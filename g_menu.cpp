@@ -11,6 +11,7 @@ Date	:	10/20/2004
 */
 
 #include "local.h"
+#pragma hdrstop
 
 // menu func routines
 void menu_func_resume	() { g_Game->Resume( );		}

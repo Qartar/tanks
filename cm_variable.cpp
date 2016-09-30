@@ -33,7 +33,7 @@ public:
 
 private:
 	char	m_szName[SHORT_STRING];
-	char	m_szValue[SHORT_STRING];
+	char	m_szValue[LONG_STRING];
 
 	cvalue		m_Value;
 	int			m_bitFlags;

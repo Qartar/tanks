@@ -5,6 +5,7 @@ Date	:	04/07/2006
 
 #include <windows.h>
 
+#include "snd_main.h"
 #include "snd_wav_source.h"
 #include "snd_wav_cache.h"
 #include "snd_wav_stream.h"

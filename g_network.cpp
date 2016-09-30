@@ -19,13 +19,16 @@ Comments:	this code is messy sloppy and bad, it was hacked together from
 */
 
 #include "local.h"
-#include "cm_variable.h"
+#pragma hdrstop
 
 extern cvar_t	*g_upgrade_frac;
 extern cvar_t	*g_upgrade_penalty;
 extern cvar_t	*g_upgrade_min;
 
-#define	PROTOCOL_VERSION	2
+cvar_t			*net_master;			//	master server ip/hostname
+cvar_t			*net_serverName;		//	name of local server
+
+#define	PROTOCOL_VERSION	3
 
 /*
 ===========================================================
@@ -37,8 +40,8 @@ Name	:	m_StartServer	m_StopServer
 
 void cGame::m_StartServer ()
 {
-	int	nWidth = g_Application->get_glWnd()->get_WndParams().nSize[0];
-	int	nHeight = g_Application->get_glWnd()->get_WndParams().nSize[1];
+	int	nWidth = m_World.m_vWorldMaxs.x;
+	int	nHeight = m_World.m_vWorldMaxs.y;
 
 	nWidth -= SPAWN_BUFFER*2;
 	nHeight -= SPAWN_BUFFER*2;
@@ -87,6 +90,7 @@ void cGame::m_StartServer ()
 	m_bMenuActive = false;
 
 	svs.active = true;
+	net_serverName->setString( svs.name );
 
 	m_netchan.Setup( NS_SERVER, m_netfrom );	// remote doesn't matter
 }
@@ -360,6 +364,9 @@ void cGame::m_Packet (netsock_t socket)
 			case svc_sound:
 				m_ReadSound( );
 				break;
+			case svc_restart:
+				flRestartTime = m_flTime + m_netmsg.ReadByte( ) * 1000;	//	 time is in msec?
+				break;
 			default:
 				return;
 			}
@@ -418,7 +425,7 @@ void cGame::m_GetFrame ()
 	// allow some leeway for arriving packets, if they exceed it
 	// clamp the time so that the velocity lerping doesn't goof up
 	//
-
+#if 0
 	// low clamp
 	if ( ((m_flTime + CLAMP_TIME) < (float)m_nFramenum * FRAMEMSEC) )
 		m_flTime = (float)m_nFramenum * FRAMEMSEC;
@@ -426,7 +433,9 @@ void cGame::m_GetFrame ()
 	// high clamp
 	if 	( ((m_flTime - CLAMP_TIME) > (float)m_nFramenum * FRAMEMSEC) )
 		m_flTime = (float)m_nFramenum * FRAMEMSEC;
-
+#else
+	m_flTime = (float )m_nFramenum * FRAMEMSEC;
+#endif
 	i = 0;
 	while ( true )
 	{
@@ -435,6 +444,10 @@ void cGame::m_GetFrame ()
 			break;
 
 		i = m_netmsg.ReadByte( );
+
+		m_Players[i].oldPos		= m_Players[i].vPos;
+		m_Players[i].oldAngle	= m_Players[i].flAngle;
+		m_Players[i].oldTAngle	= m_Players[i].flTAngle;
 
 		m_Players[i].vPos		= m_netmsg.ReadVector( );
 		m_Players[i].vVel		= m_netmsg.ReadVector( );
@@ -457,10 +470,20 @@ void cGame::m_GetFrame ()
 
 		if ( readbyte )
 		{
+			if ( m_Players[i].m_Bullet.bInGame ) {
+				m_Players[i].m_Bullet.oldPos = m_Players[i].m_Bullet.vPos;
+			} else {
+				m_Players[i].m_Bullet.oldPos = m_Players[i].oldPos;
+			}
+
 			m_Players[i].m_Bullet.vPos = m_netmsg.ReadVector( );
 			m_Players[i].m_Bullet.vVel = m_netmsg.ReadVector( );
 
 			m_World.AddObject( &m_Players[i].m_Bullet );
+
+			m_Players[i].m_Bullet.bInGame = true;
+		} else {
+			m_Players[i].m_Bullet.bInGame = false;
 		}
 	}
 
@@ -844,10 +867,6 @@ void cGame::m_ClientCommand ()
 		pTank->m_Keys[KEY_TRIGHT] = true;
 	if ( bits & BIT(KEY_FIRE) )
 		pTank->m_Keys[KEY_FIRE] = true;
-
-//	m_Players[m_netclient].vColor.r = (float)m_netmsg.ReadByte( ) / 255.0f;
-//	m_Players[m_netclient].vColor.g = (float)m_netmsg.ReadByte( ) / 255.0f;
-//	m_Players[m_netclient].vColor.b = (float)m_netmsg.ReadByte( ) / 255.0f;
 }
 
 void cGame::m_clientsend ()
@@ -873,10 +892,6 @@ void cGame::m_clientsend ()
 
 	m_netchan.message.WriteByte( clc_command );
 	m_netchan.message.WriteByte( bits );
-	// write color
-//	m_netchan.message.WriteByte( cls.color.r * 255.0f );
-//	m_netchan.message.WriteByte( cls.color.g * 255.0f );
-//	m_netchan.message.WriteByte( cls.color.b * 255.0f );
 }
 
 void cGame::m_WriteSound (int nSound)
@@ -972,11 +987,13 @@ void cGame::m_InfoAsk ()
 
 	m_bHaveServer = false;
 
-	pNet->StringToNet( "oedhead.no-ip.org", &addr );
+	//	ping master server
+	pNet->StringToNet( net_master->getString( ), &addr );
 	addr.type = NA_IP;
 	addr.port = BIG_SHORT( PORT_SERVER );
 	pNet->Print( NS_CLIENT, addr, "info" );
 
+	//	ping local network
 	addr.type = NA_BROADCAST;
 	addr.port = BIG_SHORT( PORT_SERVER );
 

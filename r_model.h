@@ -8,6 +8,9 @@ Purpose	:	Compound rectangle model class
 ===============================================================================
 */
 
+#ifndef __R_MODEL_H__
+#define __R_MODEL_H__
+
 struct sRect
 {
 	int		nPosX;
@@ -39,3 +42,4 @@ public:
 	vec2		m_AbsMax;
 };
 
+#endif //__R_MODEL_H__

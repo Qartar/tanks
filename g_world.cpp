@@ -11,6 +11,7 @@ Date	:	10/21/2004
 */
 
 #include "local.h"
+#pragma hdrstop
 
 cWorld *g_World;
 
@@ -24,16 +25,21 @@ Purpose	:	Initializes world
 ===========================================================
 */
 
+extern cvar_t	*g_arenaWidth;
+extern cvar_t	*g_arenaHeight;
+
 void cWorld::Init ()
 {
 	char	*command;
 
 	memset( m_Objects, 0, sizeof( m_Objects) );
-	m_ClearParticles ();
+	ClearParticles ();
 	g_World = this;
 
 	m_vWorldMins = vec2(0,0);
-	m_vWorldMaxs = vec2(640,480);
+	m_vWorldMaxs = vec2(
+		g_arenaWidth->getInt( ),
+		g_arenaHeight->getInt( ) );
 
 	if ( (command = strstr( g_Application->InitString(), "particles=" )) )
 		m_bParticles = ( atoi(command+10) > 0 );
@@ -49,6 +55,11 @@ void cWorld::Shutdown ()
 
 void cWorld::Reset ()
 {
+	m_vWorldMins = vec2(0,0);
+	m_vWorldMaxs = vec2(
+		g_arenaWidth->getInt( ),
+		g_arenaHeight->getInt( ) );
+
 	for ( int i=0 ; i<MAX_OBJECTS ; i++ )
 		if ( m_Objects[i] )
 			DelObject( m_Objects[i] );
@@ -278,6 +289,9 @@ void cWorld::MoveObject (cObject *pObject)
 	vec2	vDelta;
 
 	int			i;
+
+	pObject->oldPos = pObject->vPos;
+	pObject->oldAngle = pObject->flAngle;
 
 	vOldPos = pObject->vPos;
 	flOldAngle = pObject->flAngle;
@@ -586,7 +600,7 @@ void cWorld::AddFlagTrail (vec2 vPos, int nTeam)
 	}
 }
 
-void cWorld::m_ClearParticles ()
+void cWorld::ClearParticles ()
 {
 	int		i;
 	

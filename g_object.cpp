@@ -9,6 +9,7 @@ Purpose	:	implementation of object class
 */
 
 #include "local.h"
+#pragma hdrstop
 
 cObject::cObject ()
 {
@@ -35,4 +36,12 @@ void cObject::Think ()
 	// regular objects just sit there and act stupid
 
 	return;
+}
+
+vec2 cObject::GetPos( float lerp ) {
+	return oldPos + ( vPos - oldPos ) * lerp;
+}
+
+float cObject::GetAngle( float lerp ) {
+	return oldAngle + ( flAngle - oldAngle ) * lerp;
 }

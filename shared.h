@@ -176,11 +176,9 @@ static void fmt (char *szDest, char *szMessage, ...)
 
 #endif
 
-//#define	UPGRADE_FRAC	0.5f
-
-#define UPGRADE_FRAC	pVariable->Get("g_upgrade_frac")->getFloat()
-#define UPGRADE_PENALTY	pVariable->Get("g_upgrade_penalty")->getFloat()
-#define UPGRADE_MIN		pVariable->Get("g_upgrade_min")->getFloat()
+#define UPGRADE_FRAC	g_upgrade_frac->getFloat()
+#define UPGRADE_PENALTY	g_upgrade_penalty->getFloat()
+#define UPGRADE_MIN		g_upgrade_min->getFloat()
 
 typedef struct game_client_s
 {

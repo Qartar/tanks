@@ -4,8 +4,6 @@
 #ifndef __CM_SOUND_H__
 #define __CM_SOUND_H__
 
-#include "shared.h"
-
 #ifndef _WINDOWS_
 #ifndef __HWND__
 #define __HWND__

@@ -9,10 +9,9 @@ Purpose	:	tanks!
 */
 
 #include "local.h"
+#pragma hdrstop
 
 #include "keys.h"
-
-#include "cm_sound.h"
 
 cTank::cTank ()
 {
@@ -31,9 +30,20 @@ cTank::cTank ()
 
 void cTank::Draw ()
 {
-	float	flLerp = (g_Game->m_flTime - g_Game->m_nFramenum * FRAMEMSEC) / 1000.0f;
+//	float	flLerp = (g_Game->m_flTime - g_Game->m_nFramenum * FRAMEMSEC) / 1000.0f;
+	float	flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
 	float	flTime = clamp(((g_Game->m_flTime - flLastFire) / 150.f) * client->refire_mod,0,20);
 	float	flHealth = clamp((1-flDamage)*20,0,20);
+
+	if ( flLerp > 1.0f ) {
+		flLerp = 1.0f;
+	} else if ( flLerp < 0.0f ) {
+		flLerp = 0.0f;
+	}
+
+	vec2	pos = GetPos( flLerp );
+	float	angle = GetAngle( flLerp );
+	float	tangle = GetTAngle( flLerp );
 
 	vec4	vHealth;
 	vec4	vTime;
@@ -50,22 +60,22 @@ void cTank::Draw ()
 
 	if (flDamage >= 1.0f)
 	{
-		g_Render->DrawModel( pModel, vPos + vVel * flLerp, flAngle + flAVel * flLerp, vec4(0.3f,0.3f,0.3f,1) );
-		g_Render->DrawModel( pTurret, vPos + vVel * flLerp, flTAngle + flTVel * flLerp, vec4(0.3f,0.3f,0.3f,1) );
+		g_Render->DrawModel( pModel, pos, angle, vec4(0.3f,0.3f,0.3f,1) );
+		g_Render->DrawModel( pTurret, pos, tangle, vec4(0.3f,0.3f,0.3f,1) );
 		return;
 	}
 
 	// status bars
 
-	g_Render->DrawBox( vec2(20,2), vPos + vec2(0,24) + vVel * flLerp, 0, vec4(0.5,0.5,0.5,1) );
-	g_Render->DrawBox( vec2(flTime,2), vPos + vec2(0,24) + vVel * flLerp, 0, vTime );
-	g_Render->DrawBox( vec2(20,2), vPos + vec2(0,22) + vVel * flLerp, 0, vec4(0.5,0.5,0.5,1) );
-	g_Render->DrawBox( vec2(flHealth,2), vPos + vec2(0,22) + vVel * flLerp, 0, vHealth );
+	g_Render->DrawBox( vec2(20,2), pos + vec2(0,24), 0, vec4(0.5,0.5,0.5,1) );
+	g_Render->DrawBox( vec2(flTime,2), pos + vec2(0,24), 0, vTime );
+	g_Render->DrawBox( vec2(20,2), pos + vec2(0,22), 0, vec4(0.5,0.5,0.5,1) );
+	g_Render->DrawBox( vec2(flHealth,2), pos + vec2(0,22), 0, vHealth );
 
 	// actual body
 
-	g_Render->DrawModel( pModel, vPos + vVel * flLerp, flAngle + flAVel * flLerp, vColor );
-	g_Render->DrawModel( pTurret, vPos + vVel * flLerp, flTAngle + flTVel * flLerp, vColor );
+	g_Render->DrawModel( pModel, pos, angle, vColor );
+	g_Render->DrawModel( pTurret, pos, tangle, vColor );
 }
 
 void cTank::Touch (cObject *pOther)
@@ -77,7 +87,7 @@ void cTank::Touch (cObject *pOther)
 	{
 		if ( flDamage < 1.0f )
 		{
-			flDamage += (1.0f / 3.0f) * FRAMETIME;
+			flDamage += (1.0f / 3.0f) * FRAMETIME / client->armor_mod;
 
 			if (flDamage >= 1.0f)
 			{
@@ -91,7 +101,7 @@ void cTank::Touch (cObject *pOther)
 
 				g_Game->AddScore( ((cTank *)pOther)->nPlayerNum, 1 );
 				flDeadTime = g_Game->m_flTime;
-				if (g_Game->bAutoRestart)
+				if (g_Game->bAutoRestart && !g_Game->m_bMultiplayer)
 					g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
 
 				g_Game->m_WriteMessage( va("%s got a little too cozy with %s.", target, player ) );
@@ -100,7 +110,7 @@ void cTank::Touch (cObject *pOther)
 
 		if ( ((cTank *)pOther)->flDamage < 1.0f )
 		{
-			((cTank *)pOther)->flDamage += (1.0f / 3.0f) * FRAMETIME;
+			((cTank *)pOther)->flDamage += (1.0f / 3.0f) * FRAMETIME / ((cTank *)pOther)->client->armor_mod;
 
 			if (((cTank *)pOther)->flDamage >= 1.0f)
 			{
@@ -114,7 +124,7 @@ void cTank::Touch (cObject *pOther)
 
 				g_Game->AddScore( nPlayerNum, 1 );
 				((cTank *)pOther)->flDeadTime = g_Game->m_flTime;
-				if (g_Game->bAutoRestart)
+				if (g_Game->bAutoRestart && !g_Game->m_bMultiplayer)
 					g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
 
 				g_Game->m_WriteMessage( va("%s got a little too cozy with %s.", target, player ) );
@@ -134,6 +144,8 @@ void cTank::Think ()
 	float	flLeft;
 	float	flTLeft;
 	float	flVel;
+
+	oldTAngle = flTAngle;
 
 	if ( (flDamage >= 1.0f) && g_Game->m_bMultiserver && (flDeadTime+RESTART_TIME+HACK_TIME <= g_Game->m_flTime) )
 	{
@@ -235,6 +247,10 @@ void cTank::Think ()
 	}
 
 	UpdateSound( );
+}
+
+float cTank::GetTAngle( float lerp ) {
+	return oldTAngle + ( flTAngle - oldTAngle ) * lerp;
 }
 
 void cTank::UpdateKeys (int nKey, bool Down)
@@ -380,7 +396,7 @@ void cBullet::Touch (cObject *pOther)
 		float	flDot, damage;
 
 		if (pTank->flDamage >= 1.0f)
-			return;	// dont add any more score
+			return;	// dont add damage or score
 
 		vOrg = vVel * (-1/(sqrt(vVel.x * vVel.x + vVel.y * vVel.y)));
 		vDir = vec2(1,0);
@@ -432,9 +448,14 @@ void cBullet::Touch (cObject *pOther)
 
 void cBullet::Draw ()
 {
-	float	flLerp = (g_Game->m_flTime - g_Game->m_nFramenum * FRAMEMSEC) / 1000.0f;
+//	float	flLerp = (g_Game->m_flTime - g_Game->m_nFramenum * FRAMEMSEC) / 1000.0f;
+	float	flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
+	vec2	p1, p2;
 
-	g_Render->DrawLine( vPos + vVel * (flLerp + 0.02), vPos + vVel * flLerp, vec4(1,0.5,0,1), vec4(1,0.5,0,0) );
+	p1 = GetPos( flLerp - 0.4f );
+	p2 = GetPos( flLerp );
+
+	g_Render->DrawLine( p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0) );
 }
 
 void cBullet::Think ()

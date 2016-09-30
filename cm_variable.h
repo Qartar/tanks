@@ -11,6 +11,8 @@
 #define CVAR_ARCHIVE	0x00000002
 #define CVAR_NOSET		0x00000004
 #define CVAR_FORCESET	0x00000008	// initialization only
+#define CVAR_SERVER		0x00000010	// server side variable
+#define CVAR_RESET		0x00000020	// changes require restart
 
 typedef enum cVarType { cvar_undefined, cvar_string, cvar_float, cvar_int, cvar_bool, cvar_num_types } cvar_type_t;
 static char *cvar_type_strings[] = { "undefined", "string", "float", "int", "bool" };

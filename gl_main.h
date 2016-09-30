@@ -10,9 +10,11 @@ Date	:	10/15/2004
 ===============================================================================
 */
 
+#ifndef __GL_MAIN_H__
+#define __GL_MAIN_H__
+
 #include <gl/gl.h>
 #include <gl/glu.h>
-#include "r_main.h"
 
 // default size and position
 #define DEFAULT_X	100
@@ -51,6 +53,8 @@ Purpose	:	Windows Window using OpenGL
 
 ===========================================================
 */
+
+class cRender;
 
 class cOpenGLWnd
 {
@@ -96,3 +100,5 @@ private:
 	HDC		m_hDC;
 	HGLRC	m_hRC;
 };
+
+#endif //__GL_MAIN_H__

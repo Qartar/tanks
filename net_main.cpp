@@ -61,7 +61,16 @@ Purpose	:
 
 int cNetwork::Init ()
 {
-	memset( m_Loopbacks, 0, sizeof(loopback_t)*NUM_SOCKETS );
+	m_multiplayer = false;
+
+	memset( &m_wsadata, 0, sizeof(m_wsadata) );
+
+	for ( int i=0 ; i<NUM_SOCKETS ; i++ ) {
+		memset( &m_Loopbacks[i], 0, sizeof(m_Loopbacks[i]) );
+
+		ip_sockets[ i ] = 0;
+		ipx_sockets[ i ] = 0;
+	}
 
 	if ( WSAStartup( MAKEWORD( 1, 1 ), &m_wsadata ) )
 		return ERROR_FAIL;

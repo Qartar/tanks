@@ -5,6 +5,7 @@ Date	:	04/04/2006
 
 #include <windows.h>
 
+#include "snd_main.h"
 #include "snd_device.h"
 #include "snd_dsound.h"
 

@@ -11,6 +11,7 @@ Date	:	10/20/2004
 */
 
 #include "local.h"
+#pragma hdrstop
 
 /*
 ===========================================================
@@ -116,6 +117,8 @@ void cRender::m_setDefaultState ()
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_CULL_FACE );
 
+	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+
 	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
 	glDrawBuffer( GL_BACK );
@@ -138,6 +141,11 @@ void cRender::m_setDefaultState ()
 */
 
 	glOrtho( 0, 640, 480, 0, -99999, 99999 );
+
+	glTranslatef(
+		-m_viewOrigin.x,
+		-m_viewOrigin.y,
+		0 );
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity( );

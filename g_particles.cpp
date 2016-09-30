@@ -9,6 +9,7 @@ Purpose	:	handles cParticle and cWorld particle handling
 */
 
 #include "local.h"
+#pragma hdrstop
 
 cParticle *cWorld::AddParticle ()
 {

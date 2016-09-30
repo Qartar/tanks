@@ -10,11 +10,11 @@ Date	:	10/19/2004
 ===============================================================================
 */
 
+#ifndef __R_MAIN_H__
+#define __R_MAIN_H__
+
 #define MAX_FONTS	16
 #define NUM_CHARS	256
-
-#include "r_model.h"
-#include "r_particle.h"
 
 /*
 ===========================================================
@@ -64,6 +64,11 @@ Purpose	:	Rendering controller object
 ===========================================================
 */
 
+class cModel;
+class cParticle;
+
+typedef int rimage_t;
+
 class cRender
 {
 public:
@@ -83,6 +88,10 @@ public:
 	rfont_t	AddFont (char *szName, int nSize, unsigned int bitFlags);
 	int		RemoveFont (rfont_t hFont);
 	rfont_t	UseFont (rfont_t hFont);
+
+	//	Image Interface (r_image.cpp)
+	rimage_t	LoadImage( const char *szFilename );
+	void		DrawImage( rimage_t img, vec2 org, vec2 sz, vec4 color );
 
 	// Drawing Functions (r_draw.cpp)
 
@@ -115,3 +124,5 @@ private:
 	float	costbl[360];
 	float	sintbl[360];
 };
+
+#endif //__R_MAIN_H__

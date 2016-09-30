@@ -5,6 +5,8 @@ Date	:	04/01/2006
 
 #include <windows.h>
 
+#include "../shared.h"
+
 #include "../cm_sound.h"
 #include "../cm_variable.h"
 

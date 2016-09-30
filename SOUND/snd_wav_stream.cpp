@@ -3,7 +3,7 @@ Name	:	snd_wav_stream.cpp
 Date	:	04/07/2006
 =========================================================*/
 
-//#include "snd_main.h"
+#include "snd_main.h"
 #include "snd_wav_stream.h"
 
 /*=========================================================

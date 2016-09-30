@@ -10,10 +10,8 @@ Date	:	10/15/2004
 ===============================================================================
 */
 
-#include "net_main.h"
-
-#include "gl_main.h"
-#include "g_main.h"
+#ifndef __WIN_MAIN_H__
+#define __WIN_MAIN_H__
 
 /*
 ===========================================================
@@ -28,6 +26,10 @@ Purpose	:	this is THE windows class winmain calls cWinApp::Main
 
 ===========================================================
 */
+
+class cNetwork;
+class cOpenGLWnd;
+class cGame;
 
 class cWinApp
 {
@@ -74,3 +76,5 @@ private:
 };
 
 extern cWinApp *g_Application;
+
+#endif //__WIN_MAIN_H__

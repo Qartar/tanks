@@ -11,20 +11,23 @@ Date	:	10/20/2004
 */
 
 #include "local.h"
+#pragma hdrstop
 
 #include "keys.h"
-
-#include "cm_sound.h"
-#include "cm_variable.h"
 
 cvar_t	*g_upgrade_frac = NULL;
 cvar_t	*g_upgrade_penalty = NULL;
 cvar_t	*g_upgrade_min = NULL;
+cvar_t	*g_upgrades = NULL;
 
-#include <windows.h>
-#include <direct.h>
-#include <fstream>
-using namespace std;
+cvar_t	*g_arenaWidth = NULL;
+cvar_t	*g_arenaHeight = NULL;
+
+cvar_t	*cl_name = NULL;
+cvar_t	*cl_color = NULL;
+
+extern cvar_t	*net_master;		//	master server
+extern cvar_t	*net_serverName;	//	server name
 
 // global object
 vMain	*pMain;
@@ -41,11 +44,6 @@ void FindServer (bool bConnect);
 	strcpy( sound_index[i].name, a );						\
 	*(sound_index[i].name + strlen(a)) = 0
 
-#include "cm_variable.h"
-
-cvar_t	*cl_name;
-cvar_t	*cl_color;
-
 /*
 ===========================================================
 
@@ -61,6 +59,17 @@ int cGame::Init (char *cmdline)
 	g_Game = this;
 	pMain = this;
 	g_Render = g_Application->get_glWnd()->get_Render();
+
+	g_upgrade_frac		= pVariable->Get( "g_upgradeFrac", "0.50", "float", CVAR_ARCHIVE|CVAR_SERVER, "upgrade fraction" );
+	g_upgrade_penalty	= pVariable->Get( "g_upgradePenalty", "0.20", "float", CVAR_ARCHIVE|CVAR_SERVER, "upgrade penalty" );
+	g_upgrade_min		= pVariable->Get( "g_upgradeMin", "0.20", "float", CVAR_ARCHIVE|CVAR_SERVER, "minimum upgrade fraction" );
+	g_upgrades			= pVariable->Get( "g_upgrades", "true", "bool", CVAR_ARCHIVE|CVAR_SERVER, "enables upgrades" );
+
+	g_arenaWidth		= pVariable->Get( "g_arenaWidth", "640", "int", CVAR_ARCHIVE|CVAR_SERVER|CVAR_RESET, "arena width" );
+	g_arenaHeight		= pVariable->Get( "g_arenaHeight", "480", "int", CVAR_ARCHIVE|CVAR_SERVER|CVAR_RESET, "arena height" );
+
+	net_master			= pVariable->Get( "net_master", "oedhead.no-ip.org", "string", CVAR_ARCHIVE, "master server hostname" );
+	net_serverName		= pVariable->Get( "net_serverName", "Tanks! Server", "string", CVAR_ARCHIVE, "local server name" );
 
 	m_flTime = 0.0f;
 	m_nFramenum = 0;
@@ -88,6 +97,7 @@ int cGame::Init (char *cmdline)
 	bExtendedArmor = true;
 	bRandomSpawn = true;
 	bAutoRestart = true;
+	bManualRestart = false;
 
 	flRestartTime = 0;
 
@@ -100,7 +110,7 @@ int cGame::Init (char *cmdline)
 	memset( m_clientsay, 0, LONG_STRING );
 
 	svs.max_clients = MAX_PLAYERS;
-	strcpy( svs.name, "Tanks! Server" );
+	strcpy( svs.name, net_serverName->getString( ) );
 
 	cls.number = 0;
 
@@ -109,6 +119,8 @@ int cGame::Init (char *cmdline)
 
 	m_Menu.Init( );
 	m_World.Init( );
+
+	menuImage = -2;
 
 	m_netchan.Init( );
 
@@ -162,10 +174,6 @@ int cGame::Init (char *cmdline)
 
 	m_WriteMessage( "Welcome to Tanks! Press F1 for help." );
 
-	g_upgrade_frac = pVariable->Get( "g_upgrade_frac", "0.50", "float", CVAR_ARCHIVE, "upgrade fraction" );
-	g_upgrade_penalty = pVariable->Get( "g_upgrade_penalty", "0.20", "float", CVAR_ARCHIVE, "upgrade penalty" );
-	g_upgrade_min = pVariable->Get( "g_upgrade_min", "0.20", "float", CVAR_ARCHIVE, "minimum upgrade fraction" );
-
 	return ERROR_NONE;
 }
 
@@ -206,14 +214,16 @@ Purpose	:	Shutdown
 #define CLIENT_INI_PATH	"My Documents/My Games/Tanks!"
 #define CLIENT_INI_FILE	"My Documents/My Games/Tanks!/Tanks!.cfg"
 
+const float	colorMinFrac = 0.75f;
+
 void cGame::m_InitClient ()
 {
 	int		nLength;
 	char	szPath[LONG_STRING];
 
-	textutils_c	text;
+	float	csum;
 
-	fstream	fs;
+	textutils_c	text;
 
 	bClientButton = 0;
 	bClientSay = 0;
@@ -233,6 +243,19 @@ void cGame::m_InitClient ()
 	cls.color.r = (float )atoi(text.argv(0)) / 255.0f;
 	cls.color.g = (float )atoi(text.argv(1)) / 255.0f;
 	cls.color.b = (float )atoi(text.argv(2)) / 255.0f;
+
+	csum = cls.color.r + cls.color.g + cls.color.b;
+	if ( csum < colorMinFrac ) {
+		if ( csum == 0.0f ) {
+			cls.color.r = cls.color.g = cls.color.b = colorMinFrac * 0.334f;
+		} else {
+			float	invsum = colorMinFrac / csum;
+
+			cls.color.r *= invsum;
+			cls.color.g *= invsum;
+			cls.color.b *= invsum;
+		}
+	}
 }
 
 void cGame::m_EndClient ()
@@ -300,13 +323,53 @@ int cGame::RunFrame (float flMSec)
 
 	fbeg = g_Application->get_time( );
 
+	//	set view center
+	int	worldWidth, worldHeight;
+	int viewWidth, viewHeight;
+
+	float	centerX, centerY;
+
+	worldWidth	= m_World.m_vWorldMaxs.x - m_World.m_vWorldMins.x;
+	worldHeight	= m_World.m_vWorldMaxs.y - m_World.m_vWorldMins.y;
+
+	viewWidth	= g_Application->get_glWnd( )->get_WndParams( ).nSize[ 0 ];
+	viewHeight	= g_Application->get_glWnd( )->get_WndParams( ).nSize[ 1 ];
+
+	if ( m_bMultiplayer && svs.clients[ cls.number ].active ) {
+		float	flLerp = (m_flTime - (m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
+
+		centerX		= m_Players[ cls.number ].GetPos( flLerp ).x;
+		centerY		= m_Players[ cls.number ].GetPos( flLerp ).y;
+	} else {
+		centerX		= worldWidth / 2;
+		centerY		= worldHeight / 2;
+	}
+
+	if ( ( centerX < viewWidth / 2 ) && ( centerX > worldWidth - ( viewWidth / 2 )) ) {
+		centerX = worldWidth / 2;
+	} else if ( centerX < viewWidth / 2 ) {
+		centerX = viewWidth / 2;
+	} else if ( centerX > worldWidth - ( viewWidth / 2 ) ) {
+		centerX = worldWidth - ( viewWidth / 2 );
+	}
+	if ( ( centerY < viewHeight / 2 ) && ( centerY > worldHeight - ( viewHeight / 2 )) ) {
+		centerY = worldHeight / 2;
+	} else if ( centerY < viewHeight / 2 ) {
+		centerY = viewHeight / 2;
+	} else if ( centerY > worldHeight - ( viewHeight / 2 ) ) {
+		centerY = worldHeight - ( viewHeight / 2 );
+	}
+	g_Render->SetViewOrigin( cVec2(
+		centerX - viewWidth / 2,
+		centerY - viewHeight / 2 ) );
+
 	// draw world
 	if (m_bGameActive)
 		m_World.Draw( );
 
-	rworld = g_Application->get_time( );
+	g_Render->SetViewOrigin( cVec2( 0, 0 ) );
 
-	m_DrawMessages( );
+	rworld = g_Application->get_time( );
 
 	// draw menu
 	if (m_bMenuActive)
@@ -319,6 +382,12 @@ int cGame::RunFrame (float flMSec)
 
 		m_getCursorPos( );
 
+		if ( menuImage < -1 ) {	//	-1 indicates a failed load, don't keep trying
+			menuImage = g_Render->LoadImage( "Tanks.bmp" );
+		}
+
+		g_Render->DrawImage( menuImage, vec2( 0, 0 ), vec2( 640, 480 ), vec4( 1, 1, 1, 1 ) );
+
 		m_Menu.Draw( m_vCursorPos );
 	}
 	else if ( bCursor )
@@ -328,6 +397,8 @@ int cGame::RunFrame (float flMSec)
 	}
 
 	m_DrawScore( );
+
+	m_DrawMessages( );
 
 	rmenu = g_Application->get_time( );
 
@@ -339,8 +410,9 @@ int cGame::RunFrame (float flMSec)
 
 	snd = g_Application->get_time( );
 
-	if ( flRestartTime && (m_flTime > flRestartTime) && !m_bMenuActive )
+	if ( flRestartTime && (m_flTime > flRestartTime) && !m_bMenuActive ) {
 		NewGame( );
+	}
 
 	end = g_Application->get_time( );
 
@@ -534,6 +606,40 @@ int cGame::Key_Event (unsigned char Key, bool Down)
 						else
 							m_ConnectToServer( -1 );
 					}
+					else if ( (command = strstr( m_clientsay, "set" )) )
+					{
+						if ( strlen( command ) > 4 ) {
+							char	cmdbuf[ 256 ];
+							char	*arg;
+							cvar_t	*cvar;
+
+							strncpy( cmdbuf, command + 4, 256 );
+
+							//	find next arg
+							for( arg = cmdbuf ; *arg ; arg++ ) {
+								if ( *arg == ' ' ) {
+									*arg++ = '\0';
+									break;
+								}
+							}
+
+							if ( !*arg ) {
+								m_WriteMessageClient( "usage: set [variable] [value]" );
+							} else if ( (cvar = pVariable->Get( cmdbuf )) != 0 ) {
+								cvar->setString( arg );
+								if ( cvar->getFlags( ) & CVAR_SERVER ) {
+									m_WriteMessage( va("\'%s\' set to \'%s\'", cvar->getName( ), cvar->getString( ) ) );
+								} else {
+									m_WriteMessageClient( va("\'%s\' set to \'%s\'", cvar->getName( ), cvar->getString( ) ) );
+								}
+							} else {
+								m_WriteMessageClient( va("unrecognized variable: %s", cmdbuf ) );
+							}
+						} else {
+							m_WriteMessageClient( "usage: set [variable] [value]" );
+						}
+
+					}
 					else if ( (command = strstr( m_clientsay, "dedicated" )) )
 					{
 						m_bDedicated = true;
@@ -542,7 +648,7 @@ int cGame::Key_Event (unsigned char Key, bool Down)
 						m_StartServer( );
 					}
 					else
-						m_WriteMessage( va("unrecognized command: %s", m_clientsay+1) );
+						m_WriteMessageClient( va("unrecognized command: %s", m_clientsay+1) );
 				}
 				else if ( m_bMultiplayer )
 				{
@@ -605,8 +711,10 @@ int cGame::Key_Event (unsigned char Key, bool Down)
 	}
 	else if ( Key == K_PGDN && Down )
 	{
+		float	time = g_Application->get_time( );
+
 		for ( int i=0 ; i<MAX_MESSAGES ; i++ )
-			m_Messages[i].time = m_flTime;
+			m_Messages[i].time = time;
 	}
 
 	// user commands here
@@ -661,29 +769,29 @@ int cGame::Key_Event (unsigned char Key, bool Down)
 		{
 
 		case K_F1:
-			m_WriteMessage( "" );
-			m_WriteMessage( "----- TANKS HELP -----" );
-			m_WriteMessage( "note: pressing PGDN will refresh the message log" );
-			m_WriteMessage( "" );
-			m_WriteMessage( "  Each player commands an entire tank using the keyboard." );
-			m_WriteMessage( "The following keys are using in multiplayer mode: " );
-			m_WriteMessage( "W - Forward" );
-			m_WriteMessage( "S - Backward" );
-			m_WriteMessage( "A - Turns tank left" );
-			m_WriteMessage( "D - Turns tank right" );
-			m_WriteMessage( "J - Turns turret left" );
-			m_WriteMessage( "L - Turns turret right" );
-			m_WriteMessage( "K - Fire main gun" );
-			m_WriteMessage( "  Shot struck in the rear will do full damage (one shot" );
-			m_WriteMessage( "kill with no upgrades), the sides will do 1/2 damage, and" );
-			m_WriteMessage( "shots to the front will do 1/3 normal damage." );
-			m_WriteMessage( "  You can change your nick and the color of your tank in" );
-			m_WriteMessage( "the Game Options menu. You can toggle the menu at any" );
-			m_WriteMessage( "time by pressing the ESC key." );
-			m_WriteMessage( "  Every 10 kills you achieve in multiplayer you will be" );
-			m_WriteMessage( "prompted to upgrade your tank, you can see more about" );
-			m_WriteMessage( "upgrades by pressing F9" );
-			m_WriteMessage( "" );
+			m_WriteMessageClient( "" );
+			m_WriteMessageClient( "----- TANKS HELP -----" );
+			m_WriteMessageClient( "note: pressing PGDN will refresh the message log" );
+			m_WriteMessageClient( "" );
+			m_WriteMessageClient( "  Each player commands an entire tank using the keyboard." );
+			m_WriteMessageClient( "The following keys are using in multiplayer mode: " );
+			m_WriteMessageClient( "W - Forward" );
+			m_WriteMessageClient( "S - Backward" );
+			m_WriteMessageClient( "A - Turns tank left" );
+			m_WriteMessageClient( "D - Turns tank right" );
+			m_WriteMessageClient( "J - Turns turret left" );
+			m_WriteMessageClient( "L - Turns turret right" );
+			m_WriteMessageClient( "K - Fire main gun" );
+			m_WriteMessageClient( "  Shots struck in the rear will do full damage (one shot" );
+			m_WriteMessageClient( "kill with no upgrades), the sides will do 1/2 damage, and" );
+			m_WriteMessageClient( "shots to the front will do 1/3 normal damage." );
+			m_WriteMessageClient( "  You can change your nick and the color of your tank in" );
+			m_WriteMessageClient( "the Game Options menu. You can toggle the menu at any" );
+			m_WriteMessageClient( "time by pressing the ESC key." );
+			m_WriteMessageClient( "  Every 10 kills you achieve in multiplayer you will be" );
+			m_WriteMessageClient( "prompted to upgrade your tank, you can see more about" );
+			m_WriteMessageClient( "upgrades by pressing F9" );
+			m_WriteMessageClient( "" );
 			break;
 
 		//
@@ -711,22 +819,22 @@ int cGame::Key_Event (unsigned char Key, bool Down)
 			break;
 
 		case K_F9:
-			m_WriteMessage( "" );
-			m_WriteMessage( "---- UPGRADES HELP ----" );
-			m_WriteMessage( "  Upgrades are given every ten kills you achieve. The" );
-			m_WriteMessage( "categories you can upgrade in are the following: ");
-			m_WriteMessage( "1) Damage - weapon damage" );
-			m_WriteMessage( "2) Armor - damage absorption" );
-			m_WriteMessage( "3) Gunnery - fire rate" );
-			m_WriteMessage( "4) Speed - tank speed" );
-			m_WriteMessage( "  To upgrade your tank, press the number associated with" );
-			m_WriteMessage( "the upgrade when you have upgrades available to you. You" );
-			m_WriteMessage( "should note than when you upgrade your tank, a penalty" );
-			m_WriteMessage( "will be taken from a corresponding category. Damage" );
-			m_WriteMessage( "goes with Gunnery, and Speed with Armor. However, when" );
-			m_WriteMessage( "you upgrade you will see a net increase in your tanks" );
-			m_WriteMessage( "performance." );
-			m_WriteMessage( "" );
+			m_WriteMessageClient( "" );
+			m_WriteMessageClient( "---- UPGRADES HELP ----" );
+			m_WriteMessageClient( "  Upgrades are given every ten kills you achieve. The" );
+			m_WriteMessageClient( "categories you can upgrade in are the following: ");
+			m_WriteMessageClient( "1) Damage - weapon damage" );
+			m_WriteMessageClient( "2) Armor - damage absorption" );
+			m_WriteMessageClient( "3) Gunnery - fire rate" );
+			m_WriteMessageClient( "4) Speed - tank speed" );
+			m_WriteMessageClient( "  To upgrade your tank, press the number associated with" );
+			m_WriteMessageClient( "the upgrade when you have upgrades available to you. You" );
+			m_WriteMessageClient( "should note that when you upgrade your tank a penalty" );
+			m_WriteMessageClient( "will be taken from a complementary category. Damage" );
+			m_WriteMessageClient( "goes with Gunnery, and Speed with Armor. However, when" );
+			m_WriteMessageClient( "you upgrade you will see a net increase in your tanks" );
+			m_WriteMessageClient( "performance." );
+			m_WriteMessageClient( "" );
 			break;
 
 		default:
@@ -751,7 +859,15 @@ int cGame::Key_Event (unsigned char Key, bool Down)
 
 	if (Key == K_F2)
 	{
-		NewGame ();
+		byte	msg[ 2 ];
+
+		msg[ 0 ] = svc_restart;
+		msg[ 1 ] = 5;
+
+		m_Broadcast( 2, msg );
+		
+		flRestartTime = m_flTime + 5000.0f;
+		bManualRestart = true;
 		return true;
 	}
 
@@ -790,8 +906,13 @@ void cGame::AddScore (int nPlayer, int nScore)
 
 	m_nScore[nPlayer] += nScore;
 
-	if ( m_nScore[nPlayer] % 10 == 0 )
-		gameClients[nPlayer].upgrades++;
+	if ( m_bMultiplayer ) {
+		if ( m_nScore[nPlayer] % 10 == 0 ) {
+			if ( g_upgrades->getBool( ) ) {
+				gameClients[nPlayer].upgrades++;
+			}
+		}
+	}
 
 	if ( m_bMultiserver )
 	{
@@ -815,6 +936,8 @@ void cGame::AddScore (int nPlayer, int nScore)
 void cGame::m_DrawScore ()
 {
 	int		i, n, count;
+
+	int		sort[ MAX_PLAYERS ];
 
 	int	nWidth = g_Application->get_glWnd()->get_WndParams().nSize[0];
 	int	nHeight = g_Application->get_glWnd()->get_WndParams().nSize[1];
@@ -852,11 +975,36 @@ void cGame::m_DrawScore ()
 	g_Render->DrawBox( vec2(96,8+12*count), vec2(nWidth-32-22,32+4+6*count), 0, menu_colors[4] );
 	g_Render->DrawBox( vec2(96,8+12*count-2), vec2(nWidth-32-22,32+4+6*count), 0, menu_colors[5] );
 
+	memset( sort, -1, sizeof(sort) );
+	for ( i=0 ; i<MAX_PLAYERS ; i++ ) {
+
+		if ( m_bMultiplayer ) {
+			if ( !svs.clients[ i ].active ) {
+				continue;
+			}
+		} else if ( i >= 2 ) {
+			break;
+		}
+
+		for( n=MAX_PLAYERS-1 ; n>0 ; n-- ) {
+
+			if ( sort[ n-1 ] < 0 ) {
+				continue;
+			}
+			sort[ n ] = sort[ n-1 ];
+			if ( m_nScore[ sort[ n ] ] >= m_nScore[ i ] ) {
+				break;
+			}
+		}
+		sort[ n ] = i;
+	}
+
+
 	for ( i=0,n=0 ; i<MAX_PLAYERS ; i++ )
 	{
 		if ( m_bMultiplayer )
 		{
-			if ( !svs.clients[i].active )
+			if ( !svs.clients[ sort[ i ] ].active )
 				continue;
 		}
 		else if ( i >= 2 )
@@ -868,7 +1016,7 @@ void cGame::m_DrawScore ()
 							//	(int )(cls.color.b * 255),
 
 		g_Render->DrawBox( vec2(7,7), vec2(nWidth-96, 32+11+12*n), 0,
-			vec4( m_Players[i].vColor.r, m_Players[i].vColor.g, m_Players[i].vColor.b, 1 ) );
+			vec4( m_Players[ sort[ i ] ].vColor.r, m_Players[ sort[ i ] ].vColor.g, m_Players[ sort[ i ] ].vColor.b, 1 ) );
 
 		//g_Render->DrawString( va( "\\c%02x%02x%02x[]\\cx%s",
 		//	(int )(m_Players[i].vColor.r * 255),
@@ -876,17 +1024,17 @@ void cGame::m_DrawScore ()
 		//	(int )(m_Players[i].vColor.b * 255),
 		//	svs.clients[i].name ), vec2(nWidth-96+4, 32+14+12*n), menu_colors[7] );
 
-		g_Render->DrawString( svs.clients[i].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7] );
-		g_Render->DrawString( va(": %i", m_nScore[i]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7] );
+		g_Render->DrawString( svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7] );
+		g_Render->DrawString( va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7] );
 
 		n++;
 	}
 
-	if (flRestartTime > m_flTime)
+	if ( flRestartTime > m_flTime )
 	{
 		int		nTime = ceil((flRestartTime - m_flTime)/1000.0f);
 
-		g_Render->DrawString( va("Auto-Restart in... %i", nTime), vec2(nWidth/2-48,16+13), menu_colors[7] );
+		g_Render->DrawString( va("Restart in... %i", nTime), vec2(nWidth/2-48,16+13), menu_colors[7] );
 	}
 }
 
@@ -901,10 +1049,15 @@ Name	:	Menu functions
 void cGame::Reset ()
 {
 	for ( int i=0 ; i<MAX_PLAYERS ; i++ )
+	{
 		m_nScore[i] = 0;
 
-	for ( int i=0 ; i<MAX_PLAYERS ; i++ )
-	{
+		gameClients[i].armor_mod = 1.0f;
+		gameClients[i].damage_mod = 1.0f;
+		gameClients[i].refire_mod = 1.0f;
+		gameClients[i].speed_mod = 1.0f;
+		gameClients[i].upgrades = 0;
+
 		if ( m_Players[i].channels[0] )
 		{
 			m_Players[i].channels[0]->stopSound( );
@@ -920,59 +1073,88 @@ void cGame::Reset ()
 void cGame::Resume () { m_bGameActive = true; m_bMenuActive = false; }
 void cGame::NewGame ()
 {
-	int				i;
+	int	nWidth, nHeight;
+	int	i;
 
-	int	nWidth = 640;
-	int	nHeight = 480;
+	flRestartTime = 0.0f;
+	m_World.ClearParticles( );
+
+	bManualRestart = false;
+
+	if ( m_bMultiplayer && !m_bMultiserver ) {
+		return;
+	}
+
+	//
+	//	reset world
+	//
+
+	m_World.Reset( );
+
+	nWidth = m_World.m_vWorldMaxs.x;
+	nHeight = m_World.m_vWorldMaxs.y;
 
 	nWidth -= SPAWN_BUFFER*2;
 	nHeight -= SPAWN_BUFFER*2;
 
-	m_World.Reset( );
+	//
+	//	reset scores
+	//
+
+	if ( m_bMultiserver && bManualRestart )
+	{
+		netmsg_t	netmsg;
+		byte		buf[MAX_MSGLEN];
+
+		netmsg.Init( buf, MAX_MSGLEN );
+		for ( int i=0 ; i<MAX_PLAYERS ; i++ ) {
+			netmsg.WriteByte( svc_score );	//	score command
+			netmsg.WriteByte( i );			//	player index
+			netmsg.WriteByte( 0 );			//	current score
+		}
+		m_Broadcast( netmsg.nCurSize, netmsg.pData );
+	}
+
+	//
+	//	reset players
+	//
 
 	for ( i=0 ; i<MAX_PLAYERS ; i++ )
 	{
+		gameClients[i].armor_mod = 1.0f;
+		gameClients[i].damage_mod = 1.0f;
+		gameClients[i].refire_mod = 1.0f;
+		gameClients[i].speed_mod = 1.0f;
+		gameClients[i].upgrades = 0;
+
+		if ( bManualRestart ) {
+			m_nScore[ i ] = 0;
+		}
+
 		if ( !m_bMultiserver && i > 1 )
 			break;
 		else if ( m_bMultiserver && !svs.clients[i].active )
 			continue;
 
-		if (bRandomSpawn)
+		if ( !flRestartTime || m_Players[i].flDamage >= 1.0f)
 		{
-			if ( !flRestartTime || m_Players[i].flDamage >= 1.0f)
-			{
-				m_Players[i].vPos = vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER);
-				m_Players[i].flAngle = frand()*360;
-				m_Players[i].flTAngle = m_Players[i].flAngle;
-
-				m_Players[i].vVel = vec2(0,0);
-				m_Players[i].flAVel = 0;
-				m_Players[i].flTVel = 0;
-
-				m_Players[i].flDamage = 0;
-			}
-		}
-		else
-		{
-			m_Players[i].vPos = vec2(64,64);
-			m_Players[i].flAngle = 0;
-			m_Players[i].flTAngle = 0;
+			m_Players[i].vPos = vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER);
+			m_Players[i].flAngle = frand()*360;
+			m_Players[i].flTAngle = m_Players[i].flAngle;
 
 			m_Players[i].vVel = vec2(0,0);
-			m_Players[i].flAVel = 0;
-			m_Players[i].flTVel = 0;
+			m_Players[i].flAVel = 0.0f;
+			m_Players[i].flTVel = 0.0f;
 
+			m_Players[i].flDamage = 0.0f;
+			m_Players[i].flLastFire = 0.0f;
 		}
-
-		if ( !m_bMultiserver )
-			m_Players[i].flDamage = 0;
 
 		m_World.AddObject( &m_Players[i] );
 	}
 
 	m_bGameActive = true;
 	m_bMenuActive = false;
-	flRestartTime = 0;
 }
 
 /*
@@ -1047,14 +1229,14 @@ int cGame::Message (char *szMessage, ...)
 	vsprintf( string, szMessage, list );
 	va_end( list );
 
-//	m_WriteMessage( string );
+//	m_WriteMessage( string, false );
 
 	return ERROR_NONE;
 }
 
-void cGame::m_WriteMessage (char *szMessage)
+void cGame::m_WriteMessage (char *szMessage, bool broadcast)
 {
-	if ( m_bMultiserver )
+	if ( m_bMultiserver && broadcast )
 		m_Broadcast_Print( szMessage );
 
 	memset( m_Messages[m_nMessage].string, 0, MAX_STRING );

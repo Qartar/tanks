@@ -10,8 +10,8 @@ Date	:	10/20/2004
 ===============================================================================
 */
 
-#include "g_menu.h"
-#include "g_world.h"
+#ifndef __G_MAIN_H__
+#define __G_MAIN_H__
 
 #define FRAMETIME	0.05f
 #define FRAMEMSEC	50.0f
@@ -61,18 +61,19 @@ typedef enum netops_e
 	net_bad,
 	net_nop,
 
-	clc_command,
-	clc_disconnect,
-	clc_say,
-	clc_upgrade,
+	clc_command,	//	player commands
+	clc_disconnect,	//	disconnected
+	clc_say,		//	message text
+	clc_upgrade,	//	upgrade command
 
-	svc_disconnect,
-	svc_message,
-	svc_score,
-	svc_info,		// client info
-	svc_frame,
-	svc_effect,
-	svc_sound
+	svc_disconnect,	//	force disconnect
+	svc_message,	//	message from server
+	svc_score,		//	score update
+	svc_info,		//	client info
+	svc_frame,		//	frame update
+	svc_effect,		//	particle effect
+	svc_sound,		//	sound effect
+	svc_restart		//	game restart
 } netops_t;
 
 typedef enum eEffects
@@ -107,6 +108,11 @@ Purpose	:	Stores higher-level information about the current game
 
 ===========================================================
 */
+
+class cTank;
+class cMenu;
+class cWorld;
+class cRender;
 
 //
 // SERVER SIDE DATA
@@ -207,6 +213,7 @@ public:
 	bool	bExtendedArmor;
 	bool	bRandomSpawn;
 	bool	bAutoRestart;
+	bool	bManualRestart;
 
 	float	flRestartTime;
 
@@ -217,6 +224,8 @@ public:
 private:
 	cMenu	m_Menu;
 	cWorld	m_World;
+
+	int		menuImage;
 
 	void	m_getCursorPos ();
 	vec2	m_vCursorPos;
@@ -238,7 +247,8 @@ private:
 	char	m_ShiftKeys[256];
 
 public:
-	void	m_WriteMessage (char *szMessage);
+	void	m_WriteMessage (char *szMessage, bool broadcast=true);
+	void	m_WriteMessageClient( char *szMessage ) { m_WriteMessage( szMessage, false ); }
 
 	game_client_t	gameClients[MAX_PLAYERS];
 	// NETWORKING
@@ -324,3 +334,5 @@ extern index_s	sound_index[256];
 
 extern cGame *g_Game;
 extern cRender *g_Render;
+
+#endif //__G_MAIN_H__

@@ -10,12 +10,16 @@ Date	:	10/21/2004
 ===============================================================================
 */
 
+#ifndef __G_WORLD_H__
+#define __G_WORLD_H__
+
 #define MAX_OBJECTS	16
 
-#include "r_particle.h"
-#include "cm_sound.h"
-
 typedef enum eEffects effects_t;
+
+class cParticle;
+class cModel;
+class cGame;
 
 enum eObjectType
 {
@@ -35,10 +39,16 @@ public:
 	virtual void	Touch (cObject *pOther);
 	virtual void	Think ();
 
+	virtual vec2	GetPos( float lerp );
+	virtual float	GetAngle( float lerp );
+
 	cModel	*pModel;
 	vec2	vPos, vVel;			// state and rate of change
 	float	flAngle, flAVel;	//
 	vec4	vColor;
+
+	vec2	oldPos;
+	float	oldAngle;
 
 	eObjectType	eType;
 };
@@ -67,6 +77,8 @@ public:
 	virtual void	Touch (cObject *pOther);
 	virtual void	Think ();
 
+	float			GetTAngle( float lerp );
+
 	void		UpdateKeys( int nKey, bool Down );
 
 	void		UpdateSound ();
@@ -76,6 +88,8 @@ public:
 	float	flDamage;
 	int		nPlayerNum;
 	float	flDeadTime;
+
+	float	oldTAngle;
 
 	bool	m_Keys[8];
 
@@ -92,6 +106,7 @@ class cWorld
 {
 	friend cParticle;
 	friend cTank;
+	friend cGame;
 
 public:
 	cWorld () : pFreeParticles(NULL), pActiveParticles(NULL) {}
@@ -100,6 +115,8 @@ public:
 	void	Init ();
 	void	Shutdown ();
 	void	Reset ();
+
+	void	ClearParticles ();
 
 	void	RunFrame ();
 	void	Draw ();
@@ -126,7 +143,6 @@ private:
 	void		FreeParticle (cParticle *pParticle);
 
 	void		m_DrawParticles ();
-	void		m_ClearParticles ();
 
 	bool		m_bParticles;
 	bool		m_bWeakFX;
@@ -136,3 +152,5 @@ private:
 };
 
 extern cWorld *g_World;
+
+#endif //__G_WORLD_H__

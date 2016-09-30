@@ -9,12 +9,14 @@ Purpose	:	Compound rectangle model class
 */
 
 #include "local.h"
+#pragma hdrstop
 
 void cRender::DrawModel (cModel *pModel, vec2 vPos, float flAngle, vec4 vColor)
 {
 	int			i;
 	sRect		*pRect;
 
+	glMatrixMode( GL_MODELVIEW );
 	glPushMatrix();
 
 	glTranslatef( vPos.x, vPos.y, 0 );

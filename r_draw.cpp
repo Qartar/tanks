@@ -9,6 +9,7 @@ Purpose	:	drawing functions for cRender (r_main.h)
 */
 
 #include "local.h"
+#pragma hdrstop
 
 /*
 ===========================================================

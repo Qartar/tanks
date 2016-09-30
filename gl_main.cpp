@@ -11,7 +11,16 @@ Date	:	10/15/2004
 */
 
 #include "local.h"
+#pragma hdrstop
+
 #include "resource.h"
+
+#define	STATIC_SIZE
+
+#ifndef STATIC_SIZE
+cvar_t	*vid_width;
+cvar_t	*vid_height;
+#endif //!STATIC_SIZE
 
 /*
 ===========================================================
@@ -30,6 +39,11 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
 	char	*command;
 	bool	bFullscreen = DEFAULT_FS;
 
+#ifndef STATIC_SIZE
+	vid_width	= pVariable->Get( "vid_width", "640", "int", CVAR_ARCHIVE, "width of display" );
+	vid_height	= pVariable->Get( "vid_height", "480", "int", CVAR_ARCHIVE, "height of display" );
+#endif //!STATIC_SIZE
+
 	if (hInstance == NULL || WndProc == NULL)
 	{
 		g_Application->Error( "Tanks! Error", "cOpenGLWnd::Init | bad parameters\n" );
@@ -40,10 +54,20 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
 	m_hInstance = hInstance;
 	m_WndProc = WndProc;
 
-	if ( (command = strstr( g_Application->InitString(), "fullscreen=" )) )
+	if ( (command = strstr( g_Application->InitString(), "fullscreen" )) )
 		bFullscreen = ( atoi(command+11) > 0 );
 
-	res = m_CreateWindow( DEFAULT_W, DEFAULT_H, DEFAULT_X, DEFAULT_Y, bFullscreen );
+	res = m_CreateWindow(
+#ifndef STATIC_SIZE
+		vid_width->getInt( ),
+		vid_height->getInt( ),
+#else
+		DEFAULT_W,
+		DEFAULT_H,
+#endif //!STATIC_SIZE
+		DEFAULT_X,
+		DEFAULT_Y,
+		bFullscreen );
 
 	m_Render.Init( );
 

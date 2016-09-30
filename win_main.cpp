@@ -11,12 +11,9 @@ Date	:	10/15/2004
 */
 
 #include "local.h"
+#pragma hdrstop
+
 #include "keys.h"
-
-//#include "snd_main.h"
-
-#include "cm_sound.h"
-#include "cm_variable.h"
 
 cWinApp	*g_Application;	// global instance, extern declaration in "win_main.h"
 
