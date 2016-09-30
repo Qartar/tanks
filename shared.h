@@ -19,6 +19,13 @@ Date	:	10/16/2004
 #include <stdio.h>
 #include <math.h>
 
+//#define DEBUG_MEM
+
+#ifdef DEBUG_MEM
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif // DEBUG_MEM
+
 #pragma warning (disable:4244)
 
 #define ERROR_NONE		0

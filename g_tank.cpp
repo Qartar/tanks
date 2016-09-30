@@ -54,19 +54,25 @@ void cTank::Touch (cObject *pOther)
 	return;
 }
 
-#define KEY_FORWARD	0
-#define KEY_BACK	1
-#define KEY_LEFT	2
-#define KEY_RIGHT	3
-#define KEY_TLEFT	4
-#define KEY_TRIGHT	5
-#define KEY_FIRE	6
-
 void cTank::Think ()
 {
 	float	flForward;
 	float	flLeft;
 	float	flTLeft;
+
+	if (m_bComputer)
+	{
+		memset( m_Keys, 0, sizeof(m_Keys) );
+		m_Keys[0] = false;
+		m_Keys[1] = false;
+		m_Keys[2] = false;
+		m_Keys[3] = false;
+		m_Keys[4] = false;
+		m_Keys[5] = false;
+		m_Keys[6] = false;
+		m_Keys[7] = false;
+		m_Iterator.run( );
+	}
 
 	flForward = m_Keys[KEY_FORWARD] - m_Keys[KEY_BACK];
 	flLeft = m_Keys[KEY_LEFT] - m_Keys[KEY_RIGHT];
@@ -127,6 +133,9 @@ void cTank::Think ()
 
 void cTank::UpdateKeys (int nKey, bool Down)
 {
+	if (m_bComputer)
+		return;
+
 	switch ( nKey )
 	{
 	case 'w':

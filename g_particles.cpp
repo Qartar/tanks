@@ -85,9 +85,9 @@ void cWorld::m_DrawParticles ()
 			tail = p;
 		}
 
-		p->vColor.r += p->vColor.r + p->vColorVel.r * time;
-		p->vColor.g += p->vColor.g + p->vColorVel.g * time;
-		p->vColor.b += p->vColor.b + p->vColorVel.b * time;
+		p->vColor.r += p->vColorVel.r * time;
+		p->vColor.g += p->vColorVel.g * time;
+		p->vColor.b += p->vColorVel.b * time;
 
 		p->vPos.x += p->vVel.x * time + p->vAccel.x * time * time;
 		p->vPos.y += p->vVel.y * time + p->vAccel.y * time * time;

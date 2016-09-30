@@ -12,6 +12,12 @@ Date	:	10/15/2004
 
 #include "local.h"
 
+static int	default_width = 1280;
+static int	default_height = 1024;
+static int	default_posx = 100;
+static int	default_posy = 100;
+static bool default_fullscreen = 1;
+
 /*
 ===========================================================
 
@@ -36,7 +42,7 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
 	m_hInstance = hInstance;
 	m_WndProc = WndProc;
 
-	res = m_CreateWindow( DEFAULT_W, DEFAULT_H, DEFAULT_X, DEFAULT_Y );
+	res = m_CreateWindow( default_width, default_height, default_posx, default_posy,default_fullscreen );
 
 	m_Render.Init( );
 
@@ -75,9 +81,37 @@ Purpose	:	Creates a window ; calls m_InitGL
 
 ===========================================================
 */
-int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY)
+int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bool bFullscreen)
 {
 	WNDCLASS	wc;
+	int			style;
+
+	if ( bFullscreen )
+	{
+		DEVMODE	dm;
+
+		memset( &dm, 0, sizeof(DEVMODE) );
+
+		dm.dmSize = sizeof(DEVMODE);
+		dm.dmPelsWidth = nSizeX;
+		dm.dmPelsHeight = nSizeY;
+		dm.dmFields = DM_PELSWIDTH|DM_PELSHEIGHT;
+
+		if ( ChangeDisplaySettings(&dm,CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL )
+		{
+			bFullscreen = false;
+			style = WS_OVERLAPPED;
+			MessageBox( NULL, "oh shit", "shit alert!", MB_OK );
+		}
+		else
+		{
+			nPosX = 0;
+			nPosY = 0;
+			style = WS_POPUP|WS_VISIBLE;
+		}
+	}
+	else
+		style = WS_OVERLAPPED;
 
 	// Setup struct for RegisterClass
 
@@ -104,7 +138,7 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY)
 	m_hWnd = CreateWindow(
 		APP_CLASSNAME,
 		"Tanks!",
-		WS_OVERLAPPED,
+		style,
 		nPosX, nPosY, nSizeX, nSizeY,
 		NULL, NULL,
 		m_hInstance,

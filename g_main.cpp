@@ -16,6 +16,7 @@ Date	:	10/20/2004
 
 // global object
 cGame *g_Game;
+cRender	*g_Render;
 
 /*
 ===========================================================
@@ -30,6 +31,7 @@ Purpose	:	Initialization
 int cGame::Init ()
 {
 	g_Game = this;
+	g_Render = g_Application->get_glWnd()->get_Render();
 
 	m_flTime = 0.0f;
 	m_nFramenum = 0;
@@ -40,13 +42,15 @@ int cGame::Init ()
 	m_nScore[0] = 0;
 	m_nScore[1] = 0;
 
+	m_InitPlayers( );
+
 	m_Menu.Init( );
 	m_World.Init( );
 
-	m_pRender = g_Application->get_glWnd()->get_Render();
-
 	m_World.AddObject( &m_Players[0] );
 	m_World.AddObject( &m_Players[1] );
+
+	m_pInputObject = NULL;
 
 	return ERROR_NONE;
 }
@@ -91,7 +95,7 @@ int cGame::RunFrame (float flMSec)
 			m_World.RunFrame( );
 	}
 
-	m_pRender->BeginFrame( );
+	g_Render->BeginFrame( );
 
 	// draw world
 	if (m_bGameActive)
@@ -107,7 +111,7 @@ int cGame::RunFrame (float flMSec)
 
 	m_DrawScore( );
 
-	m_pRender->EndFrame( );
+	g_Render->EndFrame( );
 
 	return ERROR_NONE;
 }
@@ -168,6 +172,12 @@ int cGame::Key_Event (unsigned char Key, bool Down)
 		m_getCursorPos( );
 		m_Menu.Click( m_vCursorPos, Down );
 
+		return true;
+	}
+
+	if (m_pInputObject)
+	{
+		m_pInputObject->Key_Event( Key, Down );
 		return true;
 	}
 
@@ -232,6 +242,18 @@ int cGame::Key_Event (unsigned char Key, bool Down)
 	return false;
 }
 
+/*
+===========================================================
+
+Name	:	SetInputObject
+
+===========================================================
+*/
+
+void cGame::SetInputObject (cInputObject *pInputObject)
+{
+	m_pInputObject = pInputObject;
+}
 
 /*
 ===========================================================
@@ -250,11 +272,12 @@ void cGame::AddScore (int nPlayer, int nScore)
 
 void cGame::m_DrawScore ()
 {
-	m_pRender->DrawBox( vec2(64,32), vec2(640-32-22,16+16), 0, menu_colors[4] );
-	m_pRender->DrawBox( vec2(60,28), vec2(640-32-22,16+16), 0, menu_colors[5] );
+	int	width = g_Application->get_glWnd()->get_WndParams().nSize[0];
+	g_Render->DrawBox( vec2(64,32), vec2(width-32-22,16+16), 0, menu_colors[4] );
+	g_Render->DrawBox( vec2(60,28), vec2(width-32-22,16+16), 0, menu_colors[5] );
 
-	m_pRender->DrawString( va("Player 1: %i", m_nScore[0]), vec2(640-64-20+4,16+13), menu_colors[7] );
-	m_pRender->DrawString( va("Player 2: %i", m_nScore[1]), vec2(640-64-20+4,16+25), menu_colors[7] );
+	g_Render->DrawString( va("Player 1: %i", m_nScore[0]), vec2(width-64-20+4,16+13), menu_colors[7] );
+	g_Render->DrawString( va("Player 2: %i", m_nScore[1]), vec2(width-64-20+4,16+25), menu_colors[7] );
 }
 
 /*
@@ -276,31 +299,72 @@ void cGame::Reset ()
 void cGame::Resume () { m_bGameActive = true; m_bMenuActive = false; }
 void cGame::NewGame ()
 {
+	float	width, height;
+	static	cScript	p1, p2;	// HACK
+
+	width = g_Application->get_glWnd()->get_WndParams().nSize[0];
+	height = g_Application->get_glWnd()->get_WndParams().nSize[1];
+
 	m_World.Reset( );
 	m_bGameActive = true;
 	m_bMenuActive = false;
 
-	m_Players[0].pModel = &tank_body_model;
-	m_Players[0].pTurret = &tank_turret_model;
-	m_Players[0].vColor = vec4(1,0,0,1);
-	m_Players[0].vPos = vec2(64,64);
+	m_Players[0].vPos = vec2(width*frand(),height*frand());
 	m_Players[0].vVel = vec2(0,0);
 	m_Players[0].flAVel = 0;
 	m_Players[0].flTVel = 0;
 	m_Players[0].flAngle = 0;
 	m_Players[0].flTAngle = 0;
 	m_Players[0].flDamage = 0;
-	m_Players[0].nPlayerNum = 0;
 
-	m_Players[1].pModel = &tank_body_model;
-	m_Players[1].pTurret = &tank_turret_model;
-	m_Players[1].vColor = vec4(0,0,1,1);
-	m_Players[1].vPos = vec2(640-64,480-64);
+	if (m_Players[0].m_bComputer)
+	{
+		p1.Unload( );
+		p1.Load( string(m_Players[0].m_szScript) );
+		m_Players[0].m_Iterator.begin( &p1 );
+
+		tank_begin( (void *)&m_Players[0], (void *)&m_Players[0].m_Iterator );
+	}
+
+	m_Players[1].vPos = vec2(width*frand(),height*frand());
 	m_Players[1].vVel = vec2(0,0);
 	m_Players[1].flAVel = 0;
 	m_Players[1].flTVel = 0;
 	m_Players[1].flAngle = 180;
 	m_Players[1].flTAngle = 180;
 	m_Players[1].flDamage = 0;
+
+	if (m_Players[1].m_bComputer)
+	{
+		p2.Unload( );
+		p2.Load( string(m_Players[1].m_szScript) );
+		m_Players[1].m_Iterator.begin( &p2 );
+
+		tank_begin( (void *)&m_Players[1], (void *)&m_Players[1].m_Iterator );
+	}
+
+	m_pInputObject = NULL;
+}
+
+/*
+===========================================================
+
+Name	:	cMain::m_InitPlayers
+
+Purpose	:	Initialized default models and colors
+
+===========================================================
+*/
+
+void cGame::m_InitPlayers ()
+{
+	m_Players[0].pModel = &tank_body_model;
+	m_Players[0].pTurret = &tank_turret_model;
+	m_Players[0].vColor = player_colors[0];
+	m_Players[0].nPlayerNum = 0;
+
+	m_Players[1].pModel = &tank_body_model;
+	m_Players[1].pTurret = &tank_turret_model;
+	m_Players[1].vColor = player_colors[1];
 	m_Players[1].nPlayerNum = 1;
 }

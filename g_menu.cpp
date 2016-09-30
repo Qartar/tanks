@@ -12,121 +12,11 @@ Date	:	10/20/2004
 
 #include "local.h"
 
-cRender	*g_Render;
-
 // menu func routines
-void menu_func_quit ()
-{
-	g_Application->Quit( 0 );
-}
-
-void menu_func_resume ()
-{
-	g_Game->Resume( );
-}
-
-void menu_func_newgame ()
-{
-	g_Game->NewGame( );
-}
-
-void menu_func_reset ()
-{
-	g_Game->Reset( );
-}
-
-/*
-===========================================================
-
-Name	:	cMenuButton
-
-Purpose	:	individual button in the GUI
-
-===========================================================
-*/
-
-void cMenuButton::Init (char *szTitle, vec2 vPos, vec2 vSize, func_t op_click, bool *bCond)
-{
-	strncpy( m_szTitle, szTitle, 64 );
-	m_vPos = vPos;
-	m_vSize = vSize;
-	m_op_click = op_click;
-	m_bCond = bCond;
-
-	m_bOver = false;
-	m_bClicked = false;
-}
-
-bool cMenuButton::m_Over (vec2 vCursorPos)
-{
-	return ( (clamp(vCursorPos.x,m_vPos.x-m_vSize.x/2,m_vPos.x+m_vSize.x/2) == vCursorPos.x )
-		&& (clamp(vCursorPos.y,m_vPos.y-m_vSize.y/2,m_vPos.y+m_vSize.y/2) == vCursorPos.y ) );
-}
-
-bool cMenuButton::Click (vec2 vCursorPos, bool bDown)
-{
-	if ( m_bCond && !*m_bCond )
-	{
-		m_bOver = false;
-		m_bClicked = false;
-		return false;
-	}
-
-	m_bOver = m_Over( vCursorPos );
-
-	if (m_bOver && bDown)
-	{
-		m_bClicked = true;
-	}
-	else if (m_bClicked && m_bOver && !bDown)
-	{
-		m_bClicked = false;
-		m_op_click();
-	}
-	else if (!bDown)
-	{
-		m_bClicked = false;
-	}
-
-	return false;
-}
-
-void cMenuButton::Draw (vec2 vCursorPos)
-{
-	int		nColorIn, nColorOut, nColorText;
-	vec2	vInSize, vTextPos;
-
-	m_bOver = m_Over( vCursorPos );
-
-	if (m_bOver)
-		nColorOut = 6;
-	else
-		nColorOut = 4;
-
-	if (m_bClicked)
-		nColorIn = 3;
-	else
-		nColorIn = 5;
-
-	nColorText = nColorIn + 2;
-
-	if ( m_bCond && !*m_bCond )
-	{
-		nColorIn = 2;
-		nColorOut = 1;
-		nColorText = 3;
-	}
-
-	vInSize.x = m_vSize.x - 4;
-	vInSize.y = m_vSize.y - 4;
-
-	vTextPos.x = m_vPos.x - strlen(m_szTitle)*3;	// len * char_width / 2
-	vTextPos.y = m_vPos.y + 4;						// char_height / 2
-
-	g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[nColorOut] );
-	g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
-	g_Render->DrawString( m_szTitle, vTextPos, menu_colors[nColorText] );
-}
+void menu_func_resume	() { g_Game->Resume( );		}
+void menu_func_newgame	() { g_Game->NewGame( );	}
+void menu_func_reset	() { g_Game->Reset( );		}
+void menu_func_quit		() { g_Application->Quit( 0 );	}
 
 /*
 ===========================================================
@@ -140,17 +30,87 @@ Purpose	:	Handles GUI
 
 void cMenu::Init ()
 {
-	g_Render = g_Application->get_glWnd()->get_Render();
+	// base
 
-	m_Buttons[0].Init( "Resume",	vec2(40,	32),	vec2(64,	32),	menu_func_resume,	&g_Game->m_bGameActive );
-	m_Buttons[1].Init( "New Round",	vec2(40,	80),	vec2(64,	32),	menu_func_newgame,	NULL );
-	m_Buttons[2].Init( "Reset",		vec2(40,	128),	vec2(64,	32),	menu_func_reset,	NULL );
-	m_Buttons[3].Init( "Quit",		vec2(40,	176),	vec2(64,	32),	menu_func_quit,		NULL );
+	m_SubMenus[0] = new cMenu;	// multiplayer
+//	m_SubMenus[1] = new cMenu;	// video options
+	AddButton( new cMenuButton(	"Network Game",		vec2(56,32),	vec2(96,32),	NULL,	NULL ) );
+	AddButton( new cMenuButton( "Local Game",		vec2(56,80),	vec2(96,32),	this,	m_SubMenus[0] ) );
+	AddButton( new cMenuButton( "Video Options",	vec2(56,128),	vec2(96,32),	NULL,	NULL ) );
+	AddButton( new cBaseButton( "Quit",				vec2(56,176),	vec2(96,32),	menu_func_quit ) );
+
+	// multiplayer
+
+	m_SubMenus[0]->m_SubMenus[0] = new cMenu;	// multiplayer->options
+	m_SubMenus[0]->AddButton( new cCondButton( "Resume",	vec2(144,32),	vec2(64,32),	menu_func_resume,	&g_Game->m_bGameActive ) );	
+	m_SubMenus[0]->AddButton( new cBaseButton( "New Round",	vec2(144,80),	vec2(64,32),	menu_func_newgame ) );
+	m_SubMenus[0]->AddButton( new cBaseButton( "Reset",		vec2(144,128),	vec2(64,32),	menu_func_reset ) );
+	m_SubMenus[0]->AddButton( new cMenuButton( "Options",	vec2(144,176),	vec2(64,32),	m_SubMenus[0],	m_SubMenus[0]->m_SubMenus[0] ) );
+
+	// multiplater->options
+
+	m_SubMenus[0]->m_SubMenus[0]->AddButton( new cTankButton( "Player 1", vec2(232,56), vec2(96,80), &g_Game->m_Players[0] ) );
+	m_SubMenus[0]->m_SubMenus[0]->AddButton( new cTankButton( "Player 2", vec2(336,56), vec2(96,80), &g_Game->m_Players[1] ) );
+
+	// video options
+
+//	m_SubMenus[0]->
+
+	
 }
+
 
 void cMenu::Shutdown ()
 {
+	int			i;
+
+	for (i=0 ; i<MAX_BUTTONS ; i++)
+		if (m_Buttons[i])
+			delete m_Buttons[i];
+
+	for (i=0 ; i<MAX_SUBMENUS ; i++)
+		if (m_SubMenus[i])
+		{
+			m_SubMenus[i]->Shutdown( );
+			delete m_SubMenus[i];
+		}
 }
+
+void cMenu::AddButton (cBaseButton *pButton)
+{
+	int			i;
+
+	for (i=0 ; i<MAX_BUTTONS ; i++)
+	{
+		if (m_Buttons[i])
+			continue;
+
+		m_Buttons[i] = pButton;
+		return;
+	}
+
+	// couldn't add it, delete it to avoid mem leaks
+	delete pButton;
+}
+
+bool cMenu::ActivateMenu (cMenuButton *pButton, cMenu *pActiveMenu)
+{
+	if (pActiveMenu == m_ActiveMenu)
+	{
+		m_ActiveMenu = NULL;
+		m_ActiveButton = NULL;
+		return false;	// deactivates caller
+	}
+
+	if (m_ActiveButton)
+		m_ActiveButton->Deactivate( );
+	m_ActiveButton = pButton;
+
+	m_ActiveMenu = pActiveMenu;
+
+	return true;
+}
+
 
 /*
 ===========================================================
@@ -172,8 +132,16 @@ void cMenu::Draw (vec2 vCursorPos)
 {
 	int			i;
 
-	for (i=0 ; i<NUM_BUTTONS ; i++)
-		m_Buttons[i].Draw( vCursorPos );
+	// draw buttons
+
+	for (i=0 ; i<MAX_BUTTONS ; i++)
+		if (m_Buttons[i])
+			m_Buttons[i]->Draw( vCursorPos );
+
+	// draw submenu
+
+	if (m_ActiveMenu)
+		m_ActiveMenu->Draw( vCursorPos );
 
 	// show the keys
 
@@ -214,8 +182,12 @@ void cMenu::Draw (vec2 vCursorPos)
 	g_Render->DrawString( "KP 6", vec2(COL3,ROW+112), menu_colors[7] );
 	g_Render->DrawString( "KP 5", vec2(COL3,ROW+128), menu_colors[7] );
 
+	// shortcuts
+
 	g_Render->DrawString( "New Round", vec2(COL1,ROW+160), menu_colors[7] );
 	g_Render->DrawString( "F2", vec2(COL2+32,ROW+160), menu_colors[7] );
+	g_Render->DrawString( "Menu", vec2(COL1,ROW+176), menu_colors[7] );
+	g_Render->DrawString( "Esc", vec2(COL2+32,ROW+176), menu_colors[7] );
 }
 
 /*
@@ -232,6 +204,10 @@ void cMenu::Click (vec2 vCursorPos, bool bDown)
 {
 	int			i = 0;
 
-	for (i=0 ; i<NUM_BUTTONS ; i++)
-		m_Buttons[i].Click( vCursorPos, bDown );
+	for (i=0 ; i<MAX_BUTTONS ; i++)
+		if (m_Buttons[i])
+			m_Buttons[i]->Click( vCursorPos, bDown );
+
+	if (m_ActiveMenu)
+		m_ActiveMenu->Click( vCursorPos, bDown );
 }

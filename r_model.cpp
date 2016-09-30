@@ -112,7 +112,7 @@ bool cModel::Clip (cModel *lpOther, vec2 vPos, float flAngle)
 
 		return ( ! (
 		(m_AbsMin.x > AbsMax.x || m_AbsMax.x < AbsMin.x) ||
-		(m_AbsMin.y > AbsMax.y || m_AbsMax.y < AbsMin.x) ) );
+		(m_AbsMin.y > AbsMax.y || m_AbsMax.y < AbsMin.y) ) );
 
 	// no poly/poly checking - too code intensive and not necessary
 }

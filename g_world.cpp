@@ -270,7 +270,7 @@ void cWorld::AddEffect (vec2 vPos, eEffects eType)
 			p->vPos = vPos + vec2(crand()*2,crand()*2);
 			p->vVel = vec2(crand()*128,crand()*128);
 
-			p->vColor = vec4(1,frand(),0,1);
+			p->vColor = vec4(1,0.5+frand()*0.5,0,1);
 			p->vColorVel = vec4(0,0,0,-2);
 			p->flSize = 2.0f;
 			p->flSizeVel = 0.0f;
@@ -291,7 +291,7 @@ void cWorld::AddEffect (vec2 vPos, eEffects eType)
 			p->vPos = vPos + vec2(crand()*8,crand()*8);
 			p->vVel = vec2(crand()*128,crand()*128);
 
-			p->vColor = vec4(1.0,0.5,0.0,0.1);
+			p->vColor = vec4(1.0,frand(),0.0,0.1);
 			p->vColorVel = vec4(0,0,0,-p->vColor.a/(0.2+frand()*frand()*2.0f));
 			p->flSize = 8.0 + frand()*16.0f;
 			p->flSizeVel = 1.0f;
@@ -309,7 +309,7 @@ void cWorld::AddEffect (vec2 vPos, eEffects eType)
 			p->vPos = vPos + vec2(crand()*2,crand()*2);
 			p->vVel = vec2(crand()*128,crand()*128);
 
-			p->vColor = vec4(1,frand(),0,1);
+			p->vColor = vec4(1,0.5+frand()*0.5,0,1);
 			p->vColorVel = vec4(0,0,0,-2);
 			p->flSize = 2.0f;
 			p->flSizeVel = 0.0f;
@@ -333,7 +333,7 @@ void cWorld::AddSmokeEffect (vec2 vPos, vec2 vVel, int nCount)
 		p->flSize = 4.0f + frand()*8.0f;
 		p->flSizeVel = 2.0;
 
-		p->vColor = vec4(0.01f,0.01f,0.01f,0.1+frand()*0.1f);
+		p->vColor = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
 		p->vColorVel = vec4(0,0,0,-p->vColor.a / (1+frand()*0.5f));
 
 		p->flDrag = 0.98f - frand()*0.05;

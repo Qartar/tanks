@@ -66,7 +66,7 @@ public:
 	cRender		*get_Render () { return &m_Render; }
 
 private:
-	int	m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY);
+	int	m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bool bFullscreen);
 	int m_DestroyWindow ();
 
 	int m_InitGL ();

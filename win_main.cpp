@@ -141,6 +141,11 @@ int cWinApp::Shutdown ()
 	// shutdown game
 	m_Game.Shutdown( );
 
+#ifdef DEBUG_MEM	
+	_CrtDumpMemoryLeaks();
+#endif // DEBUG_MEM
+
+
 	return m_nExitCode;
 }
 

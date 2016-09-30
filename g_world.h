@@ -69,8 +69,14 @@ public:
 	float	flTAngle, flTVel;
 	float	flDamage;
 	int		nPlayerNum;
-private:
+
+	bool	m_bComputer;
+	char	m_szScript[64];
+
+	cScript::iterator	m_Iterator;
+
 	bool	m_Keys[8];
+private:
 
 	float	flLastFire;
 	cBullet	m_Bullet;
