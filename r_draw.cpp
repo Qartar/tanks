@@ -22,11 +22,15 @@ Purpose	:	draws a string to the screen
 
 void cRender::DrawString (char *szString, vec2 vPos, vec4 vColor)
 {
+#if 0
 	glColor4f( vColor.r, vColor.g, vColor.b, vColor.a );
 
 	glRasterPos2f( vPos.x, vPos.y );
 
 	glCallLists( strlen(szString), GL_UNSIGNED_BYTE, szString );
+#else
+	m_Fonts[m_activeFont].Draw( szString, vPos, vColor );
+#endif
 }
 
 /*
@@ -72,25 +76,51 @@ Purpose	:	draws a list of particles
 ===========================================================
 */
 
+#define ANTI	1
+
 void cRender::DrawParticles (cParticle *pHead)
 {
 	cParticle	*p;
 	float		flSize = 0.0f;
 
+	int		i, frac;
+	float	offx, offy;
+	float	a_in, a_out;
+
 	p = pHead;
-	while (p)
+	while ( p )
 	{
-		glPointSize( (flSize = p->flSize) );
+		flSize = p->flSize * 0.5;
 
-		glBegin( GL_POINTS );
-		while (p && p->flSize == flSize)
+		glBegin( GL_TRIANGLE_FAN );
+
+		if ( p->bitFlags & PF_INVERT )
 		{
-			glColor4f( p->vColor.r, p->vColor.g, p->vColor.b, p->vColor.a );
-			glVertex2f( p->vPos.x, p->vPos.y );
-
-			p = p->pNext;
+			a_in = p->vColor.a * 0.25;
+			a_out= p->vColor.a;
 		}
+		else
+		{
+			a_in = p->vColor.a;
+			a_out = p->vColor.a * 0.25;
+		}
+	
+		glColor4f( p->vColor.r, p->vColor.g, p->vColor.b, a_in );
+		glVertex2f( p->vPos.x, p->vPos.y );
+
+		glColor4f( p->vColor.r, p->vColor.g, p->vColor.b, a_out );
+		for (i=0 ; i<flSize ; i++)
+		{
+			frac = (int)floor((float)i/flSize*360);
+			offx = costbl[frac] * flSize;
+			offy = sintbl[frac] * flSize;
+			glVertex2f( p->vPos.x + offx, p->vPos.y + offy );
+		}
+		glVertex2f( p->vPos.x + costbl[0] * flSize, p->vPos.y + sintbl[0] * flSize );
+
 		glEnd( );
+
+		p = p->pNext;
 	}
 }
 

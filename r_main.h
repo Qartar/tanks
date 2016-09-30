@@ -39,11 +39,15 @@ public:
 	bool	Compare (char *szName, int nSize, unsigned int bitFlags);
 	HFONT	Activate ();
 
+	void	Draw (char *szString, vec2 vPos, vec4 vColor);
+
 	bool	is_inuse () { return (m_hFont != NULL); }
 
 private:
 	HFONT		m_hFont;
 	unsigned 	m_listBase;
+
+	byte		m_width[NUM_CHARS];
 
 	char		m_szName[64];
 	int			m_nSize;
@@ -105,4 +109,9 @@ private:
 	void	m_setDefaultState ();
 
 	vec2	m_viewOrigin;
+
+	bool	m_bATI;
+
+	float	costbl[360];
+	float	sintbl[360];
 };

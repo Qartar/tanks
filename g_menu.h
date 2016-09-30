@@ -50,6 +50,37 @@ protected:
 	func_t	m_op_click;
 };
 
+class cServerButton : public cBaseButton
+{
+public:
+	cServerButton () {}
+	cServerButton (vec2 vPos, vec2 vSize, char *szServer, float *flPing, func_t op_click);
+	~cServerButton () {}
+
+	virtual bool	Click (vec2 vCursorPos, bool bDown);
+	virtual void	Draw (vec2 vCursorPos);
+	
+protected:
+	char	*m_szServer;
+	float	*m_flPing;
+
+	func_t	m_op_click;
+};
+
+class cHostButton : public cBaseButton
+{
+public:
+	cHostButton () {}
+	cHostButton (vec2 vPos, vec2 vSize, func_t op_click);
+	~cHostButton () {}
+
+	virtual bool	Click (vec2 vCursorPos, bool bDown);
+	virtual void	Draw (vec2 vCursorPos);
+
+protected:
+	func_t	m_op_click;
+};
+
 class cCondButton : public cBaseButton
 {
 public:

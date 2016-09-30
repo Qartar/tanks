@@ -13,7 +13,15 @@ Date	:	10/15/2004
 #include "local.h"
 #include "keys.h"
 
+//#include "snd_main.h"
+
+#include "cm_sound.h"
+#include "cm_variable.h"
+
 cWinApp	*g_Application;	// global instance, extern declaration in "win_main.h"
+
+filectrl_c	g_filectrl_c, *s_filectrl_c = &g_filectrl_c;
+memctrl_c	g_memctrl_c, *s_memctrl_c = &g_memctrl_c;
 
 /*
 ===========================================================
@@ -57,6 +65,8 @@ int cWinApp::Main (HINSTANCE hInstance, LPSTR szCmdLine, int nCmdShow)
 	{
 		// message loop (pump)
 
+		Sleep( 1 );
+
 		while ( PeekMessage( &msgMessage, NULL, 0, 0, PM_NOREMOVE ) )
 		{
 			if ( !GetMessage( &msgMessage, NULL, 0, 0 ) )
@@ -81,7 +91,7 @@ int cWinApp::Main (HINSTANCE hInstance, LPSTR szCmdLine, int nCmdShow)
 	}
 
 	// abnormal termination
-	return ERROR_UNKNOWN;
+	return ERROR_FAIL;
 }
 
 /*
@@ -98,6 +108,9 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
 	// set instance
 	m_hInstance = hInstance;
 
+	// set init string
+	m_szInitString = szCmdLine;
+
 	// init timer
 	QueryPerformanceFrequency( &m_timerFrequency );
 	QueryPerformanceCounter( &m_timerBase );
@@ -108,6 +121,11 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
 
 	pNet = &m_Network;
 	m_Network.Init( );
+
+	vVariable::Create( );
+	
+	// create sound class
+	vSound::Create( );
 
 	// init game
 	m_Game.Init( szCmdLine );
@@ -136,6 +154,11 @@ int cWinApp::Shutdown ()
 
 	// shutdown game
 	m_Game.Shutdown( );
+
+	// shutdown sound
+	vSound::Destroy( );
+
+	vVariable::Destroy( );
 
 	m_Network.Shutdown( );
 
@@ -197,11 +220,18 @@ Purpose	:	internal static function for windows message handling
 
 LRESULT cWinApp::m_WndProc (HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
 {
+	char	*command;
+
 	switch (nCmd)
 	{
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
+	case WM_CREATE:
+		if ( !(command = strstr( g_Application->InitString(), "sound=" )) || ( atoi(command+6) > 0 ))
+			pSound->onCreate( hWnd );
+		return DefWindowProc( hWnd, nCmd, wParam, lParam );
+
+	case WM_CLOSE:
+		g_Application->Quit( 0 );
+		return 0;
 
 	// Game Messages
 
@@ -227,6 +257,8 @@ LRESULT cWinApp::m_WndProc (HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
 	case WM_ACTIVATE:
 	case WM_SIZE:
 	case WM_MOVE:
+	case WM_SYSKEYDOWN:
+	case WM_DESTROY:
 		return g_Application->m_glWnd.Message( nCmd, wParam, lParam );
 
 	default:
@@ -350,3 +382,27 @@ void cWinApp::m_MouseEvent (int mstate)
 		
 	oldstate = mstate;
 }
+
+char *cWinApp::ClipboardData( void )
+{
+	char *data = NULL;
+	char *cliptext;
+
+	if ( OpenClipboard( NULL ) != 0 )
+	{
+		HANDLE hClipboardData;
+
+		if ( ( hClipboardData = GetClipboardData( CF_TEXT ) ) != 0 )
+		{
+			if ( ( cliptext = (char *)GlobalLock( hClipboardData ) ) != 0 ) 
+			{
+				data = (char *)malloc( GlobalSize( hClipboardData ) + 1 );
+				strcpy( data, cliptext );
+				GlobalUnlock( hClipboardData );
+			}
+		}
+		CloseClipboard();
+	}
+	return data;
+}
+

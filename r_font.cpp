@@ -74,6 +74,8 @@ rfont_t cRender::AddFont (char *szName, int nSize, unsigned int bitFlags)
 	for ( i=0 ; i<MAX_FONTS ; i++ )
 		if ( ! m_Fonts[i].is_inuse() )
 			m_Fonts[i].Init( szName, nSize, bitFlags );
+
+	return NULL;
 }
 
 /*
@@ -127,6 +129,8 @@ Purpose	:	Initializes a new usable font
 int cFont::Init (char *szName, int nSize, unsigned int bitFlags)
 {
 	HFONT		oldFont;
+	GLYPHMETRICS	gm;
+	MAT2			m;
 
 	// copy member data
 
@@ -149,7 +153,7 @@ int cFont::Init (char *szName, int nSize, unsigned int bitFlags)
 		FALSE,
 		FALSE,
 		FALSE,
-		RUSSIAN_CHARSET,
+		ANSI_CHARSET,
 		OUT_TT_PRECIS,
 		CLIP_DEFAULT_PRECIS,
 		ANTIALIASED_QUALITY,
@@ -162,7 +166,18 @@ int cFont::Init (char *szName, int nSize, unsigned int bitFlags)
 
 	// generate font bitmaps with selected HFONT
 
+	memset( &m, 0, sizeof(m) );
+	m.eM11.value = 1;
+	m.eM12.value = 0;
+	m.eM21.value = 0;
+	m.eM22.value = 1;
+
 	wglUseFontBitmaps( g_Application->get_glWnd()->get_hDC(), 0, NUM_CHARS-1, m_listBase );
+	for ( int i=0 ; i<NUM_CHARS ; i++ )
+	{
+		GetGlyphOutline( g_Application->get_glWnd()->get_hDC(), i, GGO_METRICS, &gm, 0, NULL, &m );
+		m_width[i] = gm.gmCellIncX;
+	}
 
 	// restore previous font
 
@@ -234,4 +249,65 @@ HFONT cFont::Activate ()
 	glListBase( m_listBase );
 
 	return (HFONT )SelectObject( g_Application->get_glWnd()->get_hDC(), m_hFont );
+}
+
+/*
+===========================================================
+
+Name	:	cFont::Draw
+
+Purpose	:	draws a string
+
+===========================================================
+*/
+
+void cFont::Draw (char *szString, vec2 vPos, vec4 vColor)
+{
+	char	substr[MAX_STRING];
+	char	*cursor, *next;
+
+	int		xoffs = 0;
+
+	int		r,g,b,a;
+
+	r = vColor.r * 255;
+	g = vColor.g * 255;
+	b = vColor.b * 255;
+	a = vColor.a * 255;
+
+	cursor = szString;
+	while ( *cursor )
+	{
+		next = strstr( cursor+1, "\\c" );
+		if ( !next )
+			next = cursor + strlen(cursor);
+
+		if ( strnicmp( cursor, "\\c", 2 ) == 0 )
+		{
+			cursor += 2;	// skip past marker
+			if ( strnicmp( cursor, "x", 1 ) == 0 )
+			{
+				r = vColor.r * 255;
+				g = vColor.g * 255;
+				b = vColor.b * 255;
+				cursor++;
+			}
+			else
+			{
+				sscanf( cursor, "%02x%02x%02x", &r, &g, &b );
+				cursor += 6;	// skip past color
+			}
+		}
+	
+		strncpy( substr, cursor, next - cursor );
+		substr[next - cursor] = 0;
+
+		glColor4ub( r, g, b, a );
+		glRasterPos2f( vPos.x + xoffs, vPos.y );
+		glCallLists( next - cursor, GL_UNSIGNED_BYTE, substr );
+
+        for ( int i=0 ; i<(next-cursor) ; i++ )
+			xoffs += m_width[ substr[i] ];
+		cursor = next;
+	}
 }

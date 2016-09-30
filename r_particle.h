@@ -16,4 +16,8 @@ public:
 	vec2	vPos, vVel, vAccel;
 	float	flDrag;
 	vec4	vColor, vColorVel;
+
+	int		bitFlags;
 };
+
+#define PF_INVERT	0x00000001

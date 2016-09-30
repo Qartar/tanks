@@ -68,25 +68,22 @@ cModel::cModel (sRectList *lpList)
 
 bool cModel::Clip (cModel *lpOther, vec2 vPos, float flAngle)
 {
-	vec2	Vert[4];
+	vec3	Vert[4];
 	vec2	AbsMax(0,0), AbsMin(0,0);
+
+	mat3	mat;
 
 	if (!lpOther)
 		return ClipPoint( vPos );
 
 	// rotate corners
 
-	Vert[0] = vec2(lpOther->m_AbsMin.x, lpOther->m_AbsMin.y);
-	Vert[0] = Vert[0].rot( flAngle );
+	mat.rotateyaw( deg2rad( flAngle ) );
 
-	Vert[1] = vec2(lpOther->m_AbsMax.x, lpOther->m_AbsMin.y);
-	Vert[1] = Vert[1].rot( flAngle );
-
-	Vert[2] = vec2(lpOther->m_AbsMax.x, lpOther->m_AbsMax.y);
-	Vert[2] = Vert[2].rot( flAngle );
-
-	Vert[3] = vec2(lpOther->m_AbsMin.x, lpOther->m_AbsMax.y);
-	Vert[3] = Vert[3].rot( flAngle );
+	Vert[0] = mat.mult( vec3( lpOther->m_AbsMin.x, lpOther->m_AbsMin.y, 0 ) );
+	Vert[1] = mat.mult( vec3( lpOther->m_AbsMax.x, lpOther->m_AbsMin.y, 0 ) );
+	Vert[2] = mat.mult( vec3( lpOther->m_AbsMax.x, lpOther->m_AbsMax.y, 0 ) );
+	Vert[3] = mat.mult( vec3( lpOther->m_AbsMin.x, lpOther->m_AbsMax.y, 0 ) );
 
 	// find new absolutes
 

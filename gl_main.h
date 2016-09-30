@@ -19,7 +19,8 @@ Date	:	10/15/2004
 #define DEFAULT_Y	100
 #define DEFAULT_W	640
 #define DEFAULT_H	480
-#define DEFAULT_FS	1
+#define DEFAULT_FS	1		// fullscreen
+#define DEFAULT_MS	1		// multisampling
 
 /*
 =============================
@@ -38,6 +39,7 @@ struct sWndParam
 
 	bool	bActive;
 	bool	bMinimized;
+	bool	bFullscreen;
 };
 
 /*
@@ -66,6 +68,8 @@ public:
 	sWndParam	&get_WndParams () { return m_WndParams; }
 	cRender		*get_Render () { return &m_Render; }
 
+	int	Refresh ();
+
 	int	Recreate (int nSizeX, int nSizeY, bool bFullscreen);
 
 private:
@@ -76,6 +80,9 @@ private:
 	int m_ShutdownGL ();
 
 	int	m_Activate (bool bActive, bool bMinimized);
+
+	bool		m_bFullscreen;
+	bool		m_bRefreshing;
 
 	sWndParam	m_WndParams;
 	cRender		m_Render;

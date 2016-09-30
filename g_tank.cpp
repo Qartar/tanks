@@ -12,6 +12,8 @@ Purpose	:	tanks!
 
 #include "keys.h"
 
+#include "cm_sound.h"
+
 cTank::cTank ()
 {
 	memset( m_Keys,0,sizeof(m_Keys) );
@@ -20,13 +22,17 @@ cTank::cTank ()
 	flTAngle = 0;
 	flTVel = 0;
 
+	channels[0] = NULL;
+	channels[1] = NULL;
+	channels[2] = NULL;
+   
 	eType = object_tank;
 }
 
 void cTank::Draw ()
 {
 	float	flLerp = (g_Game->m_flTime - g_Game->m_nFramenum * FRAMEMSEC) / 1000.0f;
-	float	flTime = clamp((g_Game->m_flTime - flLastFire) / 150.f,0,20);
+	float	flTime = clamp(((g_Game->m_flTime - flLastFire) / 150.f) * client->refire_mod,0,20);
 	float	flHealth = clamp((1-flDamage)*20,0,20);
 
 	vec4	vHealth;
@@ -75,12 +81,20 @@ void cTank::Touch (cObject *pOther)
 
 			if (flDamage >= 1.0f)
 			{
+				char	player[LONG_STRING];
+				char	target[LONG_STRING];
+
+				fmt( player, "\\c%02x%02x%02x%s\\cx", (int )(((cTank *)pOther)->vColor.r * 255), (int )(((cTank *)pOther)->vColor.g * 255), (int )(((cTank *)pOther)->vColor.b * 255),
+					g_Game->svs.clients[((cTank *)pOther)->nPlayerNum].name );
+				fmt( target, "\\c%02x%02x%02x%s\\cx", (int )(vColor.r * 255), (int )(vColor.g * 255), (int )(vColor.b * 255),
+					g_Game->svs.clients[nPlayerNum].name );
+
 				g_Game->AddScore( ((cTank *)pOther)->nPlayerNum, 1 );
 				flDeadTime = g_Game->m_flTime;
 				if (g_Game->bAutoRestart)
 					g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
 
-				g_Game->m_WriteMessage( va("%s got a little too cozy with %s.", g_Game->m_clients[nPlayerNum].name, g_Game->m_clients[((cTank *)pOther)->nPlayerNum].name ) );
+				g_Game->m_WriteMessage( va("%s got a little too cozy with %s.", target, player ) );
 			}
 		}
 
@@ -90,12 +104,20 @@ void cTank::Touch (cObject *pOther)
 
 			if (((cTank *)pOther)->flDamage >= 1.0f)
 			{
+				char	player[LONG_STRING];
+				char	target[LONG_STRING];
+
+				fmt( target, "\\c%02x%02x%02x%s\\cx", (int )(((cTank *)pOther)->vColor.r * 255), (int )(((cTank *)pOther)->vColor.g * 255), (int )(((cTank *)pOther)->vColor.b * 255),
+					g_Game->svs.clients[((cTank *)pOther)->nPlayerNum].name );
+				fmt( player, "\\c%02x%02x%02x%s\\cx", (int )(vColor.r * 255), (int )(vColor.g * 255), (int )(vColor.b * 255),
+					g_Game->svs.clients[nPlayerNum].name );
+
 				g_Game->AddScore( nPlayerNum, 1 );
 				((cTank *)pOther)->flDeadTime = g_Game->m_flTime;
 				if (g_Game->bAutoRestart)
 					g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
 
-				g_Game->m_WriteMessage( va("%s got a little too cozy with %s.", g_Game->m_clients[((cTank *)pOther)->nPlayerNum].name, g_Game->m_clients[nPlayerNum].name ) );
+				g_Game->m_WriteMessage( va("%s got a little too cozy with %s.", target, player ) );
 			}
 		}
 
@@ -117,16 +139,16 @@ void cTank::Think ()
 	{
 		// respawn
 
-		int	nWidth = g_Application->get_glWnd()->get_WndParams().nSize[0];
-		int	nHeight = g_Application->get_glWnd()->get_WndParams().nSize[1];
+		int	nWidth = g_World->m_vWorldMaxs.x - g_World->m_vWorldMins.x;
+		int	nHeight = g_World->m_vWorldMaxs.y - g_World->m_vWorldMins.y;
 
 		nWidth -= SPAWN_BUFFER*2;
 		nHeight -= SPAWN_BUFFER*2;
 
 		flDeadTime = 0.0f;
 
-		vPos.x = nWidth*frand()+SPAWN_BUFFER;
-		vPos.y = nHeight*frand()+SPAWN_BUFFER;
+		vPos.x = g_World->m_vWorldMins.x + nWidth*frand()+SPAWN_BUFFER;
+		vPos.y = g_World->m_vWorldMins.y + nHeight*frand()+SPAWN_BUFFER;
 		flAngle = frand()*360;
 		flTAngle = flAngle;
 
@@ -148,24 +170,25 @@ void cTank::Think ()
 	if (flDamage >= 1.0f)
 	{
 		vVel = vec2(flVel * 0.98 * (1-FRAMETIME),0);
-		vVel = vVel.rot( flAngle );
+		vVel = rot(vVel,flAngle );
 
 		flAVel *= 0.9f;
 		flTVel *= 0.9f;
 
 		// extra explosion
-		if (flDeadTime && (g_Game->m_flTime - flDeadTime > 350) && (g_Game->m_flTime - flDeadTime < 350+HACK_TIME/2))
+		if (flDeadTime && (g_Game->m_flTime - flDeadTime > 650) && (g_Game->m_flTime - flDeadTime < 650+HACK_TIME/2))
 		{
+			g_World->AddSound( "SOUND/TANK_EXPLODE.wav" );
 			g_World->AddEffect( vPos, effect_explosion );
 			flDeadTime -= HACK_TIME;	// dont do it again
 		}
 	}
 	else
 	{
-		flVel = flVel * 0.9 * (1-FRAMETIME) + flForward * 256 * FRAMETIME;
-		flVel = clamp(flVel,-48,64);
+		flVel = flVel * 0.9 * (1-FRAMETIME) + flForward * 192*client->speed_mod * FRAMETIME;
+		flVel = clamp(flVel,-32*client->speed_mod,48*client->speed_mod);
 		vVel = vec2(flVel,0);	
-		vVel = vVel.rot( flAngle );
+		vVel = rot(vVel,flAngle );
 
 		flAVel = - flLeft * 90;
 
@@ -175,19 +198,20 @@ void cTank::Think ()
 	// update position here because Move doesn't
 	flTAngle += flTVel * FRAMETIME;
 
-	if (flLastFire + 1500 > g_Game->m_flTime)	// just fired
+	if ((flLastFire + 2500/client->refire_mod) > g_Game->m_flTime)	// just fired
 	{
 		vec2	vOrg(21,0);
 		float	flPower;
 
 		flPower = 1.5 - (g_Game->m_flTime - flLastFire)/1000.0f;
+		flPower = clamp( flPower, 0.5, 1.5 );
 
 		g_World->AddSmokeEffect(
-			vPos + vOrg.rot(flTAngle), 
-			vOrg.rot(flTAngle) * flPower * flPower * flPower * 2,
+			vPos + rot(vOrg,flTAngle), 
+			rot(vOrg,flTAngle) * flPower * flPower * flPower * 2,
 			flPower * flPower * 4 );
 	}
-	else if (flLastFire + 3000 < g_Game->m_flTime)	// can fire
+	else if ((flLastFire + 3000/client->refire_mod) < g_Game->m_flTime)	// can fire
 	{
 		// check for firing
 		if (m_Keys[KEY_FIRE] && flDamage < 1.0f)
@@ -195,19 +219,22 @@ void cTank::Think ()
 			vec2	vOrg(21,0);
 
 			g_World->AddSmokeEffect( 
-				vPos + vOrg.rot(flTAngle), 
-				vOrg.rot(flTAngle) * 16,
-				32 );
+				vPos + rot(vOrg,flTAngle), 
+				rot(vOrg,flTAngle) * 16,
+				64 );
 
 			flLastFire = g_Game->m_flTime;
 
-			m_Bullet.vPos = vPos + vOrg.rot(flTAngle);
-			m_Bullet.vVel = vOrg.rot(flTAngle) * 96;
+			m_Bullet.vPos = vPos + rot(vOrg,flTAngle);
+			m_Bullet.vVel = rot(vOrg,flTAngle) * 96;
 
+			g_World->AddSound( sound_index[TANK_FIRE].name );
 			g_World->AddObject( &m_Bullet );
 			m_Bullet.bInGame = true;
 		}
 	}
+
+	UpdateSound( );
 }
 
 void cTank::UpdateKeys (int nKey, bool Down)
@@ -238,27 +265,73 @@ void cTank::UpdateKeys (int nKey, bool Down)
 		m_Keys[KEY_RIGHT] = Down;
 		break;
 
-	case 'f':
-	case 'F':
+	case 'j':
+	case 'J':
 	case '4':
 	case K_KP_LEFTARROW:
 		m_Keys[KEY_TLEFT] = Down;
 		break;
 
-	case 'h':
-	case 'H':
+	case 'l':
+	case 'L':
 	case '6':
 	case K_KP_RIGHTARROW:
 		m_Keys[KEY_TRIGHT] = Down;
 		break;
 
-	case 'g':
-	case 'G':
+	case 'k':
+	case 'K':
 	case '5':
 	case K_KP_5:
 		m_Keys[KEY_FIRE] = Down;
 		break;
 	}
+}
+
+void cTank::UpdateSound ()
+{
+	for ( int i=0 ; i<3 ; i++ )
+		if ( channels[i] == NULL )
+			if ( (channels[i] = pSound->allocChan( )) == NULL )
+				return;
+
+	// engine noise
+	if ( flDamage < 1 )
+	{
+		if ( !channels[0]->isPlaying( ) )
+			channels[0]->playLoop( sound_index[TANK_IDLE].index );
+
+		channels[0]->setVolume( 1.0f );
+		channels[0]->setAttenuation( 0.0f );
+		channels[0]->setFrequency( 1.0f );
+//		channels[0]->setFrequency( 1.0f + (sqrt(vVel.x*vVel.x+vVel.y*vVel.y)/48.0f)*0.5f );
+	}
+	else if ( channels[0]->isPlaying( ) )
+		channels[0]->stopSound( );
+
+	// tread noise
+	if ( (abs( vVel.x ) > 1) || (abs( vVel.y) > 1) || (abs( flAVel ) > 1) )
+	{
+		if ( !channels[1]->isPlaying( ) )
+			channels[1]->playLoop( sound_index[TANK_MOVE].index );
+
+		channels[1]->setVolume( 1.0f );
+		channels[1]->setAttenuation( 0.0f );
+	}
+	else if ( channels[1]->isPlaying( ) )
+		channels[1]->stopSound( );
+
+	// turret noise
+	if ( (abs( flAVel - flTVel ) > 1) )
+	{
+		if ( !channels[2]->isPlaying( ) )
+			channels[2]->playLoop( sound_index[TURRET_MOVE].index );
+
+		channels[2]->setVolume( 1.0f );
+		channels[2]->setAttenuation( 0.0f );
+	}
+	else if ( channels[2]->isPlaying( ) )
+		channels[2]->stopSound( );
 }
 
 /*
@@ -284,8 +357,14 @@ cBullet::cBullet ()
 #define M_SQRT1_2  0.707106781186547524401
 #endif // M_SQRT1_2
 
+#define	DAMAGE_FRONT	0.334f
+#define	DAMAGE_SIDE		0.5f
+#define DAMAGE_REAR		1.0f
+#define DAMAGE_FULL		1.0f
+
 void cBullet::Touch (cObject *pOther)
 {
+	g_World->AddSound( "SOUND/BULLET_EXPLODE.wav" );
 	g_World->AddEffect( vPos, effect_explosion );
 
 	g_World->DelObject( this );
@@ -298,43 +377,53 @@ void cBullet::Touch (cObject *pOther)
 	{
 		cTank	*pTank = static_cast<cTank *>(pOther);
 		vec2	vOrg, vDir;
-		float	flDot;
+		float	flDot, damage;
 
 		if (pTank->flDamage >= 1.0f)
 			return;	// dont add any more score
 
 		vOrg = vVel * (-1/(sqrt(vVel.x * vVel.x + vVel.y * vVel.y)));
 		vDir = vec2(1,0);
-		vDir = vDir.rot(pOther->flAngle);
+		vDir = rot(vDir,pOther->flAngle);
 		flDot = (vOrg.x*vDir.x + vOrg.y*vDir.y);
 
+		damage = g_Game->gameClients[nPlayer].damage_mod / pTank->client->armor_mod;
+
 		if (!g_Game->bExtendedArmor && !g_Game->m_bMultiplayer)
-			pTank->flDamage += 1.0f;
+			pTank->flDamage += damage * DAMAGE_FULL;
 		else if (flDot > M_SQRT1_2)		// sin(45°)
-			pTank->flDamage += 0.34f;	// round up, 3 shot kill
+			pTank->flDamage += damage * DAMAGE_FRONT;	// round up, 3 shot kill
 		else if (flDot > -M_SQRT1_2)
-			pTank->flDamage += 0.5f;
+			pTank->flDamage += damage * DAMAGE_SIDE;
 		else
-	        pTank->flDamage += 1.0f;
+	        pTank->flDamage += damage * DAMAGE_REAR;
 
 		if (pTank->flDamage >= 1.0f)
 		{
+			char	player[LONG_STRING];
+			char	target[LONG_STRING];
+
 			g_Game->AddScore( nPlayer, 1 );
 			pTank->flDeadTime = g_Game->m_flTime;
-			if (g_Game->bAutoRestart && !g_Game->m_bMultiserver)
+			if (g_Game->bAutoRestart && !g_Game->m_bMultiplayer)
 				g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
+
+			fmt( target, "\\c%02x%02x%02x%s\\cx", (int )(pTank->vColor.r * 255), (int )(pTank->vColor.g * 255), (int )(pTank->vColor.b * 255),
+				g_Game->svs.clients[pTank->nPlayerNum].name );
+			fmt( player, "\\c%02x%02x%02x%s\\cx", (int )(g_Game->Player(nPlayer)->vColor.x * 255), (int )(g_Game->Player(nPlayer)->vColor.y * 255), (int )(g_Game->Player(nPlayer)->vColor.z * 255),
+				g_Game->svs.clients[nPlayer].name );
 
 			int r = rand()%3;
 			switch ( r )
 			{
 			case 0:
-				g_Game->m_WriteMessage( va("%s couldn't take %s's HEAT.", g_Game->m_clients[pTank->nPlayerNum].name, g_Game->m_clients[nPlayer].name ) );
+				g_Game->m_WriteMessage( va("%s couldn't take %s's HEAT.", target, player ) );
 				break;
 			case 1:
-				g_Game->m_WriteMessage( va("%s was on the wrong end of %s's cannon.", g_Game->m_clients[pTank->nPlayerNum].name, g_Game->m_clients[nPlayer].name ) );
+				g_Game->m_WriteMessage( va("%s was on the wrong end of %s's cannon.", target, player ) );
 				break;
 			case 2:
-				g_Game->m_WriteMessage( va("%s ate all 125mm of %s's boom stick.", g_Game->m_clients[pTank->nPlayerNum].name, g_Game->m_clients[nPlayer].name ) );
+				g_Game->m_WriteMessage( va("%s ate all 125mm of %s's boom stick.", target, player ) );
 				break;
 			}
 		}

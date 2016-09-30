@@ -17,7 +17,11 @@ cParticle *cWorld::AddParticle ()
 	if (pRet == NULL)
 		return NULL;
 
+	if (!m_bParticles)
+		return NULL;
+
 	pRet->AddToActive ();
+	pRet->bitFlags = 0;
 	pRet->flTime = g_Game->m_flTime;
 	return pRet;
 }

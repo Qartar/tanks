@@ -13,6 +13,7 @@ Date	:	10/21/2004
 #define MAX_OBJECTS	16
 
 #include "r_particle.h"
+#include "cm_sound.h"
 
 typedef enum eEffects effects_t;
 
@@ -68,6 +69,8 @@ public:
 
 	void		UpdateKeys( int nKey, bool Down );
 
+	void		UpdateSound ();
+
 	cModel	*pTurret;
 	float	flTAngle, flTVel;
 	float	flDamage;
@@ -78,6 +81,9 @@ public:
 
 	float	flLastFire;
 	cBullet	m_Bullet;
+
+	sndchan_t	*channels[3];
+	game_client_t	*client;
 };
 
 #define MAX_PARTICLES	1024
@@ -85,6 +91,7 @@ public:
 class cWorld
 {
 	friend cParticle;
+	friend cTank;
 
 public:
 	cWorld () : pFreeParticles(NULL), pActiveParticles(NULL) {}
@@ -100,8 +107,11 @@ public:
 	void	AddObject (cObject *newObject);
 	void	DelObject (cObject *oldObject);
 
+	void	AddSound (char *szName);
 	void	AddSmokeEffect (vec2 vPos, vec2 vVel, int nCount);
 	void	AddEffect (vec2 vPos, eEffects eType);
+
+	void	AddFlagTrail (vec2 vPos, int nTeam);
 
 private:
 	cObject	*m_Objects[MAX_OBJECTS];
@@ -117,6 +127,12 @@ private:
 
 	void		m_DrawParticles ();
 	void		m_ClearParticles ();
+
+	bool		m_bParticles;
+	bool		m_bWeakFX;
+
+	vec2		m_vWorldMins;
+	vec2		m_vWorldMaxs;
 };
 
 extern cWorld *g_World;

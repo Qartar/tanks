@@ -16,11 +16,11 @@ Date	:	10/20/2004
 #define FRAMETIME	0.05f
 #define FRAMEMSEC	50.0f
 
-#define RESTART_TIME	3000.0f
+#define RESTART_TIME	5000.0f
 
 #define SPAWN_BUFFER	32
 
-#define MAX_PLAYERS	8
+#define MAX_PLAYERS	16
 
 #define KEY_FORWARD	0
 #define KEY_BACK	1
@@ -33,20 +33,28 @@ Date	:	10/20/2004
 #define BIT(a)	(1<<a)
 
 static vec4 player_colors[] = {
-	vec4(1.000,0.000,0.000,1),		// 0: red
-	vec4(0.000,0.000,1.000,1),		// 1: blue
-	vec4(0.000,1.000,0.000,1),		// 2: green
-	vec4(1.000,1.000,0.000,1),		// 3: yellow
-	vec4(1.000,0.500,0.000,1),		// 4: orange
-	vec4(1.000,0.000,1.000,1),		// 5: pink
-	vec4(0.000,1.000,1.000,1),		// 6: cyan
-	vec4(1.000,1.000,1.000,1),		// 7: white
-	vec4(0.000,0.500,0.500,1),		// 8: teal
-	vec4(0.500,0.000,1.000,1),		// 9: purple
-	vec4(0.375,0.250,0.125,1),		// 10: brown
-	vec4(0.750,0.750,0.500,1)		// 11: tan
+	vec4(	1.000f,	0.000f,	0.000f,	1),		// 0: red
+	vec4(	0.000f,	0.000f,	1.000f,	1),		// 1: blue
+	vec4(	0.000f,	1.000f,	0.000f,	1),		// 2: green
+	vec4(	1.000f,	1.000f,	0.000f,	1),		// 3: yellow
+	vec4(	1.000f,	0.500f,	0.000f,	1),		// 4: orange
+	vec4(	1.000f,	0.500f,	1.000f,	1),		// 5: pink
+	vec4(	0.000f,	1.000f,	1.000f,	1),		// 6: cyan
+	vec4(	1.000f,	1.000f,	1.000f,	1),		// 7: white
+	vec4(	0.500f,	0.000f,	1.000f,	1),		// 8: purple
+	vec4(	0.750f,	0.750f,	0.500f,	1),		// 9: tan
+	vec4(	0.625f,	0.000f,	0.000f,	1),		// 10: dark red
+	vec4(	0.000f,	0.000f,	0.625f,	1),		// 11: dark blue
+	vec4(	0.000f,	0.625f,	0.000f,	1),		// 12: dark green
+	vec4(	0.250f,	0.375f,	0.000f,	1),		// 13: dark yellow-green
+	vec4(	0.750f,	0.125f,	0.012f,	1),		// 14: crimson
+	vec4(	0.000f,	0.500f,	1.000f,	1),		// 15: light blue
+	vec4(	0.000f,	0.500f,	0.500f,	1),		// 16: teal
+	vec4(	0.375f,	0.375f,	0.375f,	1),		// 17: gray
+	vec4(	0.200f,	0.000f,	0.500f,	1),		// 18: dark purple
+	vec4(	0.375f,	0.250f,	0.125f,	1),		// 19: brown
 };
-#define	NUM_PLAYER_COLORS	12
+#define	NUM_PLAYER_COLORS	20
 
 typedef enum netops_e
 {
@@ -56,13 +64,15 @@ typedef enum netops_e
 	clc_command,
 	clc_disconnect,
 	clc_say,
+	clc_upgrade,
 
 	svc_disconnect,
 	svc_message,
 	svc_score,
 	svc_info,		// client info
 	svc_frame,
-	svc_effect
+	svc_effect,
+	svc_sound
 } netops_t;
 
 typedef enum eEffects
@@ -86,7 +96,7 @@ typedef struct	message_s
 	float	time;
 } message_t;
 
-#define MAX_MESSAGES	8
+#define MAX_MESSAGES	32
 
 /*
 ===========================================================
@@ -98,6 +108,10 @@ Purpose	:	Stores higher-level information about the current game
 ===========================================================
 */
 
+//
+// SERVER SIDE DATA
+//
+
 typedef struct client_s
 {
 	bool	active;
@@ -108,15 +122,49 @@ typedef struct client_s
 	char		name[SHORT_STRING];
 } client_t;
 
+typedef struct server_state_s
+{
+	bool	active;
+
+	char		name[SHORT_STRING];
+
+	client_t	clients[MAX_PLAYERS];
+	int			max_clients;
+} server_state_t;
+
+//
+// CLIENT SIDE DATA
+//
+
+typedef struct remote_server_s
+{
+	char		name[SHORT_STRING];
+	netadr_t	address;
+
+	float		ping;
+	bool		active;
+} remote_server_t;
+
+#define MAX_SERVERS	8
+
 typedef struct client_state_s
 {
 	vec4	color;
 	char	name[SHORT_STRING];
+	int		number;
 
+	char	server[SHORT_STRING];
 	int		last_frame;
+
+	float			ping_time;
+	remote_server_t	servers[MAX_SERVERS];
 } client_state_t;
 
-class cGame
+// SHARED DATA
+
+// if your brain hasn't exploded yet it will now
+
+class cGame : public vMain
 {
 	friend	cMenu;
 
@@ -126,6 +174,11 @@ public:
 
 	int		Init (char *cmdline);
 	int		Shutdown ();
+
+	void	m_InitClient ();
+	void	m_EndClient ();
+
+	virtual int	Message (char *szMessage, ...);
 
 	int		RunFrame (float flMSec);
 
@@ -157,6 +210,10 @@ public:
 
 	float	flRestartTime;
 
+	static int	FindServerByName (void *lpvoid);
+
+	cTank *		Player( int index ) { return &m_Players[ index ]; }
+
 private:
 	cMenu	m_Menu;
 	cWorld	m_World;
@@ -183,6 +240,7 @@ private:
 public:
 	void	m_WriteMessage (char *szMessage);
 
+	game_client_t	gameClients[MAX_PLAYERS];
 	// NETWORKING
 
 public:
@@ -191,18 +249,21 @@ public:
 
 	void	m_StopClient ();
 
-	void	m_ConnectToServer ();
+	void	m_ConnectToServer (int index);
 
 	void	m_InfoAsk ();
 
+	void	m_WriteSound (int nSound);
 	void	m_WriteEffect (int type, vec2 pos, vec2 vel, int count);
 
 	client_state_t	cls;
+	server_state_t	svs;
 
 	bool	bClientButton;
+	bool	bServerButton;
 	bool	bClientSay;
 
-	client_t	m_clients[MAX_PLAYERS];
+//	client_t	svs.clients[MAX_PLAYERS];
 private:
 	void	m_GetPackets ();
 	void	m_GetFrame ();
@@ -221,16 +282,22 @@ private:
 	void	m_ClientDisconnect (int nClient);
 	void	m_ClientCommand ();
 
+	void	m_ReadUpgrade (int index);
+	void	m_WriteUpgrade (int upgrade);
+
+	void	m_ReadSound ();
 	void	m_ReadEffect ();
 
 	void	m_ClientKeys (int key, bool down);
-	void	m_ClientSend ();
+	void	m_clientsend ();
 
 	void	m_InfoSend ();
 	void	m_InfoGet ();
 
 	void	m_ReadInfo ();
 	void	m_WriteInfo (int client, netmsg_t *message);
+
+	void	m_ReadFail ();
 
 	bool	m_clientkeys[8];
 
@@ -247,6 +314,13 @@ private:
 
 	char		m_clientsay[LONG_STRING];
 };
+
+struct index_s
+{
+	char	*name;
+	int		index;
+};
+extern index_s	sound_index[256];
 
 extern cGame *g_Game;
 extern cRender *g_Render;

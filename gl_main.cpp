@@ -11,6 +11,7 @@ Date	:	10/15/2004
 */
 
 #include "local.h"
+#include "resource.h"
 
 /*
 ===========================================================
@@ -26,6 +27,9 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
 {
 	int		res;
 
+	char	*command;
+	bool	bFullscreen = DEFAULT_FS;
+
 	if (hInstance == NULL || WndProc == NULL)
 	{
 		g_Application->Error( "Tanks! Error", "cOpenGLWnd::Init | bad parameters\n" );
@@ -36,7 +40,10 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
 	m_hInstance = hInstance;
 	m_WndProc = WndProc;
 
-	res = m_CreateWindow( DEFAULT_W, DEFAULT_H, DEFAULT_X, DEFAULT_Y, DEFAULT_FS );
+	if ( (command = strstr( g_Application->InitString(), "fullscreen=" )) )
+		bFullscreen = ( atoi(command+11) > 0 );
+
+	res = m_CreateWindow( DEFAULT_W, DEFAULT_H, DEFAULT_X, DEFAULT_Y, bFullscreen );
 
 	m_Render.Init( );
 
@@ -45,11 +52,21 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
 
 int cOpenGLWnd::Recreate (int nSizeX, int nSizeY, bool bFullscreen)
 {
+	m_bRefreshing = true;
+
 	Shutdown( );
 
 	m_CreateWindow( nSizeX, nSizeY, DEFAULT_X, DEFAULT_Y, bFullscreen );
 
 	return m_Render.Init( );
+}
+
+int cOpenGLWnd::Refresh ()
+{
+	if ( m_bFullscreen != m_WndParams.bFullscreen )
+		return Recreate( m_WndParams.nSize[0], m_WndParams.nSize[1], m_bFullscreen );
+
+	return ERROR_NONE;
 }
 
 /*
@@ -87,8 +104,10 @@ Purpose	:	Creates a window ; calls m_InitGL
 int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bool bFullscreen)
 {
 	WNDCLASS	wc;
+	RECT		rect;
 
 	int			style;
+	int			width, height;
 
 	if ( bFullscreen )
 	{
@@ -101,6 +120,11 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
 		dm.dmPelsHeight = nSizeY;
 		dm.dmFields = DM_PELSWIDTH|DM_PELSHEIGHT;
 
+		rect.top = 0;
+		rect.left = 0;
+		rect.right = 0;
+		rect.bottom = 0;
+
 		if ( ChangeDisplaySettings(&dm,CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL )
 		{
 			bFullscreen = false;
@@ -108,13 +132,33 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
 		}
 		else
 		{
+			style = WS_POPUP|WS_VISIBLE;
+
 			nPosX = 0;
 			nPosY = 0;
-			style = WS_POPUP|WS_VISIBLE;
+			width = nSizeX;
+			height = nSizeY;
 		}
 	}
+	else if ( m_WndParams.bFullscreen )
+		ChangeDisplaySettings(NULL,NULL);
+
+	if ( !bFullscreen )
+	{
+		style = WS_OVERLAPPED|WS_SYSMENU|WS_BORDER|WS_CAPTION|WS_MINIMIZEBOX|WS_VISIBLE;
+
+		rect.top = 0;
+		rect.left = 0;
+		rect.right = nSizeX;
+		rect.bottom = nSizeY;
+
+		AdjustWindowRect( &rect, style, FALSE );
+
+		width = rect.right - rect.left;
+		height = rect.bottom - rect.top;
+	}
 	else
-		style = WS_OVERLAPPED;
+		nPosX = nPosY = 0;
 
 	// Setup struct for RegisterClass
 
@@ -123,7 +167,7 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
 	wc.cbClsExtra		= 0;
 	wc.cbWndExtra		= 0;
 	wc.hInstance		= m_hInstance;
-	wc.hIcon			= 0;
+	wc.hIcon			= LoadIcon( m_hInstance, MAKEINTRESOURCE(102) );
 	wc.hCursor			= LoadCursor (NULL,IDC_ARROW);
 	wc.hbrBackground	= 0;
     wc.lpszMenuName		= 0;
@@ -142,16 +186,18 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
 		APP_CLASSNAME,
 		"Tanks!",
 		style,
-		nPosX, nPosY, nSizeX, nSizeY,
+		nPosX, nPosY, width, height,
 		NULL, NULL,
 		m_hInstance,
 		NULL );
 
 	m_WndParams.nSize[0] = nSizeX ; m_WndParams.nSize[1] = nSizeY ;
-	m_WndParams.nPos[0] = nPosX ; m_WndParams.nSize[1] = nSizeY ;
+	m_WndParams.nPos[0] = nPosX - rect.left ; m_WndParams.nPos[1] = nPosY - rect.top ;
 
 	m_WndParams.bActive = true;
 	m_WndParams.bMinimized = false;
+	m_WndParams.bFullscreen = bFullscreen;
+	m_bFullscreen = bFullscreen;
 	
 	if (m_hWnd == NULL)
 	{
@@ -319,7 +365,7 @@ LRESULT cOpenGLWnd::Message (UINT nCmd, WPARAM wParam, LPARAM lParam)
 	switch ( nCmd )
 	{
 	case WM_ACTIVATE:
-		m_Activate( (LOWORD(wParam) != WA_INACTIVE), HIWORD(wParam) );
+		m_Activate( (LOWORD(wParam) != WA_INACTIVE), ( HIWORD(wParam) > 0 ) );
 		return DefWindowProc( m_hWnd, nCmd, wParam, lParam );
 
 	case WM_SIZE:
@@ -332,6 +378,18 @@ LRESULT cOpenGLWnd::Message (UINT nCmd, WPARAM wParam, LPARAM lParam)
 		m_WndParams.nPos[0] = LOWORD(lParam);    // horizontal position 
 		m_WndParams.nPos[1] = HIWORD(lParam);    // vertical position 
         return DefWindowProc( m_hWnd, nCmd, wParam, lParam );
+
+	case WM_SYSKEYDOWN:
+		if ( wParam == 13 )
+			m_bFullscreen = !m_WndParams.bFullscreen;
+		return 0;
+
+	case WM_DESTROY:
+		if ( m_bRefreshing )
+			m_bRefreshing = false;
+		else
+			PostQuitMessage(0);
+		return 0;
 
 	default:
 		return DefWindowProc( m_hWnd, nCmd, wParam, lParam );
@@ -362,10 +420,13 @@ int cOpenGLWnd::m_Activate (bool bActive, bool bMinimized)
 	}
 	else
 	{
-		m_WndParams.bActive = false;
-		m_WndParams.bMinimized = true;
+		if ( bMinimized )
+		{
+			m_WndParams.bMinimized = true;
+			ShowWindow( m_hWnd, SW_MINIMIZE );
+		}
 
-		ShowWindow( m_hWnd, SW_MINIMIZE );
+		m_WndParams.bActive = false;
 	}
 
 	return ERROR_NONE;

@@ -395,9 +395,9 @@ bool cClientButton::Click (vec2 vCursorPos, bool bDown)
 {
 	m_bOver = m_Over( vCursorPos );
 
-	m_bTextOver = ( vCursorPos.x < m_vTextBoxPos.x+m_vTextBoxSize.x/2 && vCursorPos.x > m_vTextBoxPos.x-m_vTextBoxSize.x/2 &&
-		m_vTextBoxPos.y+m_vTextBoxSize.y/2 && vCursorPos.y > m_vTextBoxPos.y-m_vTextBoxSize.y/2 );
-    
+	m_bTextOver = ( (clamp(vCursorPos.x,m_vTextBoxPos.x-m_vTextBoxSize.x/2,m_vPos.x+m_vTextBoxSize.x/2) == vCursorPos.x )
+		&& (clamp(vCursorPos.y,m_vTextBoxPos.y-m_vTextBoxSize.y/2,m_vTextBoxPos.y+m_vTextBoxSize.y/2) == vCursorPos.y ) );
+
 	if ( m_bTextOver )
 	{
 		m_bOver = false;
@@ -444,9 +444,9 @@ void cClientButton::Draw (vec2 vCursorPos)
 
 	m_bOver = m_Over( vCursorPos );
 
-	m_bTextOver = ( vCursorPos.x < m_vTextBoxPos.x+m_vTextBoxSize.x/2 && vCursorPos.x > m_vTextBoxPos.x-m_vTextBoxSize.x/2 &&
-		vCursorPos.y < m_vTextBoxPos.y+m_vTextBoxSize.y/2 && vCursorPos.y > m_vTextBoxPos.y-m_vTextBoxSize.y/2 );
-    
+	m_bTextOver = ( (clamp(vCursorPos.x,m_vTextBoxPos.x-m_vTextBoxSize.x/2,m_vPos.x+m_vTextBoxSize.x/2) == vCursorPos.x )
+		&& (clamp(vCursorPos.y,m_vTextBoxPos.y-m_vTextBoxSize.y/2,m_vTextBoxPos.y+m_vTextBoxSize.y/2) == vCursorPos.y ) );
+
 	if ( !g_Game->bClientButton )
 	{
 		m_bTextOver = false;
@@ -549,4 +549,172 @@ void cCheckButton::Draw (vec2 vCursorPos)
 	g_Render->DrawBox( vec2(12,12), m_vPos, 0, menu_colors[nBoxOut] );
 	g_Render->DrawBox( vec2(10,10), m_vPos, 0, menu_colors[nBoxIn] );
 	g_Render->DrawString( m_szTitle, vec2(m_vPos.x+10,m_vPos.y+4), menu_colors[7] );
+}
+
+
+/*
+===============================================================================
+
+Name	:	cServerButton
+
+===============================================================================
+*/
+
+cServerButton::cServerButton (vec2 vPos, vec2 vSize, char *szServer, float *flPing, func_t op_click)
+{
+	m_szServer = szServer;
+	m_flPing = flPing;
+
+	m_vPos = vPos;
+	m_vSize = vSize;
+	m_op_click = op_click;
+}
+
+bool cServerButton::Click (vec2 vCursorPos, bool bDown)
+{
+	m_bOver = over( vCursorPos, vec2(m_vPos+vec2(m_vSize.x/2-18,0)), vec2(32,m_vSize.y-4) );
+
+	if ( !m_szServer || !m_szServer[0] )
+	{
+		m_bClicked = false;
+		m_bOver = false;
+
+		return false;
+	}
+
+	if (m_bOver && bDown)
+	{
+		m_bClicked = true;
+	}
+	else if (m_bClicked && m_bOver && !bDown)
+	{
+		m_bClicked = false;
+		m_op_click( );
+	}
+	else if (!bDown)
+	{
+		m_bClicked = false;
+	}
+
+	return false;
+}
+
+void cServerButton::Draw (vec2 vCursorPos)
+{
+	int		nButtonIn;
+	int		nButtonOut;
+	int		nText;
+
+	g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[4] );
+	g_Render->DrawBox( m_vSize-vec2(2,2), m_vPos, 0, menu_colors[3] );
+	g_Render->DrawBox( m_vSize-vec2(38,4), m_vPos-vec2(17,0), 0, menu_colors[2] );
+	g_Render->DrawBox( m_vSize-vec2(40,6), m_vPos-vec2(17,0), 0, menu_colors[0] );
+
+	// join button
+
+	if ( m_szServer && m_szServer[0] )
+	{
+		g_Render->DrawString( m_szServer, m_vPos-vec2(m_vSize.x/2-4,-4), menu_colors[7] );
+		g_Render->DrawString( va("%i", (int)(*m_flPing)), m_vPos+vec2(m_vSize.x/2-64,4), menu_colors[7] );
+
+		if ( over( vCursorPos, vec2(m_vPos+vec2(m_vSize.x/2-18,0)), vec2(32,m_vSize.y-4) ) )
+			nButtonOut = 6;
+		else
+			nButtonOut = 4;
+
+		if ( m_bClicked )
+			nButtonIn = 3;
+		else
+			nButtonIn = 5;
+
+		nText = 7;
+	}
+	else
+	{
+		nButtonIn = 4;
+		nButtonOut = 2;
+		nText = 2;
+	}
+
+	g_Render->DrawBox( vec2(32,m_vSize.y-4), m_vPos+vec2(m_vSize.x/2-18,0), 0, menu_colors[nButtonOut] );
+	g_Render->DrawBox( vec2(30,m_vSize.y-6), m_vPos+vec2(m_vSize.x/2-18,0), 0, menu_colors[nButtonIn] );
+	g_Render->DrawString( "Join", m_vPos+vec2(m_vSize.x/2-26,4), menu_colors[nText] );
+
+}
+
+/*
+===============================================================================
+
+Name	:	cHostButton
+
+===============================================================================
+*/
+
+cHostButton::cHostButton (vec2 vPos, vec2 vSize, func_t op_click)
+{
+	m_vPos = vPos;
+	m_vSize = vSize;
+	m_op_click = op_click;
+}
+
+bool cHostButton::Click (vec2 vCursorPos, bool bDown)
+{
+	m_bOver = over( vCursorPos, vec2(m_vPos+vec2(m_vSize.x/2-18,0)), vec2(32,m_vSize.y-4) );
+
+	if (m_bOver && bDown)
+	{
+		m_bClicked = true;
+	}
+	else if (m_bClicked && m_bOver && !bDown)
+	{
+		m_bClicked = false;
+		m_op_click( );
+	}
+	else if ( over( vCursorPos, m_vPos, m_vSize ) )
+	{
+		if ( bDown )
+			g_Game->bServerButton ^= true;
+	}
+	else if (!bDown)
+	{
+		m_bClicked = false;
+	}
+
+	return false;
+}
+
+void cHostButton::Draw (vec2 vCursorPos)
+{
+	int		nButtonIn;
+	int		nButtonOut;
+
+	int		nInner;
+
+	if ( g_Game->bServerButton )
+		nInner = 5;
+	else
+		nInner = 2;
+
+	g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[4] );
+	g_Render->DrawBox( m_vSize-vec2(2,2), m_vPos, 0, menu_colors[3] );
+	g_Render->DrawBox( m_vSize-vec2(38,4), m_vPos-vec2(17,0), 0, menu_colors[nInner] );
+
+	// create button
+
+	g_Render->DrawString( g_Game->svs.name, m_vPos-vec2(m_vSize.x/2-4,-4), menu_colors[7] );
+
+	if ( over( vCursorPos, vec2(m_vPos+vec2(m_vSize.x/2-18,0)), vec2(32,m_vSize.y-4) ) )
+		nButtonOut = 6;
+	else
+		nButtonOut = 4;
+
+	if ( m_bClicked )
+		nButtonIn = 3;
+	else
+		nButtonIn = 5;
+
+	g_Render->DrawBox( vec2(32,m_vSize.y-4), m_vPos+vec2(m_vSize.x/2-18,0), 0, menu_colors[nButtonOut] );
+	g_Render->DrawBox( vec2(30,m_vSize.y-6), m_vPos+vec2(m_vSize.x/2-18,0), 0, menu_colors[nButtonIn] );
+	g_Render->DrawString( "Create", m_vPos+vec2(m_vSize.x/2-32,4), menu_colors[7] );
+
 }

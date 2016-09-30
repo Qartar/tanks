@@ -43,6 +43,9 @@ public:
 	void	Error (char *szTitle, char *szMessage);
 	void	Quit (int nExitCode);
 
+	char	*ClipboardData ();
+	char	*InitString() { return m_szInitString; }
+
 	// get_time : returns time in milliseconds
 	float		get_time () { QueryPerformanceCounter( &m_timerCounter ) ; return ( (float)(m_timerCounter.QuadPart - m_timerBase.QuadPart) / (float)(m_timerFrequency.QuadPart) * 1000.0f ) ; }
 
@@ -55,6 +58,8 @@ private:
 
 	cOpenGLWnd	m_glWnd;
 	cGame		m_Game;
+
+	char		*m_szInitString;
 
 	LARGE_INTEGER	m_timerFrequency;
 	LARGE_INTEGER	m_timerCounter;

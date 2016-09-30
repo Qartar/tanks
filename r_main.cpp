@@ -28,6 +28,12 @@ int cRender::Init ()
 
 	m_InitFonts( );
 
+	for (int i = 0; i < 360 ; i++)
+	{
+		sintbl[i] = sin(DEG2RAD(i));
+		costbl[i] = cos(DEG2RAD(i));
+	}
+
 	return ERROR_NONE;
 }
 
@@ -101,7 +107,11 @@ void cRender::m_setDefaultState ()
 	glAlphaFunc( GL_GREATER, 0.0 );
 
 	glEnable( GL_POINT_SMOOTH );
+	glHint( GL_POINT_SMOOTH_HINT, GL_NICEST );
 	glPointSize( 2.0f );
+
+	glEnable( GL_LINE_SMOOTH );
+	glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
 
 	glDisable( GL_DEPTH_TEST );
 	glDisable( GL_CULL_FACE );
@@ -117,7 +127,7 @@ void cRender::m_setDefaultState ()
 
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity( );
-
+/*
 	glOrtho(
 		m_viewOrigin[0],
 		g_Application->get_glWnd()->get_WndParams().nSize[0] + m_viewOrigin[0],
@@ -125,6 +135,9 @@ void cRender::m_setDefaultState ()
 		m_viewOrigin[1],
 		-99999,
 		99999 );
+*/
+
+	glOrtho( 0, 640, 480, 0, -99999, 99999 );
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity( );
