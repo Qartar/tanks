@@ -69,21 +69,12 @@ int cWinApp::Main (HINSTANCE hInstance, LPSTR szCmdLine, int nCmdShow)
 		// inactive/idle loop
 
 		if ( !m_glWnd.get_WndParams().bActive )
-		{
-			Sleep( 10 );
-			flOldTime = get_time( );
-			continue;
-		}
+			Sleep( 1 );
 
 		// wait loop
 
 		flNewTime = get_time( );
-		if ( ( flTime = flNewTime - flOldTime ) < 1.0f )
-		{
-			Sleep( 1 );
-			continue;
-		}
-
+		flTime = flNewTime - flOldTime;
 		flOldTime = flNewTime;
 
 		m_Game.RunFrame( flTime );
@@ -111,10 +102,15 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
 	QueryPerformanceFrequency( &m_timerFrequency );
 	QueryPerformanceCounter( &m_timerBase );
 
-	srand( get_time( ) );
+	srand( m_timerBase.QuadPart );
+
+	// NETWORKING OMGWTFLOL
+
+	pNet = &m_Network;
+	m_Network.Init( );
 
 	// init game
-	m_Game.Init( );
+	m_Game.Init( szCmdLine );
 
 	// init opengl
 	m_glWnd.Init( m_hInstance, (WNDPROC )m_WndProc );
@@ -140,6 +136,8 @@ int cWinApp::Shutdown ()
 
 	// shutdown game
 	m_Game.Shutdown( );
+
+	m_Network.Shutdown( );
 
 #ifdef DEBUG_MEM	
 	_CrtDumpMemoryLeaks();

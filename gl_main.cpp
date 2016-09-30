@@ -12,12 +12,6 @@ Date	:	10/15/2004
 
 #include "local.h"
 
-static int	default_width = 1280;
-static int	default_height = 1024;
-static int	default_posx = 100;
-static int	default_posy = 100;
-static bool default_fullscreen = 1;
-
 /*
 ===========================================================
 
@@ -42,11 +36,20 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
 	m_hInstance = hInstance;
 	m_WndProc = WndProc;
 
-	res = m_CreateWindow( default_width, default_height, default_posx, default_posy,default_fullscreen );
+	res = m_CreateWindow( DEFAULT_W, DEFAULT_H, DEFAULT_X, DEFAULT_Y, DEFAULT_FS );
 
 	m_Render.Init( );
 
 	return res;
+}
+
+int cOpenGLWnd::Recreate (int nSizeX, int nSizeY, bool bFullscreen)
+{
+	Shutdown( );
+
+	m_CreateWindow( nSizeX, nSizeY, DEFAULT_X, DEFAULT_Y, bFullscreen );
+
+	return m_Render.Init( );
 }
 
 /*
@@ -84,6 +87,7 @@ Purpose	:	Creates a window ; calls m_InitGL
 int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bool bFullscreen)
 {
 	WNDCLASS	wc;
+
 	int			style;
 
 	if ( bFullscreen )
@@ -101,7 +105,6 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
 		{
 			bFullscreen = false;
 			style = WS_OVERLAPPED;
-			MessageBox( NULL, "oh shit", "shit alert!", MB_OK );
 		}
 		else
 		{
@@ -122,7 +125,7 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
 	wc.hInstance		= m_hInstance;
 	wc.hIcon			= 0;
 	wc.hCursor			= LoadCursor (NULL,IDC_ARROW);
-	wc.hbrBackground	= (HBRUSH )COLOR_GRAYTEXT;
+	wc.hbrBackground	= 0;
     wc.lpszMenuName		= 0;
     wc.lpszClassName	= APP_CLASSNAME;
 
@@ -351,7 +354,8 @@ int cOpenGLWnd::m_Activate (bool bActive, bool bMinimized)
 	{
 		if (!m_WndParams.bActive || m_WndParams.bMinimized)
 		{
-			ShowWindow( m_hWnd, SW_SHOW );
+			SetForegroundWindow( m_hWnd );
+			ShowWindow( m_hWnd, SW_RESTORE );
 			m_WndParams.bActive = true;
 			m_WndParams.bMinimized = false;
 		}

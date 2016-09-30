@@ -10,18 +10,27 @@ Date	:	10/20/2004
 ===============================================================================
 */
 
-class cInputObject
-{
-public:
-	virtual void	Key_Event (int nKey, bool bDown) = 0;
-};
-
-#include "scr_main.h"
-#include "scr_tank.h"
 #include "g_menu.h"
 #include "g_world.h"
 
-#define MAX_PLAYERS	2
+#define FRAMETIME	0.05f
+#define FRAMEMSEC	50.0f
+
+#define RESTART_TIME	3000.0f
+
+#define SPAWN_BUFFER	32
+
+#define MAX_PLAYERS	8
+
+#define KEY_FORWARD	0
+#define KEY_BACK	1
+#define KEY_LEFT	2
+#define KEY_RIGHT	3
+#define KEY_TLEFT	4
+#define KEY_TRIGHT	5
+#define KEY_FIRE	6
+
+#define BIT(a)	(1<<a)
 
 static vec4 player_colors[] = {
 	vec4(1.000,0.000,0.000,1),		// 0: red
@@ -39,6 +48,31 @@ static vec4 player_colors[] = {
 };
 #define	NUM_PLAYER_COLORS	12
 
+typedef enum netops_e
+{
+	net_bad,
+	net_nop,
+
+	clc_command,
+	clc_disconnect,
+	clc_say,
+
+	svc_disconnect,
+	svc_message,
+	svc_score,
+	svc_info,		// client info
+	svc_frame,
+	svc_effect
+} netops_t;
+
+typedef enum eEffects
+{
+	effect_smoke,
+	effect_sparks,
+	effect_explosion
+} effects_t;
+
+
 enum eGameType
 {
 	game_singleplay,
@@ -46,27 +80,14 @@ enum eGameType
 	game_coop
 };
 
-/*
-===========================================================
-
-Name	:	cPlayer
-
-Purpose	:	stores information about player[x]
-
-===========================================================
-*/
-#if 0
-
-class cPlayer
+typedef struct	message_s
 {
-public:
-	cPlayer () {}
-	~cPlayer () {}
+	char	string[MAX_STRING];
+	float	time;
+} message_t;
 
-	char	m_szName[64];
-	vec4	m_vColor;
-};
-#endif
+#define MAX_MESSAGES	8
+
 /*
 ===========================================================
 
@@ -77,6 +98,24 @@ Purpose	:	Stores higher-level information about the current game
 ===========================================================
 */
 
+typedef struct client_s
+{
+	bool	active;
+	bool	local;
+
+	netchan_t	netchan;
+
+	char		name[SHORT_STRING];
+} client_t;
+
+typedef struct client_state_s
+{
+	vec4	color;
+	char	name[SHORT_STRING];
+
+	int		last_frame;
+} client_state_t;
+
 class cGame
 {
 	friend	cMenu;
@@ -85,7 +124,7 @@ public:
 	cGame () {}
 	~cGame () {}
 
-	int		Init ();
+	int		Init (char *cmdline);
 	int		Shutdown ();
 
 	int		RunFrame (float flMSec);
@@ -101,12 +140,22 @@ public:
 	bool	m_bMenuActive;
 	bool	m_bGameActive;
 
+	bool	m_bMultiplayer;		// is multiplayer
+	bool	m_bMultiserver;		// hosting multiplayer
+	bool	m_bHaveServer;		// found a server
+	bool	m_bMultiactive;		// active and playing
+	bool	m_bDedicated;
+
 	float	m_flTime;
 	int		m_nFramenum;
 
 	eGameType	m_eGameType;
 
-	void	SetInputObject (cInputObject *pInputObject);
+	bool	bExtendedArmor;
+	bool	bRandomSpawn;
+	bool	bAutoRestart;
+
+	float	flRestartTime;
 
 private:
 	cMenu	m_Menu;
@@ -118,13 +167,85 @@ private:
 	int		m_nScore[MAX_PLAYERS];
 	void	m_DrawScore ();
 
-	cTank	m_Players[2];
+	cTank	m_Players[MAX_PLAYERS];
 
 	void	m_Deathmatch_NewRound ();
 
 	void	m_InitPlayers ();
 
-	cInputObject	*m_pInputObject;
+	message_t	m_Messages[MAX_MESSAGES];
+	int			m_nMessage;
+
+	void	m_DrawMessages ();
+
+	char	m_ShiftKeys[256];
+
+public:
+	void	m_WriteMessage (char *szMessage);
+
+	// NETWORKING
+
+public:
+	void	m_StartServer ();
+	void	m_StopServer ();
+
+	void	m_StopClient ();
+
+	void	m_ConnectToServer ();
+
+	void	m_InfoAsk ();
+
+	void	m_WriteEffect (int type, vec2 pos, vec2 vel, int count);
+
+	client_state_t	cls;
+
+	bool	bClientButton;
+	bool	bClientSay;
+
+	client_t	m_clients[MAX_PLAYERS];
+private:
+	void	m_GetPackets ();
+	void	m_GetFrame ();
+	void	m_WriteFrame ();
+	void	m_SendPackets ();
+
+	void	m_Broadcast (int len, byte *data);
+	void	m_Broadcast_Print (char *message);
+
+	void	m_Connectionless (netsock_t socket);
+	void	m_Packet (netsock_t socket);
+
+	void	m_ConnectAck ();
+
+	void	m_ClientConnect ();
+	void	m_ClientDisconnect (int nClient);
+	void	m_ClientCommand ();
+
+	void	m_ReadEffect ();
+
+	void	m_ClientKeys (int key, bool down);
+	void	m_ClientSend ();
+
+	void	m_InfoSend ();
+	void	m_InfoGet ();
+
+	void	m_ReadInfo ();
+	void	m_WriteInfo (int client, netmsg_t *message);
+
+	bool	m_clientkeys[8];
+
+	netadr_t	m_netserver;
+
+	netchan_t	m_netchan;
+	netadr_t	m_netfrom;
+
+	byte		m_netmsgbuf[MAX_MSGLEN];
+	netmsg_t	m_netmsg;
+
+	int			m_netclient;
+	char		*m_netstring;
+
+	char		m_clientsay[LONG_STRING];
 };
 
 extern cGame *g_Game;

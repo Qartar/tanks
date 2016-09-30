@@ -19,6 +19,7 @@ Date	:	10/15/2004
 #define DEFAULT_Y	100
 #define DEFAULT_W	640
 #define DEFAULT_H	480
+#define DEFAULT_FS	1
 
 /*
 =============================
@@ -64,6 +65,8 @@ public:
 	HDC		get_hDC () { return m_hDC; }
 	sWndParam	&get_WndParams () { return m_WndParams; }
 	cRender		*get_Render () { return &m_Render; }
+
+	int	Recreate (int nSizeX, int nSizeY, bool bFullscreen);
 
 private:
 	int	m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bool bFullscreen);

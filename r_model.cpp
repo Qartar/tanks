@@ -119,6 +119,9 @@ bool cModel::Clip (cModel *lpOther, vec2 vPos, float flAngle)
 
 bool cModel::ClipPoint (vec2 vPos)
 {
+	if ( !this )
+		return false;
+
 	return ( ! (
 		(m_AbsMin.x > vPos.x || m_AbsMax.x < vPos.x) ||
 		(m_AbsMin.y > vPos.y || m_AbsMax.y < vPos.y) ) );

@@ -10,14 +10,30 @@ Date	:	10/16/2004
 ===============================================================================
 */
 
+#pragma once
+
 #define WIN32_LEAN_AND_MEAN		// exclude rarely used Windows crap
 
 #define APP_CLASSNAME		"Tanks!"
+
+#define PORT_SERVER		28101
+#define PORT_CLIENT		28110
+
+#define SHORT_SWAP(a)	(((a&0xffff)>>8)|((a&0xffff)<<8))&0xffff
+#define LONG_SWAP(a)	((a&0xff000000)>>24)|((a&0x00ff0000)>>8)|((a&0x0000ff00)<<8)|((a&0x000000ff)<<24)
+
+#define BIG_SHORT(a)	SHORT_SWAP(a)
+
+#define LITTLE_LONG(a)	(a)
 
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
+#define MAX_STRING		1024
+#define LONG_STRING		256
+#define SHORT_STRING	32
 
 //#define DEBUG_MEM
 
@@ -26,7 +42,7 @@ Date	:	10/16/2004
 #include <crtdbg.h>
 #endif // DEBUG_MEM
 
-#pragma warning (disable:4244)
+#pragma warning (disable:4244)	//	double to float
 
 #define ERROR_NONE		0
 #define ERROR_FAIL		1
@@ -44,6 +60,8 @@ Date	:	10/16/2004
 
 #define frand() (((float)rand())/32767.0f)
 #define crand() ((frand()-0.5f)*2)
+
+typedef unsigned char	byte;
 
 typedef class cVec2
 {
@@ -83,11 +101,20 @@ public:
 static char	*va(char *format, ...)
 {
 	va_list		argptr;
-	static char		string[1024];
+	static char		string[MAX_STRING];
 	
 	va_start (argptr, format);
 	vsprintf (string, format,argptr);
 	va_end (argptr);
 
 	return string;	
+}
+
+static void fmt (char *szDest, char *szMessage, ...)
+{
+	va_list		apList;
+
+	va_start( apList, szMessage );
+	vsprintf( szDest, szMessage, apList );
+	va_end( apList );
 }

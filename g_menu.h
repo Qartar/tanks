@@ -21,6 +21,9 @@ static vec4 menu_colors[] = {
 	vec4(0.875,0.875,0.875,1),
 	vec4(1.000,1.000,1.000,1) };
 
+#define CHAR_WIDTH	2.5
+#define over(a,b,c) ( (clamp(a.x,b.x-c.x/2,b.x+c.x/2) == a.x ) && (clamp(a.y,b.y-c.y/2,b.y+c.y/2) == a.y ) )
+
 #define NUM_BUTTONS	4
 
 #define MAX_BUTTONS		8
@@ -63,9 +66,7 @@ protected:
 
 class cTank;
 
-class cInputObject;
-
-class cTankButton : public cBaseButton, public cInputObject
+class cTankButton : public cBaseButton
 {
 public:
 	cTankButton () {}
@@ -75,37 +76,30 @@ public:
 	virtual bool	Click (vec2 vCursorPos, bool bDown);
 	virtual void	Draw (vec2 vCursorPos);
 
-	virtual void	Key_Event (int nKey, bool bDown);
-
 protected:
 	cTank	*m_pTank;
 	int		m_nTankColor;
-
-	vec2	m_vBoxSize;
-	vec2	m_vBoxPos;
-
-	vec2	m_vTextSize;
-	vec2	m_vTextPos;
-
-//	bool	m_bComputer;
-//	char	m_szScript[64];
-	int		m_scrCursor;
-	bool	m_bWriting;
 };
 
-class cRangeButton : public cBaseButton
+class cClientButton : public cBaseButton
 {
 public:
-	cRangeButton () {}
-	cRangeButton (char *szTitle, vec2 vPos, vec2 vSize, int nMax, int *nVal);
-	~cRangeButton () {}
+	cClientButton () {}
+	cClientButton (char *szTitle, vec2 vPos, vec2 vSize, vec4 *pColor);
+	~cClientButton () {}
 
 	virtual bool	Click (vec2 vCursorPos, bool bDown);
 	virtual void	Draw (vec2 vCursorPos);
 
 protected:
-	int		m_nMax;
-	int		*m_nVal;
+	vec4	*m_pColor;
+	int		m_nColor;
+
+	bool	m_bTextOver;
+	bool	m_bTextDown;
+
+	vec2	m_vTextBoxPos;
+	vec2	m_vTextBoxSize;
 };
 
 class cMenu;
@@ -125,6 +119,22 @@ public:
 protected:
 	cMenu	*m_pParent, *m_pMenu;
 	bool	m_bActive;
+};
+
+class cCheckButton : public cBaseButton
+{
+public:
+	cCheckButton () {}
+	cCheckButton (char *szTitle, vec2 vPos, bool *pValue);
+	~cCheckButton () {}
+
+	virtual bool	Click (vec2 vCursorPos, bool bDown);
+	virtual void	Draw (vec2 vCursorPos);
+
+protected:
+	char	m_szTitle[64];
+	vec2	m_vPos;
+	bool	*m_pValue;
 };
 
 /*
@@ -152,15 +162,30 @@ public:
 
 	void	AddButton (cBaseButton *pButton);
 
-	void	Draw (vec2 vCursorPos);
-	void	Click (vec2 vCursorPos, bool bDown);
+	virtual void	Draw (vec2 vCursorPos);
+	virtual void	Click (vec2 vCursorPos, bool bDown);
 
 	bool	ActivateMenu (cMenuButton *pButton, cMenu *pActiveMenu);
 
-private:
+protected:
 	cBaseButton	*m_Buttons[MAX_BUTTONS];
 	cMenu		*m_SubMenus[MAX_SUBMENUS];
 
 	cMenuButton	*m_ActiveButton;
 	cMenu		*m_ActiveMenu;
+};
+
+class cOptionsMenu : public cMenu
+{
+public:
+	cOptionsMenu () {}
+	cOptionsMenu (char *szTitle, vec2 vPos, vec2 vSize);
+	~cOptionsMenu () {}
+
+	virtual void	Draw (vec2 vCursorPos);
+	virtual void	Click (vec2 vCursorPos, bool bDown);
+
+private:
+	char	m_szTitle[64];
+	vec2	m_vPos, m_vSize;
 };

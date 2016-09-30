@@ -92,7 +92,7 @@ void cRender::m_setDefaultState ()
 {
 	glDisable( GL_TEXTURE_2D );
 
-	glClearColor( 0, 0, 0, 0.1 );
+	glClearColor( 0, 0, 0, 0.1f );
 
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );

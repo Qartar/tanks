@@ -10,6 +10,8 @@ Date	:	10/15/2004
 ===============================================================================
 */
 
+#include "net_main.h"
+
 #include "gl_main.h"
 #include "g_main.h"
 
@@ -62,6 +64,8 @@ private:
 
 	void		m_KeyEvent (int Param, bool Down);
 	void		m_MouseEvent (int mstate);
+
+	cNetwork	m_Network;
 };
 
 extern cWinApp *g_Application;

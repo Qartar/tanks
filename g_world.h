@@ -12,9 +12,9 @@ Date	:	10/21/2004
 
 #define MAX_OBJECTS	16
 
-#define FRAMETIME	0.1
-
 #include "r_particle.h"
+
+typedef enum eEffects effects_t;
 
 enum eObjectType
 {
@@ -51,6 +51,9 @@ public:
 	virtual void	Draw ();
 	virtual void	Touch (cObject *pOther);
 	virtual void	Think ();
+
+	bool	bInGame;
+	int		nPlayer;
 };
 
 class cTank : public cObject
@@ -69,26 +72,15 @@ public:
 	float	flTAngle, flTVel;
 	float	flDamage;
 	int		nPlayerNum;
-
-	bool	m_bComputer;
-	char	m_szScript[64];
-
-	cScript::iterator	m_Iterator;
+	float	flDeadTime;
 
 	bool	m_Keys[8];
-private:
 
 	float	flLastFire;
 	cBullet	m_Bullet;
 };
 
-#define MAX_PARTICLES	256
-
-enum eEffects
-{
-	effect_sparks,
-	effect_explosion
-};
+#define MAX_PARTICLES	1024
 
 class cWorld
 {

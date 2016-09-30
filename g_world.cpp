@@ -37,6 +37,9 @@ void cWorld::Shutdown ()
 
 void cWorld::Reset ()
 {
+	for ( int i=0 ; i<MAX_OBJECTS ; i++ )
+		if ( m_Objects[i] )
+			DelObject( m_Objects[i] );
 }
 
 /*
@@ -114,7 +117,7 @@ Purpose	:	Runs the world one frame, runs think funcs and movement
 
 void cWorld::RunFrame ()
 {
-	int			i, j;
+	int			i;
 
 	for (i=0 ; i<MAX_OBJECTS ; i++)
 	{
@@ -152,7 +155,6 @@ void cWorld::MoveObject (cObject *pObject)
 	float	flOldAngle;
 
 	vec2	vDelta;
-	float	flEpsilon;
 
 	int			i;
 
@@ -257,6 +259,8 @@ Purpose	:	adds particle effects
 
 void cWorld::AddEffect (vec2 vPos, eEffects eType)
 {
+	g_Game->m_WriteEffect( eType, vPos, vec2(0,0), 0 );
+
 	if (eType == effect_sparks)
 	{
 		int		i;
@@ -291,7 +295,7 @@ void cWorld::AddEffect (vec2 vPos, eEffects eType)
 			p->vPos = vPos + vec2(crand()*8,crand()*8);
 			p->vVel = vec2(crand()*128,crand()*128);
 
-			p->vColor = vec4(1.0,frand(),0.0,0.1);
+			p->vColor = vec4(1.0f,frand(),0.0f,0.1f);
 			p->vColorVel = vec4(0,0,0,-p->vColor.a/(0.2+frand()*frand()*2.0f));
 			p->flSize = 8.0 + frand()*16.0f;
 			p->flSizeVel = 1.0f;
@@ -321,6 +325,8 @@ void cWorld::AddSmokeEffect (vec2 vPos, vec2 vVel, int nCount)
 {
 	int			i;
 	cParticle	*p;
+
+	g_Game->m_WriteEffect( effect_smoke, vPos, vVel, nCount );
 
 	for (i=0 ; i<nCount ; i++)
 	{

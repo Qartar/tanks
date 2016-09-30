@@ -12,11 +12,6 @@ Date	:	10/29/2004
 
 #include "local.h"
 
-#define CHAR_WIDTH	2.5
-
-#define over(a,b,c) ( (clamp(a.x,b.x-c.x/2,b.x+c.x/2) == a.x ) && (clamp(a.y,b.y-c.y/2,b.y+c.y/2) == a.y ) )
-
-
 /*
 ===========================================================
 
@@ -83,8 +78,8 @@ void cBaseButton::Draw (vec2 vCursorPos)
 
 	nColorText = nColorIn + 2;
 
-	vInSize.x = m_vSize.x - 4;
-	vInSize.y = m_vSize.y - 4;
+	vInSize.x = m_vSize.x - 2;
+	vInSize.y = m_vSize.y - 2;
 
 	vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;	// len * char_width / 2
 	vTextPos.y = m_vPos.y + 4;								// char_height / 2
@@ -182,8 +177,8 @@ void cCondButton::Draw (vec2 vCursorPos)
 		nColorText = 3;
 	}
 
-	vInSize.x = m_vSize.x - 4;
-	vInSize.y = m_vSize.y - 4;
+	vInSize.x = m_vSize.x - 2;
+	vInSize.y = m_vSize.y - 2;
 
 	vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;	// len * char_width / 2
 	vTextPos.y = m_vPos.y + 4;								// char_height / 2
@@ -277,8 +272,8 @@ void cMenuButton::Draw (vec2 vCursorPos)
 		nColorText = 3;
 	}
 
-	vInSize.x = m_vSize.x - 4;
-	vInSize.y = m_vSize.y - 4;
+	vInSize.x = m_vSize.x - 2;
+	vInSize.y = m_vSize.y - 2;
 
 	vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;	// len * char_width / 2
 	vTextPos.y = m_vPos.y + 4;								// char_height / 2
@@ -307,70 +302,13 @@ cTankButton::cTankButton (char *szTitle, vec2 vPos, vec2 vSize, cTank *pTank)
 	m_pTank = pTank;
 	m_nTankColor = pTank->nPlayerNum;
 
-	m_vBoxPos.x = vPos.x - vSize.x / 2 + 10;
-	m_vBoxPos.y = vPos.y + vSize.y / 2 - 10;
-	m_vBoxSize.x = 12;
-	m_vBoxSize.y = 12;
-
-	m_vTextPos.x = vPos.x + m_vBoxSize.x / 2;
-	m_vTextPos.y = vPos.y + vSize.y / 2 - 10;
-
-	m_vTextSize.x = vSize.x - m_vBoxSize.x - 10;
-	m_vTextSize.y = 12;
-
 	m_bOver = false;
 	m_bClicked = false;
-	m_bWriting = false;
-	m_scrCursor = 0;
-
-	m_pTank->m_bComputer = false;
-	memset( m_pTank->m_szScript, 0, 64 );
-}
-
-void cTankButton::Key_Event (int nKey, bool bDown)
-{
-	if (!bDown)
-		return;
-
-	if (nKey <= 32)
-		return;
-
-	if ((nKey == 127) && (m_scrCursor > 0))
-	{
-		m_pTank->m_szScript[--m_scrCursor] = 0;
-		return;
-	}
-	else if (m_scrCursor < 63)
-	{
-		m_pTank->m_szScript[m_scrCursor++] = nKey;
-		return;
-	}
 }
 
 bool cTankButton::Click (vec2 vCursorPos, bool bDown)
 {
-	if ( m_bOver = over( vCursorPos, m_vBoxPos, m_vBoxSize ) )
-	{
-		if (bDown)
-			m_pTank->m_bComputer ^= 1;
-		return false;
-	}
-
 	m_bOver = m_Over( vCursorPos );
-
-	if ( over( vCursorPos, m_vTextPos, m_vTextSize ) )
-	{
-		g_Game->SetInputObject( this );
-		m_bWriting = true;
-		return false;
-	}
-	else if ( m_bOver )
-	{
-		g_Game->SetInputObject( NULL );
-		m_bWriting = false;
-		return false;
-	}
-
 
 	if (m_bOver && bDown)
 	{
@@ -395,13 +333,6 @@ void cTankButton::Draw (vec2 vCursorPos)
 	int		nColorIn, nColorOut, nColorText;
 	vec2	vInSize, vTextPos;
 
-	int		nBoxIn, nBoxOut;
-	int		nTextOut;
-	int		nTextIn;
-	vec2	vBoxSizeIn;
-	vec2	vTextSizeIn;
-	vec2	vScriptPos;
-
 	m_bOver = m_Over( vCursorPos );
 
 	if (m_bOver)
@@ -414,53 +345,17 @@ void cTankButton::Draw (vec2 vCursorPos)
 	else
 		nColorIn = 5;
 
-	if (m_pTank->m_bComputer)
-		nBoxIn = 6;
-	else
-		nBoxIn = 3;
-
-	if ( over( vCursorPos, m_vBoxPos, m_vBoxSize ) )
-		nBoxOut = 6;
-	else
-		nBoxOut = 4;
-
-	if ( over( vCursorPos, m_vTextPos, m_vTextSize ) )
-		nTextOut = 6;
-	else
-		nTextOut = 4;
-
-	if (m_bWriting)
-		nTextIn = 4;
-	else
-		nTextIn = 3;
-
 	nColorText = nColorIn + 2;
 
-	vInSize.x = m_vSize.x - 4;
-	vInSize.y = m_vSize.y - 4;
+	vInSize.x = m_vSize.x - 2;
+	vInSize.y = m_vSize.y - 2;
 
 	vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;	// len * char_width / 2
-	vTextPos.y = m_vPos.y - m_vSize.y / 2 + 16;
-
-	vBoxSizeIn.x = m_vBoxSize.x - 2;
-	vBoxSizeIn.y = m_vBoxSize.y - 2;
-
-	vTextSizeIn.x = m_vTextSize.x - 2;
-	vTextSizeIn.y = m_vTextSize.y - 2;
-
-	vScriptPos.x = m_vTextPos.x - m_vTextSize.x / 2 + 2;
-	vScriptPos.y = m_vTextPos.y + m_vTextSize.y / 2 - 2;
+	vTextPos.y = m_vPos.y + m_vSize.y / 2 - 4;
 
 	g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[nColorOut] );
 	g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
 	g_Render->DrawString( m_szTitle, vTextPos, menu_colors[nColorText] );
-
-	g_Render->DrawBox( m_vBoxSize, m_vBoxPos, 0, menu_colors[nBoxOut] );
-	g_Render->DrawBox( vBoxSizeIn, m_vBoxPos, 0, menu_colors[nBoxIn] );
-
-	g_Render->DrawBox( m_vTextSize, m_vTextPos, 0, menu_colors[nTextOut] );
-	g_Render->DrawBox( vTextSizeIn, m_vTextPos, 0, menu_colors[nTextIn] );
-	g_Render->DrawString( m_pTank->m_szScript, vScriptPos, menu_colors[nColorText] );
 
 	g_Render->DrawModel( m_pTank->pModel, m_vPos, 0, m_pTank->vColor );
 	g_Render->DrawModel( m_pTank->pTurret, m_vPos, 0, m_pTank->vColor );
@@ -469,28 +364,58 @@ void cTankButton::Draw (vec2 vCursorPos)
 /*
 ===========================================================
 
-Name	:	cRangeButton
+Name	:	cColorButton
 
-Purpose	:	range
+Purpose	:	set the client color
 
 ===========================================================
 */
 
-cRangeButton::cRangeButton (char *szTitle, vec2 vPos, vec2 vSize, int nMax, int *nVal)
+cClientButton::cClientButton (char *szTitle, vec2 vPos, vec2 vSize, vec4 *pColor)
 {
 	strncpy( m_szTitle, szTitle, 64 );
 	m_vPos = vPos;
 	m_vSize = vSize;
 
-	m_nMax = nMax;
-	m_nVal = nVal;
+	m_pColor = pColor;
+	m_nColor = 0;
+
 	m_bOver = false;
 	m_bClicked = false;
+
+	m_vTextBoxPos.x = m_vPos.x;
+	m_vTextBoxPos.y = m_vPos.y + m_vSize.y / 2 - 12;
+
+	m_vTextBoxSize.x = m_vSize.x - 16;
+	m_vTextBoxSize.y = 14;
+
 }
 
-bool cRangeButton::Click (vec2 vCursorPos, bool bDown)
+bool cClientButton::Click (vec2 vCursorPos, bool bDown)
 {
 	m_bOver = m_Over( vCursorPos );
+
+	m_bTextOver = ( vCursorPos.x < m_vTextBoxPos.x+m_vTextBoxSize.x/2 && vCursorPos.x > m_vTextBoxPos.x-m_vTextBoxSize.x/2 &&
+		m_vTextBoxPos.y+m_vTextBoxSize.y/2 && vCursorPos.y > m_vTextBoxPos.y-m_vTextBoxSize.y/2 );
+    
+	if ( m_bTextOver )
+	{
+		m_bOver = false;
+		m_bClicked = false;
+
+		if ( bDown )
+		{
+			g_Game->bClientButton ^= 1;
+			m_bTextDown ^= 1;
+		}
+	
+		return false;
+	}
+	else
+	{
+		m_bTextDown = false;
+		m_bTextOver = false;
+	}
 
 	if (m_bOver && bDown)
 	{
@@ -499,22 +424,51 @@ bool cRangeButton::Click (vec2 vCursorPos, bool bDown)
 	else if (m_bClicked && m_bOver && !bDown)
 	{
 		m_bClicked = false;
-		*m_nVal = (*m_nVal+1)%m_nMax;
+		m_nColor = (m_nColor+1)%NUM_PLAYER_COLORS;
+		*m_pColor = player_colors[m_nColor];
 	}
 	else if (!bDown)
 	{
 		m_bClicked = false;
 	}
-
 	return false;
 }
 
-void cRangeButton::Draw (vec2 vCursorPos)
+void cClientButton::Draw (vec2 vCursorPos)
 {
 	int		nColorIn, nColorOut, nColorText;
+	int		nTextIn, nTextOut;
 	vec2	vInSize, vTextPos;
 
+	vec2	vTextBoxText;
+
 	m_bOver = m_Over( vCursorPos );
+
+	m_bTextOver = ( vCursorPos.x < m_vTextBoxPos.x+m_vTextBoxSize.x/2 && vCursorPos.x > m_vTextBoxPos.x-m_vTextBoxSize.x/2 &&
+		vCursorPos.y < m_vTextBoxPos.y+m_vTextBoxSize.y/2 && vCursorPos.y > m_vTextBoxPos.y-m_vTextBoxSize.y/2 );
+    
+	if ( !g_Game->bClientButton )
+	{
+		m_bTextOver = false;
+		m_bTextDown = false;
+	}
+	else if ( m_bTextOver )
+	{
+		m_bOver = false;
+		m_bClicked = false;
+	}
+	else
+		m_bTextOver = false;
+
+	if ( m_bTextOver )
+		nTextOut = 6;
+	else
+		nTextOut = 4;
+
+	if ( m_bTextDown )
+		nTextIn = 5;
+	else
+		nTextIn = 3;
 
 	if (m_bOver)
 		nColorOut = 6;
@@ -528,15 +482,71 @@ void cRangeButton::Draw (vec2 vCursorPos)
 
 	nColorText = nColorIn + 2;
 
-	vInSize.x = m_vSize.x - 4;
-	vInSize.y = m_vSize.y - 4;
+	vInSize.x = m_vSize.x - 2;
+	vInSize.y = m_vSize.y - 2;
 
 	vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;	// len * char_width / 2
-	vTextPos.y = m_vPos.y + 4;								// char_height / 2
+	vTextPos.y = m_vPos.y - m_vSize.y / 2 + 16;
+	
+	vTextBoxText.x = m_vPos.x - m_vSize.x / 2 + 12;
+	vTextBoxText.y = m_vTextBoxPos.y + 4;
 
 	g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[nColorOut] );
 	g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
 	g_Render->DrawString( m_szTitle, vTextPos, menu_colors[nColorText] );
-	vTextPos.y += 12;
-	g_Render->DrawString( va("%i",*m_nVal), vTextPos, menu_colors[nColorText] );
+
+	g_Render->DrawBox( m_vTextBoxSize, m_vTextBoxPos, 0, menu_colors[nTextOut] );
+	g_Render->DrawBox( vec2(m_vTextBoxSize.x-2,m_vTextBoxSize.y-2), m_vTextBoxPos, 0, menu_colors[nTextIn] );
+	g_Render->DrawString( g_Game->cls.name, vTextBoxText, menu_colors[7] );
+
+	g_Render->DrawModel( &tank_body_model, m_vPos, 0, *m_pColor );
+	g_Render->DrawModel( &tank_turret_model, m_vPos, 0, *m_pColor );
+}
+
+/*
+===============================================================================
+
+Name	:	cCheckButton
+
+===============================================================================
+*/
+
+cCheckButton::cCheckButton (char *szTitle, vec2 vPos, bool *pValue)
+{
+	strncpy( m_szTitle, szTitle, 64 );
+	m_vPos = vPos;
+	m_pValue = pValue;
+
+	m_bOver = false;
+	m_bClicked = false;
+}
+
+bool cCheckButton::Click (vec2 vCursorPos, bool bDown)
+{
+	if ( over(vCursorPos,m_vPos,vec2(12,12)) )
+	{
+		if (bDown)
+			*m_pValue ^= 1;
+	}
+
+	return false;
+}
+
+void cCheckButton::Draw (vec2 vCursorPos)
+{
+	int	nBoxIn, nBoxOut;
+
+	if ( over( vCursorPos, m_vPos, vec2(12,12)) )
+		nBoxOut = 6;
+	else
+		nBoxOut = 4;
+
+	if (*m_pValue)
+		nBoxIn = 6;
+	else
+		nBoxIn = 3;
+
+	g_Render->DrawBox( vec2(12,12), m_vPos, 0, menu_colors[nBoxOut] );
+	g_Render->DrawBox( vec2(10,10), m_vPos, 0, menu_colors[nBoxIn] );
+	g_Render->DrawString( m_szTitle, vec2(m_vPos.x+10,m_vPos.y+4), menu_colors[7] );
 }

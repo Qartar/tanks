@@ -14,9 +14,13 @@ Date	:	10/20/2004
 
 // menu func routines
 void menu_func_resume	() { g_Game->Resume( );		}
-void menu_func_newgame	() { g_Game->NewGame( );	}
+void menu_func_newgame	() { g_Game->m_StopClient( ); g_Game->m_StopServer( ); g_Game->NewGame( );	}
 void menu_func_reset	() { g_Game->Reset( );		}
-void menu_func_quit		() { g_Application->Quit( 0 );	}
+void menu_func_quit		() { g_Game->m_StopClient( ); g_Game->m_StopServer( ); g_Application->Quit( 0 );	}
+
+void menu_func_host		() { g_Game->m_StartServer( ); }
+void menu_func_join		() { g_Game->m_ConnectToServer( ); }
+void menu_func_refresh	() { g_Game->m_InfoAsk( ); }
 
 /*
 ===========================================================
@@ -32,31 +36,49 @@ void cMenu::Init ()
 {
 	// base
 
-	m_SubMenus[0] = new cMenu;	// multiplayer
-//	m_SubMenus[1] = new cMenu;	// video options
-	AddButton( new cMenuButton(	"Network Game",		vec2(56,32),	vec2(96,32),	NULL,	NULL ) );
+	m_SubMenus[0] = new cMenu;	// local
+	m_SubMenus[1] = new cMenu;	// network
+	AddButton( new cMenuButton(	"Network Game",		vec2(56,32),	vec2(96,32),	this,	m_SubMenus[1] ) );
 	AddButton( new cMenuButton( "Local Game",		vec2(56,80),	vec2(96,32),	this,	m_SubMenus[0] ) );
-	AddButton( new cMenuButton( "Video Options",	vec2(56,128),	vec2(96,32),	NULL,	NULL ) );
+	AddButton( new cMenuButton( "Video Options",	vec2(56,128),	vec2(96,32),	this,	NULL ) );
 	AddButton( new cBaseButton( "Quit",				vec2(56,176),	vec2(96,32),	menu_func_quit ) );
 
-	// multiplayer
+	// local
 
-	m_SubMenus[0]->m_SubMenus[0] = new cMenu;	// multiplayer->options
+	m_SubMenus[0]->m_SubMenus[0] = new cMenu;	// local->options
 	m_SubMenus[0]->AddButton( new cCondButton( "Resume",	vec2(144,32),	vec2(64,32),	menu_func_resume,	&g_Game->m_bGameActive ) );	
 	m_SubMenus[0]->AddButton( new cBaseButton( "New Round",	vec2(144,80),	vec2(64,32),	menu_func_newgame ) );
 	m_SubMenus[0]->AddButton( new cBaseButton( "Reset",		vec2(144,128),	vec2(64,32),	menu_func_reset ) );
 	m_SubMenus[0]->AddButton( new cMenuButton( "Options",	vec2(144,176),	vec2(64,32),	m_SubMenus[0],	m_SubMenus[0]->m_SubMenus[0] ) );
 
-	// multiplater->options
+	// local->options
 
+	m_SubMenus[0]->m_SubMenus[0]->m_SubMenus[0] = new cOptionsMenu("Game Options", vec2(440,56), vec2(96,80));	// local->options->options
 	m_SubMenus[0]->m_SubMenus[0]->AddButton( new cTankButton( "Player 1", vec2(232,56), vec2(96,80), &g_Game->m_Players[0] ) );
 	m_SubMenus[0]->m_SubMenus[0]->AddButton( new cTankButton( "Player 2", vec2(336,56), vec2(96,80), &g_Game->m_Players[1] ) );
+	m_SubMenus[0]->m_SubMenus[0]->ActivateMenu( NULL, m_SubMenus[0]->m_SubMenus[0]->m_SubMenus[0] );	// force activate
 
-	// video options
+	// local->options->game_options
 
-//	m_SubMenus[0]->
+	m_SubMenus[0]->m_SubMenus[0]->m_SubMenus[0]->AddButton( new cCheckButton( "Extended Armor", vec2(440-38,38), &g_Game->bExtendedArmor ) );
+	m_SubMenus[0]->m_SubMenus[0]->m_SubMenus[0]->AddButton( new cCheckButton( "Random Spawn", vec2(440-38,52), &g_Game->bRandomSpawn ) );
+	m_SubMenus[0]->m_SubMenus[0]->m_SubMenus[0]->AddButton( new cCheckButton( "Auto Restart", vec2(440-38,66), &g_Game->bAutoRestart ) );
 
-	
+	// network
+
+	m_SubMenus[1]->AddButton( new cCondButton( "Resume",	vec2(144,32),	vec2(64,32),	menu_func_resume,	&g_Game->m_bGameActive ) );	
+	m_SubMenus[1]->AddButton( new cBaseButton( "Host",		vec2(144,80),	vec2(64,32),	menu_func_host	)	);
+	m_SubMenus[1]->AddButton( new cCondButton( "Join",		vec2(144,128),	vec2(64,32),	menu_func_join,		&g_Game->m_bHaveServer	)	);
+	m_SubMenus[1]->AddButton( new cBaseButton( "Refresh",	vec2(144,176),	vec2(64,32),	menu_func_refresh	)	);
+	m_SubMenus[1]->AddButton( new cClientButton( "Player", vec2(232,56), vec2(96,80), &g_Game->cls.color ) );
+
+#if 0
+	// options
+	m_SubMenus[2]->m_SubMenus[0] = new cMenu;	// options->local
+	m_SubMenus[2]->m_SubMenus[1] = new cMenu;	// options->netork
+	m_SubMenus[2]->AddButton( new cMenuButton( "Local", vec2(144,80), vec2(64,32),		m_SubMenus[2],	m_SubMenus[2]->m_SubMenus[0] )	);
+	m_SubMenus[2]->AddButton( new cMenuButton( "Network", vec2(144,32), vec2(64,32),	m_SubMenus[2],	m_SubMenus[2]->m_SubMenus[1] )	);
+#endif
 }
 
 
@@ -146,7 +168,7 @@ void cMenu::Draw (vec2 vCursorPos)
 	// show the keys
 
 	g_Render->DrawBox( vec2(192,256), vec2(320,240), 0, menu_colors[4] );
-	g_Render->DrawBox( vec2(188,252), vec2(320,240), 0, menu_colors[5] );
+	g_Render->DrawBox( vec2(190,254), vec2(320,240), 0, menu_colors[5] );
 
 	g_Render->DrawString( "Action:", vec2(COL1,240-128+16), menu_colors[7] );
 	g_Render->DrawString( "Player 1:", vec2(COL2,240-128+16), menu_colors[7] );
@@ -201,6 +223,48 @@ Purpose	:	Processes a click from the user
 */
 
 void cMenu::Click (vec2 vCursorPos, bool bDown)
+{
+	int			i = 0;
+
+	for (i=0 ; i<MAX_BUTTONS ; i++)
+		if (m_Buttons[i])
+			m_Buttons[i]->Click( vCursorPos, bDown );
+
+	if (m_ActiveMenu)
+		m_ActiveMenu->Click( vCursorPos, bDown );
+}
+
+/*
+===========================================================
+
+Name	:	cOptionsMenu
+
+Purpose	:	behaves a bit different than cMenu
+
+===========================================================
+*/
+
+cOptionsMenu::cOptionsMenu (char *szTitle, vec2 vPos, vec2 vSize)
+{
+	strncpy( m_szTitle, szTitle, 64 );
+	m_vPos = vPos;
+	m_vSize = vSize;
+}
+
+void cOptionsMenu::Draw (vec2 vCursorPos)
+{
+	int			i;
+
+	g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[4] );
+	g_Render->DrawBox( vec2(m_vSize.x-2,m_vSize.y-2), m_vPos, 0, menu_colors[5] );
+	g_Render->DrawString( m_szTitle, vec2(m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH,m_vPos.y - m_vSize.y / 2 + 12), menu_colors[7] );
+
+	for (i=0 ; i<MAX_BUTTONS ; i++)
+		if (m_Buttons[i])
+			m_Buttons[i]->Draw( vCursorPos );
+}
+
+void cOptionsMenu::Click (vec2 vCursorPos, bool bDown)
 {
 	int			i = 0;
 

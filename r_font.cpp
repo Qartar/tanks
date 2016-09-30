@@ -149,7 +149,7 @@ int cFont::Init (char *szName, int nSize, unsigned int bitFlags)
 		FALSE,
 		FALSE,
 		FALSE,
-		ANSI_CHARSET,
+		RUSSIAN_CHARSET,
 		OUT_TT_PRECIS,
 		CLIP_DEFAULT_PRECIS,
 		ANTIALIASED_QUALITY,
