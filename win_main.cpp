@@ -1,0 +1,349 @@
+/*
+===============================================================================
+
+Name	:	win_main.h
+
+Purpose	:	Windows API Interface
+
+Date	:	10/15/2004
+
+===============================================================================
+*/
+
+#include "local.h"
+#include "keys.h"
+
+cWinApp	*g_Application;	// global instance, extern declaration in "win_main.h"
+
+/*
+===========================================================
+
+Name	:	WinMain
+
+Purpose	:	Program Entry ; routes to cWinApp::Main
+
+===========================================================
+*/
+
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR szCmdLine, int nCmdShow)
+{
+	cWinApp	Application;
+
+	g_Application = &Application;	// set up global object
+
+	return Application.Main( hInstance, szCmdLine, nCmdShow );
+}
+
+/*
+===========================================================
+
+Name	:	cWinApp::Main
+
+Purpose	:	internal replacement for WinMain (or main in console)
+
+===========================================================
+*/
+
+int cWinApp::Main (HINSTANCE hInstance, LPSTR szCmdLine, int nCmdShow)
+{
+	float	flTime, flNewTime, flOldTime;
+	MSG		msgMessage;
+
+	Init( hInstance, szCmdLine );
+
+	flOldTime = get_time( );
+
+	while( true )
+	{
+		// message loop (pump)
+
+		while ( PeekMessage( &msgMessage, NULL, 0, 0, PM_NOREMOVE ) )
+		{
+			if ( !GetMessage( &msgMessage, NULL, 0, 0 ) )
+				return Shutdown( );
+
+			TranslateMessage( &msgMessage );
+			DispatchMessage( &msgMessage );
+		}
+
+		// inactive/idle loop
+
+		if ( !m_glWnd.get_WndParams().bActive )
+		{
+			Sleep( 10 );
+			flOldTime = get_time( );
+			continue;
+		}
+
+		// wait loop
+
+		flNewTime = get_time( );
+		if ( ( flTime = flNewTime - flOldTime ) < 1.0f )
+		{
+			Sleep( 1 );
+			continue;
+		}
+
+		flOldTime = flNewTime;
+
+		m_Game.RunFrame( flTime );
+	}
+
+	// abnormal termination
+	return ERROR_UNKNOWN;
+}
+
+/*
+===========================================================
+
+Name	:	cWinApp::Init
+
+Purpose	:	initialize timer and data members
+
+===========================================================
+*/
+int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
+{
+	// set instance
+	m_hInstance = hInstance;
+
+	// init timer
+	QueryPerformanceFrequency( &m_timerFrequency );
+	QueryPerformanceCounter( &m_timerBase );
+
+	srand( get_time( ) );
+
+	// init game
+	m_Game.Init( );
+
+	// init opengl
+	m_glWnd.Init( m_hInstance, (WNDPROC )m_WndProc );
+
+	return ERROR_NONE;
+}
+
+/*
+===========================================================
+
+Name	:	cWinApp::Shutdown
+
+Purpose	:	shuts down the application completely
+			the program ends right after calling this
+
+===========================================================
+*/
+
+int cWinApp::Shutdown ()
+{
+	// shutdown opengl
+	m_glWnd.Shutdown( );
+
+	// shutdown game
+	m_Game.Shutdown( );
+
+	return m_nExitCode;
+}
+
+/*
+===========================================================
+
+Name	:	cWinApp::Error
+
+Purpose	:	outputs an error using a message box
+			for use before graphics have been successfully
+			initialized
+
+===========================================================
+*/
+
+void cWinApp::Error (char *szTitle, char *szMessage)
+{
+	MessageBox( NULL, szMessage, szTitle, MB_OK );
+
+	Quit( ERROR_FAIL );
+}
+
+/*
+===========================================================
+
+Name	:	cWinApp::Quit
+
+Purpose	:	causes the program to begin the exit sequence
+
+===========================================================
+*/
+
+void cWinApp::Quit (int nExitCode)
+{
+	// save the exit code for shutdown
+	m_nExitCode = nExitCode;
+
+	// tell windows we dont want to play anymore
+	PostQuitMessage( nExitCode );
+}
+
+/*
+===========================================================
+
+Name	:	cWinApp::m_WndProc
+
+Purpose	:	internal static function for windows message handling
+
+===========================================================
+*/
+
+LRESULT cWinApp::m_WndProc (HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
+{
+	switch (nCmd)
+	{
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	// Game Messages
+
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_MOUSEMOVE:
+		g_Application->m_MouseEvent ( wParam );
+		break;
+
+	case WM_KEYDOWN:
+		g_Application->m_KeyEvent( lParam, true );
+		break;
+	case WM_KEYUP:
+		g_Application->m_KeyEvent( lParam, false );
+		break;
+
+	// glWnd Messages
+
+	case WM_ACTIVATE:
+	case WM_SIZE:
+	case WM_MOVE:
+		return g_Application->m_glWnd.Message( nCmd, wParam, lParam );
+
+	default:
+		return DefWindowProc( hWnd, nCmd, wParam, lParam );
+	}
+
+	return 0;
+}
+
+/*
+===========================================================
+
+Name	:	cWinApp::m_KeyEvent
+
+Purpose	:	translates a win message into a key code
+
+===========================================================
+*/
+
+void cWinApp::m_KeyEvent (int Param, bool Down)
+{
+	int result;
+	int modified = ( Param >> 16 ) & 255;
+	bool	is_extended = false;
+
+	if ( modified > 127)
+		return;
+
+	if ( Param & ( 1 << 24 ) )
+		is_extended = true;
+
+	result = keymap[modified];
+
+	if ( !is_extended )
+	{
+		switch ( result )
+		{
+		case K_HOME:
+			result = K_KP_HOME;
+			break;
+		case K_UPARROW:
+			result = K_KP_UPARROW;
+			break;
+		case K_PGUP:
+			result = K_KP_PGUP;
+			break;
+		case K_LEFTARROW:
+			result = K_KP_LEFTARROW;
+			break;
+		case K_RIGHTARROW:
+			result = K_KP_RIGHTARROW;
+			break;
+		case K_END:
+			result = K_KP_END;
+			break;
+		case K_DOWNARROW:
+			result = K_KP_DOWNARROW;
+			break;
+		case K_PGDN:
+			result = K_KP_PGDN;
+			break;
+		case K_INS:
+			result = K_KP_INS;
+			break;
+		case K_DEL:
+			result = K_KP_DEL;
+			break;
+		default:
+			break;
+		}
+	}
+	else
+	{
+		switch ( result )
+		{
+		case 0x0D:
+			result = K_KP_ENTER;
+			break;
+		case 0x2F:
+			result = K_KP_SLASH;
+			break;
+		case 0xAF:
+			result = K_KP_PLUS;
+			break;
+		}
+	}
+
+	m_Game.Key_Event( result, Down );
+}
+
+/*
+===========================================================
+
+Name	:	cWinApp::m_MouseEvent
+
+Purpose	:	translates mouse event messages into key codes
+
+===========================================================
+*/
+
+void cWinApp::m_MouseEvent (int mstate)
+{
+	int		i;
+	static int	oldstate;
+
+// perform button actions
+	for (i=0 ; i<3 ; i++)
+	{
+		if ( (mstate & (1<<i)) &&
+			!(oldstate & (1<<i)) )
+		{
+			m_Game.Key_Event (K_MOUSE1 + i, true);
+		}
+
+		if ( !(mstate & (1<<i)) &&
+			(oldstate & (1<<i)) )
+		{
+			m_Game.Key_Event (K_MOUSE1 + i, false);
+		}
+	}	
+		
+	oldstate = mstate;
+}

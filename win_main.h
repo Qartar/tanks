@@ -1,0 +1,67 @@
+/*
+===============================================================================
+
+Name	:	win_main.h
+
+Purpose	:	Windows API Interface
+
+Date	:	10/15/2004
+
+===============================================================================
+*/
+
+#include "gl_main.h"
+#include "g_main.h"
+
+/*
+===========================================================
+
+Name	:	cWinApp
+
+Purpose	:	this is THE windows class winmain calls cWinApp::Main
+			and everything is handled from within the class, wndproc
+			is a static function for compatability issues.
+
+			see win_main.cpp for explanation on member functions
+
+===========================================================
+*/
+
+class cWinApp
+{
+public:
+	cWinApp () : m_nExitCode(0) {}
+	~cWinApp () {}
+
+	int		Main (HINSTANCE hInstance, LPSTR szCmdLine, int nCmdShow);
+
+	int		Init (HINSTANCE hInstance, LPSTR szCmdLine);
+	int		Shutdown ();
+
+	void	Error (char *szTitle, char *szMessage);
+	void	Quit (int nExitCode);
+
+	// get_time : returns time in milliseconds
+	float		get_time () { QueryPerformanceCounter( &m_timerCounter ) ; return ( (float)(m_timerCounter.QuadPart - m_timerBase.QuadPart) / (float)(m_timerFrequency.QuadPart) * 1000.0f ) ; }
+
+	HINSTANCE	get_hInstance () { return m_hInstance; }
+	cOpenGLWnd	*get_glWnd () { return &m_glWnd; }
+
+private:
+	HINSTANCE	m_hInstance;
+	int			m_nExitCode;
+
+	cOpenGLWnd	m_glWnd;
+	cGame		m_Game;
+
+	LARGE_INTEGER	m_timerFrequency;
+	LARGE_INTEGER	m_timerCounter;
+	LARGE_INTEGER	m_timerBase;
+
+	static LRESULT m_WndProc (HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam);	// ATL SUCKS
+
+	void		m_KeyEvent (int Param, bool Down);
+	void		m_MouseEvent (int mstate);
+};
+
+extern cWinApp *g_Application;
