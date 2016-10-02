@@ -55,7 +55,7 @@ public:
 	{
 		mem_head.next = mem_head.prev = &mem_head;
 #pragma warning (disable:4311)
-		srand((unsigned )this);
+		srand((unsigned )(uintptr_t)this);
 #pragma warning (default:4311)
 		mem_id = (rand()&(0xffff));
 	}
@@ -65,7 +65,7 @@ public:
 	{
 		mem_head.next = mem_head.prev = &mem_head;
 #pragma warning (disable:4311)
-		srand((unsigned )this);
+		srand((unsigned )(uintptr_t)this);
 #pragma warning (default:4311)
 		mem_id = (rand()&(0xffff));
 	}

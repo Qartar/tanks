@@ -21,7 +21,7 @@ Date	:	10/15/2004
 #define DEFAULT_Y	100
 #define DEFAULT_W	640
 #define DEFAULT_H	480
-#define DEFAULT_FS	1		// fullscreen
+#define DEFAULT_FS	0		// fullscreen
 #define DEFAULT_MS	1		// multisampling
 
 /*

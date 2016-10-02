@@ -326,7 +326,7 @@ void cTank::UpdateSound ()
 		channels[0]->stopSound( );
 
 	// tread noise
-	if ( (abs( vVel.x ) > 1) || (abs( vVel.y) > 1) || (abs( flAVel ) > 1) )
+	if ( (fabs( vVel.x ) > 1) || (fabs( vVel.y) > 1) || (fabs( flAVel ) > 1) )
 	{
 		if ( !channels[1]->isPlaying( ) )
 			channels[1]->playLoop( sound_index[TANK_MOVE].index );
@@ -338,7 +338,7 @@ void cTank::UpdateSound ()
 		channels[1]->stopSound( );
 
 	// turret noise
-	if ( (abs( flAVel - flTVel ) > 1) )
+	if ( (fabs( flAVel - flTVel ) > 1) )
 	{
 		if ( !channels[2]->isPlaying( ) )
 			channels[2]->playLoop( sound_index[TURRET_MOVE].index );
