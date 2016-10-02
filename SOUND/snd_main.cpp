@@ -17,7 +17,7 @@ int cSound::Init ()
 	gSound = this;
 
 	snd_disable = pVariable->Get( "snd_disable", "false", "bool", CVAR_ARCHIVE, "disables sound playback" );
-	snd_volume =pVariable->Get( "snd_volume", "1.0", "float", CVAR_ARCHIVE, "sound volume" );
+	snd_volume =pVariable->Get( "snd_volume", "0.5", "float", CVAR_ARCHIVE, "sound volume" );
 	snd_frequency = pVariable->Get( "snd_frequency", "22050", "int", CVAR_ARCHIVE, "sound playback speed" );
 	snd_mixahead = pVariable->Get( "snd_mixahead", "0.1", "float", CVAR_ARCHIVE, "sound mix ahead time, in seconds" );
 	snd_primary = pVariable->Get( "snd_primary", "false", "bool", CVAR_ARCHIVE, "use primary sound buffer" );
