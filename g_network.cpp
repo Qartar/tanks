@@ -53,7 +53,6 @@ void cGame::m_StartServer ()
     m_bMultiactive = true;
 
     Reset( );
-//  m_World.Reset( );
 
     // init local player
 
@@ -425,17 +424,9 @@ void cGame::m_GetFrame ()
     // allow some leeway for arriving packets, if they exceed it
     // clamp the time so that the velocity lerping doesn't goof up
     //
-#if 0
-    // low clamp
-    if ( ((m_flTime + CLAMP_TIME) < (float)m_nFramenum * FRAMEMSEC) )
-        m_flTime = (float)m_nFramenum * FRAMEMSEC;
 
-    // high clamp
-    if  ( ((m_flTime - CLAMP_TIME) > (float)m_nFramenum * FRAMEMSEC) )
-        m_flTime = (float)m_nFramenum * FRAMEMSEC;
-#else
     m_flTime = (float )m_nFramenum * FRAMEMSEC;
-#endif
+
     i = 0;
     while ( true )
     {

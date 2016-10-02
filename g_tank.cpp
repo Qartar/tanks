@@ -30,7 +30,6 @@ cTank::cTank ()
 
 void cTank::Draw ()
 {
-//  float   flLerp = (g_Game->m_flTime - g_Game->m_nFramenum * FRAMEMSEC) / 1000.0f;
     float   flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
     float   flTime = clamp(((g_Game->m_flTime - flLastFire) / 150.f) * client->refire_mod,0,20);
     float   flHealth = clamp((1-flDamage)*20,0,20);
@@ -320,7 +319,6 @@ void cTank::UpdateSound ()
         channels[0]->setVolume( 1.0f );
         channels[0]->setAttenuation( 0.0f );
         channels[0]->setFrequency( 1.0f );
-//      channels[0]->setFrequency( 1.0f + (sqrt(vVel.x*vVel.x+vVel.y*vVel.y)/48.0f)*0.5f );
     }
     else if ( channels[0]->isPlaying( ) )
         channels[0]->stopSound( );
@@ -448,7 +446,6 @@ void cBullet::Touch (cObject *pOther)
 
 void cBullet::Draw ()
 {
-//  float   flLerp = (g_Game->m_flTime - g_Game->m_nFramenum * FRAMEMSEC) / 1000.0f;
     float   flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
     vec2    p1, p2;
 

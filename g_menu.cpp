@@ -57,9 +57,6 @@ void cMenu::Init ()
 
     // network
 
-//  m_SubMenus[1]->AddButton( new cBaseButton( "Host",      vec2(48,80),    vec2(64,32),    menu_func_host  )   );
-//  m_SubMenus[1]->AddButton( new cCondButton( "Join",      vec2(48,128),   vec2(64,32),    menu_func_join,     &g_Game->m_bHaveServer  )   );
-
     m_SubMenus[1]->m_SubMenus[0] = new cMenu;
     m_SubMenus[1]->m_SubMenus[1] = new cMenu;
     m_SubMenus[1]->AddButton( new cMenuButton( "Host",      vec2(48,80),    vec2(64,24),    m_SubMenus[1], m_SubMenus[1]->m_SubMenus[0] ) );
@@ -164,53 +161,6 @@ void cMenu::Draw (vec2 vCursorPos)
 
     if (m_ActiveMenu)
         m_ActiveMenu->Draw( vCursorPos );
-#if 0
-    // show the keys
-
-    g_Render->DrawBox( vec2(192,256), vec2(320,240), 0, menu_colors[4] );
-    g_Render->DrawBox( vec2(190,254), vec2(320,240), 0, menu_colors[5] );
-
-    g_Render->DrawString( "Action:", vec2(COL1,240-128+16), menu_colors[7] );
-    g_Render->DrawString( "Player 1:", vec2(COL2,240-128+16), menu_colors[7] );
-    g_Render->DrawString( "Player 2:", vec2(COL3,240-128+16), menu_colors[7] );
-
-    // actions
-    
-    g_Render->DrawString( "Move Ahead", vec2(COL1,ROW+32), menu_colors[7] );
-    g_Render->DrawString( "Move Back", vec2(COL1,ROW+48), menu_colors[7] );
-    g_Render->DrawString( "Turn Left", vec2(COL1,ROW+64), menu_colors[7] );
-    g_Render->DrawString( "Turn Right", vec2(COL1,ROW+80), menu_colors[7] );
-    g_Render->DrawString( "Turret Left", vec2(COL1,ROW+96), menu_colors[7] );
-    g_Render->DrawString( "Turret Right", vec2(COL1,ROW+112), menu_colors[7] );
-    g_Render->DrawString( "Fire!!!", vec2(COL1,ROW+128), menu_colors[7] );
-
-    // player 1 keys
-
-    g_Render->DrawString( "w", vec2(COL2,ROW+32), menu_colors[7] );
-    g_Render->DrawString( "s", vec2(COL2,ROW+48), menu_colors[7] );
-    g_Render->DrawString( "a", vec2(COL2,ROW+64), menu_colors[7] );
-    g_Render->DrawString( "d", vec2(COL2,ROW+80), menu_colors[7] );
-    g_Render->DrawString( "f", vec2(COL2,ROW+96), menu_colors[7] );
-    g_Render->DrawString( "h", vec2(COL2,ROW+112), menu_colors[7] );
-    g_Render->DrawString( "g", vec2(COL2,ROW+128), menu_colors[7] );
-
-    // player 2 keys
-
-    g_Render->DrawString( "Up", vec2(COL3,ROW+32), menu_colors[7] );
-    g_Render->DrawString( "Down", vec2(COL3,ROW+48), menu_colors[7] );
-    g_Render->DrawString( "Left", vec2(COL3,ROW+64), menu_colors[7] );
-    g_Render->DrawString( "Right", vec2(COL3,ROW+80), menu_colors[7] );
-    g_Render->DrawString( "KP 4", vec2(COL3,ROW+96), menu_colors[7] );
-    g_Render->DrawString( "KP 6", vec2(COL3,ROW+112), menu_colors[7] );
-    g_Render->DrawString( "KP 5", vec2(COL3,ROW+128), menu_colors[7] );
-
-    // shortcuts
-
-    g_Render->DrawString( "New Round", vec2(COL1,ROW+160), menu_colors[7] );
-    g_Render->DrawString( "F2", vec2(COL2+32,ROW+160), menu_colors[7] );
-    g_Render->DrawString( "Menu", vec2(COL1,ROW+176), menu_colors[7] );
-    g_Render->DrawString( "Esc", vec2(COL2+32,ROW+176), menu_colors[7] );
-#endif
 }
 
 /*

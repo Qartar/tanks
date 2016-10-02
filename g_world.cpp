@@ -573,8 +573,6 @@ void cWorld::AddFlagTrail (vec2 vPos, int nTeam)
     int         i;
     cParticle   *p;
 
-//  g_Game->m_WriteEffect( effect_smoke, vPos, vVel, nCount );
-
     if ( m_bWeakFX )
         return;
 

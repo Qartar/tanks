@@ -48,14 +48,12 @@ public:
         unsigned int    len;
 
         if (!data) {
-//          throw( filerror_c( "filectrl_c::load | bad pointer\n", ERROR_BADPTR, true ) );
             return 0;
         }
 
         len = m_open( filename, "rb", &file );
 
         if (!file) {
-//          throw( filerror_c( "filectrl_c::load | could not open file for reading\n", ERROR_FAIL, true ) );
             *data = NULL;
             return 0;
         }
@@ -140,7 +138,6 @@ private:
         else if ( (*file = fopen( filename, attribs )) )
             return length( *file );
 
-//      throw( filerror_c( "filectrl_c::m_open | file does not exist\n", ERROR_NOTFOUND, true ) );
         return 0;
     }
 

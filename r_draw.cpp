@@ -23,15 +23,7 @@ Purpose :   draws a string to the screen
 
 void cRender::DrawString (char *szString, vec2 vPos, vec4 vColor)
 {
-#if 0
-    glColor4f( vColor.r, vColor.g, vColor.b, vColor.a );
-
-    glRasterPos2f( vPos.x, vPos.y );
-
-    glCallLists( strlen(szString), GL_UNSIGNED_BYTE, szString );
-#else
     m_Fonts[m_activeFont].Draw( szString, vPos, vColor );
-#endif
 }
 
 /*

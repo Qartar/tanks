@@ -31,9 +31,6 @@ cAudioDevice *cAudioDevice::Create (HWND hWnd)
         if ( devState == device_abort )
             return NULL;
     }
-    
-//  if ( (pDevice = new X)) )
-    
 
     return NULL;
 }

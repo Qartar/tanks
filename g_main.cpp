@@ -666,7 +666,6 @@ int cGame::Key_Event (unsigned char Key, bool Down)
                                 (int )(cls.color.g * 255),
                                 (int )(cls.color.b * 255),
                                 cls.name, m_clientsay ) ); 
-//                          m_WriteMessage( va( "%s: %s", cls.name, m_clientsay ) );
                         }
                     }
                 }
@@ -1010,19 +1009,8 @@ void cGame::m_DrawScore ()
         else if ( i >= 2 )
             break;
 
-                            //m_WriteMessage( va( "\\c%02x%02x%02x%s\\cx: %s",
-                            //  (int )(cls.color.r * 255),
-                            //  (int )(cls.color.g * 255),
-                            //  (int )(cls.color.b * 255),
-
         g_Render->DrawBox( vec2(7,7), vec2(nWidth-96, 32+11+12*n), 0,
             vec4( m_Players[ sort[ i ] ].vColor.r, m_Players[ sort[ i ] ].vColor.g, m_Players[ sort[ i ] ].vColor.b, 1 ) );
-
-        //g_Render->DrawString( va( "\\c%02x%02x%02x[]\\cx%s",
-        //  (int )(m_Players[i].vColor.r * 255),
-        //  (int )(m_Players[i].vColor.g * 255),
-        //  (int )(m_Players[i].vColor.b * 255),
-        //  svs.clients[i].name ), vec2(nWidth-96+4, 32+14+12*n), menu_colors[7] );
 
         g_Render->DrawString( svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7] );
         g_Render->DrawString( va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7] );
@@ -1201,15 +1189,6 @@ void cGame::m_InitPlayers ()
 
         fmt( svs.clients[i].name, "Player %i", i );
     }
-#if 0
-    m_Players[0].pModel = &t80_body_model;
-    m_Players[0].pTurret = &t80_turret_model;
-    m_Players[1].pModel = &abrams_body_model;
-    m_Players[1].pTurret = &abrams_turret_model;
-    m_Players[1].pModel = &blkegl_body_model;
-    m_Players[1].pTurret = &blkegl_turret_model;
-
-#endif // 0
 }
 
 /*
@@ -1228,8 +1207,6 @@ int cGame::Message (char *szMessage, ...)
     va_start( list, szMessage );
     vsprintf( string, szMessage, list );
     va_end( list );
-
-//  m_WriteMessage( string, false );
 
     return ERROR_NONE;
 }

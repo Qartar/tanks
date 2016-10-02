@@ -273,7 +273,6 @@ public:
     bool    bServerButton;
     bool    bClientSay;
 
-//  client_t    svs.clients[MAX_PLAYERS];
 private:
     void    m_GetPackets ();
     void    m_GetFrame ();
