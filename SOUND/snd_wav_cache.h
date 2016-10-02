@@ -1,6 +1,6 @@
 /*=========================================================
-Name	:	snd_wav_cache.h
-Date	:	04/07/2006
+Name    :   snd_wav_cache.h
+Date    :   04/07/2006
 =========================================================*/
 
 #include "snd_wav_source.h"
@@ -11,14 +11,14 @@ Date	:	04/07/2006
 class cSoundWaveCache : public cSoundWaveSource
 {
 public:
-	virtual int				getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping);
+    virtual int             getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping);
 
-	virtual int		Load (char *szFilename);
-	virtual void	Unload ();
+    virtual int     Load (char *szFilename);
+    virtual void    Unload ();
 
 private:
-	virtual void	parseData	(riffChunk_t &chunk);
+    virtual void    parseData   (riffChunk_t &chunk);
 
-	byte	*m_dataCache;	// data chunk
-	int		m_cacheSize;	// in bytes
+    byte    *m_dataCache;   // data chunk
+    int     m_cacheSize;    // in bytes
 };

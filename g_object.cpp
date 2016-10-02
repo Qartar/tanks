@@ -1,9 +1,9 @@
 /*
 ===============================================================================
 
-Name	:	g_object.cpp
+Name    :   g_object.cpp
 
-Purpose	:	implementation of object class
+Purpose :   implementation of object class
 
 ===============================================================================
 */
@@ -13,35 +13,35 @@ Purpose	:	implementation of object class
 
 cObject::cObject ()
 {
-	flAngle = 0;
-	flAVel = 0;
+    flAngle = 0;
+    flAVel = 0;
 
-	vVel = vec2(0,0);
+    vVel = vec2(0,0);
 
-	eType = object_object;
+    eType = object_object;
 }
 
 void cObject::Touch (cObject *pOther)
 {
-	return;
+    return;
 }
 
 void cObject::Draw ()
 {
-	g_Application->get_glWnd()->get_Render()->DrawModel( pModel, vPos, flAngle, vColor );
+    g_Application->get_glWnd()->get_Render()->DrawModel( pModel, vPos, flAngle, vColor );
 }
 
 void cObject::Think ()
 {
-	// regular objects just sit there and act stupid
+    // regular objects just sit there and act stupid
 
-	return;
+    return;
 }
 
 vec2 cObject::GetPos( float lerp ) {
-	return oldPos + ( vPos - oldPos ) * lerp;
+    return oldPos + ( vPos - oldPos ) * lerp;
 }
 
 float cObject::GetAngle( float lerp ) {
-	return oldAngle + ( flAngle - oldAngle ) * lerp;
+    return oldAngle + ( flAngle - oldAngle ) * lerp;
 }

@@ -1,11 +1,11 @@
 /*
 ===============================================================================
 
-Name	:	r_main.h
+Name    :   r_main.h
 
-Purpose	:	Rendering controller
+Purpose :   Rendering controller
 
-Date	:	10/19/2004
+Date    :   10/19/2004
 
 ===============================================================================
 */
@@ -13,53 +13,53 @@ Date	:	10/19/2004
 #ifndef __R_MAIN_H__
 #define __R_MAIN_H__
 
-#define MAX_FONTS	16
-#define NUM_CHARS	256
+#define MAX_FONTS   16
+#define NUM_CHARS   256
 
 /*
 ===========================================================
 
-Name	:	cFont (r_font.cpp)
+Name    :   cFont (r_font.cpp)
 
-Purpose	:	OpenGL Font Encapsulation
+Purpose :   OpenGL Font Encapsulation
 
 ===========================================================
 */
 
-typedef int	rfont_t;
+typedef int rfont_t;
 class cFont
 {
 public:
-	cFont () {}
-	~cFont () {}
+    cFont () {}
+    ~cFont () {}
 
-	int		Init (char *szName, int nSize, unsigned int bitFlags);
-	int		Shutdown ();
+    int     Init (char *szName, int nSize, unsigned int bitFlags);
+    int     Shutdown ();
 
-	bool	Compare (char *szName, int nSize, unsigned int bitFlags);
-	HFONT	Activate ();
+    bool    Compare (char *szName, int nSize, unsigned int bitFlags);
+    HFONT   Activate ();
 
-	void	Draw (char *szString, vec2 vPos, vec4 vColor);
+    void    Draw (char *szString, vec2 vPos, vec4 vColor);
 
-	bool	is_inuse () { return (m_hFont != NULL); }
+    bool    is_inuse () { return (m_hFont != NULL); }
 
 private:
-	HFONT		m_hFont;
-	unsigned 	m_listBase;
+    HFONT       m_hFont;
+    unsigned    m_listBase;
 
-	byte		m_width[NUM_CHARS];
+    byte        m_width[NUM_CHARS];
 
-	char		m_szName[64];
-	int			m_nSize;
-	unsigned int	m_bitFlags;
+    char        m_szName[64];
+    int         m_nSize;
+    unsigned int    m_bitFlags;
 };
 
 /*
 ===========================================================
 
-Name	:	cRender (r_main.cpp)
+Name    :   cRender (r_main.cpp)
 
-Purpose	:	Rendering controller object
+Purpose :   Rendering controller object
 
 ===========================================================
 */
@@ -72,57 +72,57 @@ typedef int rimage_t;
 class cRender
 {
 public:
-	cRender () {}
-	~cRender () {}
+    cRender () {}
+    ~cRender () {}
 
-	int		Init ();
-	int		Shutdown ();
+    int     Init ();
+    int     Shutdown ();
 
-	void	BeginFrame ();
-	void	EndFrame ();
+    void    BeginFrame ();
+    void    EndFrame ();
 
-	void	Resize () { m_setDefaultState( ) ; }
+    void    Resize () { m_setDefaultState( ) ; }
 
-	// Font Interface (r_font.cpp)
+    // Font Interface (r_font.cpp)
 
-	rfont_t	AddFont (char *szName, int nSize, unsigned int bitFlags);
-	int		RemoveFont (rfont_t hFont);
-	rfont_t	UseFont (rfont_t hFont);
+    rfont_t AddFont (char *szName, int nSize, unsigned int bitFlags);
+    int     RemoveFont (rfont_t hFont);
+    rfont_t UseFont (rfont_t hFont);
 
-	//	Image Interface (r_image.cpp)
-	rimage_t	LoadImage( const char *szFilename );
-	void		DrawImage( rimage_t img, vec2 org, vec2 sz, vec4 color );
+    //  Image Interface (r_image.cpp)
+    rimage_t    LoadImage( const char *szFilename );
+    void        DrawImage( rimage_t img, vec2 org, vec2 sz, vec4 color );
 
-	// Drawing Functions (r_draw.cpp)
+    // Drawing Functions (r_draw.cpp)
 
-	void	DrawString (char *szString, vec2 vPos, vec4 vColor);
-	void	DrawLine (vec2 vOrg, vec2 vEnd, vec4 vColorO, vec4 vColorE);
-	void	DrawBox (vec2 vSize, vec2 vPos, float flAngle, vec4 vColor);
-	void	DrawModel (cModel *pModel, vec2 vPos, float flAngle, vec4 vColor);
-	void	DrawParticles (cParticle *pHead);
+    void    DrawString (char *szString, vec2 vPos, vec4 vColor);
+    void    DrawLine (vec2 vOrg, vec2 vEnd, vec4 vColorO, vec4 vColorE);
+    void    DrawBox (vec2 vSize, vec2 vPos, float flAngle, vec4 vColor);
+    void    DrawModel (cModel *pModel, vec2 vPos, float flAngle, vec4 vColor);
+    void    DrawParticles (cParticle *pHead);
 
-	void	SetViewOrigin (vec2 vPos) { m_viewOrigin = vPos ; m_setDefaultState( ) ; }
+    void    SetViewOrigin (vec2 vPos) { m_viewOrigin = vPos ; m_setDefaultState( ) ; }
 
 private:
 
-	// More font stuff (r_font.cpp)
+    // More font stuff (r_font.cpp)
 
-	void	m_InitFonts ();
-	void	m_ClearFonts ();
-	HFONT	m_sysFont;
-	cFont	m_Fonts[MAX_FONTS];
-	rfont_t	m_activeFont;
+    void    m_InitFonts ();
+    void    m_ClearFonts ();
+    HFONT   m_sysFont;
+    cFont   m_Fonts[MAX_FONTS];
+    rfont_t m_activeFont;
 
-	// Internal stuff
+    // Internal stuff
 
-	void	m_setDefaultState ();
+    void    m_setDefaultState ();
 
-	vec2	m_viewOrigin;
+    vec2    m_viewOrigin;
 
-	bool	m_bATI;
+    bool    m_bATI;
 
-	float	costbl[360];
-	float	sintbl[360];
+    float   costbl[360];
+    float   sintbl[360];
 };
 
 #endif //__R_MAIN_H__

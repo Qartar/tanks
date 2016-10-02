@@ -1,6 +1,6 @@
 /*=========================================================
-Name	:	snd_device.h
-Date	:	04/04/2006
+Name    :   snd_device.h
+Date    :   04/04/2006
 =========================================================*/
 
 #include <windows.h>
@@ -14,28 +14,28 @@ Date	:	04/04/2006
 
 cAudioDevice *cAudioDevice::Create (HWND hWnd)
 {
-	cAudioDevice	*pDevice;
-	device_state_t	devState = device_fail;
+    cAudioDevice    *pDevice;
+    device_state_t  devState = device_fail;
 
-	pMain->Message( "------ initializing sound ------" );
+    pMain->Message( "------ initializing sound ------" );
 
-	//	try directsound
-	if ( (pDevice = new cDirectSoundDevice(hWnd)) )
-	{
-		if ( (devState = pDevice->getState( )) == device_ready )
-			return pDevice;
+    //  try directsound
+    if ( (pDevice = new cDirectSoundDevice(hWnd)) )
+    {
+        if ( (devState = pDevice->getState( )) == device_ready )
+            return pDevice;
 
-		pDevice->Destroy( );
-		delete pDevice;
+        pDevice->Destroy( );
+        delete pDevice;
 
-		if ( devState == device_abort )
-			return NULL;
-	}
-	
-//	if ( (pDevice = new X)) )
-	
+        if ( devState == device_abort )
+            return NULL;
+    }
+    
+//  if ( (pDevice = new X)) )
+    
 
-	return NULL;
+    return NULL;
 }
 
 /*=========================================================
@@ -43,13 +43,13 @@ cAudioDevice *cAudioDevice::Create (HWND hWnd)
 
 void cAudioDevice::Destroy (cAudioDevice *pDevice)
 {
-	pMain->Message( "------ shutting down sound ------" );
+    pMain->Message( "------ shutting down sound ------" );
 
-	if ( pDevice )
-	{
-		pDevice->Destroy( );
-		delete pDevice;
-	}
+    if ( pDevice )
+    {
+        pDevice->Destroy( );
+        delete pDevice;
+    }
 
-	return;
+    return;
 }
