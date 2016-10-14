@@ -46,6 +46,7 @@ add_executable(tanks WIN32
     r_model.cpp
     r_model.h
     r_particle.h
+    resource.rc
     resource.h
     shared.h
     win_main.cpp

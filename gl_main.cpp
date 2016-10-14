@@ -172,7 +172,7 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
     wc.cbClsExtra       = 0;
     wc.cbWndExtra       = 0;
     wc.hInstance        = m_hInstance;
-    wc.hIcon            = LoadIcon( m_hInstance, MAKEINTRESOURCE(102) );
+    wc.hIcon            = LoadIcon( m_hInstance, MAKEINTRESOURCE(IDI_ICON1) );
     wc.hCursor          = LoadCursor (NULL,IDC_ARROW);
     wc.hbrBackground    = 0;
     wc.lpszMenuName     = 0;
