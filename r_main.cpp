@@ -82,7 +82,7 @@ Purpose :   End of Drawing, Swap to screen
 
 void cRender::EndFrame ()
 {
-    SwapBuffers( g_Application->get_glWnd()->get_hDC() );
+    g_Application->get_glWnd()->EndFrame();
 }
 
 /*
@@ -121,26 +121,12 @@ void cRender::m_setDefaultState ()
 
     glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
-    glDrawBuffer( GL_BACK );
-
-    glViewport(
-        0, 0,
-        g_Application->get_glWnd()->get_WndParams().nSize[0],
-        g_Application->get_glWnd()->get_WndParams().nSize[1] );
+    glViewport( 0, 0, DEFAULT_W, DEFAULT_H );
 
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity( );
-/*
-    glOrtho(
-        m_viewOrigin[0],
-        g_Application->get_glWnd()->get_WndParams().nSize[0] + m_viewOrigin[0],
-        g_Application->get_glWnd()->get_WndParams().nSize[1] + m_viewOrigin[1],
-        m_viewOrigin[1],
-        -99999,
-        99999 );
-*/
 
-    glOrtho( 0, 640, 480, 0, -99999, 99999 );
+    glOrtho( 0, DEFAULT_W, DEFAULT_H, 0, -99999, 99999 );
 
     glTranslatef(
         -m_viewOrigin.x,

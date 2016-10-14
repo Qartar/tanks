@@ -25,6 +25,23 @@ cvar_t  *vid_height;
 /*
 ===========================================================
 
+Name    :   cOpenGLWnd::cOpenGLWnd
+
+Purpose :   Initialized member data and creates a default window
+
+===========================================================
+*/
+
+cOpenGLWnd::cOpenGLWnd ()
+{
+    m_fbo       = 0;
+    m_rbo[0]    = 0;
+    m_rbo[1]    = 0;
+}
+
+/*
+===========================================================
+
 Name    :   cOpenGLWnd::Init
 
 Purpose :   Initialized member data and creates a default window
@@ -74,21 +91,24 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
     return res;
 }
 
-int cOpenGLWnd::Recreate (int nSizeX, int nSizeY, bool bFullscreen)
+int cOpenGLWnd::EndFrame ()
 {
-    m_bRefreshing = true;
+    glBindFramebuffer( GL_READ_FRAMEBUFFER, m_fbo );
+    glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
 
-    Shutdown( );
+    glDrawBuffer( GL_BACK );
 
-    m_CreateWindow( nSizeX, nSizeY, DEFAULT_X, DEFAULT_Y, bFullscreen );
+    glBlitFramebuffer(
+        0, 0, DEFAULT_W, DEFAULT_H,
+        0, 0, m_WndParams.nSize[0], m_WndParams.nSize[1],
+        GL_COLOR_BUFFER_BIT, GL_NEAREST
+    );
 
-    return m_Render.Init( );
-}
+    SwapBuffers( m_hDC );
 
-int cOpenGLWnd::Refresh ()
-{
-    if ( m_bFullscreen != m_WndParams.bFullscreen )
-        return Recreate( m_WndParams.nSize[0], m_WndParams.nSize[1], m_bFullscreen );
+    glBindFramebuffer( GL_DRAW_FRAMEBUFFER, m_fbo );
+
+    glDrawBuffer( GL_COLOR_ATTACHMENT0 );
 
     return ERROR_NONE;
 }
@@ -133,56 +153,17 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
     int         style;
     int         width, height;
 
-    if ( bFullscreen )
-    {
-        DEVMODE dm;
+    style = WS_OVERLAPPED|WS_SYSMENU|WS_BORDER|WS_CAPTION|WS_MINIMIZEBOX;
 
-        memset( &dm, 0, sizeof(DEVMODE) );
+    rect.top = 0;
+    rect.left = 0;
+    rect.right = nSizeX;
+    rect.bottom = nSizeY;
 
-        dm.dmSize = sizeof(DEVMODE);
-        dm.dmPelsWidth = nSizeX;
-        dm.dmPelsHeight = nSizeY;
-        dm.dmFields = DM_PELSWIDTH|DM_PELSHEIGHT;
+    AdjustWindowRect( &rect, style, FALSE );
 
-        rect.top = 0;
-        rect.left = 0;
-        rect.right = 0;
-        rect.bottom = 0;
-
-        if ( ChangeDisplaySettings(&dm,CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL )
-        {
-            bFullscreen = false;
-            style = WS_OVERLAPPED;
-        }
-        else
-        {
-            style = WS_POPUP|WS_VISIBLE;
-
-            nPosX = 0;
-            nPosY = 0;
-            width = nSizeX;
-            height = nSizeY;
-        }
-    }
-    else if ( m_WndParams.bFullscreen )
-        ChangeDisplaySettings(NULL,NULL);
-
-    if ( !bFullscreen )
-    {
-        style = WS_OVERLAPPED|WS_SYSMENU|WS_BORDER|WS_CAPTION|WS_MINIMIZEBOX|WS_VISIBLE;
-
-        rect.top = 0;
-        rect.left = 0;
-        rect.right = nSizeX;
-        rect.bottom = nSizeY;
-
-        AdjustWindowRect( &rect, style, FALSE );
-
-        width = rect.right - rect.left;
-        height = rect.bottom - rect.top;
-    }
-    else
-        nPosX = nPosY = 0;
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
 
     // Setup struct for RegisterClass
 
@@ -215,14 +196,45 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
         m_hInstance,
         NULL );
 
-    m_WndParams.nSize[0] = nSizeX ; m_WndParams.nSize[1] = nSizeY ;
-    m_WndParams.nPos[0] = nPosX - rect.left ; m_WndParams.nPos[1] = nPosY - rect.top ;
+    if ( bFullscreen )
+    {
+        MONITORINFO info = { sizeof(info) };
+        HMONITOR hMonitor = MonitorFromWindow( m_hWnd, MONITOR_DEFAULTTOPRIMARY );
 
-    m_WndParams.bActive = true;
-    m_WndParams.bMinimized = false;
-    m_WndParams.bFullscreen = bFullscreen;
-    m_bFullscreen = bFullscreen;
-    
+        GetMonitorInfo( hMonitor, &info );
+
+        m_WndParams.nPos[0] = info.rcMonitor.left;
+        m_WndParams.nPos[1] = info.rcMonitor.top;
+        m_WndParams.nSize[0] = info.rcMonitor.right - info.rcMonitor.left;
+        m_WndParams.nSize[1] = info.rcMonitor.bottom - info.rcMonitor.top;
+
+        SetWindowLongPtr( m_hWnd, GWL_STYLE, WS_OVERLAPPED );
+
+        MoveWindow(
+            m_hWnd,
+            m_WndParams.nPos[0],
+            m_WndParams.nPos[1], 
+            m_WndParams.nSize[0],
+            m_WndParams.nSize[1],
+            FALSE
+        );
+
+        m_WndParams.bActive = true;
+        m_WndParams.bMinimized = false;
+        m_WndParams.bFullscreen = true;
+        m_bFullscreen = true;
+    }
+    else
+    {
+        m_WndParams.nSize[0] = nSizeX ; m_WndParams.nSize[1] = nSizeY ;
+        m_WndParams.nPos[0] = nPosX - rect.left ; m_WndParams.nPos[1] = nPosY - rect.top ;
+
+        m_WndParams.bActive = true;
+        m_WndParams.bMinimized = false;
+        m_WndParams.bFullscreen = false;
+        m_bFullscreen = false;
+    }
+
     if (m_hWnd == NULL)
     {
         g_Application->Error( "Tanks! Error", "cOpenGLWnd::m_CreateWindow | CreateWindow failed\n" );
@@ -234,8 +246,22 @@ int cOpenGLWnd::m_CreateWindow (int nSizeX, int nSizeY, int nPosX, int nPosY, bo
     UpdateWindow( m_hWnd );
 
     // initialize OpenGL
+    if ( m_InitGL() != ERROR_NONE )
+    {
+        return ERROR_FAIL;
+    }
 
-    return m_InitGL ();
+    // initialize framebuffer
+    if ( m_CreateFramebuffer( nSizeX, nSizeY ) != ERROR_NONE )
+    {
+        return ERROR_FAIL;
+    }
+
+    // show the window
+    SetForegroundWindow( m_hWnd );
+    SetFocus( m_hWnd );
+
+    return ERROR_NONE;
 }
 
 /*
@@ -312,10 +338,66 @@ int cOpenGLWnd::m_InitGL ()
 
     // initialize Renderer
 
-    // show the window
+    glBindRenderbuffer = (PFNGLBINDRENDERBUFFER )wglGetProcAddress("glBindRenderbuffer");
+    glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERS )wglGetProcAddress("glDeleteRenderbuffers");
+    glGenRenderbuffers = (PFNGLGENRENDERBUFFERS )wglGetProcAddress("glGenRenderbuffers");
+    glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGE )wglGetProcAddress("glRenderbufferStorage");
+    glBindFramebuffer = (PFNGLBINDFRAMEBUFFER )wglGetProcAddress("glBindFramebuffer");
+    glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERS )wglGetProcAddress("glDeleteFramebuffers");
+    glGenFramebuffers = (PFNGLGENFRAMEBUFFERS )wglGetProcAddress("glGenFramebuffers");
+    glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFER )wglGetProcAddress("glFramebufferRenderbuffer");
+    glBlitFramebuffer = (PFNGLBLITFRAMEBUFFER )wglGetProcAddress("glBlitFramebuffer");
 
-    SetForegroundWindow( m_hWnd );
-    SetFocus( m_hWnd );
+    return ERROR_NONE;
+}
+
+/*
+===========================================================
+
+Name    :   cOpenGLWnd::m_CreateFramebuffer
+
+Purpose :   
+
+===========================================================
+*/
+
+int cOpenGLWnd::m_CreateFramebuffer (int, int)
+{
+    if (m_fbo)
+    {
+        m_DestroyFramebuffer( );
+    }
+
+    glGenFramebuffers( 1, &m_fbo );
+    glGenRenderbuffers( 2, m_rbo );
+
+    glBindFramebuffer( GL_FRAMEBUFFER, m_fbo );
+
+    glBindRenderbuffer( GL_RENDERBUFFER, m_rbo[0] );
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_RGBA, DEFAULT_W, DEFAULT_H );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_rbo[0] );
+
+    glBindRenderbuffer( GL_RENDERBUFFER, m_rbo[1] );
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, DEFAULT_W, DEFAULT_H );
+    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rbo[1] );
+
+    return ERROR_NONE;
+}
+
+/*
+===========================================================
+
+Name    :   cOpenGLWnd::m_DestroyFramebuffer
+
+Purpose :   
+
+===========================================================
+*/
+
+int cOpenGLWnd::m_DestroyFramebuffer ()
+{
+    glDeleteRenderbuffers( 2, m_rbo );
+    glDeleteFramebuffers( 1, &m_fbo );
 
     return ERROR_NONE;
 }
@@ -334,6 +416,8 @@ int cOpenGLWnd::m_DestroyWindow ()
 {
     if (m_hWnd)
     {
+        m_DestroyFramebuffer( );
+
         m_ShutdownGL( );
 
         DestroyWindow( m_hWnd );
@@ -402,11 +486,6 @@ LRESULT cOpenGLWnd::Message (UINT nCmd, WPARAM wParam, LPARAM lParam)
         m_WndParams.nPos[0] = LOWORD(lParam);    // horizontal position 
         m_WndParams.nPos[1] = HIWORD(lParam);    // vertical position 
         return DefWindowProc( m_hWnd, nCmd, wParam, lParam );
-
-    case WM_SYSKEYDOWN:
-        if ( wParam == 13 )
-            m_bFullscreen = !m_WndParams.bFullscreen;
-        return 0;
 
     case WM_DESTROY:
         if ( m_bRefreshing )

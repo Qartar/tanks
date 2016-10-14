@@ -315,8 +315,6 @@ int cGame::RunFrame (float flMSec)
     // client side shit
     //
 
-    g_Application->get_glWnd()->Refresh( );
-
     ref = g_Application->get_time( );
 
     g_Render->BeginFrame( );
@@ -332,8 +330,8 @@ int cGame::RunFrame (float flMSec)
     worldWidth  = m_World.m_vWorldMaxs.x - m_World.m_vWorldMins.x;
     worldHeight = m_World.m_vWorldMaxs.y - m_World.m_vWorldMins.y;
 
-    viewWidth   = g_Application->get_glWnd( )->get_WndParams( ).nSize[ 0 ];
-    viewHeight  = g_Application->get_glWnd( )->get_WndParams( ).nSize[ 1 ];
+    viewWidth   = DEFAULT_W;
+    viewHeight  = DEFAULT_H;
 
     if ( m_bMultiplayer && svs.clients[ cls.number ].active ) {
         float   flLerp = (m_flTime - (m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
@@ -432,32 +430,15 @@ Purpose :   Gets cursor position from windows and translates it
 void cGame::m_getCursorPos ()
 {
     POINT   ptCursor;
-    RECT    rRect;
 
-    rRect.left = rRect.top = 0;
-
-    rRect.right = g_Application->get_glWnd()->get_WndParams().nSize[0];
-    rRect.bottom = g_Application->get_glWnd()->get_WndParams().nSize[1];
+    sWndParam wndParam = g_Application->get_glWnd()->get_WndParams();
 
     GetCursorPos( &ptCursor );
 
-    // adjust for window position
-
-    ptCursor.x -= g_Application->get_glWnd()->get_WndParams().nPos[0];
-    ptCursor.y -= g_Application->get_glWnd()->get_WndParams().nPos[1];
-
-    // adjust for window style
-
-//  if ( !g_Application->get_glWnd()->get_WndParams().bFullscreen )
-//  {
-//      nStyle = GetWindowLong( g_Application->get_glWnd()->get_hWnd(), GWL_STYLE );
-//      AdjustWindowRect( &rRect, nStyle, FALSE );
-//  }
-
     // copy to member value
 
-    m_vCursorPos.x = ptCursor.x - rRect.left;
-    m_vCursorPos.y = ptCursor.y - rRect.top;
+    m_vCursorPos.x = (ptCursor.x - wndParam.nPos[0]) * DEFAULT_W / wndParam.nSize[0];
+    m_vCursorPos.y = (ptCursor.y - wndParam.nPos[1]) * DEFAULT_H / wndParam.nSize[1];
 }
 
 /*
@@ -938,8 +919,8 @@ void cGame::m_DrawScore ()
 
     int     sort[ MAX_PLAYERS ];
 
-    int nWidth = g_Application->get_glWnd()->get_WndParams().nSize[0];
-    int nHeight = g_Application->get_glWnd()->get_WndParams().nSize[1];
+    int nWidth = DEFAULT_W;
+    int nHeight = DEFAULT_H;
 
     if ( bClientSay )
     {
@@ -1231,7 +1212,7 @@ void cGame::m_DrawMessages ()
 
     float       time = g_Application->get_time( );
 
-    ypos = g_Application->get_glWnd()->get_WndParams().nSize[1] - 36;
+    ypos = DEFAULT_H - 36;
 
     for ( i=m_nMessage-1 ; i!=m_nMessage ; i = ( i<=0 ? MAX_MESSAGES-1 : i-1 ) )
     {
