@@ -14,6 +14,7 @@ Date    :   10/20/2004
 #pragma hdrstop
 
 #include "keys.h"
+#include "resource.h"
 
 cvar_t  *g_upgrade_frac = NULL;
 cvar_t  *g_upgrade_penalty = NULL;
@@ -381,7 +382,7 @@ int cGame::RunFrame (float flMSec)
         m_getCursorPos( );
 
         if ( menuImage < -1 ) { //  -1 indicates a failed load, don't keep trying
-            menuImage = g_Render->LoadImage( "Tanks.bmp" );
+            menuImage = g_Render->LoadImage( MAKEINTRESOURCE(IDB_BITMAP1) );
         }
 
         g_Render->DrawImage( menuImage, vec2( 0, 0 ), vec2( 640, 480 ), vec4( 1, 1, 1, 1 ) );
