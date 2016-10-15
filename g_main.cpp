@@ -212,25 +212,17 @@ Purpose :   Shutdown
 ===========================================================
 */
 
-#define CLIENT_INI_PATH "My Documents/My Games/Tanks!"
-#define CLIENT_INI_FILE "My Documents/My Games/Tanks!/Tanks!.cfg"
-
 const float colorMinFrac = 0.75f;
 
 void cGame::m_InitClient ()
 {
     int     nLength;
-    char    szPath[LONG_STRING];
-
     float   csum;
 
     textutils_c text;
 
     bClientButton = 0;
     bClientSay = 0;
-
-    nLength = LONG_STRING;
-    ExpandEnvironmentStrings( "%homedrive%%homepath%", szPath, (DWORD )nLength );
 
     cl_name = pVariable->Get( "ui_name", "", "string", CVAR_ARCHIVE, "user info: name" );
     cl_color = pVariable->Get( "ui_color", "255 0 0", "string", CVAR_ARCHIVE, "user info: color" );

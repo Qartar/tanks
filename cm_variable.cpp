@@ -3,7 +3,8 @@
 
 #include "cm_variable.h"
 
-#define VARIABLE_FILENAME   "variable.txt"
+#include <Shlobj.h>
+#include <PathCch.h>
 
 union cvalue { float f; int i; bool b; };
 
@@ -81,14 +82,49 @@ DEF_CREATE_DESTROY(Variable);
 /*=========================================================
 =========================================================*/
 
+int getConfigPath(char *path, int size, bool create = false)
+{
+    PWSTR pszPath;
+    WCHAR wPath[1024];
+
+    SHGetKnownFolderPath( FOLDERID_LocalAppData, KF_FLAG_DEFAULT, NULL, &pszPath );
+
+    PathCchCombine(wPath, _countof(wPath), pszPath, L"Tanks!");
+
+    if (create) {
+        CreateDirectoryW(wPath, NULL);
+    }
+
+    PathCchAppend(wPath, _countof(wPath), L"config.ini" );
+
+    CoTaskMemFree( pszPath );
+
+    return WideCharToMultiByte(
+        CP_ACP,
+        WC_NO_BEST_FIT_CHARS,
+        wPath,
+        -1,
+        path,
+        size,
+        NULL,
+        NULL);
+}
+
+/*=========================================================
+=========================================================*/
+
 int cVariable::Load ()
 {
+    char szPath[LONG_STRING];
+
     char    *fileData, *fileCursor, getLine[MAX_STRING];
     int     nLength;
 
     textutils_c text;
 
-    file::load( (void **)&fileData, VARIABLE_FILENAME, &nLength );
+    getConfigPath(szPath, _countof(szPath));
+
+    file::load( (void **)&fileData, szPath, &nLength );
 
     if ( (fileCursor = fileData) == NULL )
         return ERROR_NONE;
@@ -115,12 +151,16 @@ int cVariable::Load ()
 
 int cVariable::Unload ()
 {
+    char szPath[LONG_STRING];
+
     FILE        *fOut;
     var_link_t  *pLink, *pNext;
 
     char        *szLine;
 
-    file::open( &fOut, VARIABLE_FILENAME, "w+" );
+    getConfigPath(szPath, _countof(szPath), true);
+
+    file::open( &fOut, szPath, "w+" );
 
     if ( !fOut )
         return ERROR_FAIL;
@@ -147,59 +187,17 @@ int cVariable::Unload ()
 /*=========================================================
 =========================================================*/
 
-int field_size[] = { 24, 16, 8, 8 };
-char field_type[] = { 's', 's', 's', 'i' };
-bool field_pad[] = { false, true, false, false };
-
-#define NUM_FIELDS  4
-
 char *cVariable::Print (cVar *cvar, int tab_size)
 {
     static char szOut[MAX_STRING];
-    char        szFmt[SHORT_STRING];
-    char        *cursor = szFmt;
-
-    int         i, j, tabs, len[NUM_FIELDS];
 
     memset( szOut, 0, MAX_STRING );
-
-    len[0] = strlen( cvar->getName() );
-    len[1] = strlen( cvar->getString() );
-    len[2] = strlen( cvar_type_strings[cvar->getType()] );
-    len[3] = strlen( va( "%i", cvar->getFlags() ) );
-
-    for ( i=0 ; i<NUM_FIELDS ; i++)
-    {
-        if ( field_pad[i] )
-        {
-            cursor[0] = '\"';
-            cursor[1] = '%';
-            cursor[2] = field_type[i];
-            cursor[3] = '\"';
-
-            cursor += 4;
-            len[i] += 2;
-        }
-        else
-        {
-            cursor[0] = '%';
-            cursor[1] = field_type[i];
-
-            cursor += 2;
-        }
-
-        for ( j = 0, tabs = ceil( (float)(field_size[i] - len[i]) / (float)tab_size ) ; j < tabs ; j++ )
-            *cursor++ = '\t';
-    }
-
-    cursor[0] = '\"';
-    cursor[1] = '%';
-    cursor[2] = 's';
-    cursor[3] = '\"';
-    cursor[4] = '\n';
-    cursor[5] = 0;
-
-    fmt( szOut, szFmt, cvar->getName(), cvar->getString(), cvar_type_strings[cvar->getType()], cvar->getFlags(), cvar->getDesc() );
+    fmt( szOut, "%-20s %-20s %-8s %3d \"%s\"\n",
+         cvar->getName(),
+         va("\"%s\"", cvar->getString()),
+         cvar_type_strings[cvar->getType()],
+         cvar->getFlags(),
+         cvar->getDesc() );
 
     return szOut;
 }

@@ -59,6 +59,7 @@ target_link_libraries(tanks
     # system libraries
     ws2_32
     opengl32
+    Pathcch
 )
 
 set_target_properties(tanks PROPERTIES OUTPUT_NAME "Tanks!")
