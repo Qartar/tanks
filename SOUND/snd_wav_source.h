@@ -21,6 +21,7 @@ typedef class riffChunk_c : public vObject
 {
 public:
     riffChunk_c (char *szFilename);
+    riffChunk_c (byte* pChunkData, int nChunkSize);
     riffChunk_c (riffChunk_c &Outer);
 
     void        chunkClose ();
@@ -51,6 +52,7 @@ private:
     int             m_chunkStart;
 
     FILE    *m_riff;
+    byte    *m_riffData;
 } riffChunk_t;
 
 class cSoundWaveSource : public cSoundSource

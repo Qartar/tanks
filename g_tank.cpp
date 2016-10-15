@@ -189,7 +189,7 @@ void cTank::Think ()
         // extra explosion
         if (flDeadTime && (g_Game->m_flTime - flDeadTime > 650) && (g_Game->m_flTime - flDeadTime < 650+HACK_TIME/2))
         {
-            g_World->AddSound( "SOUND/TANK_EXPLODE.wav" );
+            g_World->AddSound( sound_index[TANK_EXPLODE].name );
             g_World->AddEffect( vPos, effect_explosion );
             flDeadTime -= HACK_TIME;    // dont do it again
         }
@@ -378,7 +378,7 @@ cBullet::cBullet ()
 
 void cBullet::Touch (cObject *pOther)
 {
-    g_World->AddSound( "SOUND/BULLET_EXPLODE.wav" );
+    g_World->AddSound( sound_index[BULLET_EXPLODE].name );
     g_World->AddEffect( vPos, effect_explosion );
 
     g_World->DelObject( this );

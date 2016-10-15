@@ -50,6 +50,46 @@ riffChunk_c::riffChunk_c (char *szFilename)
     chunkSet( );
 }
 
+riffChunk_c::riffChunk_c (byte* pChunkData, int nChunkSize)
+{
+    int     name;
+
+    m_pos = 0;
+
+    m_riff = NULL;
+    m_riffData = pChunkData;
+
+    if ( !m_riffData )
+    {
+        m_chunkName = NULL;
+        m_chunkSize = NULL;
+        return;
+    }
+
+    name = readInt( );
+    if ( name != RIFF_ID )
+    {
+        m_chunkName = NULL;
+        m_chunkSize = NULL;
+        return;
+    }
+    else
+    {
+        m_size = readInt( );
+        m_name = readInt( );
+
+        m_start = m_pos;
+
+        if ( m_name != WAVE_ID )
+        {
+            m_chunkName = NULL;
+            m_chunkSize = NULL;
+        }
+    }
+
+    chunkSet( );
+}
+
 riffChunk_c::riffChunk_c (riffChunk_c &Outer)
 {
     m_size = Outer.m_size;
@@ -74,10 +114,21 @@ void riffChunk_c::chunkClose ()
 
 int riffChunk_c::m_read (void *out, int len)
 {
-    int     read = fread( out, 1, len, m_riff );
+    if ( m_riff ) {
 
-    m_pos += read;
-    return read;
+        int read = fread( out, 1, len, m_riff );
+        m_pos += read;
+        return read;
+
+    } else if ( m_riffData ) {
+
+        memcpy( out, m_riffData + m_pos, len );
+        m_pos += len;
+        return len;
+
+    } else {
+        return 0;
+    }
 }
 
 int riffChunk_c::readChunk (byte *pOutput)
@@ -110,7 +161,9 @@ int riffChunk_c::getPos ()
 int riffChunk_c::setPos (int pos)
 {
     m_pos = pos;
-    fseek( m_riff, pos, SEEK_SET );
+    if ( m_riff ) {
+        fseek( m_riff, pos, SEEK_SET );
+    }
     return m_pos;
 }
 

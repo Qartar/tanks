@@ -2,6 +2,7 @@
 Name    :   snd_wav_cache.h
 Date    :   04/07/2006
 =========================================================*/
+#pragma once
 
 #include "snd_wav_source.h"
 
@@ -16,7 +17,7 @@ public:
     virtual int     Load (char *szFilename);
     virtual void    Unload ();
 
-private:
+protected:
     virtual void    parseData   (riffChunk_t &chunk);
 
     byte    *m_dataCache;   // data chunk

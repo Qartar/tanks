@@ -15,4 +15,6 @@ add_library(sound STATIC
     snd_wav_source.h
     snd_wav_stream.cpp
     snd_wav_stream.h
+    snd_wav_resource.cpp
+    snd_wav_resource.h
 )

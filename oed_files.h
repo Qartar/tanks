@@ -103,7 +103,10 @@ public:
     unsigned int    length (char *filename)
     {
         FILE    *f;
-        return m_open( filename, "rb", &f );
+        unsigned int len = m_open( filename, "rb", &f );
+        if ( f )
+            close( f );
+        return len;
     }
 
     int close (FILE *file)

@@ -166,12 +166,12 @@ int cGame::Init (char *cmdline)
 
     memset( sound_index, 0, sizeof(sound_index) );
 
-    register_sound( 0, "SOUND/TANK_MOVE.wav" );
-    register_sound( 1, "SOUND/TANK_IDLE.wav" );
-    register_sound( 2, "SOUND/TANK_FIRE.wav" );
-    register_sound( 3, "SOUND/TANK_EXPLODE.wav" );
-    register_sound( 4, "SOUND/BULLET_EXPLODE.wav" );
-    register_sound( 5, "SOUND/TURRET_MOVE.wav" );
+    register_sound( 0, "ASSETS\\SOUND\\TANK_MOVE.wav" );
+    register_sound( 1, "ASSETS\\SOUND\\TANK_IDLE.wav" );
+    register_sound( 2, "ASSETS\\SOUND\\TANK_FIRE.wav" );
+    register_sound( 3, "ASSETS\\SOUND\\TANK_EXPLODE.wav" );
+    register_sound( 4, "ASSETS\\SOUND\\BULLET_EXPLODE.wav" );
+    register_sound( 5, "ASSETS\\SOUND\\TURRET_MOVE.wav" );
 
     m_WriteMessage( "Welcome to Tanks! Press F1 for help." );
 

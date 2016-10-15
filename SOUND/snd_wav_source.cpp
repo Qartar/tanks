@@ -9,6 +9,7 @@ Date    :   04/07/2006
 #include "snd_wav_source.h"
 #include "snd_wav_cache.h"
 #include "snd_wav_stream.h"
+#include "snd_wav_resource.h"
 
 /*=========================================================
 =========================================================*/
@@ -24,7 +25,9 @@ cSoundSource *cSoundSource::createSound (char *szFilename)
     {
         filelen = file::length( szFilename );
 
-        if ( filelen > STREAM_THRESHOLD )
+        if ( filelen == 0 )
+            pSource = (cSoundSource *)new cSoundWaveResource;
+        else if ( filelen > STREAM_THRESHOLD )
             pSource = (cSoundSource *)new cSoundWaveStream;
         else
             pSource = (cSoundSource *)new cSoundWaveCache;
