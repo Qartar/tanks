@@ -38,6 +38,14 @@ add_executable(tanks WIN32
     oed_shared.h
     oed_tools.h
     oed_types.h
+    p_collide.cpp
+    p_collide.h
+    p_material.h
+    p_rigidbody.cpp
+    p_rigidbody.h
+    p_shape.h
+    p_trace.cpp
+    p_trace.h
     r_draw.cpp
     r_font.cpp
     r_image.cpp
