@@ -13,6 +13,12 @@ Date    :   10/21/2004
 #ifndef __G_WORLD_H__
 #define __G_WORLD_H__
 
+#include <memory>
+
+#include "p_material.h"
+#include "p_rigidbody.h"
+#include "p_shape.h"
+
 #define MAX_OBJECTS 16
 
 typedef enum eEffects effects_t;
@@ -43,14 +49,16 @@ public:
     virtual float   GetAngle( float lerp );
 
     cModel  *pModel;
-    vec2    vPos, vVel;         // state and rate of change
-    float   flAngle, flAVel;    //
     vec4    vColor;
 
     vec2    oldPos;
     float   oldAngle;
 
     eObjectType eType;
+
+    std::unique_ptr<physics::material> _material;
+    std::unique_ptr<physics::rigid_body> _rigid_body;
+    std::unique_ptr<physics::shape> _shape;
 };
 
 class cBullet : public cObject

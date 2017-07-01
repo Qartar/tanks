@@ -20,7 +20,7 @@ void cRender::DrawModel (cModel *pModel, vec2 vPos, float flAngle, vec4 vColor)
     glPushMatrix();
 
     glTranslatef( vPos.x, vPos.y, 0 );
-    glRotatef( flAngle, 0, 0, 1 );  // YAW
+    glRotatef( rad2deg(flAngle), 0, 0, 1 );  // YAW
 
     glBegin( GL_QUADS );
 

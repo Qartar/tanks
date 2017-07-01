@@ -13,11 +13,6 @@ Purpose :   implementation of object class
 
 cObject::cObject ()
 {
-    flAngle = 0;
-    flAVel = 0;
-
-    vVel = vec2(0,0);
-
     eType = object_object;
 }
 
@@ -28,7 +23,11 @@ void cObject::Touch (cObject *pOther)
 
 void cObject::Draw ()
 {
-    g_Application->get_glWnd()->get_Render()->DrawModel( pModel, vPos, flAngle, vColor );
+    g_Application->get_glWnd()->get_Render()->DrawModel(
+        pModel,
+        _rigid_body->get_position(),
+        _rigid_body->get_rotation(),
+        vColor);
 }
 
 void cObject::Think ()
@@ -39,9 +38,9 @@ void cObject::Think ()
 }
 
 vec2 cObject::GetPos( float lerp ) {
-    return oldPos + ( vPos - oldPos ) * lerp;
+    return oldPos + ( _rigid_body->get_position() - oldPos ) * lerp;
 }
 
 float cObject::GetAngle( float lerp ) {
-    return oldAngle + ( flAngle - oldAngle ) * lerp;
+    return oldAngle + ( _rigid_body->get_rotation() - oldAngle ) * lerp;
 }

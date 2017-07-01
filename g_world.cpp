@@ -190,18 +190,18 @@ bool clipModelToModel (cObject *a, cObject *b)
 
     mat3    mat;
 
-    if ( (b->vPos.x - a->vPos.x)*(b->vPos.x - a->vPos.x) + (b->vPos.y - a->vPos.y)*(b->vPos.y - a->vPos.y) > 32*32 )
+    if ( (b->_rigid_body->get_position() - a->_rigid_body->get_position()).lengthsq() > 32*32 )
         return false;
 
-    mat.rotateyaw( deg2rad( a->flAngle ) );
+    mat.rotateyaw( a->_rigid_body->get_rotation() );
 
-    av[4] = vec3(a->vPos.x,a->vPos.y,0);
+    av[4] = vec3(a->_rigid_body->get_position());
     av[0] = mat.mult( vec3( a->pModel->m_AbsMin.x, a->pModel->m_AbsMin.y, 0 ) ) + av[4];
     av[1] = mat.mult( vec3( a->pModel->m_AbsMax.x, a->pModel->m_AbsMin.y, 0 ) ) + av[4];
     av[2] = mat.mult( vec3( a->pModel->m_AbsMax.x, a->pModel->m_AbsMax.y, 0 ) ) + av[4];
     av[3] = mat.mult( vec3( a->pModel->m_AbsMin.x, a->pModel->m_AbsMax.y, 0 ) ) + av[4];
 
-    bv[4] = vec3(b->vPos.x,b->vPos.y,0);
+    bv[4] = vec3(b->_rigid_body->get_position());
     bv[0] = mat.mult( vec3( b->pModel->m_AbsMin.x, b->pModel->m_AbsMin.y, 0 ) ) + bv[4];
     bv[1] = mat.mult( vec3( b->pModel->m_AbsMax.x, b->pModel->m_AbsMin.y, 0 ) ) + bv[4];
     bv[2] = mat.mult( vec3( b->pModel->m_AbsMax.x, b->pModel->m_AbsMax.y, 0 ) ) + bv[4];
@@ -237,9 +237,9 @@ bool clipModelToSegment(cObject *a, vec2 b, vec2 c, vec2 *out)
 
     bool    hit = false;
 
-    mat.rotateyaw( deg2rad( a->flAngle ) );
+    mat.rotateyaw( a->_rigid_body->get_rotation() );
 
-    av[4] = vec3(a->vPos.x,a->vPos.y,0);
+    av[4] = vec3(a->_rigid_body->get_position());
     av[0] = mat.mult( vec3( a->pModel->m_AbsMin.x, a->pModel->m_AbsMin.y, 0 ) ) + av[4];
     av[1] = mat.mult( vec3( a->pModel->m_AbsMax.x, a->pModel->m_AbsMin.y, 0 ) ) + av[4];
     av[2] = mat.mult( vec3( a->pModel->m_AbsMax.x, a->pModel->m_AbsMax.y, 0 ) ) + av[4];
@@ -290,14 +290,14 @@ void cWorld::MoveObject (cObject *pObject)
 
     int         i;
 
-    pObject->oldPos = pObject->vPos;
-    pObject->oldAngle = pObject->flAngle;
+    pObject->oldPos = pObject->_rigid_body->get_position();
+    pObject->oldAngle = pObject->_rigid_body->get_rotation();
 
-    vOldPos = pObject->vPos;
-    flOldAngle = pObject->flAngle;
+    vOldPos = pObject->_rigid_body->get_position();
+    flOldAngle = pObject->_rigid_body->get_rotation();
 
-    pObject->vPos = pObject->vPos + pObject->vVel * FRAMETIME;
-    pObject->flAngle += pObject->flAVel * FRAMETIME;
+    pObject->_rigid_body->set_position(pObject->_rigid_body->get_position() + pObject->_rigid_body->get_linear_velocity() * FRAMETIME);
+    pObject->_rigid_body->set_rotation(pObject->_rigid_body->get_rotation() + pObject->_rigid_body->get_angular_velocity() * FRAMETIME);
 
     for (i=0 ; i<MAX_OBJECTS ; i++)
     {
@@ -313,9 +313,9 @@ void cWorld::MoveObject (cObject *pObject)
                 &((cTank *)m_Objects[i])->m_Bullet == pObject )
                 continue;
 
-            if ( clipModelToSegment( m_Objects[i], vOldPos, pObject->vPos, &vDelta ) )
+            if ( clipModelToSegment( m_Objects[i], vOldPos, pObject->_rigid_body->get_position(), &vDelta ) )
             {
-                pObject->vPos = vDelta;
+                pObject->_rigid_body->set_position(vDelta);
                 pObject->Touch( m_Objects[i] );
             }
         }
@@ -324,10 +324,10 @@ void cWorld::MoveObject (cObject *pObject)
         {
             // ghetto action : simply remove all movement, add sparks
 
-            AddEffect( pObject->vPos + (m_Objects[i]->vPos - pObject->vPos)/2, effect_sparks ); // add spark effect
+            AddEffect( pObject->_rigid_body->get_position() + (m_Objects[i]->_rigid_body->get_position() - pObject->_rigid_body->get_position())/2, effect_sparks ); // add spark effect
 
-            pObject->vPos = vOldPos;
-            pObject->vVel = vec2(0,0);
+            pObject->_rigid_body->set_position(vOldPos);
+            pObject->_rigid_body->set_linear_velocity(vec2(0,0));
 
             pObject->Touch( m_Objects[i] );
 
@@ -336,47 +336,53 @@ void cWorld::MoveObject (cObject *pObject)
     }
 
     // check for collision with window bounds
-    if (pObject->vPos.x < m_vWorldMins.x)
+    vec2 vPos = pObject->_rigid_body->get_position();
+    vec2 vVel = pObject->_rigid_body->get_linear_velocity();
+
+    if (vPos.x < m_vWorldMins.x)
     {
         if (!pObject->pModel)
-            pObject->vPos.y = vOldPos.y + ( (pObject->vPos.y - vOldPos.y) / (pObject->vPos.x - vOldPos.x) * (m_vWorldMins.x - vOldPos.x) );
+            vPos.y = vOldPos.y + ( (vPos.y - vOldPos.y) / (vPos.x - vOldPos.x) * (m_vWorldMins.x - vOldPos.x) );
 
-        pObject->vPos.x = m_vWorldMins.x;
-        pObject->vVel.x = 0;
+        vPos.x = m_vWorldMins.x;
+        vVel.x = 0;
 
         pObject->Touch( NULL );
     }
-    else if (pObject->vPos.x > m_vWorldMaxs.x)
+    else if (vPos.x > m_vWorldMaxs.x)
     {
         if (!pObject->pModel)
-            pObject->vPos.y = vOldPos.y + ( (pObject->vPos.y - vOldPos.y) / (pObject->vPos.x - vOldPos.x) * (m_vWorldMaxs.x - vOldPos.x) );
+            vPos.y = vOldPos.y + ( (vPos.y - vOldPos.y) / (vPos.x - vOldPos.x) * (m_vWorldMaxs.x - vOldPos.x) );
 
-        pObject->vPos.x = m_vWorldMaxs.x;
-        pObject->vVel.x = 0;
+        vPos.x = m_vWorldMaxs.x;
+        vVel.x = 0;
 
         pObject->Touch( NULL );
     }
 
-    if (pObject->vPos.y < m_vWorldMins.y)
+    if (vPos.y < m_vWorldMins.y)
     {
         if (!pObject->pModel)
-            pObject->vPos.x = vOldPos.x + ( (pObject->vPos.x - vOldPos.x) / (pObject->vPos.y - vOldPos.y) * (m_vWorldMins.y - vOldPos.y) );
+            vPos.x = vOldPos.x + ( (vPos.x - vOldPos.x) / (vPos.y - vOldPos.y) * (m_vWorldMins.y - vOldPos.y) );
 
-        pObject->vPos.y = m_vWorldMins.y;
-        pObject->vVel.y = 0;
+        vPos.y = m_vWorldMins.y;
+        vVel.y = 0;
 
         pObject->Touch( NULL );
     }
-    else if (pObject->vPos.y > m_vWorldMaxs.y)
+    else if (vPos.y > m_vWorldMaxs.y)
     {
         if (!pObject->pModel)
-            pObject->vPos.x = vOldPos.x + ( (pObject->vPos.x - vOldPos.x) / (pObject->vPos.y - vOldPos.y) * (m_vWorldMaxs.y - vOldPos.y) );
+            vPos.x = vOldPos.x + ( (vPos.x - vOldPos.x) / (vPos.y - vOldPos.y) * (m_vWorldMaxs.y - vOldPos.y) );
 
-        pObject->vPos.y = m_vWorldMaxs.y;
-        pObject->vVel.y = 0;
+        vPos.y = m_vWorldMaxs.y;
+        vVel.y = 0;
 
         pObject->Touch( NULL );
     }
+
+    pObject->_rigid_body->set_position(vPos);
+    pObject->_rigid_body->set_linear_velocity(vVel);
 }
 
 /*

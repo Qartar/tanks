@@ -1100,12 +1100,12 @@ void cGame::NewGame ()
 
         if ( !flRestartTime || m_Players[i].flDamage >= 1.0f)
         {
-            m_Players[i].vPos = vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER);
-            m_Players[i].flAngle = frand()*360;
-            m_Players[i].flTAngle = m_Players[i].flAngle;
+            m_Players[i]._rigid_body->set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
+            m_Players[i]._rigid_body->set_rotation(frand()*2.0f*M_PI);
+            m_Players[i].flTAngle = m_Players[i]._rigid_body->get_rotation();
 
-            m_Players[i].vVel = vec2(0,0);
-            m_Players[i].flAVel = 0.0f;
+            m_Players[i]._rigid_body->set_linear_velocity(vec2(0,0));
+            m_Players[i]._rigid_body->set_angular_velocity(0.0f);
             m_Players[i].flTVel = 0.0f;
 
             m_Players[i].flDamage = 0.0f;
@@ -1142,8 +1142,22 @@ void cGame::m_InitPlayers ()
 
         m_Players[i].flDeadTime = 0.0f;
 
+        m_Players[i]._material = std::make_unique<physics::material>(0.5f, 1.0f);
+        m_Players[i]._shape = std::make_unique<physics::box_shape>(vec2(24,16));
+        m_Players[i]._rigid_body = std::make_unique<physics::rigid_body>(
+            m_Players[i]._shape.get(),
+            m_Players[i]._material.get(),
+            1.0f);
+
         m_Players[i].m_Bullet.nPlayer = i;
         m_Players[i].m_Bullet.pModel = NULL;
+
+        m_Players[i].m_Bullet._material = std::make_unique<physics::material>(0.5f, 1.0f);
+        m_Players[i].m_Bullet._shape = std::make_unique<physics::circle_shape>(1);
+        m_Players[i].m_Bullet._rigid_body = std::make_unique<physics::rigid_body>(
+            m_Players[i].m_Bullet._shape.get(),
+            m_Players[i].m_Bullet._material.get(),
+            1.0f);
 
         if ( m_Players[i].channels[0] )
         {
