@@ -160,7 +160,6 @@ private:
     void        m_DrawParticles ();
 
     bool        m_bParticles;
-    bool        m_bWeakFX;
 
     vec2        m_vWorldMins;
     vec2        m_vWorldMaxs;

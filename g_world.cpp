@@ -44,8 +44,6 @@ void cWorld::Init ()
     else
         m_bParticles = true;
 
-    m_bWeakFX = false;  // obsolete
-
     _border_objects[0]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[0], &_border_material, 0);
     _border_objects[1]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[0], &_border_material, 0);
     _border_objects[2]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[1], &_border_material, 0);
@@ -479,9 +477,6 @@ void cWorld::AddSmokeEffect (vec2 vPos, vec2 vVel, int nCount)
 
     g_Game->m_WriteEffect( effect_smoke, vPos, vVel, nCount );
 
-    if ( m_bWeakFX )
-        return;
-
     for (i=0 ; i<nCount ; i++)
     {
         if ( (p = AddParticle()) == NULL )
@@ -507,9 +502,6 @@ void cWorld::AddFlagTrail (vec2 vPos, int nTeam)
 {
     int         i;
     cParticle   *p;
-
-    if ( m_bWeakFX )
-        return;
 
     for (i=0 ; i<4 ; i++)
     {
