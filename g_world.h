@@ -15,6 +15,7 @@ Date    :   10/21/2004
 #include "p_material.h"
 #include "p_rigidbody.h"
 #include "p_shape.h"
+#include "r_particle.h"
 
 #include <array>
 #include <memory>
@@ -23,7 +24,6 @@ Date    :   10/21/2004
 #include <vector>
 
 class cGame;
-class cParticle;
 class cModel;
 
 namespace game {
@@ -178,20 +178,15 @@ protected:
     static physics::box_shape _shape;
 };
 
-#define MAX_PARTICLES   4096
-
 //------------------------------------------------------------------------------
 class world
 {
-    friend cParticle;
     friend tank;
     friend cGame;
 
 public:
     world ()
-        : pFreeParticles(NULL)
-        , pActiveParticles(NULL)
-        , _spawn_id(0)
+        : _spawn_id(0)
         , _border_material{0,0}
         , _border_shapes{{vec2(0,0)}, {vec2(0,0)}}
     {}
@@ -230,16 +225,18 @@ private:
 
     void move_object(object* object);
 
-    cParticle   *pFreeParticles;
-    mutable cParticle   *pActiveParticles;
+    //
+    // particle system
+    //
 
-    cParticle   m_Particles[MAX_PARTICLES];
-    cParticle   *AddParticle ();
-    void        FreeParticle (cParticle *pParticle) const;
+    bool _use_particles;
 
-    void        m_DrawParticles () const;
+    mutable std::vector<render::particle> _particles;
 
-    bool        m_bParticles;
+    render::particle* add_particle();
+    void free_particle (render::particle* particle) const;
+
+    void draw_particles() const;
 
     vec2        _mins;
     vec2        _maxs;

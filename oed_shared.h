@@ -67,6 +67,8 @@ PREPROCESSOR DEFINITIONS
 #define M_SQRT1_2  0.707106781186547524401
 #endif
 
+#define BIT(a)  (1<<a)
+
 #define __deg2rad(a)    (((a)*M_PI)/180.0f)
 #define __rad2deg(a)    (((a)*180.0f)/M_PI)
 

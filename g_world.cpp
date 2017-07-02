@@ -42,10 +42,11 @@ void world::init()
     clear_particles();
     g_World = this;
 
-    if ( (command = strstr( g_Application->InitString(), "particles=" )) )
-        m_bParticles = ( atoi(command+10) > 0 );
-    else
-        m_bParticles = true;
+    if ( (command = strstr( g_Application->InitString(), "particles=" )) ) {
+        _use_particles = ( atoi(command+10) > 0 );
+    } else {
+        _use_particles = true;
+    }
 
     _border_material = physics::material(0, 0);
 
@@ -128,7 +129,7 @@ void world::draw() const
         obj->draw();
     }
 
-    m_DrawParticles( );
+    draw_particles();
 }
 
 /*
@@ -293,138 +294,140 @@ void world::add_effect(vec2 position, effect_type type, float strength)
     g_Game->m_WriteEffect(static_cast<int>(type), position, vec2(0,0), 0);
 
     float   r, d;
-    
+
     switch (type) {
         case effect_type::sparks: {
-            cParticle   *p;
+            render::particle* p;
 
             for (int ii = 0; ii < 4; ++ii) {
-                if ( (p = AddParticle()) == NULL )
+                if ( (p = add_particle()) == NULL )
                     return;
 
-                p->vPos = position + vec2(crand()*2,crand()*2);
-                p->vVel = vec2(crand()*128,crand()*128);
+                p->position = position + vec2(crand()*2,crand()*2);
 
-                p->vColor = vec4(1,0.5+frand()*0.5,0,strength*(0.5f+frand()));
-                p->vColorVel = vec4(0,-1.0f,0,-2.0f - frand());
-                p->flSize = 2.0f;
-                p->flSizeVel = 0.0f;
-                p->flDrag = 0.99 - frand()*0.03;
+                r = frand()*M_PI*2.0f;
+                d = frand()*128;
+
+                p->velocity = vec2(cos(r)*d,sin(r)*d);
+
+                p->color = vec4(1,0.5+frand()*0.5,0,strength*(0.5f+frand()));
+                p->color_velocity = vec4(0,-1.0f,0,-2.0f - frand());
+                p->size = 1.0f;
+                p->size_velocity = 0.0f;
+                p->drag = 0.5f + frand() * 0.5f;
             }
 
             for (int ii = 0; ii < 2; ++ii) {
-                if ( (p = AddParticle()) == NULL )
+                if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
                 d = frand()*24;
 
-                p->vPos = position + vec2(cos(r)*d,sin(r)*d);
+                p->position = position + vec2(cos(r)*d,sin(r)*d);
 
                 r = frand()*M_PI*2.0f;
                 d = frand()*24;
 
-                p->vVel = vec2(cos(r)*d,sin(r)*d);
+                p->velocity = vec2(cos(r)*d,sin(r)*d);
 
-                p->flSize = 4.0f + frand()*8.0f;
-                p->flSizeVel = 2.0;
+                p->size = 4.0f + frand()*8.0f;
+                p->size_velocity = 2.0;
 
-                p->vColor = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
-                p->vColorVel = vec4(0,0,0,-p->vColor.a / (2+frand()*1.5f));
+                p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color_velocity = vec4(0,0,0,-p->color.a / (2+frand()*1.5f));
 
-                p->flDrag = 0.98f - frand()*0.05;
+                p->drag = 0.5f + frand() * 2.0f;
             }
             break;
         }
 
         case effect_type::explosion: {
-            cParticle   *p;
+            render::particle* p;
 
             // shock wave
 
-            if ( (p = AddParticle()) == NULL )
+            if ( (p = add_particle()) == NULL )
                 return;
 
-            p->vPos = position;
-            p->vVel = vec2(0,0);
+            p->position = position;
+            p->velocity = vec2(0,0);
 
-            p->vColor = vec4(1.0f,1.0f,0.5f,0.5f);
-            p->vColorVel = vec4(0,0,0,-p->vColor.a/(0.3f));
-            p->flSize = 24.0;
-            p->flSizeVel = 192.0f;
-            p->bitFlags = PF_INVERT;
-
-            p->flDrag = 0.95 - frand()*0.03;
+            p->color = vec4(1.0f,1.0f,0.5f,0.5f);
+            p->color_velocity = -p->color * vec4(0,1,3,3);
+            p->size = 12.0;
+            p->size_velocity = 192.0f;
+            p->flags = render::particle::invert;
 
             // smoke
 
             for (int ii = 0; ii < 128; ++ii) {
-                if ( (p = AddParticle()) == NULL )
+                if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*24;
+                d = frand()*12;
 
-                p->vPos = position + vec2(cos(r)*d,sin(r)*d);
+                p->position = position + vec2(cos(r)*d,sin(r)*d);
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*24;
+                d = frand()*128;
 
-                p->vVel = vec2(cos(r)*d,sin(r)*d);
+                p->velocity = vec2(cos(r)*d,sin(r)*d);
 
-                p->flSize = 4.0f + frand()*8.0f;
-                p->flSizeVel = 2.0;
+                p->size = 4.0f + frand()*8.0f;
+                p->size_velocity = 2.0;
 
-                p->vColor = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
-                p->vColorVel = vec4(0,0,0,-p->vColor.a / (2+frand()*1.5f));
+                p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color_velocity = vec4(0,0,0,-p->color.a / (2+frand()*1.5f));
 
-                p->flDrag = 0.98f - frand()*0.05;
+                p->drag = 3.0f + frand() * 1.0f;
             }
 
             // fire
 
             for (int ii = 0; ii < 96; ++ii) {
-                if ( (p = AddParticle()) == NULL )
+                if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*16;
+                d = frand()*8;
 
-                p->vPos = position + vec2(cos(r)*d,sin(r)*d);
+                p->position = position + vec2(cos(r)*d,sin(r)*d);
 
                 r = frand()*M_PI*2.0f;
                 d = frand()*128;
 
-                p->vVel = vec2(cos(r)*d,sin(r)*d);
+                p->velocity = vec2(cos(r)*d,sin(r)*d);
 
-                p->vColor = vec4(1.0f,frand(),0.0f,0.1f);
-                p->vColorVel = vec4(0,0,0,-p->vColor.a/(0.5+frand()*frand()*2.5f));
-                p->flSize = 8.0 + frand()*16.0f;
-                p->flSizeVel = 1.0f;
+                p->color = vec4(1.0f,frand(),0.0f,0.1f);
+                p->color_velocity = vec4(0,0,0,-p->color.a/(0.5+frand()*frand()*2.5f));
+                p->size = 8.0 + frand()*16.0f;
+                p->size_velocity = 1.0f;
 
-                p->flDrag = 0.95 - frand()*0.03;
+                p->drag = 1.0f + frand() * 3.0f;
             }
 
             // debris
 
             for (int ii = 0; ii < 32; ++ii) {
-                if ( (p = AddParticle()) == NULL )
+                if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
                 d = frand()*2;
 
-                p->vPos = position + vec2(cos(r)*d,sin(r)*d);
+                p->position = position + vec2(cos(r)*d,sin(r)*d);
 
                 r = frand()*M_PI*2.0f;
                 d = frand()*128;
 
-                p->vVel = vec2(cos(r)*d,sin(r)*d);
+                p->velocity = vec2(cos(r)*d,sin(r)*d);
 
-                p->vColor = vec4(1,0.5+frand()*0.5,0,1);
-                p->vColorVel = vec4(0,0,0,-1.5f-frand());
-                p->flSize = 2.0f;
-                p->flSizeVel = 0.0f;
+                p->color = vec4(1,0.5+frand()*0.5,0,1);
+                p->color_velocity = vec4(0,0,0,-1.5f-frand());
+                p->size = 1.0f;
+                p->size_velocity = 0.0f;
             }
             break;
         }
@@ -436,41 +439,33 @@ void world::add_effect(vec2 position, effect_type type, float strength)
 
 void world::add_smoke_effect(vec2 position, vec2 velocity, int count)
 {
+    render::particle* p;
     float       r, d;
-    cParticle   *p;
 
     g_Game->m_WriteEffect(static_cast<int>(effect_type::smoke), position, velocity, count);
 
     for (int ii = 0; ii < count; ++ii) {
-        if ( (p = AddParticle()) == NULL )
+        if ( (p = add_particle()) == NULL )
             return;
 
         r = frand()*M_PI*2.0f;
         d = frand();
-        p->vPos = position + vec2(cos(r)*d,sin(r)*d);
-        p->vVel = velocity * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
+        p->position = position + vec2(cos(r)*d,sin(r)*d);
+        p->velocity = velocity * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
 
-        p->flSize = 4.0f + frand()*8.0f;
-        p->flSizeVel = 2.0;
+        p->size = 4.0f + frand()*8.0f;
+        p->size_velocity = 2.0;
 
-        p->vColor = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
-        p->vColorVel = vec4(0,0,0,-p->vColor.a / (1+frand()*1.0f));
+        p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
+        p->color_velocity = vec4(0,0,0,-p->color.a / (1+frand()*1.0f));
 
-        p->flDrag = 0.98f - frand()*0.05;
+        p->drag = 1.5f + frand() * 1.5f;
     }
 }
 
 void world::clear_particles()
 {
-    memset (&m_Particles, 0, sizeof(m_Particles));
-
-    pFreeParticles = &m_Particles[0];
-    pActiveParticles = NULL;
-
-    for (int ii = 0; ii < MAX_PARTICLES; ++ii) {
-        m_Particles[ii].pNext = &m_Particles[ii+1];
-    }
-    m_Particles[MAX_PARTICLES-1].pNext = NULL;
+    _particles.clear();
 }
 
 } // namespace game

@@ -29,8 +29,6 @@ Date    :   10/20/2004
 #define KEY_TRIGHT  5
 #define KEY_FIRE    6
 
-#define BIT(a)  (1<<a)
-
 static vec4 player_colors[] = {
     vec4(   1.000f, 0.000f, 0.000f, 1),     // 0: red
     vec4(   0.000f, 0.000f, 1.000f, 1),     // 1: blue

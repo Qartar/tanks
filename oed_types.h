@@ -52,7 +52,7 @@ public:
     };
 
 // constructors
-    inline          cVec2   ()                  {}
+    inline          cVec2   () = default;
     __forceinline   cVec2   (float X, float Y)  {   x = X   ;   y = Y   ;   }
 
     __forceinline   cVec2   &operator=  (const cVec2 &V) {x=V.x;y=V.y;return *this;}
@@ -108,7 +108,7 @@ public:
     };
 
 // constructors
-    inline          cVec3   ()                          {}
+    inline          cVec3   () = default;
     __forceinline   cVec3   (float X, float Y, float Z) {x=X;y=Y;z=Z;}
     __forceinline   cVec3   (cVec2& V, float Z = 0) {x=V.x;y=V.y;z=Z;}
     __forceinline   cVec3   (cVec4 &V) { *this = *(cVec3 *)(&V); }
@@ -176,13 +176,13 @@ public:
     };
 
 // constructors
-    inline          cVec4   ()  {}
+    inline          cVec4   () = default;
     __forceinline   cVec4   (float X, float Y, float Z) : x(X), y(Y), z(Z), w(1) {}
     __forceinline   cVec4   (float X, float Y, float Z, float W) : x(X), y(Y), z(Z), w(W) {}
     __forceinline   cVec4   (cVec3 &V) { v[0] = V.v[0] ; v[1] = V.v[1] ; v[2] = V.v[2] ; v[3] = 1.0f; }
 
     __forceinline   cVec4   &operator=  (const cVec4 &V) {x=V.x;y=V.y;z=V.z;w=V.w;return *this;}
-    __forceinline   cVec4   operator-   (void)           const {return cVec4(-x,-y,-z);}
+    __forceinline   cVec4   operator-   (void)           const {return cVec4(-x,-y,-z,-w);}
     __forceinline   bool    operator==  (const cVec4 &V) const {return(x==V.x && y==V.y && z==V.z && w==V.w);}
     __forceinline   bool    operator!=  (const cVec4 &V) const {return(!(*this==V));}
     __forceinline   float   operator[]  (unsigned int n) const {return v[n];}
@@ -190,32 +190,32 @@ public:
     __forceinline   operator const float*   ()           const {return v;}
 
 // vector operations
-    __forceinline   cVec4   operator+   (const cVec4 &V) const {return cVec4(x+V.x,y+V.y,z+V.z,1);}
-    __forceinline   cVec4   operator-   (const cVec4 &V) const {return cVec4(x-V.x,y-V.y,z-V.z,1);}
-    __forceinline   cVec4   operator*   (const cVec4 &V) const {return cVec4(x*V.x,y*V.y,z*V.z,1);}
-    __forceinline   cVec4   operator/   (const cVec4 &V) const {return cVec4(x/V.x,y/V.y,z/V.z,1);}
+    __forceinline   cVec4   operator+   (const cVec4 &V) const {return cVec4(x+V.x,y+V.y,z+V.z,w+V.w);}
+    __forceinline   cVec4   operator-   (const cVec4 &V) const {return cVec4(x-V.x,y-V.y,z-V.z,w-V.w);}
+    __forceinline   cVec4   operator*   (const cVec4 &V) const {return cVec4(x*V.x,y*V.y,z*V.z,w*V.w);}
+    __forceinline   cVec4   operator/   (const cVec4 &V) const {return cVec4(x/V.x,y/V.y,z/V.z,w/V.w);}
 
 // implicit operations
-    __forceinline   cVec4   &operator+= (const cVec4 &V)       {x+=V.x;y+=V.y;z+=V.z;return*this;}
-    __forceinline   cVec4   &operator-= (const cVec4 &V)       {x-=V.x;y-=V.y;z-=V.z;return*this;}
-    __forceinline   cVec4   &operator*= (const cVec4 &V)       {x*=V.x;y*=V.y;z*=V.z;return*this;}
-    __forceinline   cVec4   &operator/= (const cVec4 &V)       {x/=V.x;y/=V.y;z/=V.z;return*this;}
+    __forceinline   cVec4   &operator+= (const cVec4 &V)       {x+=V.x;y+=V.y;z+=V.z;w+=V.w;return*this;}
+    __forceinline   cVec4   &operator-= (const cVec4 &V)       {x-=V.x;y-=V.y;z-=V.z;w-=V.w;return*this;}
+    __forceinline   cVec4   &operator*= (const cVec4 &V)       {x*=V.x;y*=V.y;z*=V.z;w*=V.w;return*this;}
+    __forceinline   cVec4   &operator/= (const cVec4 &V)       {x/=V.x;y/=V.y;z/=V.z;w/=V.w;return*this;}
 
 // linear operations
-    __forceinline   cVec4   operator*   (float L) const {return cVec4(x*L,y*L,z*L,w);}
-    __forceinline   cVec4   operator/   (float L) const {return cVec4(x/L,y/L,z/L,w);}
+    __forceinline   cVec4   operator*   (float L) const {return cVec4(x*L,y*L,z*L,w*L);}
+    __forceinline   cVec4   operator/   (float L) const {return cVec4(x/L,y/L,z/L,w/L);}
 
 // linear implicit
-    __forceinline   cVec4   &operator*= (float L)   {x*=L;y*=L;z*=L;return*this;}
-    __forceinline   cVec4   &operator/= (float L)   {x/=L;y/=L;z/=L;return*this;}
+    __forceinline   cVec4   &operator*= (float L)   {x*=L;y*=L;z*=L;w*=L;return*this;}
+    __forceinline   cVec4   &operator/= (float L)   {x/=L;y/=L;z/=L;w/=L;return*this;}
 
 // utility functions
-    __forceinline   float   length      () const {return sqrtf(x*x+y*y+z*z);}
-    __forceinline   float   lengthsq    () const {return (x*x+y*y+z*z);}
+    __forceinline   float   length      () const {return sqrtf(x*x+y*y+z*z+w*w);}
+    __forceinline   float   lengthsq    () const {return (x*x+y*y+z*z+w*w);}
     __forceinline   cVec4   &normalize  ()       {(*this/=length());return*this;}
-    __forceinline   void    clear       ()       {x=0.0f;y=0.0f;z=0.0f;w=1.0f;}
+    __forceinline   void    clear       ()       {x=0.0f;y=0.0f;z=0.0f;w=0.0f;}
 
-    __forceinline   float   dot         (const cVec4 &V) const {return (x*V.x+y*V.y+z*V.z);}
+    __forceinline   float   dot         (const cVec4 &V) const {return (x*V.x+y*V.y+z*V.z+w*V.w);}
     __forceinline   cVec4   cross       (const cVec4 &V) const {return cVec4(  y*V.z - z*V.y,  z*V.x - x*V.z,  x*V.y - y*V.x, 0.0f );  }
 };
 

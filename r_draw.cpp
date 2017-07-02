@@ -69,51 +69,40 @@ Purpose :   draws a list of particles
 ===========================================================
 */
 
-#define ANTI    1
-
-void cRender::DrawParticles (cParticle *pHead)
+void cRender::DrawParticles (float time, render::particle const* particles, std::size_t num_particles)
 {
-    cParticle   *p;
-    float       flSize = 0.0f;
+    render::particle const* end = particles + num_particles;
+    for (render::particle const*p = particles; p < end; ++p) {
+        float ptime = time - p->time;
 
-    int     i, frac;
-    float   offx, offy;
-    float   a_in, a_out;
+        float vtime = p->drag ? tanhf(p->drag * ptime) / p->drag : ptime;
 
-    p = pHead;
-    while ( p )
-    {
-        flSize = p->flSize * 0.5;
+        float radius = p->size + p->size_velocity * ptime;
+        vec4 color = p->color + p->color_velocity * ptime;
+        vec2 position = p->position
+                      + p->velocity * vtime
+                      + p->acceleration * 0.5f * vtime * vtime;
 
-        glBegin( GL_TRIANGLE_FAN );
+        vec4 color_in = p->flags & render::particle::invert ? color * vec4(1,1,1,0.25f) : color;
+        vec4 color_out = p->flags & render::particle::invert ? color : color * vec4(1,1,1,0.25f);
 
-        if ( p->bitFlags & PF_INVERT )
-        {
-            a_in = p->vColor.a * 0.25;
-            a_out= p->vColor.a;
+        glBegin(GL_TRIANGLE_FAN);
+
+        // Number of circle segments, approximation for pi / acos(1 - 1/2x)
+        int n = 1 + M_PI * sqrtf(radius - 0.25f);
+        int k = std::max<int>(1, 360 / n);
+
+        glColor4fv(color_in.v);
+        glVertex2fv(position.v);
+
+        glColor4fv(color_out.v);
+        for (int ii = 0; ii < 360 ; ii += k) {
+            vec2 vertex = position + vec2(costbl[ii] * radius, sintbl[ii] * radius);
+            glVertex2fv(vertex.v);
         }
-        else
-        {
-            a_in = p->vColor.a;
-            a_out = p->vColor.a * 0.25;
-        }
-    
-        glColor4f( p->vColor.r, p->vColor.g, p->vColor.b, a_in );
-        glVertex2f( p->vPos.x, p->vPos.y );
+        glVertex2f(position.x + radius, position.y);
 
-        glColor4f( p->vColor.r, p->vColor.g, p->vColor.b, a_out );
-        for (i=0 ; i<flSize ; i++)
-        {
-            frac = (int)floor((float)i/flSize*360);
-            offx = costbl[frac] * flSize;
-            offy = sintbl[frac] * flSize;
-            glVertex2f( p->vPos.x + offx, p->vPos.y + offy );
-        }
-        glVertex2f( p->vPos.x + costbl[0] * flSize, p->vPos.y + sintbl[0] * flSize );
-
-        glEnd( );
-
-        p = p->pNext;
+        glEnd();
     }
 }
 

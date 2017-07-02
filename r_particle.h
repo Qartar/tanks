@@ -2,24 +2,24 @@
 
 #pragma once
 
-class cParticle
+#include "oed_types.h"
+#include "oed_shared.h"
+
+namespace render {
+
+struct particle
 {
-public:
-    cParticle () {}
-    ~cParticle () {}
+    enum flag_bits
+    {
+        invert = BIT(0),
+    };
 
-    void    AddToActive ();
-    void    AddToFree ();
-
-    cParticle   *pNext;
-
-    float   flTime;
-    float   flSize, flSizeVel;
-    vec2    vPos, vVel, vAccel;
-    float   flDrag;
-    vec4    vColor, vColorVel;
-
-    int     bitFlags;
+    float time;
+    float size, size_velocity;
+    vec2 position, velocity, acceleration;
+    float drag;
+    vec4 color, color_velocity;
+    flag_bits flags;
 };
 
-#define PF_INVERT   0x00000001
+} // namespace render

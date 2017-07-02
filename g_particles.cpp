@@ -13,103 +13,38 @@ Purpose :   handles cParticle and cWorld particle handling
 
 namespace game {
 
-cParticle *world::AddParticle ()
+//------------------------------------------------------------------------------
+render::particle* world::add_particle ()
 {
-    cParticle   *pRet = pFreeParticles;
-
-    if (pRet == NULL)
-        return NULL;
-
-    if (!m_bParticles)
-        return NULL;
-
-    pRet->AddToActive ();
-    pRet->bitFlags = 0;
-    pRet->flTime = g_Game->m_flTime;
-    return pRet;
+    _particles.emplace_back(render::particle{0});
+    _particles.back().time = 1e-3f * g_Game->m_flTime;
+    return &_particles.back();
 }
 
-void world::FreeParticle (cParticle *pParticle) const
+//------------------------------------------------------------------------------
+void world::free_particle (render::particle *p) const
 {
-    pParticle->AddToFree( );
+    _particles[p - _particles.data()] = _particles.back();
+    _particles.pop_back();
 }
 
-void world::m_DrawParticles () const
+//------------------------------------------------------------------------------
+void world::draw_particles () const
 {
-    cParticle   *p, *next;
-    cParticle   *active, *tail;
-    float       time;
+    float time = 1e-3f * g_Game->m_flTime;
 
-    active = NULL;
-    tail = NULL;
-
-    next = pActiveParticles;
-    for (p = pActiveParticles ; p ; p=next )
-    {
-        next = p->pNext;
-
-        if (g_Game->m_flTime < p->flTime)
-        {
-            p->pNext = NULL;
-            if (!tail)
-                active = tail = p;
-            else
-            {
-                tail->pNext = p;
-                tail = p;
-            }
-            continue;
+    for (std::size_t ii = 0; ii < _particles.size(); ++ii) {
+        float ptime = time - _particles[ii].time;
+        if (_particles[ii].color.a + _particles[ii].color_velocity.a * ptime <= 0.0f) {
+            free_particle(&_particles[ii]);
+            --ii;
         }
-
-        time = (g_Game->m_flTime - p->flTime)*0.001f;
-        p->vColor.a += p->vColorVel.a * time;
-        if (p->vColor.a <= 0.0f)
-        {
-            FreeParticle( p );
-            continue;
-        }
-
-        p->pNext = NULL;
-        if (!tail)
-            active = tail = p;
-        else
-        {
-            tail->pNext = p;
-            tail = p;
-        }
-
-        p->vColor.r += p->vColorVel.r * time;
-        p->vColor.g += p->vColorVel.g * time;
-        p->vColor.b += p->vColorVel.b * time;
-
-        p->vPos.x += p->vVel.x * time + p->vAccel.x * time * time;
-        p->vPos.y += p->vVel.y * time + p->vAccel.y * time * time;
-
-        if (p->flDrag)
-            p->vVel = p->vVel * p->flDrag * (1.0f - time);
-
-        p->flSize += p->flSizeVel * time;
-
-        p->flTime = g_Game->m_flTime;
     }
 
-    pActiveParticles = active;
-
-    g_Application->get_glWnd()->get_Render()->DrawParticles( pActiveParticles );
+    g_Application->get_glWnd()->get_Render()->DrawParticles(
+        time,
+        _particles.data(),
+        _particles.size());
 }
 
 } // namespace game
-
-void cParticle::AddToActive ()
-{
-    g_World->pFreeParticles = pNext;
-    pNext = g_World->pActiveParticles;
-    g_World->pActiveParticles = this;
-}
-
-void cParticle::AddToFree ()
-{
-    memset( this, 0, sizeof(cParticle) );
-    pNext = g_World->pFreeParticles;
-    g_World->pFreeParticles = this;
-}
