@@ -10,8 +10,7 @@ Modified:   11/03/2006
 ===========================================================
 */
 
-#ifndef __OED_SHARED__
-#define __OED_SHARED__
+#pragma once
 
 // pragmas
 
@@ -129,5 +128,3 @@ static void fmt (char *szDest, char *szMessage, ...)
     vsprintf( szDest, szMessage, apList );
     va_end( apList );
 }
-
-#endif // __OED_SHARED__

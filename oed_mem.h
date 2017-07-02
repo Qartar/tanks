@@ -10,8 +10,7 @@ Modified:   11/03/2006
 ===========================================================
 */
 
-#ifndef __OED_MEM__
-#define __OED_MEM__
+#pragma once
 
 #include "oed_shared.h"
 #include "oed_error.h"
@@ -162,5 +161,3 @@ public:
     void * operator new (size_t s) { return mem::alloc( s ); }
     void operator delete (void *ptr) { mem::free( ptr ); }
 };
-
-#endif // __OED_MEM__

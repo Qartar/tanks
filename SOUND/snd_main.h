@@ -3,6 +3,8 @@ Name    :   snd_main.h
 Date    :   04/01/2006
 =========================================================*/
 
+#pragma once
+
 #include <windows.h>
 
 #include "../shared.h"

@@ -1,9 +1,8 @@
 // variable.h
 
-#include "shared.h"
+#pragma once
 
-#ifndef __CM_VARIABLE_H__
-#define __CM_VARIABLE_H__
+#include "shared.h"
 
 #define CVAR_GET(a)         pVariable->Get(a)
 
@@ -53,5 +52,3 @@ public:
 };
 
 extern vVariable    *pVariable;
-
-#endif //__CM_VARIABLE_H__

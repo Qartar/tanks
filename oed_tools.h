@@ -10,8 +10,7 @@ Modified:   11/03/2006
 ===========================================================
 */
 
-#ifndef __OED_DATA__
-#define __OED_DATA__
+#pragma once
 
 #include "oed_shared.h"
 #include "oed_mem.h"    // [oed_error.h]
@@ -304,5 +303,3 @@ private:
     int m_nCursorRead;
     int m_nCursorWrite;
 };
-
-#endif // __OED_DATA__

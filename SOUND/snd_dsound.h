@@ -3,6 +3,8 @@ Name    :   snd_dsound.h
 Date    :   04/04/2006
 =========================================================*/
 
+#pragma once
+
 #include <windows.h>
 #include <dsound.h>
 

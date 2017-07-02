@@ -3,10 +3,9 @@ Name    :   snd_wav_source.h
 Date    :   04/07/2006
 =========================================================*/
 
-#include "snd_files.h"
+#pragma once
 
-#ifndef __SND_WAV_SOURCE__
-#define __SND_WAV_SOURCE__
+#include "snd_files.h"
 
 /*=========================================================
 =========================================================*/
@@ -79,5 +78,3 @@ protected:
     int         m_numSamples;
     int         m_loopStart;
 };
-
-#endif // __SND_WAV_SOURCE__

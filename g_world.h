@@ -10,8 +10,7 @@ Date    :   10/21/2004
 ===============================================================================
 */
 
-#ifndef __G_WORLD_H__
-#define __G_WORLD_H__
+#pragma once
 
 #include <memory>
 
@@ -171,5 +170,3 @@ private:
 };
 
 extern cWorld *g_World;
-
-#endif //__G_WORLD_H__

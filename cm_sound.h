@@ -1,8 +1,7 @@
 //  cm_sound.h
 //
 
-#ifndef __CM_SOUND_H__
-#define __CM_SOUND_H__
+#pragma once
 
 #ifndef _WINDOWS_
 #ifndef __HWND__
@@ -56,5 +55,3 @@ public:
 };
 
 extern vSound   *pSound;
-
-#endif //__CM_SOUND_H__

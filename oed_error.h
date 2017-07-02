@@ -10,8 +10,7 @@ Modified:   11/03/2006
 ===========================================================
 */
 
-#ifndef __OED_ERROR__
-#define __OED_ERROR__
+#pragma once
 
 #include "oed_shared.h"
 #include <string.h>     // strncpy
@@ -42,5 +41,3 @@ public:
     int     code () { return m_code; }
     bool    is_fatal () { return m_fatal; }
 };
-
-#endif // __OED_ERROR__

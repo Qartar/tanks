@@ -8,6 +8,8 @@ Purpose :   General top-down include file
 ===============================================================================
 */
 
+#pragma once
+
 #include "shared.h"
 
 #include <windows.h>

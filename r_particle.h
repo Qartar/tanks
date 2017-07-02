@@ -1,7 +1,6 @@
 //  r_particle.h
 
-#ifndef __R_PARTICLE_H__
-#define __R_PARTICLE_H__
+#pragma once
 
 class cParticle
 {
@@ -24,5 +23,3 @@ public:
 };
 
 #define PF_INVERT   0x00000001
-
-#endif //__R_PARTICLE_H__

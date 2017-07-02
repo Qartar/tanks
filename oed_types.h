@@ -10,8 +10,7 @@ Modified:   11/03/2006
 ===========================================================
 */
 
-#ifndef __OED_TYPES__
-#define __OED_TYPES__
+#pragma once
 
 #include <math.h>   // sqrt
 
@@ -581,5 +580,3 @@ const vec2 vec2_null = cVec2(0,0);
 
 const mat4 mat4_unit = cMat4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
 const mat3 mat3_unit = cMat3(1,0,0,0,1,0,0,0,1);
-
-#endif // __OED_TYPES__

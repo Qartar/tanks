@@ -10,8 +10,7 @@ Date    :   10/19/2004
 ===============================================================================
 */
 
-#ifndef __R_MAIN_H__
-#define __R_MAIN_H__
+#pragma once
 
 #define MAX_FONTS   16
 #define NUM_CHARS   256
@@ -124,5 +123,3 @@ private:
     float   costbl[360];
     float   sintbl[360];
 };
-
-#endif //__R_MAIN_H__

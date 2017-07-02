@@ -10,8 +10,7 @@ Date    :   10/20/2004
 ===============================================================================
 */
 
-#ifndef __G_MENU_H__
-#define __G_MENU_H__
+#pragma once
 
 static vec4 menu_colors[] = {
     vec4(0.000,0.000,0.000,1),
@@ -223,5 +222,3 @@ private:
     char    m_szTitle[64];
     vec2    m_vPos, m_vSize;
 };
-
-#endif //__G_MENU_H__

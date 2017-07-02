@@ -10,8 +10,7 @@ Modified:   11/03/2006
 ===========================================================
 */
 
-#ifndef __OED_FILES__
-#define __OED_FILES__
+#pragma once
 
 #include "oed_shared.h"
 #include "oed_tools.h"  // [oed_mem.h]
@@ -281,5 +280,3 @@ namespace file
     inline int      remove (char *file)                                 { return s_filectrl_c->_remove(file); }
     inline int      mkdir (char *dir)                                   { return s_filectrl_c->mkdir(dir); }
 }
-
-#endif // __OED_FILES__

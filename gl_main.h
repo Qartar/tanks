@@ -10,8 +10,7 @@ Date    :   10/15/2004
 ===============================================================================
 */
 
-#ifndef __GL_MAIN_H__
-#define __GL_MAIN_H__
+#pragma once
 
 #include <gl/gl.h>
 #include <gl/glu.h>
@@ -133,5 +132,3 @@ private:
     GLuint  m_fbo;
     GLuint  m_rbo[2];
 };
-
-#endif //__GL_MAIN_H__

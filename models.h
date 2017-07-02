@@ -8,6 +8,8 @@ Purpose :   static list of models used in game
 ===============================================================================
 */
 
+#pragma once
+
 static sRect tank_body_rects[] = {
     //  posx    posy    sizex   sizey   gamma
     {   0,      8,      20,     2,      0.5f    },  // left tread

@@ -3,8 +3,7 @@ Name    :   snd_device.h
 Date    :   04/04/2006
 =========================================================*/
 
-#ifndef __SND_DEVICE_H__
-#define __SND_DEVICE_H__
+#pragma once
 
 #include "../cm_sound.h"
 
@@ -41,5 +40,3 @@ public:
 
     virtual void        writeToBuffer (byte *pAudioData, int nBytes) = 0;
 };
-
-#endif //__SND_DEVICE_H__

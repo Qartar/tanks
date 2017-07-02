@@ -10,8 +10,7 @@ Date    :   10/20/2004
 ===============================================================================
 */
 
-#ifndef __G_MAIN_H__
-#define __G_MAIN_H__
+#pragma once
 
 #define FRAMETIME   0.05f
 #define FRAMEMSEC   50.0f
@@ -333,5 +332,3 @@ extern index_s  sound_index[256];
 
 extern cGame *g_Game;
 extern cRender *g_Render;
-
-#endif //__G_MAIN_H__
