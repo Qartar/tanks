@@ -42,7 +42,7 @@ public:
 
     virtual void    Draw ();
 
-    virtual void    Touch (cObject *pOther);
+    virtual void    Touch (cObject *pOther, float impulse = 0);
     virtual void    Think ();
 
     virtual vec2    GetPos( float lerp );
@@ -68,7 +68,7 @@ public:
     ~cBullet () {}
 
     virtual void    Draw ();
-    virtual void    Touch (cObject *pOther);
+    virtual void    Touch (cObject *pOther, float impulse = 0) override;
     virtual void    Think ();
 
     bool    bInGame;
@@ -82,7 +82,7 @@ public:
     ~cTank () {}
 
     virtual void    Draw ();
-    virtual void    Touch (cObject *pOther);
+    virtual void    Touch (cObject *pOther, float impulse = 0) override;
     virtual void    Think ();
 
     float           GetTAngle( float lerp );
@@ -97,6 +97,8 @@ public:
     int     nPlayerNum;
     float   flDeadTime;
 
+    float _track_speed;
+
     float   oldTAngle;
 
     bool    m_Keys[8];
@@ -108,7 +110,7 @@ public:
     game_client_t   *client;
 };
 
-#define MAX_PARTICLES   1024
+#define MAX_PARTICLES   4096
 
 class cWorld
 {
@@ -117,7 +119,12 @@ class cWorld
     friend cGame;
 
 public:
-    cWorld () : pFreeParticles(NULL), pActiveParticles(NULL) {}
+    cWorld ()
+        : pFreeParticles(NULL)
+        , pActiveParticles(NULL)
+        , _border_material{0,0}
+        , _border_shapes{{vec2(0,0)}, {vec2(0,0)}}
+    {}
     ~cWorld () {}
 
     void    Init ();
@@ -134,7 +141,7 @@ public:
 
     void    AddSound (char *szName);
     void    AddSmokeEffect (vec2 vPos, vec2 vVel, int nCount);
-    void    AddEffect (vec2 vPos, eEffects eType);
+    void    AddEffect (vec2 vPos, eEffects eType, float strength = 1);
 
     void    AddFlagTrail (vec2 vPos, int nTeam);
 
@@ -157,6 +164,11 @@ private:
 
     vec2        m_vWorldMins;
     vec2        m_vWorldMaxs;
+
+    physics::material _border_material;
+    physics::box_shape _border_shapes[2];
+    cObject _border_objects[4];
+    constexpr static int _border_thickness = 512;
 };
 
 extern cWorld *g_World;

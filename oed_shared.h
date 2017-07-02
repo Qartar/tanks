@@ -76,8 +76,8 @@ PREPROCESSOR DEFINITIONS
 
 #define __clamp(a,b,c)  ( (a<b)?b:( (a>c)?c:a ) )
 
-#define ___min(a,b) (a>b?a:b)
-#define ___max(a,b) (a<b?a:b)
+#define ___min(a,b) (a<b?a:b)
+#define ___max(a,b) (a>b?a:b)
 
 #define deg2rad(deg)    __deg2rad(deg)
 #define rad2deg(rad)    __rad2deg(rad)

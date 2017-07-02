@@ -21,6 +21,8 @@ cTank::cTank ()
     flTAngle = 0;
     flTVel = 0;
 
+    _track_speed = 0;
+
     channels[0] = NULL;
     channels[1] = NULL;
     channels[2] = NULL;
@@ -77,28 +79,31 @@ void cTank::Draw ()
     g_Render->DrawModel( pTurret, pos, tangle, vColor );
 }
 
-void cTank::Touch (cObject *pOther)
+void cTank::Touch (cObject *pOther, float impulse)
 {
     if ( !pOther )
         return;
 
     if ( pOther->eType == object_tank )
     {
+        float base_damage = (max(0, impulse - 5.0f) / 5.0f) * FRAMETIME;
+        cTank* pOtherTank = static_cast<cTank*>(pOther);
+
         if ( flDamage < 1.0f )
         {
-            flDamage += (1.0f / 3.0f) * FRAMETIME / client->armor_mod;
+            flDamage += base_damage / client->armor_mod;
 
             if (flDamage >= 1.0f)
             {
                 char    player[LONG_STRING];
                 char    target[LONG_STRING];
 
-                fmt( player, "\\c%02x%02x%02x%s\\cx", (int )(((cTank *)pOther)->vColor.r * 255), (int )(((cTank *)pOther)->vColor.g * 255), (int )(((cTank *)pOther)->vColor.b * 255),
-                    g_Game->svs.clients[((cTank *)pOther)->nPlayerNum].name );
+                fmt( player, "\\c%02x%02x%02x%s\\cx", (int )(pOtherTank->vColor.r * 255), (int )(pOtherTank->vColor.g * 255), (int )(pOtherTank->vColor.b * 255),
+                    g_Game->svs.clients[pOtherTank->nPlayerNum].name );
                 fmt( target, "\\c%02x%02x%02x%s\\cx", (int )(vColor.r * 255), (int )(vColor.g * 255), (int )(vColor.b * 255),
                     g_Game->svs.clients[nPlayerNum].name );
 
-                g_Game->AddScore( ((cTank *)pOther)->nPlayerNum, 1 );
+                g_Game->AddScore( pOtherTank->nPlayerNum, 1 );
                 flDeadTime = g_Game->m_flTime;
                 if (g_Game->bAutoRestart && !g_Game->m_bMultiplayer)
                     g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
@@ -107,32 +112,29 @@ void cTank::Touch (cObject *pOther)
             }
         }
 
-        if ( ((cTank *)pOther)->flDamage < 1.0f )
+        if ( pOtherTank->flDamage < 1.0f )
         {
-            ((cTank *)pOther)->flDamage += (1.0f / 3.0f) * FRAMETIME / ((cTank *)pOther)->client->armor_mod;
+            pOtherTank->flDamage += base_damage / pOtherTank->client->armor_mod;
 
-            if (((cTank *)pOther)->flDamage >= 1.0f)
+            if (pOtherTank->flDamage >= 1.0f)
             {
                 char    player[LONG_STRING];
                 char    target[LONG_STRING];
 
-                fmt( target, "\\c%02x%02x%02x%s\\cx", (int )(((cTank *)pOther)->vColor.r * 255), (int )(((cTank *)pOther)->vColor.g * 255), (int )(((cTank *)pOther)->vColor.b * 255),
-                    g_Game->svs.clients[((cTank *)pOther)->nPlayerNum].name );
+                fmt( target, "\\c%02x%02x%02x%s\\cx", (int )(pOtherTank->vColor.r * 255), (int )(pOtherTank->vColor.g * 255), (int )(pOtherTank->vColor.b * 255),
+                    g_Game->svs.clients[pOtherTank->nPlayerNum].name );
                 fmt( player, "\\c%02x%02x%02x%s\\cx", (int )(vColor.r * 255), (int )(vColor.g * 255), (int )(vColor.b * 255),
                     g_Game->svs.clients[nPlayerNum].name );
 
                 g_Game->AddScore( nPlayerNum, 1 );
-                ((cTank *)pOther)->flDeadTime = g_Game->m_flTime;
+                pOtherTank->flDeadTime = g_Game->m_flTime;
                 if (g_Game->bAutoRestart && !g_Game->m_bMultiplayer)
                     g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
 
                 g_Game->m_WriteMessage( va("%s got a little too cozy with %s.", target, player ) );
             }
         }
-
     }
-
-    return;
 }
 
 #define HACK_TIME       1000.0f
@@ -174,14 +176,20 @@ void cTank::Think ()
     flLeft = m_Keys[KEY_LEFT] - m_Keys[KEY_RIGHT];
     flTLeft = m_Keys[KEY_TLEFT] - m_Keys[KEY_TRIGHT];
 
-    vec2 forward = rot(vec2(1,0), rad2deg(_rigid_body->get_rotation()));
+    vec2 forward = rot(vec2(1,0), _rigid_body->get_rotation());
     flVel = forward.dot(_rigid_body->get_linear_velocity());
+
+    vec2 track_velocity = rot(vec2(_track_speed,0), _rigid_body->get_rotation());
+    vec2 delta_velocity = track_velocity - _rigid_body->get_linear_velocity();
+    vec2 friction_impulse = delta_velocity * _rigid_body->get_mass() * _rigid_body->get_material()->sliding_friction() * FRAMETIME;
+
+    _rigid_body->apply_impulse(friction_impulse);
 
     if (flDamage >= 1.0f)
     {
         vec2 vVel = vec2(flVel * 0.98 * (1-FRAMETIME),0);
 
-        _rigid_body->set_linear_velocity(rot(vVel,rad2deg(_rigid_body->get_rotation())));
+        _rigid_body->set_linear_velocity(rot(vVel,_rigid_body->get_rotation()));
         _rigid_body->set_angular_velocity(_rigid_body->get_angular_velocity() * 0.9f);
         flTVel *= 0.9f;
 
@@ -195,11 +203,12 @@ void cTank::Think ()
     }
     else
     {
-        flVel = flVel * 0.9 * (1-FRAMETIME) + flForward * 192*client->speed_mod * FRAMETIME;
-        flVel = clamp(flVel,-32*client->speed_mod,48*client->speed_mod);
-        vec2 vVel = vec2(flVel,0);
+        float new_speed = _track_speed * 0.9 * (1 - FRAMETIME) + flForward * 192 * client->speed_mod * FRAMETIME;
+        new_speed = clamp(new_speed, -32 * client->speed_mod, 48 * client->speed_mod);
 
-        _rigid_body->set_linear_velocity(rot(vVel,rad2deg(_rigid_body->get_rotation())));
+        _rigid_body->set_linear_velocity(_rigid_body->get_linear_velocity() + forward * (new_speed - _track_speed));
+        _track_speed = new_speed;
+
         _rigid_body->set_angular_velocity(deg2rad(-flLeft * 90));
         flTVel = deg2rad(-flTLeft * 90);
     }
@@ -216,8 +225,8 @@ void cTank::Think ()
         flPower = clamp( flPower, 0.5, 1.5 );
 
         g_World->AddSmokeEffect(
-            _rigid_body->get_position() + rot(vOrg,rad2deg(flTAngle)),
-            rot(vOrg,rad2deg(flTAngle)) * flPower * flPower * flPower * 2,
+            _rigid_body->get_position() + rot(vOrg,flTAngle),
+            rot(vOrg,flTAngle) * flPower * flPower * flPower * 2,
             flPower * flPower * 4 );
     }
     else if ((flLastFire + 3000/client->refire_mod) < g_Game->m_flTime) // can fire
@@ -227,19 +236,21 @@ void cTank::Think ()
         {
             vec2    vOrg(21,0);
 
-            g_World->AddSmokeEffect( 
-                _rigid_body->get_position() + rot(vOrg,rad2deg(flTAngle)),
-                rot(vOrg,rad2deg(flTAngle)) * 16,
+            g_World->AddSmokeEffect(
+                _rigid_body->get_position() + rot(vOrg,flTAngle),
+                rot(vOrg,flTAngle) * 16,
                 64 );
 
             flLastFire = g_Game->m_flTime;
 
-            m_Bullet._rigid_body->set_position(_rigid_body->get_position() + rot(vOrg,rad2deg(flTAngle)));
-            m_Bullet._rigid_body->set_linear_velocity(rot(vOrg,rad2deg(flTAngle)) * 96);
+            m_Bullet._rigid_body->set_position(_rigid_body->get_position() + rot(vOrg,flTAngle));
+            m_Bullet._rigid_body->set_linear_velocity(rot(vec2(1,0),flTAngle) * 20 * 96);
 
             g_World->AddSound( sound_index[TANK_FIRE].name );
-            g_World->AddObject( &m_Bullet );
-            m_Bullet.bInGame = true;
+            if (!m_Bullet.bInGame) {
+                g_World->AddObject( &m_Bullet );
+                m_Bullet.bInGame = true;
+            }
         }
     }
 
@@ -359,6 +370,8 @@ cBullet::cBullet ()
     pModel = NULL;
 
     eType = object_bullet;
+
+    bInGame = false;
 }
 
 #ifndef M_SQRT1_2
@@ -370,7 +383,7 @@ cBullet::cBullet ()
 #define DAMAGE_REAR     1.0f
 #define DAMAGE_FULL     1.0f
 
-void cBullet::Touch (cObject *pOther)
+void cBullet::Touch (cObject *pOther, float impulse)
 {
     g_World->AddSound( sound_index[BULLET_EXPLODE].name );
     g_World->AddEffect( _rigid_body->get_position(), effect_explosion );
@@ -392,7 +405,7 @@ void cBullet::Touch (cObject *pOther)
 
         vOrg = -_rigid_body->get_linear_velocity().normalize();
         vDir = vec2(1,0);
-        vDir = rot(vDir,rad2deg(pOther->_rigid_body->get_rotation()));
+        vDir = rot(vDir,pOther->_rigid_body->get_rotation());
         flDot = (vOrg.x*vDir.x + vOrg.y*vDir.y);
 
         damage = g_Game->gameClients[nPlayer].damage_mod / pTank->client->armor_mod;

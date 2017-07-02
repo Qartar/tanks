@@ -13,6 +13,9 @@ Date    :   10/21/2004
 #include "local.h"
 #pragma hdrstop
 
+#include "p_collide.h"
+#include "p_trace.h"
+
 cWorld *g_World;
 
 /*
@@ -36,17 +39,19 @@ void cWorld::Init ()
     ClearParticles ();
     g_World = this;
 
-    m_vWorldMins = vec2(0,0);
-    m_vWorldMaxs = vec2(
-        g_arenaWidth->getInt( ),
-        g_arenaHeight->getInt( ) );
-
     if ( (command = strstr( g_Application->InitString(), "particles=" )) )
         m_bParticles = ( atoi(command+10) > 0 );
     else
         m_bParticles = true;
 
     m_bWeakFX = false;  // obsolete
+
+    _border_objects[0]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[0], &_border_material, 0);
+    _border_objects[1]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[0], &_border_material, 0);
+    _border_objects[2]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[1], &_border_material, 0);
+    _border_objects[3]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[1], &_border_material, 0);
+
+    Reset();
 }
 
 void cWorld::Shutdown ()
@@ -60,9 +65,29 @@ void cWorld::Reset ()
         g_arenaWidth->getInt( ),
         g_arenaHeight->getInt( ) );
 
+    _border_material = physics::material(0, 0);
+    _border_shapes[0] = physics::box_shape(vec2(_border_thickness + g_arenaWidth->getInt(), _border_thickness));
+    _border_shapes[1] = physics::box_shape(vec2(_border_thickness, _border_thickness + g_arenaHeight->getInt()));
+
     for ( int i=0 ; i<MAX_OBJECTS ; i++ )
         if ( m_Objects[i] )
             DelObject( m_Objects[i] );
+
+    // Initialize border objects
+    {
+        vec2 mins = vec2(-_border_thickness / 2, -_border_thickness / 2);
+        vec2 maxs = vec2(g_arenaWidth->getInt(), g_arenaHeight->getInt()) - mins;
+
+        _border_objects[0]._rigid_body->set_position(vec2((mins.x+maxs.x)/2,mins.y));
+        _border_objects[1]._rigid_body->set_position(vec2((mins.x+maxs.x)/2,maxs.y));
+        _border_objects[2]._rigid_body->set_position(vec2(mins.x,(mins.y+maxs.y)/2));
+        _border_objects[3]._rigid_body->set_position(vec2(maxs.x,(mins.y+maxs.y)/2));
+
+        AddObject(&_border_objects[0]);
+        AddObject(&_border_objects[1]);
+        AddObject(&_border_objects[2]);
+        AddObject(&_border_objects[3]);
+    }
 }
 
 /*
@@ -178,211 +203,93 @@ int segs[4][2] = {
     { 2, 3 },
     { 3, 0 } };
 
-bool clipModelToModel (cObject *a, cObject *b)
-{
-    vec3    av[5];
-    vec3    bv[5];
-
-    vec2    amin, amax;
-    vec2    bmin, bmax;
-
-    cLine2  line[2];
-
-    mat3    mat;
-
-    if ( (b->_rigid_body->get_position() - a->_rigid_body->get_position()).lengthsq() > 32*32 )
-        return false;
-
-    mat.rotateyaw( a->_rigid_body->get_rotation() );
-
-    av[4] = vec3(a->_rigid_body->get_position());
-    av[0] = mat.mult( vec3( a->pModel->m_AbsMin.x, a->pModel->m_AbsMin.y, 0 ) ) + av[4];
-    av[1] = mat.mult( vec3( a->pModel->m_AbsMax.x, a->pModel->m_AbsMin.y, 0 ) ) + av[4];
-    av[2] = mat.mult( vec3( a->pModel->m_AbsMax.x, a->pModel->m_AbsMax.y, 0 ) ) + av[4];
-    av[3] = mat.mult( vec3( a->pModel->m_AbsMin.x, a->pModel->m_AbsMax.y, 0 ) ) + av[4];
-
-    bv[4] = vec3(b->_rigid_body->get_position());
-    bv[0] = mat.mult( vec3( b->pModel->m_AbsMin.x, b->pModel->m_AbsMin.y, 0 ) ) + bv[4];
-    bv[1] = mat.mult( vec3( b->pModel->m_AbsMax.x, b->pModel->m_AbsMin.y, 0 ) ) + bv[4];
-    bv[2] = mat.mult( vec3( b->pModel->m_AbsMax.x, b->pModel->m_AbsMax.y, 0 ) ) + bv[4];
-    bv[3] = mat.mult( vec3( b->pModel->m_AbsMin.x, b->pModel->m_AbsMax.y, 0 ) ) + bv[4];
-
-    for ( int i=0 ; i<4 ; i++ )
-    {
-        for ( int j=0 ; j<4 ; j++ )
-        {
-            line[0] = cLine2( vec2(av[segs[i][0]].x, av[segs[i][0]].y),
-                vec2(av[segs[i][1]].x,av[segs[i][1]].y), true );
-            line[1] = cLine2( vec2(bv[segs[j][0]].x, bv[segs[j][0]].y),
-                vec2(bv[segs[j][1]].x,bv[segs[j][1]].y), true );
-
-            if ( line[0].intersect( line[1] ) )
-                return true;
-        }
-    }
-
-    return false;
-}
-
-bool clipModelToSegment(cObject *a, vec2 b, vec2 c, vec2 *out)
-{
-    vec3    av[5];
-
-    float   d, dist = 999999;
-    vec2    final;
-
-    cLine2  line[2];
-
-    mat3    mat;
-
-    bool    hit = false;
-
-    mat.rotateyaw( a->_rigid_body->get_rotation() );
-
-    av[4] = vec3(a->_rigid_body->get_position());
-    av[0] = mat.mult( vec3( a->pModel->m_AbsMin.x, a->pModel->m_AbsMin.y, 0 ) ) + av[4];
-    av[1] = mat.mult( vec3( a->pModel->m_AbsMax.x, a->pModel->m_AbsMin.y, 0 ) ) + av[4];
-    av[2] = mat.mult( vec3( a->pModel->m_AbsMax.x, a->pModel->m_AbsMax.y, 0 ) ) + av[4];
-    av[3] = mat.mult( vec3( a->pModel->m_AbsMin.x, a->pModel->m_AbsMax.y, 0 ) ) + av[4];
-
-    line[1] = cLine2( b, c, true );
-    for ( int i=0 ; i<4 ; i++ )
-    {
-        line[0] = cLine2( vec2(av[segs[i][0]].x, av[segs[i][0]].y),
-            vec2(av[segs[i][1]].x,av[segs[i][1]].y), true );
-
-        if ( line[0].intersect( line[1], out ) )
-        {
-            hit = true;
-            if ( (d = ( *out - b ).length()) < dist )
-            {
-                final = *out;
-                dist = d;
-            }
-        }
-    }
-
-    if ( hit )
-    {
-        *out = final;
-        return true;
-    }
-
-    return false;
-}
-
-bool clipSegmentToSegment (vec2 a, vec2 b, vec2 c, vec2 d, vec2 *out)
-{
-    cLine2  line[2];
-
-    line[0] = cLine2(a,b,true);
-    line[1] = cLine2(c,d,true);
-
-    return line[0].intersect( line[1], out );
-}
-
 void cWorld::MoveObject (cObject *pObject)
 {
-    vec2    vOldPos;
-    float   flOldAngle;
-
-    vec2    vDelta;
-
-    int         i;
-
     pObject->oldPos = pObject->_rigid_body->get_position();
     pObject->oldAngle = pObject->_rigid_body->get_rotation();
 
-    vOldPos = pObject->_rigid_body->get_position();
-    flOldAngle = pObject->_rigid_body->get_rotation();
+    if (pObject->_rigid_body->get_linear_velocity().lengthsq() < 1e-12f
+            && pObject->_rigid_body->get_angular_velocity() < 1e-6f) {
+        return;
+    }
 
-    pObject->_rigid_body->set_position(pObject->_rigid_body->get_position() + pObject->_rigid_body->get_linear_velocity() * FRAMETIME);
-    pObject->_rigid_body->set_rotation(pObject->_rigid_body->get_rotation() + pObject->_rigid_body->get_angular_velocity() * FRAMETIME);
-
-    for (i=0 ; i<MAX_OBJECTS ; i++)
+    if (pObject->eType == object_bullet)
     {
-        if (!m_Objects[i])
-            continue;
+        cObject* bestObject = NULL;
+        float bestFraction = 1.f;
 
-        if (m_Objects[i] == pObject)
-            continue;
+        vec2 start = pObject->_rigid_body->get_position();
+        vec2 end = start + pObject->_rigid_body->get_linear_velocity() * FRAMETIME;
 
-        if ( !pObject->pModel && m_Objects[i]->pModel )
+        for (int ii = 0; ii < MAX_OBJECTS; ++ii)
         {
-            if ( ( m_Objects[i]->eType == object_tank ) &&
-                &((cTank *)m_Objects[i])->m_Bullet == pObject )
+            if (!m_Objects[ii])
                 continue;
 
-            if ( clipModelToSegment( m_Objects[i], vOldPos, pObject->_rigid_body->get_position(), &vDelta ) )
+            if (m_Objects[ii] == pObject)
+                continue;
+
+            if ( ( m_Objects[ii]->eType == object_tank ) &&
+                &((cTank *)m_Objects[ii])->m_Bullet == pObject )
+                continue;
+
+            auto tr = physics::trace(m_Objects[ii]->_rigid_body.get(), start, end);
+
+            if (tr.get_fraction() < bestFraction)
             {
-                pObject->_rigid_body->set_position(vDelta);
-                pObject->Touch( m_Objects[i] );
+                bestFraction = tr.get_fraction();
+                bestObject = m_Objects[ii];
             }
         }
-        else if ( pObject->pModel && m_Objects[i]->pModel
-            && clipModelToModel( pObject, m_Objects[i] ) )
+
+        if (bestObject)
         {
-            // ghetto action : simply remove all movement, add sparks
-
-            AddEffect( pObject->_rigid_body->get_position() + (m_Objects[i]->_rigid_body->get_position() - pObject->_rigid_body->get_position())/2, effect_sparks ); // add spark effect
-
-            pObject->_rigid_body->set_position(vOldPos);
-            pObject->_rigid_body->set_linear_velocity(vec2(0,0));
-
-            pObject->Touch( m_Objects[i] );
-
-            return;
+            pObject->_rigid_body->set_position(start + (end - start) * bestFraction);
+            pObject->Touch( bestObject );
+        }
+        else
+        {
+            pObject->_rigid_body->set_position(end);
         }
     }
-
-    // check for collision with window bounds
-    vec2 vPos = pObject->_rigid_body->get_position();
-    vec2 vVel = pObject->_rigid_body->get_linear_velocity();
-
-    if (vPos.x < m_vWorldMins.x)
+    else
     {
-        if (!pObject->pModel)
-            vPos.y = vOldPos.y + ( (vPos.y - vOldPos.y) / (vPos.x - vOldPos.x) * (m_vWorldMins.x - vOldPos.x) );
+        for (int i=0 ; i<MAX_OBJECTS ; i++)
+        {
+            if (!m_Objects[i])
+                continue;
 
-        vPos.x = m_vWorldMins.x;
-        vVel.x = 0;
+            if (m_Objects[i] == pObject)
+                continue;
 
-        pObject->Touch( NULL );
+            if ( ( pObject->eType == object_tank ) &&
+                &((cTank *)pObject)->m_Bullet == m_Objects[i] )
+                continue;
+
+            auto c = physics::collide(pObject->_rigid_body.get(), m_Objects[i]->_rigid_body.get());
+
+            if (c.has_contact()) {
+                float impulse = c.get_contact().impulse.length();
+                float strength = clamp((impulse - 5.0f) / 5.0f, 0.0f, 1.0f);
+                AddEffect(c.get_contact().point, effect_sparks, strength);
+
+                pObject->_rigid_body->apply_impulse(
+                    -c.get_contact().impulse,
+                    c.get_contact().point
+                );
+
+                m_Objects[i]->_rigid_body->apply_impulse(
+                    c.get_contact().impulse,
+                    c.get_contact().point
+                );
+
+                pObject->Touch( m_Objects[i], impulse );
+            }
+        }
+
+        pObject->_rigid_body->set_position(pObject->_rigid_body->get_position() + pObject->_rigid_body->get_linear_velocity() * FRAMETIME);
+        pObject->_rigid_body->set_rotation(pObject->_rigid_body->get_rotation() + pObject->_rigid_body->get_angular_velocity() * FRAMETIME);
     }
-    else if (vPos.x > m_vWorldMaxs.x)
-    {
-        if (!pObject->pModel)
-            vPos.y = vOldPos.y + ( (vPos.y - vOldPos.y) / (vPos.x - vOldPos.x) * (m_vWorldMaxs.x - vOldPos.x) );
-
-        vPos.x = m_vWorldMaxs.x;
-        vVel.x = 0;
-
-        pObject->Touch( NULL );
-    }
-
-    if (vPos.y < m_vWorldMins.y)
-    {
-        if (!pObject->pModel)
-            vPos.x = vOldPos.x + ( (vPos.x - vOldPos.x) / (vPos.y - vOldPos.y) * (m_vWorldMins.y - vOldPos.y) );
-
-        vPos.y = m_vWorldMins.y;
-        vVel.y = 0;
-
-        pObject->Touch( NULL );
-    }
-    else if (vPos.y > m_vWorldMaxs.y)
-    {
-        if (!pObject->pModel)
-            vPos.x = vOldPos.x + ( (vPos.x - vOldPos.x) / (vPos.y - vOldPos.y) * (m_vWorldMaxs.y - vOldPos.y) );
-
-        vPos.y = m_vWorldMaxs.y;
-        vVel.y = 0;
-
-        pObject->Touch( NULL );
-    }
-
-    pObject->_rigid_body->set_position(vPos);
-    pObject->_rigid_body->set_linear_velocity(vVel);
 }
 
 /*
@@ -417,7 +324,7 @@ Purpose :   adds particle effects
 ===========================================================
 */
 
-void cWorld::AddEffect (vec2 vPos, eEffects eType)
+void cWorld::AddEffect (vec2 vPos, eEffects eType, float strength)
 {
     g_Game->m_WriteEffect( eType, vPos, vec2(0,0), 0 );
 
@@ -428,10 +335,7 @@ void cWorld::AddEffect (vec2 vPos, eEffects eType)
         int     i;
         cParticle   *p;
 
-        if ( m_bWeakFX )
-            return;
-
-        for (i=0 ; i<2 ; i++)
+        for (i=0 ; i<4 ; i++)
         {
             if ( (p = AddParticle()) == NULL )
                 return;
@@ -439,10 +343,35 @@ void cWorld::AddEffect (vec2 vPos, eEffects eType)
             p->vPos = vPos + vec2(crand()*2,crand()*2);
             p->vVel = vec2(crand()*128,crand()*128);
 
-            p->vColor = vec4(1,0.5+frand()*0.5,0,1);
-            p->vColorVel = vec4(0,0,0,-2);
+            p->vColor = vec4(1,0.5+frand()*0.5,0,strength*(0.5f+frand()));
+            p->vColorVel = vec4(0,-1.0f,0,-2.0f - frand());
             p->flSize = 2.0f;
             p->flSizeVel = 0.0f;
+            p->flDrag = 0.99 - frand()*0.03;
+        }
+
+        for (i=0 ; i<2 ; i++)
+        {
+            if ( (p = AddParticle()) == NULL )
+                return;
+
+            r = frand()*M_PI*2.0f;
+            d = frand()*24;
+
+            p->vPos = vPos + vec2(cos(r)*d,sin(r)*d);
+
+            r = frand()*M_PI*2.0f;
+            d = frand()*24;
+
+            p->vVel = vec2(cos(r)*d,sin(r)*d);
+
+            p->flSize = 4.0f + frand()*8.0f;
+            p->flSizeVel = 2.0;
+
+            p->vColor = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
+            p->vColorVel = vec4(0,0,0,-p->vColor.a / (2+frand()*1.5f));
+
+            p->flDrag = 0.98f - frand()*0.05;
         }
     }
     else if (eType == effect_explosion)
@@ -519,7 +448,7 @@ void cWorld::AddEffect (vec2 vPos, eEffects eType)
 
         // debris
 
-        for (i=0 ; i<16 ; i++)
+        for (i=0 ; i<32 ; i++)
         {
             if ( (p = AddParticle()) == NULL )
                 return;
@@ -535,7 +464,7 @@ void cWorld::AddEffect (vec2 vPos, eEffects eType)
             p->vVel = vec2(cos(r)*d,sin(r)*d);
 
             p->vColor = vec4(1,0.5+frand()*0.5,0,1);
-            p->vColorVel = vec4(0,0,0,-2);
+            p->vColorVel = vec4(0,0,0,-1.5f-frand());
             p->flSize = 2.0f;
             p->flSizeVel = 0.0f;
         }

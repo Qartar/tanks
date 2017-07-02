@@ -75,10 +75,10 @@ void v##x::Create () {                  \
 void v##x::Destroy () {                 \
     ((c##x *)p##x)->~c##x(); delete p##x; p##x = NULL; }        
 
-static cVec2 rot (cVec2 v, float deg)
+static cVec2 rot (cVec2 v, float rad)
 {
-    return cVec2( v.x*cos(deg2rad(deg)) - v.y*sin(deg2rad(deg)),
-        v.y*cos(deg2rad(deg)) + v.x*sin(deg2rad(deg)) );
+    return cVec2( v.x*cos(rad) - v.y*sin(rad),
+                  v.y*cos(rad) + v.x*sin(rad) );
 }
 
 #define UPGRADE_FRAC    g_upgrade_frac->getFloat()

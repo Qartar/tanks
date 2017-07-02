@@ -12,22 +12,24 @@ Purpose :   implementation of object class
 #pragma hdrstop
 
 cObject::cObject ()
-{
-    eType = object_object;
-}
+    : pModel(NULL)
+    , eType(object_object)
+{}
 
-void cObject::Touch (cObject *pOther)
+void cObject::Touch (cObject *pOther, float impulse)
 {
     return;
 }
 
 void cObject::Draw ()
 {
-    g_Application->get_glWnd()->get_Render()->DrawModel(
-        pModel,
-        _rigid_body->get_position(),
-        _rigid_body->get_rotation(),
-        vColor);
+    if (pModel) {
+        g_Application->get_glWnd()->get_Render()->DrawModel(
+            pModel,
+            _rigid_body->get_position(),
+            _rigid_body->get_rotation(),
+            vColor);
+    }
 }
 
 void cObject::Think ()

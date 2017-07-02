@@ -1107,6 +1107,7 @@ void cGame::NewGame ()
             m_Players[i]._rigid_body->set_linear_velocity(vec2(0,0));
             m_Players[i]._rigid_body->set_angular_velocity(0.0f);
             m_Players[i].flTVel = 0.0f;
+            m_Players[i]._track_speed = 0.0f;
 
             m_Players[i].flDamage = 0.0f;
             m_Players[i].flLastFire = 0.0f;
@@ -1142,7 +1143,7 @@ void cGame::m_InitPlayers ()
 
         m_Players[i].flDeadTime = 0.0f;
 
-        m_Players[i]._material = std::make_unique<physics::material>(0.5f, 1.0f);
+        m_Players[i]._material = std::make_unique<physics::material>(0.5f, 1.0f, 5.0f);
         m_Players[i]._shape = std::make_unique<physics::box_shape>(vec2(24,16));
         m_Players[i]._rigid_body = std::make_unique<physics::rigid_body>(
             m_Players[i]._shape.get(),
@@ -1151,6 +1152,7 @@ void cGame::m_InitPlayers ()
 
         m_Players[i].m_Bullet.nPlayer = i;
         m_Players[i].m_Bullet.pModel = NULL;
+        m_Players[i].m_Bullet.bInGame = false;
 
         m_Players[i].m_Bullet._material = std::make_unique<physics::material>(0.5f, 1.0f);
         m_Players[i].m_Bullet._shape = std::make_unique<physics::circle_shape>(1);
