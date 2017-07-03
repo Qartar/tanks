@@ -44,11 +44,6 @@ void cWorld::Init ()
     else
         m_bParticles = true;
 
-    _border_objects[0]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[0], &_border_material, 0);
-    _border_objects[1]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[0], &_border_material, 0);
-    _border_objects[2]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[1], &_border_material, 0);
-    _border_objects[3]._rigid_body = std::make_unique<physics::rigid_body>(&_border_shapes[1], &_border_material, 0);
-
     Reset();
 }
 
@@ -76,10 +71,10 @@ void cWorld::Reset ()
         vec2 mins = vec2(-_border_thickness / 2, -_border_thickness / 2);
         vec2 maxs = vec2(g_arenaWidth->getInt(), g_arenaHeight->getInt()) - mins;
 
-        _border_objects[0]._rigid_body->set_position(vec2((mins.x+maxs.x)/2,mins.y));
-        _border_objects[1]._rigid_body->set_position(vec2((mins.x+maxs.x)/2,maxs.y));
-        _border_objects[2]._rigid_body->set_position(vec2(mins.x,(mins.y+maxs.y)/2));
-        _border_objects[3]._rigid_body->set_position(vec2(maxs.x,(mins.y+maxs.y)/2));
+        _border_objects[0].set_position(vec2((mins.x+maxs.x)/2,mins.y));
+        _border_objects[1].set_position(vec2((mins.x+maxs.x)/2,maxs.y));
+        _border_objects[2].set_position(vec2(mins.x,(mins.y+maxs.y)/2));
+        _border_objects[3].set_position(vec2(maxs.x,(mins.y+maxs.y)/2));
 
         AddObject(&_border_objects[0]);
         AddObject(&_border_objects[1]);
@@ -203,11 +198,11 @@ int segs[4][2] = {
 
 void cWorld::MoveObject (cObject *pObject)
 {
-    pObject->oldPos = pObject->_rigid_body->get_position();
-    pObject->oldAngle = pObject->_rigid_body->get_rotation();
+    pObject->oldPos = pObject->get_position();
+    pObject->oldAngle = pObject->get_rotation();
 
-    if (pObject->_rigid_body->get_linear_velocity().lengthsq() < 1e-12f
-            && pObject->_rigid_body->get_angular_velocity() < 1e-6f) {
+    if (pObject->get_linear_velocity().lengthsq() < 1e-12f
+            && pObject->get_angular_velocity() < 1e-6f) {
         return;
     }
 
@@ -216,8 +211,8 @@ void cWorld::MoveObject (cObject *pObject)
         cObject* bestObject = NULL;
         float bestFraction = 1.f;
 
-        vec2 start = pObject->_rigid_body->get_position();
-        vec2 end = start + pObject->_rigid_body->get_linear_velocity() * FRAMETIME;
+        vec2 start = pObject->get_position();
+        vec2 end = start + pObject->get_linear_velocity() * FRAMETIME;
 
         for (int ii = 0; ii < MAX_OBJECTS; ++ii)
         {
@@ -231,7 +226,7 @@ void cWorld::MoveObject (cObject *pObject)
                 &((cTank *)m_Objects[ii])->m_Bullet == pObject )
                 continue;
 
-            auto tr = physics::trace(m_Objects[ii]->_rigid_body.get(), start, end);
+            auto tr = physics::trace(&m_Objects[ii]->rigid_body(), start, end);
 
             if (tr.get_fraction() < bestFraction)
             {
@@ -242,12 +237,12 @@ void cWorld::MoveObject (cObject *pObject)
 
         if (bestObject)
         {
-            pObject->_rigid_body->set_position(start + (end - start) * bestFraction);
+            pObject->set_position(start + (end - start) * bestFraction);
             pObject->Touch( bestObject );
         }
         else
         {
-            pObject->_rigid_body->set_position(end);
+            pObject->set_position(end);
         }
     }
     else
@@ -264,19 +259,19 @@ void cWorld::MoveObject (cObject *pObject)
                 &((cTank *)pObject)->m_Bullet == m_Objects[i] )
                 continue;
 
-            auto c = physics::collide(pObject->_rigid_body.get(), m_Objects[i]->_rigid_body.get());
+            auto c = physics::collide(&pObject->rigid_body(), &m_Objects[i]->rigid_body());
 
             if (c.has_contact()) {
                 float impulse = c.get_contact().impulse.length();
                 float strength = clamp((impulse - 5.0f) / 5.0f, 0.0f, 1.0f);
                 AddEffect(c.get_contact().point, effect_sparks, strength);
 
-                pObject->_rigid_body->apply_impulse(
+                pObject->apply_impulse(
                     -c.get_contact().impulse,
                     c.get_contact().point
                 );
 
-                m_Objects[i]->_rigid_body->apply_impulse(
+                m_Objects[i]->apply_impulse(
                     c.get_contact().impulse,
                     c.get_contact().point
                 );
@@ -285,8 +280,8 @@ void cWorld::MoveObject (cObject *pObject)
             }
         }
 
-        pObject->_rigid_body->set_position(pObject->_rigid_body->get_position() + pObject->_rigid_body->get_linear_velocity() * FRAMETIME);
-        pObject->_rigid_body->set_rotation(pObject->_rigid_body->get_rotation() + pObject->_rigid_body->get_angular_velocity() * FRAMETIME);
+        pObject->set_position(pObject->get_position() + pObject->get_linear_velocity() * FRAMETIME);
+        pObject->set_rotation(pObject->get_rotation() + pObject->get_angular_velocity() * FRAMETIME);
     }
 }
 

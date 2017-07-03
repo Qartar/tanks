@@ -63,12 +63,12 @@ void cGame::m_StartServer ()
         svs.clients[0].active = true;
         svs.clients[0].local = true;
 
-        m_Players[0]._rigid_body->set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
-        m_Players[0]._rigid_body->set_rotation(frand()*2.0f*M_PI);
-        m_Players[0].flTAngle = m_Players[0]._rigid_body->get_rotation();
+        m_Players[0].set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
+        m_Players[0].set_rotation(frand()*2.0f*M_PI);
+        m_Players[0].flTAngle = m_Players[0].get_rotation();
 
-        m_Players[0]._rigid_body->set_linear_velocity(vec2(0,0));
-        m_Players[0]._rigid_body->set_angular_velocity(0.0f);
+        m_Players[0].set_linear_velocity(vec2(0,0));
+        m_Players[0].set_angular_velocity(0.0f);
         m_Players[0].flTVel = 0.0f;
 
         m_Players[0].flDamage = 0.0f;
@@ -436,14 +436,14 @@ void cGame::m_GetFrame ()
 
         i = m_netmsg.ReadByte( );
 
-        m_Players[i].oldPos     = m_Players[i]._rigid_body->get_position();
-        m_Players[i].oldAngle   = m_Players[i]._rigid_body->get_rotation();
+        m_Players[i].oldPos     = m_Players[i].get_position();
+        m_Players[i].oldAngle   = m_Players[i].get_rotation();
         m_Players[i].oldTAngle  = m_Players[i].flTAngle;
 
-        m_Players[i]._rigid_body->set_position(m_netmsg.ReadVector());
-        m_Players[i]._rigid_body->set_linear_velocity(m_netmsg.ReadVector());
-        m_Players[i]._rigid_body->set_rotation(m_netmsg.ReadFloat());
-        m_Players[i]._rigid_body->set_angular_velocity(m_netmsg.ReadFloat());
+        m_Players[i].set_position(m_netmsg.ReadVector());
+        m_Players[i].set_linear_velocity(m_netmsg.ReadVector());
+        m_Players[i].set_rotation(m_netmsg.ReadFloat());
+        m_Players[i].set_angular_velocity(m_netmsg.ReadFloat());
         m_Players[i].flTAngle   = m_netmsg.ReadFloat( );
         m_Players[i].flTVel     = m_netmsg.ReadFloat( );
 
@@ -462,13 +462,13 @@ void cGame::m_GetFrame ()
         if ( readbyte )
         {
             if ( m_Players[i].m_Bullet.bInGame ) {
-                m_Players[i].m_Bullet.oldPos = m_Players[i].m_Bullet._rigid_body->get_position();
+                m_Players[i].m_Bullet.oldPos = m_Players[i].m_Bullet.get_position();
             } else {
                 m_Players[i].m_Bullet.oldPos = m_Players[i].oldPos;
             }
 
-            m_Players[i].m_Bullet._rigid_body->set_position(m_netmsg.ReadVector());
-            m_Players[i].m_Bullet._rigid_body->set_linear_velocity(m_netmsg.ReadVector());
+            m_Players[i].m_Bullet.set_position(m_netmsg.ReadVector());
+            m_Players[i].m_Bullet.set_linear_velocity(m_netmsg.ReadVector());
 
             m_World.AddObject( &m_Players[i].m_Bullet );
 
@@ -506,10 +506,10 @@ void cGame::m_WriteFrame ()
         message.WriteByte( 1 );
         message.WriteByte( i );
 
-        message.WriteVector( m_Players[i]._rigid_body->get_position() );
-        message.WriteVector( m_Players[i]._rigid_body->get_linear_velocity() );
-        message.WriteFloat( m_Players[i]._rigid_body->get_rotation() );
-        message.WriteFloat( m_Players[i]._rigid_body->get_angular_velocity() );
+        message.WriteVector( m_Players[i].get_position() );
+        message.WriteVector( m_Players[i].get_linear_velocity() );
+        message.WriteFloat( m_Players[i].get_rotation() );
+        message.WriteFloat( m_Players[i].get_angular_velocity() );
         message.WriteFloat( m_Players[i].flTAngle );
         message.WriteFloat( m_Players[i].flTVel );
 
@@ -520,8 +520,8 @@ void cGame::m_WriteFrame ()
         {
             message.WriteByte( 1 );
 
-            message.WriteVector( m_Players[i].m_Bullet._rigid_body->get_position() );
-            message.WriteVector( m_Players[i].m_Bullet._rigid_body->get_linear_velocity() );
+            message.WriteVector( m_Players[i].m_Bullet.get_position() );
+            message.WriteVector( m_Players[i].m_Bullet.get_linear_velocity() );
         }
         else
             message.WriteByte( 0 );
@@ -710,12 +710,12 @@ void cGame::m_ClientConnect ()
 
     // init their tank
 
-    m_Players[i]._rigid_body->set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
-    m_Players[i]._rigid_body->set_rotation(frand()*2.0f*M_PI);
-    m_Players[i].flTAngle = m_Players[i]._rigid_body->get_rotation();
+    m_Players[i].set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
+    m_Players[i].set_rotation(frand()*2.0f*M_PI);
+    m_Players[i].flTAngle = m_Players[i].get_rotation();
 
-    m_Players[i]._rigid_body->set_linear_velocity(vec2(0,0));
-    m_Players[i]._rigid_body->set_angular_velocity(0.0f);
+    m_Players[i].set_linear_velocity(vec2(0,0));
+    m_Players[i].set_angular_velocity(0.0f);
     m_Players[i].flTVel = 0.0f;
 
     m_Players[i].flDamage = 0.0f;

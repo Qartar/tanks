@@ -13,6 +13,9 @@ Purpose :   tanks!
 
 #include "keys.h"
 
+physics::material cTank::_material(0.5f, 1.0f, 5.0f);
+physics::box_shape cTank::_shape(vec2(24, 16));
+
 cTank::cTank ()
 {
     memset( m_Keys,0,sizeof(m_Keys) );
@@ -28,6 +31,8 @@ cTank::cTank ()
     channels[2] = NULL;
    
     eType = object_tank;
+
+    _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
 }
 
 void cTank::Draw ()
@@ -42,9 +47,9 @@ void cTank::Draw ()
         flLerp = 0.0f;
     }
 
-    vec2    pos = GetPos( flLerp );
-    float   angle = GetAngle( flLerp );
-    float   tangle = GetTAngle( flLerp );
+    vec2    pos = get_position( flLerp );
+    float   angle = get_rotation( flLerp );
+    float   tangle = get_turret_rotation( flLerp );
 
     vec4    vHealth;
     vec4    vTime;
@@ -160,13 +165,13 @@ void cTank::Think ()
 
         flDeadTime = 0.0f;
 
-        _rigid_body->set_position(vec2(g_World->m_vWorldMins.x + nWidth*frand()+SPAWN_BUFFER,
-                                       g_World->m_vWorldMins.y + nHeight*frand()+SPAWN_BUFFER));
-        _rigid_body->set_rotation(frand()*2.0f*M_PI);
-        flTAngle = _rigid_body->get_rotation();
+        set_position(vec2(g_World->m_vWorldMins.x + nWidth*frand()+SPAWN_BUFFER,
+                          g_World->m_vWorldMins.y + nHeight*frand()+SPAWN_BUFFER));
+        set_rotation(frand()*2.0f*M_PI);
+        flTAngle = get_rotation();
 
-        _rigid_body->set_linear_velocity(vec2(0,0));
-        _rigid_body->set_angular_velocity(0);
+        set_linear_velocity(vec2(0,0));
+        set_angular_velocity(0);
         flTVel = 0;
 
         flDamage = 0.0f;
@@ -176,28 +181,28 @@ void cTank::Think ()
     flLeft = m_Keys[KEY_LEFT] - m_Keys[KEY_RIGHT];
     flTLeft = m_Keys[KEY_TLEFT] - m_Keys[KEY_TRIGHT];
 
-    vec2 forward = rot(vec2(1,0), _rigid_body->get_rotation());
-    flVel = forward.dot(_rigid_body->get_linear_velocity());
+    vec2 forward = rot(vec2(1,0), get_rotation());
+    flVel = forward.dot(get_linear_velocity());
 
-    vec2 track_velocity = rot(vec2(_track_speed,0), _rigid_body->get_rotation());
-    vec2 delta_velocity = track_velocity - _rigid_body->get_linear_velocity();
-    vec2 friction_impulse = delta_velocity * _rigid_body->get_mass() * _rigid_body->get_material()->sliding_friction() * FRAMETIME;
+    vec2 track_velocity = rot(vec2(_track_speed,0), get_rotation());
+    vec2 delta_velocity = track_velocity - get_linear_velocity();
+    vec2 friction_impulse = delta_velocity * _rigid_body.get_mass() * _rigid_body.get_material()->sliding_friction() * FRAMETIME;
 
-    _rigid_body->apply_impulse(friction_impulse);
+    _rigid_body.apply_impulse(friction_impulse);
 
     if (flDamage >= 1.0f)
     {
         vec2 vVel = vec2(flVel * 0.98 * (1-FRAMETIME),0);
 
-        _rigid_body->set_linear_velocity(rot(vVel,_rigid_body->get_rotation()));
-        _rigid_body->set_angular_velocity(_rigid_body->get_angular_velocity() * 0.9f);
+        set_linear_velocity(rot(vVel,get_rotation()));
+        set_angular_velocity(get_angular_velocity() * 0.9f);
         flTVel *= 0.9f;
 
         // extra explosion
         if (flDeadTime && (g_Game->m_flTime - flDeadTime > 650) && (g_Game->m_flTime - flDeadTime < 650+HACK_TIME/2))
         {
             g_World->AddSound( sound_index[TANK_EXPLODE].name );
-            g_World->AddEffect( _rigid_body->get_position(), effect_explosion );
+            g_World->AddEffect( get_position(), effect_explosion );
             flDeadTime -= HACK_TIME;    // dont do it again
         }
     }
@@ -206,10 +211,10 @@ void cTank::Think ()
         float new_speed = _track_speed * 0.9 * (1 - FRAMETIME) + flForward * 192 * client->speed_mod * FRAMETIME;
         new_speed = clamp(new_speed, -32 * client->speed_mod, 48 * client->speed_mod);
 
-        _rigid_body->set_linear_velocity(_rigid_body->get_linear_velocity() + forward * (new_speed - _track_speed));
+        set_linear_velocity(get_linear_velocity() + forward * (new_speed - _track_speed));
         _track_speed = new_speed;
 
-        _rigid_body->set_angular_velocity(deg2rad(-flLeft * 90));
+        set_angular_velocity(deg2rad(-flLeft * 90));
         flTVel = deg2rad(-flTLeft * 90);
     }
 
@@ -225,7 +230,7 @@ void cTank::Think ()
         flPower = clamp( flPower, 0.5, 1.5 );
 
         g_World->AddSmokeEffect(
-            _rigid_body->get_position() + rot(vOrg,flTAngle),
+            get_position() + rot(vOrg,flTAngle),
             rot(vOrg,flTAngle) * flPower * flPower * flPower * 2,
             flPower * flPower * 4 );
     }
@@ -237,14 +242,14 @@ void cTank::Think ()
             vec2    vOrg(21,0);
 
             g_World->AddSmokeEffect(
-                _rigid_body->get_position() + rot(vOrg,flTAngle),
+                get_position() + rot(vOrg,flTAngle),
                 rot(vOrg,flTAngle) * 16,
                 64 );
 
             flLastFire = g_Game->m_flTime;
 
-            m_Bullet._rigid_body->set_position(_rigid_body->get_position() + rot(vOrg,flTAngle));
-            m_Bullet._rigid_body->set_linear_velocity(rot(vec2(1,0),flTAngle) * 20 * 96);
+            m_Bullet.set_position(get_position() + rot(vOrg,flTAngle));
+            m_Bullet.set_linear_velocity(rot(vec2(1,0),flTAngle) * 20 * 96);
 
             g_World->AddSound( sound_index[TANK_FIRE].name );
             if (!m_Bullet.bInGame) {
@@ -257,8 +262,9 @@ void cTank::Think ()
     UpdateSound( );
 }
 
-float cTank::GetTAngle( float lerp ) {
-    return oldTAngle + ( flTAngle - oldTAngle ) * lerp;
+float cTank::get_turret_rotation(float lerp) const
+{
+    return oldTAngle + (flTAngle - oldTAngle) * lerp;
 }
 
 void cTank::UpdateKeys (int nKey, bool Down)
@@ -333,7 +339,7 @@ void cTank::UpdateSound ()
         channels[0]->stopSound( );
 
     // tread noise
-    if ( _rigid_body->get_linear_velocity().lengthsq() > 1 || _rigid_body->get_angular_velocity() > deg2rad(1) )
+    if ( get_linear_velocity().lengthsq() > 1 || get_angular_velocity() > deg2rad(1) )
     {
         if ( !channels[1]->isPlaying( ) )
             channels[1]->playLoop( sound_index[TANK_MOVE].index );
@@ -345,7 +351,7 @@ void cTank::UpdateSound ()
         channels[1]->stopSound( );
 
     // turret noise
-    if ( (fabs( _rigid_body->get_angular_velocity() - flTVel ) > deg2rad(1)) )
+    if ( (fabs( get_angular_velocity() - flTVel ) > deg2rad(1)) )
     {
         if ( !channels[2]->isPlaying( ) )
             channels[2]->playLoop( sound_index[TURRET_MOVE].index );
@@ -365,6 +371,9 @@ Name    :   cBullet
 ===========================================================
 */
 
+physics::circle_shape cBullet::_shape(1.0f);
+physics::material cBullet::_material(0.5f, 1.0f);
+
 cBullet::cBullet ()
 {
     pModel = NULL;
@@ -372,6 +381,8 @@ cBullet::cBullet ()
     eType = object_bullet;
 
     bInGame = false;
+
+    _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
 }
 
 #ifndef M_SQRT1_2
@@ -386,7 +397,7 @@ cBullet::cBullet ()
 void cBullet::Touch (cObject *pOther, float impulse)
 {
     g_World->AddSound( sound_index[BULLET_EXPLODE].name );
-    g_World->AddEffect( _rigid_body->get_position(), effect_explosion );
+    g_World->AddEffect( get_position(), effect_explosion );
 
     g_World->DelObject( this );
     bInGame = false;
@@ -403,9 +414,9 @@ void cBullet::Touch (cObject *pOther, float impulse)
         if (pTank->flDamage >= 1.0f)
             return; // dont add damage or score
 
-        vOrg = -_rigid_body->get_linear_velocity().normalize();
+        vOrg = -get_linear_velocity().normalize();
         vDir = vec2(1,0);
-        vDir = rot(vDir,pOther->_rigid_body->get_rotation());
+        vDir = rot(vDir,pOther->get_rotation());
         flDot = (vOrg.x*vDir.x + vOrg.y*vDir.y);
 
         damage = g_Game->gameClients[nPlayer].damage_mod / pTank->client->armor_mod;
@@ -456,8 +467,8 @@ void cBullet::Draw ()
     float   flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
     vec2    p1, p2;
 
-    p1 = GetPos( flLerp - 0.4f );
-    p2 = GetPos( flLerp );
+    p1 = get_position( flLerp - 0.4f );
+    p2 = get_position( flLerp );
 
     g_Render->DrawLine( p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0) );
 }

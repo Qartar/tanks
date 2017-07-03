@@ -25,6 +25,7 @@ typedef enum eEffects effects_t;
 class cParticle;
 class cModel;
 class cGame;
+class cWorld;
 
 enum eObjectType
 {
@@ -44,8 +45,26 @@ public:
     virtual void    Touch (cObject *pOther, float impulse = 0);
     virtual void    Think ();
 
-    virtual vec2    GetPos( float lerp );
-    virtual float   GetAngle( float lerp );
+    //! Get frame-interpolated position
+    virtual vec2 get_position(float lerp) const;
+
+    //! Get frame-interpolated rotation
+    virtual float get_rotation(float lerp) const;
+
+    physics::rigid_body const& rigid_body() const { return _rigid_body; }
+
+    void set_position(vec2 position) { _rigid_body.set_position(position); }
+    void set_rotation(float rotation) { _rigid_body.set_rotation(rotation); }
+    void set_linear_velocity(vec2 linear_velocity) { _rigid_body.set_linear_velocity(linear_velocity); }
+    void set_angular_velocity(float angular_velocity) { _rigid_body.set_angular_velocity(angular_velocity); }
+
+    vec2 get_position() const { return _rigid_body.get_position(); }
+    float get_rotation() const { return _rigid_body.get_rotation(); }
+    vec2 get_linear_velocity() const { return _rigid_body.get_linear_velocity(); }
+    float get_angular_velocity() const { return _rigid_body.get_angular_velocity(); }
+
+    void apply_impulse(vec2 impulse) { _rigid_body.apply_impulse(impulse); }
+    void apply_impulse(vec2 impulse, vec2 position) { _rigid_body.apply_impulse(impulse, position); }
 
     cModel  *pModel;
     vec4    vColor;
@@ -55,9 +74,12 @@ public:
 
     eObjectType eType;
 
-    std::unique_ptr<physics::material> _material;
-    std::unique_ptr<physics::rigid_body> _rigid_body;
-    std::unique_ptr<physics::shape> _shape;
+protected:
+    physics::rigid_body _rigid_body;
+
+    static physics::material _default_material;
+    static physics::circle_shape _default_shape;
+    constexpr static float _default_mass = 1.0f;
 };
 
 class cBullet : public cObject
@@ -72,6 +94,11 @@ public:
 
     bool    bInGame;
     int     nPlayer;
+
+    static physics::circle_shape _shape;
+    static physics::material _material;
+
+    float _damage;
 };
 
 class cTank : public cObject
@@ -84,7 +111,8 @@ public:
     virtual void    Touch (cObject *pOther, float impulse = 0) override;
     virtual void    Think ();
 
-    float           GetTAngle( float lerp );
+    //! Get frame-interpolated turret rotation
+    float get_turret_rotation(float lerp) const;
 
     void        UpdateKeys( int nKey, bool Down );
 
@@ -107,6 +135,10 @@ public:
 
     sndchan_t   *channels[3];
     game_client_t   *client;
+
+protected:
+    static physics::material _material;
+    static physics::box_shape _shape;
 };
 
 #define MAX_PARTICLES   4096
