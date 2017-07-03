@@ -14,9 +14,10 @@ Purpose :   implementation of object class
 physics::material cObject::_default_material(0.5f, 0.5f);
 physics::circle_shape cObject::_default_shape(0.5f);
 
-cObject::cObject ()
+cObject::cObject(eObjectType type, cObject* owner)
     : pModel(NULL)
-    , eType(object_object)
+    , eType(type)
+    , _owner(owner)
     , _rigid_body(&_default_shape, &_default_material, _default_mass)
 {}
 

@@ -17,6 +17,7 @@ physics::material cTank::_material(0.5f, 1.0f, 5.0f);
 physics::box_shape cTank::_shape(vec2(24, 16));
 
 cTank::cTank ()
+    : cObject(object_tank)
 {
     memset( m_Keys,0,sizeof(m_Keys) );
     flDamage = 0;
@@ -29,10 +30,17 @@ cTank::cTank ()
     channels[0] = NULL;
     channels[1] = NULL;
     channels[2] = NULL;
-   
-    eType = object_tank;
 
     _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
+}
+
+cTank::~cTank()
+{
+    for (int ii = 0; ii < 3; ++ii) {
+        if (channels[ii]) {
+            channels[ii]->stopSound();
+        }
+    }
 }
 
 void cTank::Draw ()
@@ -248,14 +256,12 @@ void cTank::Think ()
 
             flLastFire = g_Game->m_flTime;
 
-            m_Bullet.set_position(get_position() + rot(vOrg,flTAngle));
-            m_Bullet.set_linear_velocity(rot(vec2(1,0),flTAngle) * 20 * 96);
+            cBullet* bullet = g_World->spawn<cBullet>(this, client->damage_mod);
+
+            bullet->set_position(get_position() + rot(vOrg,flTAngle));
+            bullet->set_linear_velocity(rot(vec2(1,0),flTAngle) * 20 * 96);
 
             g_World->AddSound( sound_index[TANK_FIRE].name );
-            if (!m_Bullet.bInGame) {
-                g_World->AddObject( &m_Bullet );
-                m_Bullet.bInGame = true;
-            }
         }
     }
 
@@ -374,14 +380,10 @@ Name    :   cBullet
 physics::circle_shape cBullet::_shape(1.0f);
 physics::material cBullet::_material(0.5f, 1.0f);
 
-cBullet::cBullet ()
+cBullet::cBullet(cTank* owner, float damage)
+    : cObject(object_bullet, owner)
+    , _damage(damage)
 {
-    pModel = NULL;
-
-    eType = object_bullet;
-
-    bInGame = false;
-
     _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
 }
 
@@ -399,19 +401,20 @@ void cBullet::Touch (cObject *pOther, float impulse)
     g_World->AddSound( sound_index[BULLET_EXPLODE].name );
     g_World->AddEffect( get_position(), effect_explosion );
 
-    g_World->DelObject( this );
-    bInGame = false;
+    g_World->remove(this);
 
     if (!pOther)
         return;
 
     if ( pOther->eType == object_tank )
     {
-        cTank   *pTank = static_cast<cTank *>(pOther);
+        cTank* owner_tank = static_cast<cTank*>(_owner);
+        cTank* other_tank = static_cast<cTank*>(pOther);
+
         vec2    vOrg, vDir;
         float   flDot, damage;
 
-        if (pTank->flDamage >= 1.0f)
+        if (other_tank->flDamage >= 1.0f)
             return; // dont add damage or score
 
         vOrg = -get_linear_velocity().normalize();
@@ -419,31 +422,31 @@ void cBullet::Touch (cObject *pOther, float impulse)
         vDir = rot(vDir,pOther->get_rotation());
         flDot = (vOrg.x*vDir.x + vOrg.y*vDir.y);
 
-        damage = g_Game->gameClients[nPlayer].damage_mod / pTank->client->armor_mod;
+        damage = owner_tank->client->damage_mod / other_tank->client->armor_mod;
 
         if (!g_Game->bExtendedArmor && !g_Game->m_bMultiplayer)
-            pTank->flDamage += damage * DAMAGE_FULL;
+            other_tank->flDamage += damage * DAMAGE_FULL;
         else if (flDot > M_SQRT1_2)     // sin(45°)
-            pTank->flDamage += damage * DAMAGE_FRONT;   // round up, 3 shot kill
+            other_tank->flDamage += damage * DAMAGE_FRONT;   // round up, 3 shot kill
         else if (flDot > -M_SQRT1_2)
-            pTank->flDamage += damage * DAMAGE_SIDE;
+            other_tank->flDamage += damage * DAMAGE_SIDE;
         else
-            pTank->flDamage += damage * DAMAGE_REAR;
+            other_tank->flDamage += damage * DAMAGE_REAR;
 
-        if (pTank->flDamage >= 1.0f)
+        if (other_tank->flDamage >= 1.0f)
         {
             char    player[LONG_STRING];
             char    target[LONG_STRING];
 
-            g_Game->AddScore( nPlayer, 1 );
-            pTank->flDeadTime = g_Game->m_flTime;
+            g_Game->AddScore( owner_tank->nPlayerNum, 1 );
+            other_tank->flDeadTime = g_Game->m_flTime;
             if (g_Game->bAutoRestart && !g_Game->m_bMultiplayer)
                 g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
 
-            fmt( target, "\\c%02x%02x%02x%s\\cx", (int )(pTank->vColor.r * 255), (int )(pTank->vColor.g * 255), (int )(pTank->vColor.b * 255),
-                g_Game->svs.clients[pTank->nPlayerNum].name );
-            fmt( player, "\\c%02x%02x%02x%s\\cx", (int )(g_Game->Player(nPlayer)->vColor.x * 255), (int )(g_Game->Player(nPlayer)->vColor.y * 255), (int )(g_Game->Player(nPlayer)->vColor.z * 255),
-                g_Game->svs.clients[nPlayer].name );
+            fmt( target, "\\c%02x%02x%02x%s\\cx", (int )(other_tank->vColor.r * 255), (int )(other_tank->vColor.g * 255), (int )(other_tank->vColor.b * 255),
+                g_Game->svs.clients[other_tank->nPlayerNum].name );
+            fmt( player, "\\c%02x%02x%02x%s\\cx", (int )(owner_tank->vColor.r * 255), (int )(owner_tank->vColor.g * 255), (int )(owner_tank->vColor.b * 255),
+                g_Game->svs.clients[owner_tank->nPlayerNum].name );
 
             int r = rand()%3;
             switch ( r )

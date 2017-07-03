@@ -174,7 +174,7 @@ class cGame : public vMain
     friend  cMenu;
 
 public:
-    cGame () {}
+    cGame ();
     ~cGame () {}
 
     int     Init (char *cmdline);
@@ -191,6 +191,7 @@ public:
 
     void    Reset ();
     void    NewGame ();
+    void    Restart ();
     void    Resume ();
 
     void    AddScore (int nPlayer, int nScore);
@@ -218,7 +219,7 @@ public:
 
     static int  FindServerByName (void *lpvoid);
 
-    cTank *     Player( int index ) { return &m_Players[ index ]; }
+    cTank *     Player( int index ) { return m_Players[ index ]; }
 
 private:
     cMenu   m_Menu;
@@ -232,11 +233,9 @@ private:
     int     m_nScore[MAX_PLAYERS];
     void    m_DrawScore ();
 
-    cTank   m_Players[MAX_PLAYERS];
-
-    void    m_Deathmatch_NewRound ();
-
-    void    m_InitPlayers ();
+    cTank*  m_Players[MAX_PLAYERS];
+    void spawn_player(int num);
+    void respawn_player(int num);
 
     message_t   m_Messages[MAX_MESSAGES];
     int         m_nMessage;

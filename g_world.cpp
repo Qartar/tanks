@@ -16,6 +16,8 @@ Date    :   10/21/2004
 #include "p_collide.h"
 #include "p_trace.h"
 
+#include <algorithm>
+
 cWorld *g_World;
 
 /*
@@ -35,7 +37,6 @@ void cWorld::Init ()
 {
     char    *command;
 
-    memset( m_Objects, 0, sizeof( m_Objects) );
     ClearParticles ();
     g_World = this;
 
@@ -43,6 +44,8 @@ void cWorld::Init ()
         m_bParticles = ( atoi(command+10) > 0 );
     else
         m_bParticles = true;
+
+    _border_material = physics::material(0, 0);
 
     Reset();
 }
@@ -58,28 +61,39 @@ void cWorld::Reset ()
         g_arenaWidth->getInt( ),
         g_arenaHeight->getInt( ) );
 
-    _border_material = physics::material(0, 0);
     _border_shapes[0] = physics::box_shape(vec2(_border_thickness + g_arenaWidth->getInt(), _border_thickness));
     _border_shapes[1] = physics::box_shape(vec2(_border_thickness, _border_thickness + g_arenaHeight->getInt()));
 
-    for ( int i=0 ; i<MAX_OBJECTS ; i++ )
-        if ( m_Objects[i] )
-            DelObject( m_Objects[i] );
+    _objects.clear();
+    _pending.clear();
+    _removed.clear();
+
+    _spawn_id = 0;
 
     // Initialize border objects
     {
         vec2 mins = vec2(-_border_thickness / 2, -_border_thickness / 2);
         vec2 maxs = vec2(g_arenaWidth->getInt(), g_arenaHeight->getInt()) - mins;
 
-        _border_objects[0].set_position(vec2((mins.x+maxs.x)/2,mins.y));
-        _border_objects[1].set_position(vec2((mins.x+maxs.x)/2,maxs.y));
-        _border_objects[2].set_position(vec2(mins.x,(mins.y+maxs.y)/2));
-        _border_objects[3].set_position(vec2(maxs.x,(mins.y+maxs.y)/2));
+        vec2 positions[] = {
+            {(mins.x+maxs.x)/2,mins.y}, // bottom
+            {(mins.x+maxs.x)/2,maxs.y}, // top
+            {mins.x,(mins.y+maxs.y)/2}, // left
+            {maxs.x,(mins.y+maxs.y)/2}, // right
+        };
 
-        AddObject(&_border_objects[0]);
-        AddObject(&_border_objects[1]);
-        AddObject(&_border_objects[2]);
-        AddObject(&_border_objects[3]);
+        physics::shape* shapes[] = {
+            &_border_shapes[0],
+            &_border_shapes[0],
+            &_border_shapes[1],
+            &_border_shapes[1],
+        };
+
+        for (int ii = 0; ii < 4; ++ii) {
+            physics::rigid_body body(shapes[ii], &_border_material, 0.0f);
+            body.set_position(positions[ii]);
+            spawn<cStatic>(std::move(body));
+        }
     }
 }
 
@@ -93,32 +107,9 @@ Purpose :   adds and removes objects from the object list
 ===========================================================
 */
 
-void cWorld::AddObject (cObject *newObject)
+void cWorld::remove (cObject* object)
 {
-    int         i;
-
-    for (i=0 ; i<MAX_OBJECTS ; i++)
-    {
-        if (!m_Objects[i])
-        {
-            m_Objects[i] = newObject;
-            break;
-        }
-    }
-}
-
-void cWorld::DelObject (cObject *oldObject)
-{
-    int         i;
-
-    for (i=0 ; i<MAX_OBJECTS ; i++)
-    {
-        if (m_Objects[i] == oldObject)
-        {
-            m_Objects[i] = NULL;
-            break;
-        }
-    }
+    _removed.insert(object);
 }
 
 /*
@@ -133,14 +124,8 @@ Purpose :   Renders the world to the screen
 
 void cWorld::Draw ()
 {
-    int         i;
-
-    for (i=0 ; i<MAX_OBJECTS ; i++)
-    {
-        if (!m_Objects[i])
-            continue;
-
-        m_Objects[i]->Draw( );
+    for (auto& obj : _objects) {
+        obj->Draw();
     }
 
     m_DrawParticles( );
@@ -158,23 +143,25 @@ Purpose :   Runs the world one frame, runs think funcs and movement
 
 void cWorld::RunFrame ()
 {
-    int         i;
+    for (auto& obj : _pending) {
+        _objects.push_back(std::move(obj));
+    }
+    _pending.clear();
 
-    for (i=0 ; i<MAX_OBJECTS ; i++)
-    {
-        if (!m_Objects[i])
-            continue;
-
-        m_Objects[i]->Think( );
+    for (auto& obj : _objects) {
+        obj->Think();
     }
 
-    for (i=0 ; i<MAX_OBJECTS ; i++)
-    {
-        if (!m_Objects[i])
-            continue;
-
-        MoveObject( m_Objects[i] );
+    for (auto& obj : _objects) {
+        MoveObject(obj.get());
     }
+
+    for (auto obj : _removed) {
+        _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
+            return it.get() == obj;
+        }));
+    }
+    _removed.clear();
 }
 
 /*
@@ -214,24 +201,20 @@ void cWorld::MoveObject (cObject *pObject)
         vec2 start = pObject->get_position();
         vec2 end = start + pObject->get_linear_velocity() * FRAMETIME;
 
-        for (int ii = 0; ii < MAX_OBJECTS; ++ii)
+        for (auto& other : _objects)
         {
-            if (!m_Objects[ii])
+            if (other.get() == pObject)
                 continue;
 
-            if (m_Objects[ii] == pObject)
+            if (pObject->_owner == other.get())
                 continue;
 
-            if ( ( m_Objects[ii]->eType == object_tank ) &&
-                &((cTank *)m_Objects[ii])->m_Bullet == pObject )
-                continue;
-
-            auto tr = physics::trace(&m_Objects[ii]->rigid_body(), start, end);
+            auto tr = physics::trace(&other->rigid_body(), start, end);
 
             if (tr.get_fraction() < bestFraction)
             {
                 bestFraction = tr.get_fraction();
-                bestObject = m_Objects[ii];
+                bestObject = other.get();
             }
         }
 
@@ -247,19 +230,15 @@ void cWorld::MoveObject (cObject *pObject)
     }
     else
     {
-        for (int i=0 ; i<MAX_OBJECTS ; i++)
+        for (auto& other : _objects)
         {
-            if (!m_Objects[i])
+            if (other.get() == pObject)
                 continue;
 
-            if (m_Objects[i] == pObject)
+            if (other->_owner == pObject)
                 continue;
 
-            if ( ( pObject->eType == object_tank ) &&
-                &((cTank *)pObject)->m_Bullet == m_Objects[i] )
-                continue;
-
-            auto c = physics::collide(&pObject->rigid_body(), &m_Objects[i]->rigid_body());
+            auto c = physics::collide(&pObject->rigid_body(), &other->rigid_body());
 
             if (c.has_contact()) {
                 float impulse = c.get_contact().impulse.length();
@@ -271,12 +250,12 @@ void cWorld::MoveObject (cObject *pObject)
                     c.get_contact().point
                 );
 
-                m_Objects[i]->apply_impulse(
+                other->apply_impulse(
                     c.get_contact().impulse,
                     c.get_contact().point
                 );
 
-                pObject->Touch( m_Objects[i], impulse );
+                pObject->Touch( other.get(), impulse );
             }
         }
 

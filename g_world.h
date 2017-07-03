@@ -12,33 +12,39 @@ Date    :   10/21/2004
 
 #pragma once
 
-#include <memory>
-
 #include "p_material.h"
 #include "p_rigidbody.h"
 #include "p_shape.h"
 
-#define MAX_OBJECTS 16
+#include <memory>
+#include <set>
+#include <type_traits>
+#include <vector>
 
 typedef enum eEffects effects_t;
 
 class cParticle;
 class cModel;
 class cGame;
+class cTank;
 class cWorld;
 
 enum eObjectType
 {
     object_object,
+    object_static,
     object_bullet,
-    object_tank
+    object_tank,
 };
 
+//------------------------------------------------------------------------------
 class cObject
 {
 public:
-    cObject ();
+    cObject (eObjectType type, cObject* owner = nullptr);
     ~cObject () {}
+
+    std::size_t spawn_id() const { return _spawn_id; }
 
     virtual void    Draw ();
 
@@ -75,6 +81,12 @@ public:
     eObjectType eType;
 
 protected:
+    friend cWorld;
+
+    cObject* _owner;
+
+    std::size_t _spawn_id;
+
     physics::rigid_body _rigid_body;
 
     static physics::material _default_material;
@@ -82,30 +94,41 @@ protected:
     constexpr static float _default_mass = 1.0f;
 };
 
+//------------------------------------------------------------------------------
+class cStatic : public cObject
+{
+public:
+    cStatic(physics::rigid_body&& rigid_body)
+        : cObject(object_static)
+    {
+        _rigid_body = std::move(rigid_body);
+    }
+};
+
+//------------------------------------------------------------------------------
 class cBullet : public cObject
 {
 public:
-    cBullet ();
+    cBullet (cTank* owner, float damage);
     ~cBullet () {}
 
     virtual void    Draw ();
     virtual void    Touch (cObject *pOther, float impulse = 0) override;
     virtual void    Think ();
 
-    bool    bInGame;
-    int     nPlayer;
-
     static physics::circle_shape _shape;
     static physics::material _material;
 
+protected:
     float _damage;
 };
 
+//------------------------------------------------------------------------------
 class cTank : public cObject
 {
 public:
     cTank ();
-    ~cTank () {}
+    ~cTank ();
 
     virtual void    Draw ();
     virtual void    Touch (cObject *pOther, float impulse = 0) override;
@@ -131,7 +154,6 @@ public:
     bool    m_Keys[8];
 
     float   flLastFire;
-    cBullet m_Bullet;
 
     sndchan_t   *channels[3];
     game_client_t   *client;
@@ -143,6 +165,7 @@ protected:
 
 #define MAX_PARTICLES   4096
 
+//------------------------------------------------------------------------------
 class cWorld
 {
     friend cParticle;
@@ -153,6 +176,7 @@ public:
     cWorld ()
         : pFreeParticles(NULL)
         , pActiveParticles(NULL)
+        , _spawn_id(0)
         , _border_material{0,0}
         , _border_shapes{{vec2(0,0)}, {vec2(0,0)}}
     {}
@@ -167,8 +191,10 @@ public:
     void    RunFrame ();
     void    Draw ();
 
-    void    AddObject (cObject *newObject);
-    void    DelObject (cObject *oldObject);
+    template<typename T, typename... Args>
+    T* spawn(Args&& ...args);
+
+    void remove(cObject* object);
 
     void    AddSound (char *szName);
     void    AddSmokeEffect (vec2 vPos, vec2 vVel, int nCount);
@@ -177,7 +203,17 @@ public:
     void    AddFlagTrail (vec2 vPos, int nTeam);
 
 private:
-    cObject *m_Objects[MAX_OBJECTS];
+    //! Active objects in the world
+    std::vector<std::unique_ptr<cObject>> _objects;
+
+    //! Objects pending addition
+    std::vector<std::unique_ptr<cObject>> _pending;
+
+    //! Objects pending removal
+    std::set<cObject*> _removed;
+
+    //! Previous object spawn id
+    std::size_t _spawn_id;
 
     void    MoveObject (cObject *pObject);
 
@@ -197,8 +233,19 @@ private:
 
     physics::material _border_material;
     physics::box_shape _border_shapes[2];
-    cObject _border_objects[4];
     constexpr static int _border_thickness = 512;
 };
+
+//------------------------------------------------------------------------------
+template<typename T, typename... Args>
+T* cWorld::spawn(Args&& ...args)
+{
+    static_assert(std::is_base_of<cObject, T>::value,
+                  "'spawn': 'T' must be derived from 'cObject'");
+
+    _pending.push_back(std::make_unique<T>(std::move(args)...));
+    _pending.back()->_spawn_id = ++_spawn_id;
+    return static_cast<T*>(_pending.back().get());
+}
 
 extern cWorld *g_World;

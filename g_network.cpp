@@ -56,28 +56,14 @@ void cGame::m_StartServer ()
 
     // init local player
 
-    m_InitPlayers( );
-
     if ( !m_bDedicated )
     {
         svs.clients[0].active = true;
         svs.clients[0].local = true;
 
-        m_Players[0].set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
-        m_Players[0].set_rotation(frand()*2.0f*M_PI);
-        m_Players[0].flTAngle = m_Players[0].get_rotation();
-
-        m_Players[0].set_linear_velocity(vec2(0,0));
-        m_Players[0].set_angular_velocity(0.0f);
-        m_Players[0].flTVel = 0.0f;
-
-        m_Players[0].flDamage = 0.0f;
-
-        m_nScore[0] = 0;
+        spawn_player(0);
 
         strncpy( svs.clients[0].name, cls.name, SHORT_STRING );
-
-        m_World.AddObject( &m_Players[0] );
     }
     else
     {
@@ -110,6 +96,8 @@ void cGame::m_StopServer ()
 
     for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
     {
+        m_Players[ i ] = nullptr;
+
         if ( cl->local )
             continue;
         if ( !cl->active )
@@ -138,11 +126,11 @@ void cGame::m_StopClient ()
 
     for ( int i=0 ; i<MAX_PLAYERS ; i++ )
     {
-        if ( m_Players[i].channels[0] )
+        if ( m_Players[i] )
         {
-            m_Players[i].channels[0]->stopSound( );
-            m_Players[i].channels[1]->stopSound( );
-            m_Players[i].channels[2]->stopSound( );
+            m_Players[i]->channels[0]->stopSound( );
+            m_Players[i]->channels[1]->stopSound( );
+            m_Players[i]->channels[2]->stopSound( );
         }
     }
 
@@ -315,9 +303,9 @@ void cGame::m_Packet (netsock_t socket)
             case clc_say:
                 string = m_netmsg.ReadString( );
                 m_WriteMessage( va( "\\c%02x%02x%02x%s\\cx: %s",
-                    (int )(m_Players[m_netclient].vColor.r * 255),
-                    (int )(m_Players[m_netclient].vColor.g * 255),
-                    (int )(m_Players[m_netclient].vColor.b * 255),
+                    (int )(m_Players[m_netclient]->vColor.r * 255),
+                    (int )(m_Players[m_netclient]->vColor.g * 255),
+                    (int )(m_Players[m_netclient]->vColor.b * 255),
                     svs.clients[m_netclient].name, string ) ); 
                 break;
 
@@ -416,7 +404,7 @@ void cGame::m_GetFrame ()
 
     if ( framenum < cls.last_frame )
         return;
-    
+
     cls.last_frame = framenum;
     m_nFramenum = framenum;
 
@@ -436,46 +424,46 @@ void cGame::m_GetFrame ()
 
         i = m_netmsg.ReadByte( );
 
-        m_Players[i].oldPos     = m_Players[i].get_position();
-        m_Players[i].oldAngle   = m_Players[i].get_rotation();
-        m_Players[i].oldTAngle  = m_Players[i].flTAngle;
+        m_Players[i]->oldPos     = m_Players[i]->get_position();
+        m_Players[i]->oldAngle   = m_Players[i]->get_rotation();
+        m_Players[i]->oldTAngle  = m_Players[i]->flTAngle;
 
-        m_Players[i].set_position(m_netmsg.ReadVector());
-        m_Players[i].set_linear_velocity(m_netmsg.ReadVector());
-        m_Players[i].set_rotation(m_netmsg.ReadFloat());
-        m_Players[i].set_angular_velocity(m_netmsg.ReadFloat());
-        m_Players[i].flTAngle   = m_netmsg.ReadFloat( );
-        m_Players[i].flTVel     = m_netmsg.ReadFloat( );
+        m_Players[i]->set_position(m_netmsg.ReadVector());
+        m_Players[i]->set_linear_velocity(m_netmsg.ReadVector());
+        m_Players[i]->set_rotation(m_netmsg.ReadFloat());
+        m_Players[i]->set_angular_velocity(m_netmsg.ReadFloat());
+        m_Players[i]->flTAngle   = m_netmsg.ReadFloat( );
+        m_Players[i]->flTVel     = m_netmsg.ReadFloat( );
 
-        m_Players[i].flDamage   = m_netmsg.ReadFloat( );
-        m_Players[i].flLastFire = m_netmsg.ReadFloat( );
+        m_Players[i]->flDamage   = m_netmsg.ReadFloat( );
+        m_Players[i]->flLastFire = m_netmsg.ReadFloat( );
 
-        m_World.AddObject( &m_Players[i] );
+        //m_World.AddObject( &m_Players[i] );
 
         // this is normally run on cTank::Think but is this 
         // not called on clients and must be called here
-        m_Players[i].UpdateSound( );
+        m_Players[i]->UpdateSound( );
 
 
-        readbyte = m_netmsg.ReadByte( );
+        //readbyte = m_netmsg.ReadByte( );
 
-        if ( readbyte )
-        {
-            if ( m_Players[i].m_Bullet.bInGame ) {
-                m_Players[i].m_Bullet.oldPos = m_Players[i].m_Bullet.get_position();
-            } else {
-                m_Players[i].m_Bullet.oldPos = m_Players[i].oldPos;
-            }
+        //if ( readbyte )
+        //{
+        //    if ( m_Players[i].m_Bullet.bInGame ) {
+        //        m_Players[i].m_Bullet.oldPos = m_Players[i].m_Bullet.get_position();
+        //    } else {
+        //        m_Players[i].m_Bullet.oldPos = m_Players[i].oldPos;
+        //    }
 
-            m_Players[i].m_Bullet.set_position(m_netmsg.ReadVector());
-            m_Players[i].m_Bullet.set_linear_velocity(m_netmsg.ReadVector());
+        //    m_Players[i].m_Bullet.set_position(m_netmsg.ReadVector());
+        //    m_Players[i].m_Bullet.set_linear_velocity(m_netmsg.ReadVector());
 
-            m_World.AddObject( &m_Players[i].m_Bullet );
+        //    m_World.AddObject( &m_Players[i].m_Bullet );
 
-            m_Players[i].m_Bullet.bInGame = true;
-        } else {
-            m_Players[i].m_Bullet.bInGame = false;
-        }
+        //    m_Players[i].m_Bullet.bInGame = true;
+        //} else {
+        //    m_Players[i].m_Bullet.bInGame = false;
+        //}
     }
 
     return;
@@ -491,7 +479,7 @@ void cGame::m_WriteFrame ()
 
     // HACK: update local players color here
     if ( svs.clients[0].local )
-        m_Players[0].vColor = cls.color;
+        m_Players[0]->vColor = cls.color;
 
     message.Init( messagebuf, MAX_MSGLEN );
     message.Clear( );
@@ -506,25 +494,25 @@ void cGame::m_WriteFrame ()
         message.WriteByte( 1 );
         message.WriteByte( i );
 
-        message.WriteVector( m_Players[i].get_position() );
-        message.WriteVector( m_Players[i].get_linear_velocity() );
-        message.WriteFloat( m_Players[i].get_rotation() );
-        message.WriteFloat( m_Players[i].get_angular_velocity() );
-        message.WriteFloat( m_Players[i].flTAngle );
-        message.WriteFloat( m_Players[i].flTVel );
+        message.WriteVector( m_Players[i]->get_position() );
+        message.WriteVector( m_Players[i]->get_linear_velocity() );
+        message.WriteFloat( m_Players[i]->get_rotation() );
+        message.WriteFloat( m_Players[i]->get_angular_velocity() );
+        message.WriteFloat( m_Players[i]->flTAngle );
+        message.WriteFloat( m_Players[i]->flTVel );
 
-        message.WriteFloat( m_Players[i].flDamage );
-        message.WriteFloat( m_Players[i].flLastFire );
+        message.WriteFloat( m_Players[i]->flDamage );
+        message.WriteFloat( m_Players[i]->flLastFire );
 
-        if ( m_Players[i].m_Bullet.bInGame )
-        {
-            message.WriteByte( 1 );
+        //if ( m_Players[i].m_Bullet.bInGame )
+        //{
+        //    message.WriteByte( 1 );
 
-            message.WriteVector( m_Players[i].m_Bullet.get_position() );
-            message.WriteVector( m_Players[i].m_Bullet.get_linear_velocity() );
-        }
-        else
-            message.WriteByte( 0 );
+        //    message.WriteVector( m_Players[i].m_Bullet.get_position() );
+        //    message.WriteVector( m_Players[i].m_Bullet.get_linear_velocity() );
+        //}
+        //else
+        //    message.WriteByte( 0 );
     }
 
     message.WriteByte( 0 );
@@ -599,8 +587,6 @@ void cGame::m_ConnectToServer (int index)
 
 void cGame::m_ConnectAck ()
 {
-    int     i;
-
     char    tempbuf[32];
 
     // server has ack'd our connect
@@ -618,19 +604,9 @@ void cGame::m_ConnectAck ()
     m_bMenuActive = false;      // so you're totally screwed
     m_bGameActive = true;       // if you ever want to know
 
-    for ( i=0 ; i<MAX_PLAYERS ; i++ )
-    {
-        if ( m_Players[i].channels[0] )
-        {
-            m_Players[i].channels[0]->stopSound( );
-            m_Players[i].channels[1]->stopSound( );
-            m_Players[i].channels[2]->stopSound( );
-        }
-    }
-
-    m_Players[cls.number].vColor.r = cls.color.r;
-    m_Players[cls.number].vColor.g = cls.color.g;
-    m_Players[cls.number].vColor.b = cls.color.b;
+    m_Players[cls.number]->vColor.r = cls.color.r;
+    m_Players[cls.number]->vColor.g = cls.color.g;
+    m_Players[cls.number]->vColor.b = cls.color.b;
 
     gameClients[cls.number].upgrades = 0;
     gameClients[cls.number].damage_mod = 1.0f;
@@ -710,27 +686,7 @@ void cGame::m_ClientConnect ()
 
     // init their tank
 
-    m_Players[i].set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
-    m_Players[i].set_rotation(frand()*2.0f*M_PI);
-    m_Players[i].flTAngle = m_Players[i].get_rotation();
-
-    m_Players[i].set_linear_velocity(vec2(0,0));
-    m_Players[i].set_angular_velocity(0.0f);
-    m_Players[i].flTVel = 0.0f;
-
-    m_Players[i].flDamage = 0.0f;
-
-    gameClients[i].armor_mod = 1.0f;
-    gameClients[i].damage_mod = 1.0f;
-    gameClients[i].refire_mod = 1.0f;
-    gameClients[i].speed_mod = 1.0f;
-    gameClients[i].upgrades = 0;
-
-    m_nScore[i] = 0;
-
-    // add into world
-
-    m_World.AddObject( &m_Players[i] );
+    spawn_player(i);
 
     m_WriteMessage( va( "%s connected.", cl->name ) );
 
@@ -769,9 +725,9 @@ void cGame::m_WriteInfo (int client, netmsg_t *message)
     message->WriteByte( gameClients[client].refire_mod * 10 );
     message->WriteByte( gameClients[client].speed_mod * 10 );
 
-    message->WriteByte( m_Players[client].vColor.r * 255 );
-    message->WriteByte( m_Players[client].vColor.g * 255 );
-    message->WriteByte( m_Players[client].vColor.b * 255 );
+    message->WriteByte( m_Players[client]->vColor.r * 255 );
+    message->WriteByte( m_Players[client]->vColor.g * 255 );
+    message->WriteByte( m_Players[client]->vColor.b * 255 );
 
     // also write score
 
@@ -800,9 +756,9 @@ void cGame::m_ReadInfo ()
     gameClients[client].refire_mod = m_netmsg.ReadByte( ) / 10.0f;
     gameClients[client].speed_mod = m_netmsg.ReadByte( ) / 10.0f;
 
-    m_Players[client].vColor.r = m_netmsg.ReadByte( ) / 255.0f;
-    m_Players[client].vColor.g = m_netmsg.ReadByte( ) / 255.0f;
-    m_Players[client].vColor.b = m_netmsg.ReadByte( ) / 255.0f;
+    m_Players[client]->vColor.r = m_netmsg.ReadByte( ) / 255.0f;
+    m_Players[client]->vColor.g = m_netmsg.ReadByte( ) / 255.0f;
+    m_Players[client]->vColor.b = m_netmsg.ReadByte( ) / 255.0f;
 
     if ( m_bMultiserver || m_bDedicated )
     {
@@ -825,7 +781,8 @@ void cGame::m_ClientDisconnect (int nClient)
     if ( !svs.clients[nClient].active )
         return;
 
-    m_World.DelObject( &m_Players[nClient] );
+    m_World.remove( m_Players[nClient] );
+    m_Players[nClient] = nullptr;
     svs.clients[nClient].active = false;
 
     m_WriteInfo( nClient, &message );
@@ -838,7 +795,7 @@ void cGame::m_ClientCommand ()
     int     bits;
 
     bits = m_netmsg.ReadByte( );
-    pTank = &m_Players[m_netclient];
+    pTank = m_Players[m_netclient];
 
     memset( pTank->m_Keys, 0, sizeof(pTank->m_Keys) );
 
@@ -1086,9 +1043,9 @@ void cGame::m_ReadUpgrade (int index)
         }
 
         m_WriteMessage( va( "\\c%02x%02x%02x%s\\cx has upgraded their %s!",
-            (int )(m_Players[m_netclient].vColor.r * 255),
-            (int )(m_Players[m_netclient].vColor.g * 255),
-            (int )(m_Players[m_netclient].vColor.b * 255),
+            (int )(m_Players[m_netclient]->vColor.r * 255),
+            (int )(m_Players[m_netclient]->vColor.g * 255),
+            (int )(m_Players[m_netclient]->vColor.b * 255),
             svs.clients[m_netclient].name, sz_upgrades[index] ) ); 
 
         netmsg.Init( msgbuf, MAX_MSGLEN );

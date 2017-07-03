@@ -45,6 +45,10 @@ void FindServer (bool bConnect);
     strcpy( sound_index[i].name, a );                       \
     *(sound_index[i].name + strlen(a)) = 0
 
+cGame::cGame()
+    : m_Players{0}
+{}
+
 /*
 ===========================================================
 
@@ -115,7 +119,6 @@ int cGame::Init (char *cmdline)
 
     cls.number = 0;
 
-    m_InitPlayers( );
     m_InitClient( );
 
     m_Menu.Init( );
@@ -329,8 +332,8 @@ int cGame::RunFrame (float flMSec)
     if ( m_bMultiplayer && svs.clients[ cls.number ].active ) {
         float   flLerp = (m_flTime - (m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
 
-        centerX     = m_Players[ cls.number ].get_position( flLerp ).x;
-        centerY     = m_Players[ cls.number ].get_position( flLerp ).y;
+        centerX     = m_Players[ cls.number ]->get_position( flLerp ).x;
+        centerY     = m_Players[ cls.number ]->get_position( flLerp ).y;
     } else {
         centerX     = worldWidth / 2;
         centerY     = worldHeight / 2;
@@ -402,7 +405,7 @@ int cGame::RunFrame (float flMSec)
     snd = g_Application->get_time( );
 
     if ( flRestartTime && (m_flTime > flRestartTime) && !m_bMenuActive ) {
-        NewGame( );
+        Restart( );
     }
 
     end = g_Application->get_time( );
@@ -712,7 +715,7 @@ int cGame::Key_Event (unsigned char Key, bool Down)
         case 'k':   // fire
         case 'K':
             if ( !m_bMultiactive || m_bMultiserver )
-                m_Players[0].UpdateKeys( Key, Down );
+                m_Players[0]->UpdateKeys( Key, Down );
             else
                 m_ClientKeys( Key, Down );
             break;
@@ -728,7 +731,7 @@ int cGame::Key_Event (unsigned char Key, bool Down)
         case '5':           // fire
         case K_KP_5:
             if ( !m_bMultiactive )
-                m_Players[1].UpdateKeys( Key, Down );
+                m_Players[1]->UpdateKeys( Key, Down );
             break;
 
         default:
@@ -984,7 +987,7 @@ void cGame::m_DrawScore ()
             break;
 
         g_Render->DrawBox( vec2(7,7), vec2(nWidth-96, 32+11+12*n), 0,
-            vec4( m_Players[ sort[ i ] ].vColor.r, m_Players[ sort[ i ] ].vColor.g, m_Players[ sort[ i ] ].vColor.b, 1 ) );
+            vec4( m_Players[ sort[ i ] ]->vColor.r, m_Players[ sort[ i ] ]->vColor.g, m_Players[ sort[ i ] ]->vColor.b, 1 ) );
 
         g_Render->DrawString( svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7] );
         g_Render->DrawString( va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7] );
@@ -1020,12 +1023,7 @@ void cGame::Reset ()
         gameClients[i].speed_mod = 1.0f;
         gameClients[i].upgrades = 0;
 
-        if ( m_Players[i].channels[0] )
-        {
-            m_Players[i].channels[0]->stopSound( );
-            m_Players[i].channels[1]->stopSound( );
-            m_Players[i].channels[2]->stopSound( );
-        }
+        m_Players[i] = nullptr;
     }
 
     m_bGameActive = false;
@@ -1035,9 +1033,6 @@ void cGame::Reset ()
 void cGame::Resume () { m_bGameActive = true; m_bMenuActive = false; }
 void cGame::NewGame ()
 {
-    int nWidth, nHeight;
-    int i;
-
     flRestartTime = 0.0f;
     m_World.ClearParticles( );
 
@@ -1051,13 +1046,12 @@ void cGame::NewGame ()
     //  reset world
     //
 
+    for ( int i=0 ; i<MAX_PLAYERS ; i++ )
+    {
+        m_Players[i] = nullptr;
+    }
+
     m_World.Reset( );
-
-    nWidth = m_World.m_vWorldMaxs.x;
-    nHeight = m_World.m_vWorldMaxs.y;
-
-    nWidth -= SPAWN_BUFFER*2;
-    nHeight -= SPAWN_BUFFER*2;
 
     //
     //  reset scores
@@ -1081,7 +1075,7 @@ void cGame::NewGame ()
     //  reset players
     //
 
-    for ( i=0 ; i<MAX_PLAYERS ; i++ )
+    for ( int i=0 ; i<MAX_PLAYERS ; i++ )
     {
         gameClients[i].armor_mod = 1.0f;
         gameClients[i].damage_mod = 1.0f;
@@ -1098,73 +1092,93 @@ void cGame::NewGame ()
         else if ( m_bMultiserver && !svs.clients[i].active )
             continue;
 
-        if ( !flRestartTime || m_Players[i].flDamage >= 1.0f)
+        if ( !flRestartTime || !m_Players[i] || m_Players[i]->flDamage >= 1.0f)
         {
-            m_Players[i].set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
-            m_Players[i].set_rotation(frand()*2.0f*M_PI);
-            m_Players[i].flTAngle = m_Players[i].get_rotation();
-
-            m_Players[i].set_linear_velocity(vec2(0,0));
-            m_Players[i].set_angular_velocity(0.0f);
-            m_Players[i].flTVel = 0.0f;
-            m_Players[i]._track_speed = 0.0f;
-
-            m_Players[i].flDamage = 0.0f;
-            m_Players[i].flLastFire = 0.0f;
+            spawn_player(i);
         }
-
-        m_World.AddObject( &m_Players[i] );
     }
 
     m_bGameActive = true;
     m_bMenuActive = false;
 }
 
-/*
-===========================================================
-
-Name    :   cMain::m_InitPlayers
-
-Purpose :   Initialized default models and colors
-
-===========================================================
-*/
-
-void cGame::m_InitPlayers ()
+void cGame::Restart ()
 {
-    int             i;
+    flRestartTime = 0.0f;
+    bManualRestart = false;
 
-    for ( i=0 ; i<MAX_PLAYERS ; i++ )
-    {
-        m_Players[i].pModel = &tank_body_model;
-        m_Players[i].pTurret = &tank_turret_model;
-        m_Players[i].vColor = player_colors[i];
-        m_Players[i].nPlayerNum = i;
-
-        m_Players[i].flDeadTime = 0.0f;
-
-        m_Players[i].m_Bullet.nPlayer = i;
-        m_Players[i].m_Bullet.pModel = NULL;
-        m_Players[i].m_Bullet.bInGame = false;
-
-        if ( m_Players[i].channels[0] )
-        {
-            m_Players[i].channels[0]->stopSound( );
-            m_Players[i].channels[1]->stopSound( );
-            m_Players[i].channels[2]->stopSound( );
-        }
-
-        gameClients[i].color = player_colors[i];
-        gameClients[i].armor_mod = 1.0f;
-        gameClients[i].damage_mod = 1.0f;
-        gameClients[i].refire_mod = 1.0f;
-        gameClients[i].speed_mod = 1.0f;
-        gameClients[i].upgrades = 0;
-
-        m_Players[i].client = gameClients + i;
-
-        fmt( svs.clients[i].name, "Player %i", i );
+    if ( m_bMultiplayer && !m_bMultiserver ) {
+        return;
     }
+
+    for (int ii = 0; ii < MAX_PLAYERS; ++ii)
+    {
+        if ( !m_bMultiserver && ii > 1 )
+            break;
+        else if ( m_bMultiserver && !svs.clients[ii].active )
+            continue;
+
+        if (m_Players[ii]->flDamage >= 1.0f)
+            respawn_player(ii);
+        else
+            m_Players[ii]->flDamage = 0.0f;
+    }
+
+    m_bGameActive = true;
+    m_bMenuActive = false;
+}
+
+void cGame::spawn_player(int num)
+{
+    //
+    //  initialize tank object
+    //
+
+    assert(m_Players[num] == nullptr);
+    m_Players[num] = m_World.spawn<cTank>();
+
+    m_Players[num]->pModel = &tank_body_model;
+    m_Players[num]->pTurret = &tank_turret_model;
+    m_Players[num]->vColor = player_colors[num];
+    m_Players[num]->nPlayerNum = num;
+    m_Players[num]->client = gameClients + num;
+
+    respawn_player(num);
+
+    //
+    //  initialize stats
+    //
+
+    m_nScore[num] = 0;
+
+    gameClients[num].color = player_colors[num];
+    gameClients[num].armor_mod = 1.0f;
+    gameClients[num].damage_mod = 1.0f;
+    gameClients[num].refire_mod = 1.0f;
+    gameClients[num].speed_mod = 1.0f;
+    gameClients[num].upgrades = 0;
+
+    fmt( svs.clients[num].name, "Player %i", num+1 );
+}
+
+void cGame::respawn_player(int num)
+{
+    int nWidth = m_World.m_vWorldMaxs.x - SPAWN_BUFFER * 2;
+    int nHeight = m_World.m_vWorldMaxs.y - SPAWN_BUFFER * 2;
+
+    assert(m_Players[num] != nullptr);
+
+    m_Players[num]->set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
+    m_Players[num]->set_rotation(frand()*2.0f*M_PI);
+    m_Players[num]->flTAngle = m_Players[num]->get_rotation();
+
+    m_Players[num]->set_linear_velocity(vec2(0,0));
+    m_Players[num]->set_angular_velocity(0.0f);
+    m_Players[num]->flTVel = 0.0f;
+    m_Players[num]->_track_speed = 0.0f;
+
+    m_Players[num]->flDamage = 0.0f;
+    m_Players[num]->flLastFire = 0.0f;
 }
 
 /*
