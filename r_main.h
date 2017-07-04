@@ -63,8 +63,6 @@ Purpose :   Rendering controller object
 ===========================================================
 */
 
-class cModel;
-
 typedef int rimage_t;
 
 class cRender
@@ -96,7 +94,6 @@ public:
     void    DrawString (char *szString, vec2 vPos, vec4 vColor);
     void    DrawLine (vec2 vOrg, vec2 vEnd, vec4 vColorO, vec4 vColorE);
     void    DrawBox (vec2 vSize, vec2 vPos, float flAngle, vec4 vColor);
-    void    DrawModel (cModel *pModel, vec2 vPos, float flAngle, vec4 vColor);
     void    DrawParticles (float time, render::particle const* particles, std::size_t num_particles);
 
     void    SetViewOrigin (vec2 vPos) { m_viewOrigin = vPos ; m_setDefaultState( ) ; }

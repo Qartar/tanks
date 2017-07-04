@@ -33,11 +33,7 @@ void object::touch(object* /*other*/, float /*impulse = 0*/)
 void object::draw() const
 {
     if (_model) {
-        g_Application->get_glWnd()->get_Render()->DrawModel(
-            _model,
-            _rigid_body.get_position(),
-            _rigid_body.get_rotation(),
-            _color);
+        _model->draw(get_position(), get_rotation(), _color);
     }
 }
 

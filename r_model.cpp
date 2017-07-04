@@ -11,117 +11,74 @@ Purpose :   Compound rectangle model class
 #include "local.h"
 #pragma hdrstop
 
-void cRender::DrawModel (cModel *pModel, vec2 vPos, float flAngle, vec4 vColor)
-{
-    int         i;
-    sRect       *pRect;
+render::model tank_body_model({
+    //  center        size          gamma
+    {{  0.f,  8.0f}, {20.f,  2.f},  0.5f},  // left tread
+    {{  0.f, -8.0f}, {20.f,  2.f},  0.5f},  // right tread
+    {{  0.f,  0.0f}, {24.f, 16.f},  0.8f},  // main chassis
+    {{- 8.f,  0.0f}, { 4.f, 12.f},  0.6f},  // whatever
+    {{-12.f,  5.0f}, { 3.f,  6.f},  0.5f},  // left barrel
+    {{-12.f, -5.0f}, { 3.f,  6.f},  0.5f},  // right barrel
+    {{ 10.f,  0.0f}, { 2.f, 12.f},  0.6f},
+    {{  7.f,  0.0f}, { 2.f, 12.f},  0.6f},
+});
 
-    glMatrixMode( GL_MODELVIEW );
+render::model tank_turret_model({
+    //  center        size          gamma
+    {{  0.f,  0.f},  { 8.f,  10.f}, 1.0f},  // turret
+    {{  0.f,  0.f},  {10.f,   8.f}, 1.0f},  // turret
+    {{ 13.f,  0.f},  {16.f,   2.f}, 1.0f},  // barrel
+});
+
+namespace render {
+
+//------------------------------------------------------------------------------
+model::model(model::rect const* rects, std::size_t num_rects)
+    : _list(rects, rects + num_rects)
+    , _mins(0,0)
+    , _maxs(0,0)
+{
+    // calculate absolute mins/maxs
+    for (auto const& r : _list) {
+        vec2 mins = r.center - r.size * 0.5f;
+        vec2 maxs = r.center + r.size * 0.5f;
+
+        for (int ii = 0; ii < 2; ++ii) {
+            if (_mins.v[ii] > mins.v[ii]) {
+                _mins.v[ii] = mins.v[ii];
+            }
+            if (_maxs.v[ii] < maxs.v[ii]) {
+                _maxs.v[ii] = maxs.v[ii];
+            }
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void model::draw(vec2 position, float rotation, vec4 color) const
+{
+    glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
-    glTranslatef( vPos.x, vPos.y, 0 );
-    glRotatef( rad2deg(flAngle), 0, 0, 1 );  // YAW
+    glTranslatef(position.x, position.y, 0);
+    glRotatef(rad2deg(rotation), 0, 0, 1);  // YAW
 
-    glBegin( GL_QUADS );
+    glBegin(GL_QUADS);
 
-    for (i=0 ; i<pModel->m_List.numRects ; i++)
-    {
-        pRect = &pModel->m_List.lpRects[i];
+    for (auto const& rect : _list) {
+        vec2 rmin = rect.center - rect.size * 0.5f;
+        vec2 rmax = rect.center + rect.size * 0.5f;
+        vec4 rcolor = color * rect.gamma;
 
-        glColor4f( vColor.r * pRect->flGamma, vColor.g * pRect->flGamma, vColor.b * pRect->flGamma, 1.0 );
-        glVertex2f( pRect->nPosX - pRect->nSizeX / 2, pRect->nPosY - pRect->nSizeY / 2 );
-        glVertex2f( pRect->nPosX + pRect->nSizeX / 2, pRect->nPosY - pRect->nSizeY / 2 );
-        glVertex2f( pRect->nPosX + pRect->nSizeX / 2, pRect->nPosY + pRect->nSizeY / 2 );
-        glVertex2f( pRect->nPosX - pRect->nSizeX / 2, pRect->nPosY + pRect->nSizeY / 2 );
+        glColor4f(rcolor.r, rcolor.g, rcolor.b, 1.0f);
+        glVertex2f(rmin.x, rmin.y);
+        glVertex2f(rmax.x, rmin.y);
+        glVertex2f(rmax.x, rmax.y);
+        glVertex2f(rmin.x, rmax.y);
     }
 
-    glEnd( );
-
+    glEnd();
     glPopMatrix();
 }
 
-cModel::cModel (sRectList *lpList)
-{
-    int     i;
-    sRect   *lpRect;
-
-    m_AbsMax = vec2(0,0);
-    m_AbsMin = vec2(0,0);
-
-    m_List.numRects = lpList->numRects;
-    m_List.lpRects = lpList->lpRects;       // beware! shallow copy
-
-    // find absolute bounds
-    for (i=0 ; i<m_List.numRects ; i++)
-    {
-        lpRect = &m_List.lpRects[i];
-
-        if (lpRect->nPosX + lpRect->nSizeX / 2 > m_AbsMax.x)        // xmax
-            m_AbsMax.x = lpRect->nPosX + lpRect->nSizeX / 2;
-        else if (lpRect->nPosX - lpRect->nSizeX / 2 < m_AbsMin.x)
-            m_AbsMin.x = lpRect->nPosX - lpRect->nSizeX / 2;
-
-        if (lpRect->nPosY + lpRect->nSizeY / 2 > m_AbsMax.y)
-            m_AbsMax.y = lpRect->nPosY + lpRect->nSizeY / 2;
-        else if (lpRect->nPosY - lpRect->nSizeY / 2 < m_AbsMin.y)
-            m_AbsMin.y = lpRect->nPosY - lpRect->nSizeY / 2;
-    }
-}
-
-bool cModel::Clip (cModel *lpOther, vec2 vPos, float flAngle)
-{
-    vec3    Vert[4];
-    vec2    AbsMax(0,0), AbsMin(0,0);
-
-    mat3    mat;
-
-    if (!lpOther)
-        return ClipPoint( vPos );
-
-    // rotate corners
-
-    mat.rotateyaw( deg2rad( flAngle ) );
-
-    Vert[0] = mat.mult( vec3( lpOther->m_AbsMin.x, lpOther->m_AbsMin.y, 0 ) );
-    Vert[1] = mat.mult( vec3( lpOther->m_AbsMax.x, lpOther->m_AbsMin.y, 0 ) );
-    Vert[2] = mat.mult( vec3( lpOther->m_AbsMax.x, lpOther->m_AbsMax.y, 0 ) );
-    Vert[3] = mat.mult( vec3( lpOther->m_AbsMin.x, lpOther->m_AbsMax.y, 0 ) );
-
-    // find new absolutes
-
-    for (int i = 0 ; i<4 ; i++)
-    {
-        if (Vert[i].x > AbsMax.x)
-            AbsMax.x = Vert[i].x;
-        else if (Vert[i].x < AbsMin.x)
-            AbsMin.x = Vert[i].x;
-
-        if (Vert[i].y > AbsMax.y)
-            AbsMax.y = Vert[i].y;
-        else if (Vert[i].y < AbsMin.y)
-            AbsMin.y = Vert[i].y;
-    }
-
-    // add absolutes to relative position (vPos)
-
-    AbsMax = AbsMax + vPos;
-    AbsMin = AbsMin + vPos;
-
-    // compare values
-
-        return ( ! (
-        (m_AbsMin.x > AbsMax.x || m_AbsMax.x < AbsMin.x) ||
-        (m_AbsMin.y > AbsMax.y || m_AbsMax.y < AbsMin.y) ) );
-
-    // no poly/poly checking - too code intensive and not necessary
-}
-
-bool cModel::ClipPoint (vec2 vPos)
-{
-    if ( !this )
-        return false;
-
-    return ( ! (
-        (m_AbsMin.x > vPos.x || m_AbsMax.x < vPos.x) ||
-        (m_AbsMin.y > vPos.y || m_AbsMax.y < vPos.y) ) );
-}
+} // namespace render

@@ -31,8 +31,6 @@ Purpose :   General top-down include file
 #include "gl_main.h"
 //  windows headers
 #include "win_main.h"
-//  extra headers
-#include "models.h"
 
 #define TANK_MOVE       0
 #define TANK_IDLE       1

@@ -86,8 +86,8 @@ void tank::draw() const
 
     if (_damage >= 1.0f)
     {
-        g_Render->DrawModel(_model, pos, angle, vec4(0.3f,0.3f,0.3f,1));
-        g_Render->DrawModel(_turret_model, pos, tangle, vec4(0.3f,0.3f,0.3f,1));
+        _model->draw(pos, angle, vec4(0.3f,0.3f,0.3f,1));
+        _turret_model->draw(pos, tangle, vec4(0.3f,0.3f,0.3f,1));
         return;
     }
 
@@ -100,8 +100,8 @@ void tank::draw() const
 
     // actual body
 
-    g_Render->DrawModel(_model, pos, angle, _color);
-    g_Render->DrawModel(_turret_model, pos, tangle, _color);
+    _model->draw(pos, angle, _color);
+    _turret_model->draw(pos, tangle, _color);
 }
 
 //------------------------------------------------------------------------------

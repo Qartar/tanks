@@ -27,7 +27,6 @@ add_executable(tanks WIN32
     gl_main.h
     keys.h
     local.h
-    models.h
     net_chan.cpp
     net_main.cpp
     net_main.h

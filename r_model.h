@@ -10,33 +10,39 @@ Purpose :   Compound rectangle model class
 
 #pragma once
 
-struct sRect
-{
-    int     nPosX;
-    int     nPosY;
-    int     nSizeX;
-    int     nSizeY;
-    float   flGamma;
-};
+#include "oed_types.h"
+#include <vector>
 
-struct sRectList
-{
-    int     numRects;
-    sRect   *lpRects;
-};
+namespace render {
 
-class cModel
+//------------------------------------------------------------------------------
+class model
 {
 public:
-    cModel () {}
-    ~cModel () {};
+    struct rect
+    {
+        vec2 center;
+        vec2 size;
+        float gamma;
+    };
 
-    cModel (sRectList *lpList);
+    template<std::size_t Size>
+    model(rect const (&rects)[Size])
+        : model(rects, Size)
+    {}
 
-    bool    Clip (cModel *lpOther, vec2 vPos, float flAngle);
-    bool    ClipPoint (vec2 vPos);
+    void draw(vec2 position, float rotation, vec4 color) const;
 
-    sRectList   m_List;
-    vec2        m_AbsMin;   // absolute size, early out clipping detection
-    vec2        m_AbsMax;
+protected:
+    std::vector<rect> _list;
+    vec2 _mins;
+    vec2 _maxs;
+
+protected:
+    model(rect const* rects, std::size_t num_rects);
 };
+
+} // namespace render
+
+extern render::model tank_body_model;
+extern render::model tank_turret_model;

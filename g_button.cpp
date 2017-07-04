@@ -358,8 +358,8 @@ void cTankButton::Draw (vec2 vCursorPos)
     g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
     g_Render->DrawString( m_szTitle, vTextPos, menu_colors[nColorText] );
 
-    g_Render->DrawModel( m_pTank->_model, m_vPos, 0, m_pTank->_color );
-    g_Render->DrawModel( m_pTank->_turret_model, m_vPos, 0, m_pTank->_color );
+    m_pTank->_model->draw(m_vPos, 0, m_pTank->_color);
+    m_pTank->_turret_model->draw(m_vPos, 0, m_pTank->_color);
 }
 
 /*
@@ -500,8 +500,8 @@ void cClientButton::Draw (vec2 vCursorPos)
     g_Render->DrawBox( vec2(m_vTextBoxSize.x-2,m_vTextBoxSize.y-2), m_vTextBoxPos, 0, menu_colors[nTextIn] );
     g_Render->DrawString( g_Game->cls.name, vTextBoxText, menu_colors[7] );
 
-    g_Render->DrawModel( &tank_body_model, m_vPos, 0, *m_pColor );
-    g_Render->DrawModel( &tank_turret_model, m_vPos, 0, *m_pColor );
+    tank_body_model.draw(m_vPos, 0, *m_pColor);
+    tank_turret_model.draw(m_vPos, 0, *m_pColor);
 }
 
 /*

@@ -15,6 +15,8 @@ Date    :   10/21/2004
 #include "p_material.h"
 #include "p_rigidbody.h"
 #include "p_shape.h"
+
+#include "r_model.h"
 #include "r_particle.h"
 
 #include <array>
@@ -24,7 +26,6 @@ Date    :   10/21/2004
 #include <vector>
 
 class cGame;
-class cModel;
 
 namespace game {
 
@@ -80,7 +81,7 @@ public:
     void apply_impulse(vec2 impulse) { _rigid_body.apply_impulse(impulse); }
     void apply_impulse(vec2 impulse, vec2 position) { _rigid_body.apply_impulse(impulse, position); }
 
-    cModel* _model;
+    render::model const* _model;
     vec4 _color;
 
     vec2 _old_position;
@@ -152,7 +153,7 @@ public:
 
     char const* player_name() const;
 
-    cModel* _turret_model;
+    render::model const* _turret_model;
     float _turret_rotation;
     float _turret_velocity;
     float _old_turret_rotation;
