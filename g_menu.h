@@ -97,20 +97,18 @@ protected:
     bool    *m_bCond;
 };
 
-class cTank;
-
 class cTankButton : public cBaseButton
 {
 public:
     cTankButton () {}
-    cTankButton (char *szTitle, vec2 vPos, vec2 vSize, cTank *pTank);
+    cTankButton (char *szTitle, vec2 vPos, vec2 vSize, game::tank *pTank);
     ~cTankButton () {}
 
     virtual bool    Click (vec2 vCursorPos, bool bDown);
     virtual void    Draw (vec2 vCursorPos);
 
 protected:
-    cTank   *m_pTank;
+    game::tank   *m_pTank;
     int     m_nTankColor;
 };
 

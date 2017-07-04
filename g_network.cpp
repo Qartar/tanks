@@ -40,12 +40,6 @@ Name    :   m_StartServer   m_StopServer
 
 void cGame::m_StartServer ()
 {
-    int nWidth = m_World.m_vWorldMaxs.x;
-    int nHeight = m_World.m_vWorldMaxs.y;
-
-    nWidth -= SPAWN_BUFFER*2;
-    nHeight -= SPAWN_BUFFER*2;
-
     m_StopClient( );
 
     m_bMultiplayer = true;
@@ -110,7 +104,7 @@ void cGame::m_StopServer ()
         cl->netchan.message.Clear( );
     }
 
-    m_World.Reset( );
+    m_World.reset( );
 
     m_bGameActive = false;
 }
@@ -124,15 +118,7 @@ void cGame::m_StopClient ()
         m_netchan.message.Clear( );
     }
 
-    for ( int i=0 ; i<MAX_PLAYERS ; i++ )
-    {
-        if ( m_Players[i] )
-        {
-            m_Players[i]->channels[0]->stopSound( );
-            m_Players[i]->channels[1]->stopSound( );
-            m_Players[i]->channels[2]->stopSound( );
-        }
-    }
+    m_World.reset();
 
     m_bMultiplayer = false;
     m_bMultiactive = false;
@@ -303,9 +289,9 @@ void cGame::m_Packet (netsock_t socket)
             case clc_say:
                 string = m_netmsg.ReadString( );
                 m_WriteMessage( va( "\\c%02x%02x%02x%s\\cx: %s",
-                    (int )(m_Players[m_netclient]->vColor.r * 255),
-                    (int )(m_Players[m_netclient]->vColor.g * 255),
-                    (int )(m_Players[m_netclient]->vColor.b * 255),
+                    (int )(m_Players[m_netclient]->_color.r * 255),
+                    (int )(m_Players[m_netclient]->_color.g * 255),
+                    (int )(m_Players[m_netclient]->_color.b * 255),
                     svs.clients[m_netclient].name, string ) ); 
                 break;
 
@@ -398,7 +384,7 @@ void cGame::m_GetFrame ()
     int             readbyte;
     int             framenum;
 
-    m_World.Reset( );
+    m_World.reset( );
 
     framenum = m_netmsg.ReadLong( );
 
@@ -424,25 +410,25 @@ void cGame::m_GetFrame ()
 
         i = m_netmsg.ReadByte( );
 
-        m_Players[i]->oldPos     = m_Players[i]->get_position();
-        m_Players[i]->oldAngle   = m_Players[i]->get_rotation();
-        m_Players[i]->oldTAngle  = m_Players[i]->flTAngle;
+        m_Players[i]->_old_position = m_Players[i]->get_position();
+        m_Players[i]->_old_rotation = m_Players[i]->get_rotation();
+        m_Players[i]->_old_turret_rotation  = m_Players[i]->_turret_rotation;
 
         m_Players[i]->set_position(m_netmsg.ReadVector());
         m_Players[i]->set_linear_velocity(m_netmsg.ReadVector());
         m_Players[i]->set_rotation(m_netmsg.ReadFloat());
         m_Players[i]->set_angular_velocity(m_netmsg.ReadFloat());
-        m_Players[i]->flTAngle   = m_netmsg.ReadFloat( );
-        m_Players[i]->flTVel     = m_netmsg.ReadFloat( );
+        m_Players[i]->_turret_rotation = m_netmsg.ReadFloat( );
+        m_Players[i]->_turret_velocity = m_netmsg.ReadFloat( );
 
-        m_Players[i]->flDamage   = m_netmsg.ReadFloat( );
-        m_Players[i]->flLastFire = m_netmsg.ReadFloat( );
+        m_Players[i]->_damage = m_netmsg.ReadFloat( );
+        m_Players[i]->_fire_time = m_netmsg.ReadFloat( );
 
         //m_World.AddObject( &m_Players[i] );
 
         // this is normally run on cTank::Think but is this 
         // not called on clients and must be called here
-        m_Players[i]->UpdateSound( );
+        m_Players[i]->update_sound( );
 
 
         //readbyte = m_netmsg.ReadByte( );
@@ -479,7 +465,7 @@ void cGame::m_WriteFrame ()
 
     // HACK: update local players color here
     if ( svs.clients[0].local )
-        m_Players[0]->vColor = cls.color;
+        m_Players[0]->_color = cls.color;
 
     message.Init( messagebuf, MAX_MSGLEN );
     message.Clear( );
@@ -498,11 +484,11 @@ void cGame::m_WriteFrame ()
         message.WriteVector( m_Players[i]->get_linear_velocity() );
         message.WriteFloat( m_Players[i]->get_rotation() );
         message.WriteFloat( m_Players[i]->get_angular_velocity() );
-        message.WriteFloat( m_Players[i]->flTAngle );
-        message.WriteFloat( m_Players[i]->flTVel );
+        message.WriteFloat( m_Players[i]->_turret_rotation );
+        message.WriteFloat( m_Players[i]->_turret_velocity );
 
-        message.WriteFloat( m_Players[i]->flDamage );
-        message.WriteFloat( m_Players[i]->flLastFire );
+        message.WriteFloat( m_Players[i]->_damage );
+        message.WriteFloat( m_Players[i]->_fire_time );
 
         //if ( m_Players[i].m_Bullet.bInGame )
         //{
@@ -604,9 +590,9 @@ void cGame::m_ConnectAck ()
     m_bMenuActive = false;      // so you're totally screwed
     m_bGameActive = true;       // if you ever want to know
 
-    m_Players[cls.number]->vColor.r = cls.color.r;
-    m_Players[cls.number]->vColor.g = cls.color.g;
-    m_Players[cls.number]->vColor.b = cls.color.b;
+    m_Players[cls.number]->_color.r = cls.color.r;
+    m_Players[cls.number]->_color.g = cls.color.g;
+    m_Players[cls.number]->_color.b = cls.color.b;
 
     gameClients[cls.number].upgrades = 0;
     gameClients[cls.number].damage_mod = 1.0f;
@@ -725,9 +711,9 @@ void cGame::m_WriteInfo (int client, netmsg_t *message)
     message->WriteByte( gameClients[client].refire_mod * 10 );
     message->WriteByte( gameClients[client].speed_mod * 10 );
 
-    message->WriteByte( m_Players[client]->vColor.r * 255 );
-    message->WriteByte( m_Players[client]->vColor.g * 255 );
-    message->WriteByte( m_Players[client]->vColor.b * 255 );
+    message->WriteByte( m_Players[client]->_color.r * 255 );
+    message->WriteByte( m_Players[client]->_color.g * 255 );
+    message->WriteByte( m_Players[client]->_color.b * 255 );
 
     // also write score
 
@@ -756,9 +742,9 @@ void cGame::m_ReadInfo ()
     gameClients[client].refire_mod = m_netmsg.ReadByte( ) / 10.0f;
     gameClients[client].speed_mod = m_netmsg.ReadByte( ) / 10.0f;
 
-    m_Players[client]->vColor.r = m_netmsg.ReadByte( ) / 255.0f;
-    m_Players[client]->vColor.g = m_netmsg.ReadByte( ) / 255.0f;
-    m_Players[client]->vColor.b = m_netmsg.ReadByte( ) / 255.0f;
+    m_Players[client]->_color.r = m_netmsg.ReadByte( ) / 255.0f;
+    m_Players[client]->_color.g = m_netmsg.ReadByte( ) / 255.0f;
+    m_Players[client]->_color.b = m_netmsg.ReadByte( ) / 255.0f;
 
     if ( m_bMultiserver || m_bDedicated )
     {
@@ -791,30 +777,30 @@ void cGame::m_ClientDisconnect (int nClient)
 
 void cGame::m_ClientCommand ()
 {
-    cTank   *pTank;
+    game::tank* pTank;
     int     bits;
 
     bits = m_netmsg.ReadByte( );
     pTank = m_Players[m_netclient];
 
-    memset( pTank->m_Keys, 0, sizeof(pTank->m_Keys) );
+    memset( pTank->_keys, 0, sizeof(pTank->_keys) );
 
     if ( bits & BIT(KEY_FORWARD) )
-        pTank->m_Keys[KEY_FORWARD] = true;
+        pTank->_keys[KEY_FORWARD] = true;
     if ( bits & BIT(KEY_BACK) )
-        pTank->m_Keys[KEY_BACK] = true;
+        pTank->_keys[KEY_BACK] = true;
 
     if ( bits & BIT(KEY_LEFT) )
-        pTank->m_Keys[KEY_LEFT] = true;
+        pTank->_keys[KEY_LEFT] = true;
     if ( bits & BIT(KEY_RIGHT) )
-        pTank->m_Keys[KEY_RIGHT] = true;
+        pTank->_keys[KEY_RIGHT] = true;
 
     if ( bits & BIT(KEY_TLEFT) )
-        pTank->m_Keys[KEY_TLEFT] = true;
+        pTank->_keys[KEY_TLEFT] = true;
     if ( bits & BIT(KEY_TRIGHT) )
-        pTank->m_Keys[KEY_TRIGHT] = true;
+        pTank->_keys[KEY_TRIGHT] = true;
     if ( bits & BIT(KEY_FIRE) )
-        pTank->m_Keys[KEY_FIRE] = true;
+        pTank->_keys[KEY_FIRE] = true;
 }
 
 void cGame::m_clientsend ()
@@ -882,7 +868,7 @@ void cGame::m_WriteEffect (int type, vec2 pos, vec2 vel, int count)
     netmsg.WriteByte( svc_effect );
     netmsg.WriteByte( type );
     netmsg.WriteVector( pos );
-    if ( type == effect_smoke )
+    if ( type == static_cast<int>(game::effect_type::smoke) )
     {
         netmsg.WriteVector( vel );
         netmsg.WriteShort( count );
@@ -900,14 +886,14 @@ void cGame::m_ReadEffect ()
 
     type = m_netmsg.ReadByte( );
     pos = m_netmsg.ReadVector( );
-    if ( type == effect_smoke )
+    if ( type == static_cast<int>(game::effect_type::smoke) )
     {
         vel = m_netmsg.ReadVector( );
         count = m_netmsg.ReadShort( );
-        m_World.AddSmokeEffect( pos, vel, count );
+        m_World.add_smoke_effect( pos, vel, count );
     }
     else
-        m_World.AddEffect( pos, (effects_t )type );
+        m_World.add_effect( pos, static_cast<game::effect_type>(type) );
 }
 
 /*
@@ -1043,9 +1029,9 @@ void cGame::m_ReadUpgrade (int index)
         }
 
         m_WriteMessage( va( "\\c%02x%02x%02x%s\\cx has upgraded their %s!",
-            (int )(m_Players[m_netclient]->vColor.r * 255),
-            (int )(m_Players[m_netclient]->vColor.g * 255),
-            (int )(m_Players[m_netclient]->vColor.b * 255),
+            (int )(m_Players[m_netclient]->_color.r * 255),
+            (int )(m_Players[m_netclient]->_color.g * 255),
+            (int )(m_Players[m_netclient]->_color.b * 255),
             svs.clients[m_netclient].name, sz_upgrades[index] ) ); 
 
         netmsg.Init( msgbuf, MAX_MSGLEN );

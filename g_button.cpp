@@ -294,14 +294,14 @@ Purpose :   various modifications on a tank
 ===========================================================
 */
 
-cTankButton::cTankButton (char *szTitle, vec2 vPos, vec2 vSize, cTank *pTank)
+cTankButton::cTankButton (char *szTitle, vec2 vPos, vec2 vSize, game::tank *pTank)
 {
     strncpy( m_szTitle, szTitle, 64 );
     m_vPos = vPos;
     m_vSize = vSize;
 
     m_pTank = pTank;
-    m_nTankColor = pTank->nPlayerNum;
+    m_nTankColor = pTank->_player_index;
 
     m_bOver = false;
     m_bClicked = false;
@@ -319,7 +319,7 @@ bool cTankButton::Click (vec2 vCursorPos, bool bDown)
     {
         m_bClicked = false;
         m_nTankColor = (m_nTankColor+1)%NUM_PLAYER_COLORS;
-        m_pTank->vColor = player_colors[m_nTankColor];
+        m_pTank->_color = player_colors[m_nTankColor];
     }
     else if (!bDown)
     {
@@ -358,8 +358,8 @@ void cTankButton::Draw (vec2 vCursorPos)
     g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
     g_Render->DrawString( m_szTitle, vTextPos, menu_colors[nColorText] );
 
-    g_Render->DrawModel( m_pTank->pModel, m_vPos, 0, m_pTank->vColor );
-    g_Render->DrawModel( m_pTank->pTurret, m_vPos, 0, m_pTank->vColor );
+    g_Render->DrawModel( m_pTank->_model, m_vPos, 0, m_pTank->_color );
+    g_Render->DrawModel( m_pTank->_turret_model, m_vPos, 0, m_pTank->_color );
 }
 
 /*

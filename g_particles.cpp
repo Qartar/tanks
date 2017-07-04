@@ -11,7 +11,9 @@ Purpose :   handles cParticle and cWorld particle handling
 #include "local.h"
 #pragma hdrstop
 
-cParticle *cWorld::AddParticle ()
+namespace game {
+
+cParticle *world::AddParticle ()
 {
     cParticle   *pRet = pFreeParticles;
 
@@ -27,26 +29,12 @@ cParticle *cWorld::AddParticle ()
     return pRet;
 }
 
-void cWorld::FreeParticle (cParticle *pParticle)
+void world::FreeParticle (cParticle *pParticle) const
 {
     pParticle->AddToFree( );
 }
 
-void cParticle::AddToActive ()
-{
-    g_World->pFreeParticles = pNext;
-    pNext = g_World->pActiveParticles;
-    g_World->pActiveParticles = this;
-}
-
-void cParticle::AddToFree ()
-{
-    memset( this, 0, sizeof(cParticle) );
-    pNext = g_World->pFreeParticles;
-    g_World->pFreeParticles = this;
-}
-
-void cWorld::m_DrawParticles ()
+void world::m_DrawParticles () const
 {
     cParticle   *p, *next;
     cParticle   *active, *tail;
@@ -108,4 +96,20 @@ void cWorld::m_DrawParticles ()
     pActiveParticles = active;
 
     g_Application->get_glWnd()->get_Render()->DrawParticles( pActiveParticles );
+}
+
+} // namespace game
+
+void cParticle::AddToActive ()
+{
+    g_World->pFreeParticles = pNext;
+    pNext = g_World->pActiveParticles;
+    g_World->pActiveParticles = this;
+}
+
+void cParticle::AddToFree ()
+{
+    memset( this, 0, sizeof(cParticle) );
+    pNext = g_World->pFreeParticles;
+    g_World->pFreeParticles = this;
 }

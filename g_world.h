@@ -16,40 +16,48 @@ Date    :   10/21/2004
 #include "p_rigidbody.h"
 #include "p_shape.h"
 
+#include <array>
 #include <memory>
 #include <set>
 #include <type_traits>
 #include <vector>
 
-typedef enum eEffects effects_t;
-
+class cGame;
 class cParticle;
 class cModel;
-class cGame;
-class cTank;
-class cWorld;
 
-enum eObjectType
+namespace game {
+
+class tank;
+class world;
+
+enum class object_type
 {
-    object_object,
-    object_static,
-    object_bullet,
-    object_tank,
+    object,
+    obstacle,
+    projectile,
+    tank,
+};
+
+enum class effect_type
+{
+    smoke,
+    sparks,
+    explosion,
 };
 
 //------------------------------------------------------------------------------
-class cObject
+class object
 {
 public:
-    cObject (eObjectType type, cObject* owner = nullptr);
-    ~cObject () {}
+    object(object_type type, object* owner = nullptr);
+    ~object() {}
 
     std::size_t spawn_id() const { return _spawn_id; }
 
-    virtual void    Draw ();
-
-    virtual void    Touch (cObject *pOther, float impulse = 0);
-    virtual void    Think ();
+    virtual void draw() const;
+    virtual void touch(object *other, float impulse = 0);
+    virtual void think();
 
     //! Get frame-interpolated position
     virtual vec2 get_position(float lerp) const;
@@ -72,18 +80,18 @@ public:
     void apply_impulse(vec2 impulse) { _rigid_body.apply_impulse(impulse); }
     void apply_impulse(vec2 impulse, vec2 position) { _rigid_body.apply_impulse(impulse, position); }
 
-    cModel  *pModel;
-    vec4    vColor;
+    cModel* _model;
+    vec4 _color;
 
-    vec2    oldPos;
-    float   oldAngle;
+    vec2 _old_position;
+    float _old_rotation;
 
-    eObjectType eType;
+    object_type _type;
 
 protected:
-    friend cWorld;
+    friend world;
 
-    cObject* _owner;
+    object* _owner;
 
     std::size_t _spawn_id;
 
@@ -95,26 +103,24 @@ protected:
 };
 
 //------------------------------------------------------------------------------
-class cStatic : public cObject
+class obstacle : public object
 {
 public:
-    cStatic(physics::rigid_body&& rigid_body)
-        : cObject(object_static)
+    obstacle(physics::rigid_body&& rigid_body)
+        : object(object_type::obstacle)
     {
         _rigid_body = std::move(rigid_body);
     }
 };
 
 //------------------------------------------------------------------------------
-class cBullet : public cObject
+class projectile : public object
 {
 public:
-    cBullet (cTank* owner, float damage);
-    ~cBullet () {}
+    projectile(tank* owner, float damage);
 
-    virtual void    Draw ();
-    virtual void    Touch (cObject *pOther, float impulse = 0) override;
-    virtual void    Think ();
+    virtual void draw() const override;
+    virtual void touch(object *other, float impulse = 0) override;
 
     static physics::circle_shape _shape;
     static physics::material _material;
@@ -124,39 +130,48 @@ protected:
 };
 
 //------------------------------------------------------------------------------
-class cTank : public cObject
+class tank : public object
 {
 public:
-    cTank ();
-    ~cTank ();
+    tank();
+    ~tank();
 
-    virtual void    Draw ();
-    virtual void    Touch (cObject *pOther, float impulse = 0) override;
-    virtual void    Think ();
+    virtual void draw() const override;
+    virtual void touch(object *other, float impulse = 0) override;
+    virtual void think() override;
 
     //! Get frame-interpolated turret rotation
     float get_turret_rotation(float lerp) const;
 
-    void        UpdateKeys( int nKey, bool Down );
+    float get_turret_rotation() const { return _turret_rotation; }
+    float get_turret_velocity() const { return _turret_velocity; }
 
-    void        UpdateSound ();
+    void update_keys(int key, bool is_down);
 
-    cModel  *pTurret;
-    float   flTAngle, flTVel;
-    float   flDamage;
-    int     nPlayerNum;
-    float   flDeadTime;
+    void update_sound();
+
+    char const* player_name() const;
+
+    cModel* _turret_model;
+    float _turret_rotation;
+    float _turret_velocity;
+    float _old_turret_rotation;
 
     float _track_speed;
 
-    float   oldTAngle;
+    float _damage;
+    int _player_index;
 
-    bool    m_Keys[8];
+    float _dead_time;
+    float _fire_time;
 
-    float   flLastFire;
+    bool _keys[8];
 
-    sndchan_t   *channels[3];
-    game_client_t   *client;
+    std::array<sndchan_t*,3> _channels;
+    game_client_t* _client;
+
+protected:
+    void collide(tank* other, float base_damage);
 
 protected:
     static physics::material _material;
@@ -166,70 +181,68 @@ protected:
 #define MAX_PARTICLES   4096
 
 //------------------------------------------------------------------------------
-class cWorld
+class world
 {
     friend cParticle;
-    friend cTank;
+    friend tank;
     friend cGame;
 
 public:
-    cWorld ()
+    world ()
         : pFreeParticles(NULL)
         , pActiveParticles(NULL)
         , _spawn_id(0)
         , _border_material{0,0}
         , _border_shapes{{vec2(0,0)}, {vec2(0,0)}}
     {}
-    ~cWorld () {}
+    ~world () {}
 
-    void    Init ();
-    void    Shutdown ();
-    void    Reset ();
+    void init();
+    void shutdown();
+    void reset();
 
-    void    ClearParticles ();
+    void clear_particles();
 
-    void    RunFrame ();
-    void    Draw ();
+    void run_frame ();
+    void draw() const;
 
     template<typename T, typename... Args>
     T* spawn(Args&& ...args);
 
-    void remove(cObject* object);
+    void remove(object* object);
 
-    void    AddSound (char *szName);
-    void    AddSmokeEffect (vec2 vPos, vec2 vVel, int nCount);
-    void    AddEffect (vec2 vPos, eEffects eType, float strength = 1);
-
-    void    AddFlagTrail (vec2 vPos, int nTeam);
+    void add_sound(char const* name);
+    void add_smoke_effect(vec2 position, vec2 velocity, int count);
+    void add_effect(vec2 position, effect_type type, float strength = 1);
 
 private:
     //! Active objects in the world
-    std::vector<std::unique_ptr<cObject>> _objects;
+    std::vector<std::unique_ptr<object>> _objects;
 
     //! Objects pending addition
-    std::vector<std::unique_ptr<cObject>> _pending;
+    std::vector<std::unique_ptr<object>> _pending;
 
     //! Objects pending removal
-    std::set<cObject*> _removed;
+    std::set<object*> _removed;
 
     //! Previous object spawn id
     std::size_t _spawn_id;
 
-    void    MoveObject (cObject *pObject);
+    void move_object(object* object);
 
     cParticle   *pFreeParticles;
-    cParticle   *pActiveParticles;
+    mutable cParticle   *pActiveParticles;
 
     cParticle   m_Particles[MAX_PARTICLES];
     cParticle   *AddParticle ();
-    void        FreeParticle (cParticle *pParticle);
+    void        FreeParticle (cParticle *pParticle) const;
 
-    void        m_DrawParticles ();
+    void        m_DrawParticles () const;
 
     bool        m_bParticles;
 
-    vec2        m_vWorldMins;
-    vec2        m_vWorldMaxs;
+    vec2        _mins;
+    vec2        _maxs;
 
     physics::material _border_material;
     physics::box_shape _border_shapes[2];
@@ -238,14 +251,16 @@ private:
 
 //------------------------------------------------------------------------------
 template<typename T, typename... Args>
-T* cWorld::spawn(Args&& ...args)
+T* world::spawn(Args&& ...args)
 {
-    static_assert(std::is_base_of<cObject, T>::value,
-                  "'spawn': 'T' must be derived from 'cObject'");
+    static_assert(std::is_base_of<game::object, T>::value,
+                  "'spawn': 'T' must be derived from 'game::object'");
 
     _pending.push_back(std::make_unique<T>(std::move(args)...));
     _pending.back()->_spawn_id = ++_spawn_id;
     return static_cast<T*>(_pending.back().get());
 }
 
-extern cWorld *g_World;
+} // namespace game
+
+extern game::world *g_World;

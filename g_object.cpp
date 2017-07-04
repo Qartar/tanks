@@ -11,45 +11,51 @@ Purpose :   implementation of object class
 #include "local.h"
 #pragma hdrstop
 
-physics::material cObject::_default_material(0.5f, 0.5f);
-physics::circle_shape cObject::_default_shape(0.5f);
+namespace game {
 
-cObject::cObject(eObjectType type, cObject* owner)
-    : pModel(NULL)
-    , eType(type)
+physics::material object::_default_material(0.5f, 0.5f);
+physics::circle_shape object::_default_shape(0.5f);
+
+//------------------------------------------------------------------------------
+object::object(object_type type, object* owner)
+    : _model(NULL)
+    , _type(type)
     , _owner(owner)
     , _rigid_body(&_default_shape, &_default_material, _default_mass)
 {}
 
-void cObject::Touch (cObject *pOther, float impulse)
+//------------------------------------------------------------------------------
+void object::touch(object* /*other*/, float /*impulse = 0*/)
 {
-    return;
 }
 
-void cObject::Draw ()
+//------------------------------------------------------------------------------
+void object::draw() const
 {
-    if (pModel) {
+    if (_model) {
         g_Application->get_glWnd()->get_Render()->DrawModel(
-            pModel,
+            _model,
             _rigid_body.get_position(),
             _rigid_body.get_rotation(),
-            vColor);
+            _color);
     }
 }
 
-void cObject::Think ()
+//------------------------------------------------------------------------------
+void object::think()
 {
-    // regular objects just sit there and act stupid
-
-    return;
 }
 
-vec2 cObject::get_position(float lerp) const
+//------------------------------------------------------------------------------
+vec2 object::get_position(float lerp) const
 {
-    return oldPos + (get_position() - oldPos) * lerp;
+    return _old_position + (get_position() - _old_position) * lerp;
 }
 
-float cObject::get_rotation(float lerp) const
+//------------------------------------------------------------------------------
+float object::get_rotation(float lerp) const
 {
-    return oldAngle + (get_rotation() - oldAngle) * lerp;
+    return _old_rotation + (get_rotation() - _old_rotation) * lerp;
 }
+
+} // namespace game

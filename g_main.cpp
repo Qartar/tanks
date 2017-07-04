@@ -122,7 +122,7 @@ int cGame::Init (char *cmdline)
     m_InitClient( );
 
     m_Menu.Init( );
-    m_World.Init( );
+    m_World.init( );
 
     menuImage = -2;
 
@@ -196,7 +196,7 @@ int cGame::Shutdown ()
     m_StopClient( );
     m_EndClient( );
 
-    m_World.Shutdown( );
+    m_World.shutdown( );
     m_Menu.Shutdown( );
 
     for ( int i=0 ; i<NUM_SOUNDS ; i++ )
@@ -295,7 +295,7 @@ int cGame::RunFrame (float flMSec)
         // run time step on world
         if ( !m_bMenuActive || m_bMultiserver )
         {
-            m_World.RunFrame( );
+            m_World.run_frame( );
             if ( m_bMultiserver )
                 m_WriteFrame( );
         }
@@ -323,8 +323,8 @@ int cGame::RunFrame (float flMSec)
 
     float   centerX, centerY;
 
-    worldWidth  = m_World.m_vWorldMaxs.x - m_World.m_vWorldMins.x;
-    worldHeight = m_World.m_vWorldMaxs.y - m_World.m_vWorldMins.y;
+    worldWidth  = m_World._maxs.x - m_World._mins.x;
+    worldHeight = m_World._maxs.y - m_World._mins.y;
 
     viewWidth   = DEFAULT_W;
     viewHeight  = DEFAULT_H;
@@ -359,7 +359,7 @@ int cGame::RunFrame (float flMSec)
 
     // draw world
     if (m_bGameActive)
-        m_World.Draw( );
+        m_World.draw( );
 
     g_Render->SetViewOrigin( cVec2( 0, 0 ) );
 
@@ -715,7 +715,7 @@ int cGame::Key_Event (unsigned char Key, bool Down)
         case 'k':   // fire
         case 'K':
             if ( !m_bMultiactive || m_bMultiserver )
-                m_Players[0]->UpdateKeys( Key, Down );
+                m_Players[0]->update_keys( Key, Down );
             else
                 m_ClientKeys( Key, Down );
             break;
@@ -731,7 +731,7 @@ int cGame::Key_Event (unsigned char Key, bool Down)
         case '5':           // fire
         case K_KP_5:
             if ( !m_bMultiactive )
-                m_Players[1]->UpdateKeys( Key, Down );
+                m_Players[1]->update_keys( Key, Down );
             break;
 
         default:
@@ -987,7 +987,7 @@ void cGame::m_DrawScore ()
             break;
 
         g_Render->DrawBox( vec2(7,7), vec2(nWidth-96, 32+11+12*n), 0,
-            vec4( m_Players[ sort[ i ] ]->vColor.r, m_Players[ sort[ i ] ]->vColor.g, m_Players[ sort[ i ] ]->vColor.b, 1 ) );
+            vec4( m_Players[ sort[ i ] ]->_color.r, m_Players[ sort[ i ] ]->_color.g, m_Players[ sort[ i ] ]->_color.b, 1 ) );
 
         g_Render->DrawString( svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7] );
         g_Render->DrawString( va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7] );
@@ -1027,14 +1027,14 @@ void cGame::Reset ()
     }
 
     m_bGameActive = false;
-    m_World.Reset( );
+    m_World.reset( );
 }
 
 void cGame::Resume () { m_bGameActive = true; m_bMenuActive = false; }
 void cGame::NewGame ()
 {
     flRestartTime = 0.0f;
-    m_World.ClearParticles( );
+    m_World.clear_particles( );
 
     bManualRestart = false;
 
@@ -1051,7 +1051,7 @@ void cGame::NewGame ()
         m_Players[i] = nullptr;
     }
 
-    m_World.Reset( );
+    m_World.reset( );
 
     //
     //  reset scores
@@ -1092,7 +1092,7 @@ void cGame::NewGame ()
         else if ( m_bMultiserver && !svs.clients[i].active )
             continue;
 
-        if ( !flRestartTime || !m_Players[i] || m_Players[i]->flDamage >= 1.0f)
+        if ( !flRestartTime || !m_Players[i] || m_Players[i]->_damage >= 1.0f)
         {
             spawn_player(i);
         }
@@ -1118,10 +1118,10 @@ void cGame::Restart ()
         else if ( m_bMultiserver && !svs.clients[ii].active )
             continue;
 
-        if (m_Players[ii]->flDamage >= 1.0f)
+        if (m_Players[ii]->_damage >= 1.0f)
             respawn_player(ii);
         else
-            m_Players[ii]->flDamage = 0.0f;
+            m_Players[ii]->_damage = 0.0f;
     }
 
     m_bGameActive = true;
@@ -1135,13 +1135,13 @@ void cGame::spawn_player(int num)
     //
 
     assert(m_Players[num] == nullptr);
-    m_Players[num] = m_World.spawn<cTank>();
+    m_Players[num] = m_World.spawn<game::tank>();
 
-    m_Players[num]->pModel = &tank_body_model;
-    m_Players[num]->pTurret = &tank_turret_model;
-    m_Players[num]->vColor = player_colors[num];
-    m_Players[num]->nPlayerNum = num;
-    m_Players[num]->client = gameClients + num;
+    m_Players[num]->_model = &tank_body_model;
+    m_Players[num]->_turret_model = &tank_turret_model;
+    m_Players[num]->_color = player_colors[num];
+    m_Players[num]->_player_index = num;
+    m_Players[num]->_client = gameClients + num;
 
     respawn_player(num);
 
@@ -1163,22 +1163,26 @@ void cGame::spawn_player(int num)
 
 void cGame::respawn_player(int num)
 {
-    int nWidth = m_World.m_vWorldMaxs.x - SPAWN_BUFFER * 2;
-    int nHeight = m_World.m_vWorldMaxs.y - SPAWN_BUFFER * 2;
+    int nWidth = m_World._maxs.x - SPAWN_BUFFER * 2;
+    int nHeight = m_World._maxs.y - SPAWN_BUFFER * 2;
 
     assert(m_Players[num] != nullptr);
 
     m_Players[num]->set_position(vec2(nWidth*frand()+SPAWN_BUFFER,nHeight*frand()+SPAWN_BUFFER));
     m_Players[num]->set_rotation(frand()*2.0f*M_PI);
-    m_Players[num]->flTAngle = m_Players[num]->get_rotation();
+    m_Players[num]->_turret_rotation = m_Players[num]->get_rotation();
+
+    m_Players[num]->_old_position = m_Players[num]->get_position();
+    m_Players[num]->_old_rotation = m_Players[num]->get_rotation();
+    m_Players[num]->_old_turret_rotation = m_Players[num]->_turret_rotation;
 
     m_Players[num]->set_linear_velocity(vec2(0,0));
     m_Players[num]->set_angular_velocity(0.0f);
-    m_Players[num]->flTVel = 0.0f;
+    m_Players[num]->_turret_velocity = 0.0f;
     m_Players[num]->_track_speed = 0.0f;
 
-    m_Players[num]->flDamage = 0.0f;
-    m_Players[num]->flLastFire = 0.0f;
+    m_Players[num]->_damage = 0.0f;
+    m_Players[num]->_fire_time = 0.0f;
 }
 
 /*

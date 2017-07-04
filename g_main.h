@@ -75,14 +75,6 @@ typedef enum netops_e
     svc_restart     //  game restart
 } netops_t;
 
-typedef enum eEffects
-{
-    effect_smoke,
-    effect_sparks,
-    effect_explosion
-} effects_t;
-
-
 enum eGameType
 {
     game_singleplay,
@@ -108,7 +100,6 @@ Purpose :   Stores higher-level information about the current game
 ===========================================================
 */
 
-class cTank;
 class cMenu;
 class cWorld;
 class cRender;
@@ -219,11 +210,11 @@ public:
 
     static int  FindServerByName (void *lpvoid);
 
-    cTank *     Player( int index ) { return m_Players[ index ]; }
+    game::tank *     Player( int index ) { return m_Players[ index ]; }
 
 private:
     cMenu   m_Menu;
-    cWorld  m_World;
+    game::world m_World;
 
     int     menuImage;
 
@@ -233,7 +224,7 @@ private:
     int     m_nScore[MAX_PLAYERS];
     void    m_DrawScore ();
 
-    cTank*  m_Players[MAX_PLAYERS];
+    game::tank* m_Players[MAX_PLAYERS];
     void spawn_player(int num);
     void respawn_player(int num);
 
