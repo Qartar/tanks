@@ -11,7 +11,11 @@ struct particle
 {
     enum flag_bits
     {
+        //! Fade alpha towards the particle center instead of outside
         invert = BIT(0),
+
+        //! Draw particle as a half-circle with an elliptical tail
+        tail = BIT(1),
     };
 
     float time;

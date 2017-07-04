@@ -95,12 +95,53 @@ void cRender::DrawParticles (float time, render::particle const* particles, std:
         glColor4fv(color_in.v);
         glVertex2fv(position.v);
 
-        glColor4fv(color_out.v);
-        for (int ii = 0; ii < 360 ; ii += k) {
-            vec2 vertex = position + vec2(costbl[ii] * radius, sintbl[ii] * radius);
-            glVertex2fv(vertex.v);
+        if (!(p->flags & render::particle::tail)) {
+            // draw circle outline
+            glColor4fv(color_out.v);
+            for (int ii = 0; ii < 360 ; ii += k) {
+                vec2 vertex = position + vec2(costbl[ii], sintbl[ii]) * radius;
+                glVertex2fv(vertex.v);
+            }
+            glVertex2f(position.x + radius, position.y);
+        } else {
+            float tail_time = std::max<float>(0.0f, time - p->time - FRAMETIME);
+            float tail_vtime = p->drag ? tanhf(p->drag * tail_time) / p->drag : tail_time;
+
+            vec2 tail_position = p->position
+                               + p->velocity * tail_vtime
+                               + p->acceleration * 0.5f * tail_vtime * tail_vtime;
+
+            // calculate forward and tangent vectors
+            vec2 normal = position - tail_position;
+            float distance = normal.length();
+            normal /= distance;
+            distance = std::max<float>(distance, radius);
+            vec2 tangent = vec2(-normal.y, normal.x);
+
+            // particle needs at least 4 verts to look reasonable
+            int n0 = std::max<int>(4, n);
+            int k0 = std::min<int>(1, 360 / n0);
+
+            glColor4fv(color_in.v);
+            for (int ii = 0; ii < 360; ii += k0) {
+                if (ii < 180) {
+                    // draw forward-facing half-circle
+                    vec2 vertex = position + (tangent * costbl[ii] + normal * sintbl[ii]) * radius;
+                    glVertex2fv(vertex.v);
+                } else {
+                    // draw backward-facing elliptical tail
+                    float alpha = -sintbl[ii];
+                    vec4 vcolor = color_out * alpha + color_in * (1.0f - alpha);
+                    vec2 vertex = position + tangent * costbl[ii] * radius + normal * sintbl[ii] * distance;
+
+                    glColor4fv(vcolor.v);
+                    glVertex2fv(vertex.v);
+                }
+            }
+
+            glColor4fv(color_in.v);
+            glVertex2f(position.x + tangent.x * radius, position.y + tangent.y * radius);
         }
-        glVertex2f(position.x + radius, position.y);
 
         glEnd();
     }

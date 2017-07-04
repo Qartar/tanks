@@ -312,9 +312,10 @@ void world::add_effect(vec2 position, effect_type type, float strength)
 
                 p->color = vec4(1,0.5+frand()*0.5,0,strength*(0.5f+frand()));
                 p->color_velocity = vec4(0,-1.0f,0,-2.0f - frand());
-                p->size = 1.0f;
+                p->size = 0.5f;
                 p->size_velocity = 0.0f;
                 p->drag = 0.5f + frand() * 0.5f;
+                p->flags = render::particle::tail;
             }
 
             for (int ii = 0; ii < 2; ++ii) {
@@ -426,8 +427,10 @@ void world::add_effect(vec2 position, effect_type type, float strength)
 
                 p->color = vec4(1,0.5+frand()*0.5,0,1);
                 p->color_velocity = vec4(0,0,0,-1.5f-frand());
-                p->size = 1.0f;
+                p->size = 0.5f;
                 p->size_velocity = 0.0f;
+                p->drag = 0.5f + frand() * 0.5f;
+                p->flags = render::particle::tail;
             }
             break;
         }
