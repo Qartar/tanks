@@ -372,9 +372,9 @@ void world::add_effect(vec2 position, effect_type type, float strength)
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*128;
+                d = square(1.0f - frand()) * 128.0f;
 
-                p->velocity = vec2(cos(r)*d,sin(r)*d);
+                p->velocity = vec2(cos(r),sin(r)) * d;
 
                 p->size = 4.0f + frand()*8.0f;
                 p->size_velocity = 2.0;

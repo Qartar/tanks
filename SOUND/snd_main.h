@@ -5,6 +5,7 @@ Date    :   04/01/2006
 
 #pragma once
 
+#define NOMINMAX
 #include <windows.h>
 
 #include "../shared.h"

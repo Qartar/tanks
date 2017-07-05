@@ -58,8 +58,8 @@ tank::~tank()
 void tank::draw() const
 {
     float   flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
-    float   flTime = clamp(((g_Game->m_flTime - _fire_time) / 150.f) * _client->refire_mod,0,20);
-    float   flHealth = clamp((1-_damage)*20,0,20);
+    float   flTime = clamp(((g_Game->m_flTime - _fire_time) / 150.f) * _client->refire_mod,0.0f,20.0f);
+    float   flHealth = clamp((1.0f - _damage) * 20.f, 0.0f, 20.0f);
 
     if ( flLerp > 1.0f ) {
         flLerp = 1.0f;
@@ -226,7 +226,7 @@ void tank::think()
         float   flPower;
 
         flPower = 1.5 - (g_Game->m_flTime - _fire_time)/1000.0f;
-        flPower = clamp( flPower, 0.5, 1.5 );
+        flPower = clamp(flPower, 0.5f, 1.5f);
 
         g_World->add_smoke_effect(
             get_position() + rot(vOrg,_turret_rotation),
@@ -337,7 +337,7 @@ void tank::update_sound()
 
     // tread noise
     if (_channels[1]) {
-        if (get_linear_velocity().lengthsq() > 1.0f || fabs(get_angular_velocity()) > deg2rad(1)) {
+        if (get_linear_velocity().lengthsq() > 1.0f || fabs(get_angular_velocity()) > deg2rad(1.0f)) {
             if (!_channels[1]->isPlaying()) {
                 _channels[1]->playLoop(sound_index[TANK_MOVE].index);
             }
@@ -351,7 +351,7 @@ void tank::update_sound()
 
     // turret noise
     if (_channels[2]) {
-        if (fabs(get_angular_velocity() - _turret_velocity) > deg2rad(1)) {
+        if (fabs(get_angular_velocity() - _turret_velocity) > deg2rad(1.0f)) {
             if (!_channels[2]->isPlaying()) {
                 _channels[2]->playLoop( sound_index[TURRET_MOVE].index );
             }

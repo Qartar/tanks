@@ -69,33 +69,20 @@ PREPROCESSOR DEFINITIONS
 
 #define BIT(a)  (1<<a)
 
-#define __deg2rad(a)    (((a)*M_PI)/180.0f)
-#define __rad2deg(a)    (((a)*180.0f)/M_PI)
-
-#define __frand() ((float)((rand()&32767)*(1.0f/32767.0f)))
-#define __crand() ((float)((rand()&32767)*(2.0f/32767.0f)-1.0f))
-
-#define __clamp(a,b,c)  ( (a<b)?b:( (a>c)?c:a ) )
-
-#define ___min(a,b) (a<b?a:b)
-#define ___max(a,b) (a>b?a:b)
-
-#define deg2rad(deg)    __deg2rad(deg)
-#define rad2deg(rad)    __rad2deg(rad)
-
-#define frand()     __frand()
-#define crand()     __crand()
-
-#define clamp(value,min,max)    __clamp(value,min,max)
-
-#ifndef min
-#define min(value,min)  ___min(value,min)
-#endif // min
-#ifndef max
-#define max(value,max)  ___max(value,max)
-#endif // max
-
 #define MAKEID(d,c,b,a)                 ( ((int)(a) << 24) | ((int)(b) << 16) | ((int)(c) << 8) | ((int)(d)) )
+
+template<typename T> T deg2rad(T value) { return value * T(M_PI / 180.0); }
+template<typename T> T rad2deg(T value) { return value * T(180.0 / M_PI); }
+
+__forceinline float frand() { return ((float)((rand()&32767)*(1.0f/32767.0f))); }
+__forceinline float crand() { return ((float)((rand()&32767)*(2.0f/32767.0f)-1.0f)); }
+
+template<typename T> T square(T value) { return value * value; }
+
+template<typename T> T clamp(T value, T min, T max) { return (value < min) ? min : (value > max) ? max : value; }
+
+template<typename T> T min(T a, T b) { return a < b ? a : b; }
+template<typename T> T max(T a, T b) { return a > b ? a : b; }
 
 /*
 ===========================================================

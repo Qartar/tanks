@@ -4,11 +4,7 @@
 #pragma once
 
 #ifndef _WINDOWS_
-#ifndef __HWND__
-#define __HWND__
-struct HWND__ { int unused; };
-typedef HWND__ *HWND;
-#endif //__HWND__
+typedef struct HWND__ *HWND;
 #endif // _WINDOWS_
 
 #define ATTN_STATIC     0.0f

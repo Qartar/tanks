@@ -31,8 +31,8 @@ int cRender::Init ()
 
     for (int i = 0; i < 360 ; i++)
     {
-        sintbl[i] = sin(DEG2RAD(i));
-        costbl[i] = cos(DEG2RAD(i));
+        sintbl[i] = sin(deg2rad<float>(i));
+        costbl[i] = cos(deg2rad<float>(i));
     }
 
     return ERROR_NONE;

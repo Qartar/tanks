@@ -42,9 +42,6 @@ Date    :   10/16/2004
 #define strnicmp    _strnicmp
 #define stricmp     _stricmp
 
-#define DEG2RAD(a)  deg2rad(a)
-#define RAD2DEG(a)  rad2deg(a)
-
 class vObject
 {
 public:
