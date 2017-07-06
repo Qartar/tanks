@@ -12,8 +12,11 @@ Date    :   10/19/2004
 
 #pragma once
 
-#define MAX_FONTS   16
-#define NUM_CHARS   256
+#ifndef _WINDOWS_
+typedef struct HFONT__* HFONT;
+#endif // _WINDOWS_
+
+namespace render {
 
 /*
 ===========================================================
@@ -25,33 +28,32 @@ Purpose :   OpenGL Font Encapsulation
 ===========================================================
 */
 
-typedef int rfont_t;
-class cFont
+class font
 {
 public:
-    cFont () {}
-    ~cFont () {}
+    font(char const* name, int size);
+    ~font();
 
-    int     Init (char *szName, int nSize, unsigned int bitFlags);
-    int     Shutdown ();
-
-    bool    Compare (char *szName, int nSize, unsigned int bitFlags);
-    HFONT   Activate ();
-
-    void    Draw (char *szString, vec2 vPos, vec4 vColor);
-
-    bool    is_inuse () { return (m_hFont != NULL); }
+    bool compare(char const* name, int size) const;
+    void draw(char const* string, vec2 position, vec4 color) const;
+    vec2 size(char const* string) const;
 
 private:
-    HFONT       m_hFont;
-    unsigned    m_listBase;
+    constexpr static int kNumChars = 256;
 
-    byte        m_width[NUM_CHARS];
+    std::string _name;
+    int _size;
 
-    char        m_szName[64];
-    int         m_nSize;
-    unsigned int    m_bitFlags;
+    HFONT _handle;
+    unsigned int _list_base;
+
+    byte _char_width[kNumChars];
+
+    static HFONT _system_font;
+    static HFONT _active_font;
 };
+
+} // namespace render
 
 /*
 ===========================================================
@@ -81,9 +83,7 @@ public:
 
     // Font Interface (r_font.cpp)
 
-    rfont_t AddFont (char *szName, int nSize, unsigned int bitFlags);
-    int     RemoveFont (rfont_t hFont);
-    rfont_t UseFont (rfont_t hFont);
+    render::font const* load_font(char const* szName, int nSize);
 
     //  Image Interface (r_image.cpp)
     rimage_t    LoadImage( const char *szFilename );
@@ -91,7 +91,9 @@ public:
 
     // Drawing Functions (r_draw.cpp)
 
-    void    DrawString (char *szString, vec2 vPos, vec4 vColor);
+    void draw_string(char const* string, vec2 position, vec4 color);
+    vec2 string_size(char const* string) const;
+
     void    DrawLine (vec2 vOrg, vec2 vEnd, vec4 vColorO, vec4 vColorE);
     void    DrawBox (vec2 vSize, vec2 vPos, float flAngle, vec4 vColor);
     void    DrawParticles (float time, render::particle const* particles, std::size_t num_particles);
@@ -102,11 +104,7 @@ private:
 
     // More font stuff (r_font.cpp)
 
-    void    m_InitFonts ();
-    void    m_ClearFonts ();
-    HFONT   m_sysFont;
-    cFont   m_Fonts[MAX_FONTS];
-    rfont_t m_activeFont;
+    std::vector<std::unique_ptr<render::font>> _fonts;
 
     // Internal stuff
 

@@ -920,8 +920,8 @@ void cGame::m_DrawScore ()
 
     if ( bClientSay )
     {
-        g_Render->DrawString( "say:", vec2(nWidth/4,nHeight-16), menu_colors[7] );
-        g_Render->DrawString( m_clientsay, vec2(nWidth/4+32,nHeight-16), menu_colors[7] );
+        g_Render->draw_string("say:", vec2(nWidth/4,nHeight-16), menu_colors[7]);
+        g_Render->draw_string(m_clientsay, vec2(nWidth/4+32,nHeight-16), menu_colors[7]);
     }
 
     if ( m_bMenuActive )
@@ -942,10 +942,10 @@ void cGame::m_DrawScore ()
         int num = gameClients[cls.number].upgrades;
 
         if ( num > 1 )
-            g_Render->DrawString( va( "you have %i upgrades waiting...", num ), vec2(8,12), menu_colors[7] );
+            g_Render->draw_string(va( "you have %i upgrades waiting...", num ), vec2(8,12), menu_colors[7]);
         else
-            g_Render->DrawString( "you have 1 upgrade waiting...", vec2(8,12), menu_colors[7] );
-        g_Render->DrawString( "for help with upgrades press F9", vec2(8,24), menu_colors[7] );
+            g_Render->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu_colors[7]);
+        g_Render->draw_string("for help with upgrades press F9", vec2(8,24), menu_colors[7]);
     }
 
     g_Render->DrawBox( vec2(96,8+12*count), vec2(nWidth-32-22,32+4+6*count), 0, menu_colors[4] );
@@ -989,8 +989,8 @@ void cGame::m_DrawScore ()
         g_Render->DrawBox( vec2(7,7), vec2(nWidth-96, 32+11+12*n), 0,
             vec4( m_Players[ sort[ i ] ]->_color.r, m_Players[ sort[ i ] ]->_color.g, m_Players[ sort[ i ] ]->_color.b, 1 ) );
 
-        g_Render->DrawString( svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7] );
-        g_Render->DrawString( va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7] );
+        g_Render->draw_string(svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7]);
+        g_Render->draw_string(va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7]);
 
         n++;
     }
@@ -999,7 +999,7 @@ void cGame::m_DrawScore ()
     {
         int     nTime = ceil((flRestartTime - m_flTime)/1000.0f);
 
-        g_Render->DrawString( va("Restart in... %i", nTime), vec2(nWidth/2-48,16+13), menu_colors[7] );
+        g_Render->draw_string(va("Restart in... %i", nTime), vec2(nWidth/2-48,16+13), menu_colors[7]);
     }
 }
 
@@ -1236,7 +1236,7 @@ void cGame::m_DrawMessages ()
         {
             alpha = (m_Messages[i].time+12000 > time ? 1.0f : (m_Messages[i].time+15000 - time)/3000.0f );
 
-            g_Render->DrawString( m_Messages[i].string, vec2(8,ypos), vec4(1,1,1,alpha) );
+            g_Render->draw_string(m_Messages[i].string, vec2(8,ypos), vec4(1,1,1,alpha));
 
             ypos -= 12;
         }

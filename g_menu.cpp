@@ -208,7 +208,7 @@ void cOptionsMenu::Draw (vec2 vCursorPos)
 
     g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[4] );
     g_Render->DrawBox( vec2(m_vSize.x-2,m_vSize.y-2), m_vPos, 0, menu_colors[5] );
-    g_Render->DrawString( m_szTitle, vec2(m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH,m_vPos.y - m_vSize.y / 2 + 12), menu_colors[7] );
+    g_Render->draw_string(m_szTitle, vec2(m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH,m_vPos.y - m_vSize.y / 2 + 12), menu_colors[7]);
 
     for (i=0 ; i<MAX_BUTTONS ; i++)
         if (m_Buttons[i])

@@ -21,9 +21,15 @@ Purpose :   draws a string to the screen
 ===========================================================
 */
 
-void cRender::DrawString (char *szString, vec2 vPos, vec4 vColor)
+void cRender::draw_string(char const* string, vec2 position, vec4 color)
 {
-    m_Fonts[m_activeFont].Draw( szString, vPos, vColor );
+    _fonts[0]->draw(string, position, color);
+}
+
+//------------------------------------------------------------------------------
+vec2 system::string_size(char const* string) const
+{
+    return _fonts[0]->size(string);
 }
 
 /*

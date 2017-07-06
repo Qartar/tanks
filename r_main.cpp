@@ -27,7 +27,7 @@ int cRender::Init ()
 {
     SetViewOrigin( vec2(0,0) );
 
-    m_InitFonts( );
+    _fonts.push_back(std::make_unique<render::font>("Tahoma", 12));
 
     for (int i = 0; i < 360 ; i++)
     {
@@ -50,7 +50,7 @@ Purpose :   Shuts down object before removal
 
 int cRender::Shutdown ()
 {
-    m_ClearFonts( );
+    _fonts.clear();
 
     return ERROR_NONE;
 }

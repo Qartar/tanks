@@ -16,47 +16,6 @@ Date    :   10/19/2004
 /*
 ===========================================================
 
-Name    :   cRender::m_InitFonts
-
-Purpose :   Creates default font
-
-===========================================================
-*/
-
-void cRender::m_InitFonts ()
-{
-    memset( &m_Fonts, 0, sizeof( m_Fonts ) );
-
-    m_Fonts[0].Init( "Tahoma", 12, 0 );
-
-    m_sysFont = m_Fonts[0].Activate( );
-
-    m_activeFont = 0;
-}
-
-/*
-===========================================================
-
-Name    :   cRender::m_ClearFonts
-
-Purpose :   Deactivates all the fonts and restores system font
-
-===========================================================
-*/
-
-void cRender::m_ClearFonts ()
-{
-    int         i;
-
-    SelectObject( g_Application->get_glWnd()->get_hDC(), m_sysFont );
-
-    for ( i=0 ; i<MAX_FONTS ; i++ )
-        m_Fonts[i].Shutdown ();
-}
-
-/*
-===========================================================
-
 Name    :   cRender::AddFont
 
 Purpose :   Adds a font to m_Fonts
@@ -64,58 +23,21 @@ Purpose :   Adds a font to m_Fonts
 ===========================================================
 */
 
-rfont_t cRender::AddFont (char *szName, int nSize, unsigned int bitFlags)
+render::font const* cRender::load_font(char const* name, int size)
 {
-    int         i;
-
-    for ( i=0 ; i<MAX_FONTS ; i++ )
-        if ( m_Fonts[i].Compare( szName, nSize, bitFlags ) )
-            return i;
-
-    for ( i=0 ; i<MAX_FONTS ; i++ )
-        if ( ! m_Fonts[i].is_inuse() )
-            m_Fonts[i].Init( szName, nSize, bitFlags );
-
-    return NULL;
+    for (auto const& f : _fonts) {
+        if (f->compare(name, size)) {
+            return f.get();
+        }
+    }
+    _fonts.push_back(std::make_unique<render::font>(name, size));
+    return _fonts.back().get();
 }
 
-/*
-===========================================================
+namespace render {
 
-Name    :   cRender::RemoveFont
-
-Purpose :   removes a font from m_Fonts
-
-===========================================================
-*/
-
-int cRender::RemoveFont (rfont_t hFont)
-{
-    SelectObject( g_Application->get_glWnd()->get_hDC(), m_sysFont );
-
-    return m_Fonts[hFont].Shutdown( );
-}
-
-/*
-===========================================================
-
-Name    :   cRender::UseFont
-
-Purpose :   makes a font active for rendering
-
-===========================================================
-*/
-
-rfont_t cRender::UseFont (rfont_t hFont)
-{
-    rfont_t oldFont = m_activeFont;
-
-    m_Fonts[hFont].Activate( );
-
-    m_activeFont = hFont;
-
-    return oldFont;
-}
+HFONT font::_system_font = NULL;
+HFONT font::_active_font = NULL;
 
 /*
 ===========================================================
@@ -127,64 +49,55 @@ Purpose :   Initializes a new usable font
 ===========================================================
 */
 
-int cFont::Init (char *szName, int nSize, unsigned int bitFlags)
+font::font(char const* name, int size)
+    : _name(name)
+    , _size(size)
+    , _handle(NULL)
+    , _list_base(0)
+    , _char_width{0}
 {
-    HFONT       oldFont;
-    GLYPHMETRICS    gm;
-    MAT2            m;
-
-    // copy member data
-
-    strncpy( m_szName, szName, 64 );
-    m_nSize = nSize;
-    m_bitFlags = bitFlags;
+    GLYPHMETRICS gm;
+    MAT2 m;
 
     // allocate lists
-
-    m_listBase = glGenLists( NUM_CHARS );
+    _list_base = glGenLists(kNumChars);
 
     // create font
-
-    m_hFont = CreateFont(
-        nSize,
-        0,
-        0,
-        0,
-        FW_NORMAL,
-        FALSE,
-        FALSE,
-        FALSE,
-        ANSI_CHARSET,
-        OUT_TT_PRECIS,
-        CLIP_DEFAULT_PRECIS,
-        ANTIALIASED_QUALITY,
-        FF_DONTCARE|DEFAULT_PITCH,
-        m_szName );
+    _handle = CreateFontA(
+        _size,                      // cHeight
+        0,                          // cWidth
+        0,                          // cEscapement
+        0,                          // cOrientation
+        FW_NORMAL,                  // cWeight
+        FALSE,                      // bItalic
+        FALSE,                      // bUnderline
+        FALSE,                      // bStrikeOut
+        ANSI_CHARSET,               // iCharSet
+        OUT_TT_PRECIS,              // iOutPrecision
+        CLIP_DEFAULT_PRECIS,        // iClipPrecision
+        ANTIALIASED_QUALITY,        // iQuality
+        FF_DONTCARE|DEFAULT_PITCH,  // iPitchAndFamily
+        _name.c_str()               // pszFaceName
+    );
 
     // set our new font to the system
-
-    oldFont = (HFONT )SelectObject( g_Application->get_glWnd()->get_hDC(), m_hFont );
+    HFONT prev_font = (HFONT )SelectObject(g_Application->get_glWnd()->get_hDC(), _handle);
 
     // generate font bitmaps with selected HFONT
-
     memset( &m, 0, sizeof(m) );
     m.eM11.value = 1;
     m.eM12.value = 0;
     m.eM21.value = 0;
     m.eM22.value = 1;
 
-    wglUseFontBitmaps( g_Application->get_glWnd()->get_hDC(), 0, NUM_CHARS-1, m_listBase );
-    for ( int i=0 ; i<NUM_CHARS ; i++ )
-    {
-        GetGlyphOutline( g_Application->get_glWnd()->get_hDC(), i, GGO_METRICS, &gm, 0, NULL, &m );
-        m_width[i] = gm.gmCellIncX;
+    wglUseFontBitmapsA(g_Application->get_glWnd()->get_hDC(), 0, kNumChars-1, _list_base);
+    for (int ii = 0; ii < kNumChars; ++ii) {
+        GetGlyphOutlineA(g_Application->get_glWnd()->get_hDC(), ii, GGO_METRICS, &gm, 0, NULL, &m);
+        _char_width[ii] = gm.gmCellIncX;
     }
 
     // restore previous font
-
-    SelectObject( g_Application->get_glWnd()->get_hDC(), oldFont );
-
-    return ERROR_NONE;
+    SelectObject(g_Application->get_glWnd()->get_hDC(), prev_font);
 }
 
 /*
@@ -197,23 +110,26 @@ Purpose :   Deletes font object
 ===========================================================
 */
 
-int cFont::Shutdown ()
+font::~font()
 {
-    if ( m_hFont )
-    {
-    // delete from opengl
+    // restore system font if this is the active font
+    if (_active_font == _handle) {
+        glListBase(0);
+        SelectObject(g_Application->get_glWnd()->get_hDC(), _system_font);
 
-        glDeleteLists( m_listBase, NUM_CHARS );
-
-    // delete font from gdi, assume that it has been already removed from the DC
-
-        DeleteObject( m_hFont );
-        m_hFont = NULL;
+        _active_font = _system_font;
+        _system_font = NULL;
     }
 
-    memset( m_szName, 0, 64 );
+    // delete from opengl
+    if (_list_base) {
+        glDeleteLists(_list_base, kNumChars);
+    }
 
-    return ERROR_NONE;
+    // delete font from gdi
+    if (_handle) {
+        DeleteObject(_handle);
+    }
 }
 
 /*
@@ -226,30 +142,10 @@ Purpose :   equality comparison
 ===========================================================
 */
 
-bool cFont::Compare (char *szName, int nSize, unsigned int bitFlags)
+bool font::compare(char const* name, int size) const
 {
-    if (( strcmp( szName, m_szName ) == 0 )
-        && (nSize == m_nSize)
-        && (bitFlags == m_bitFlags) )
-        return true;
-    return false;
-}
-
-/*
-===========================================================
-
-Name    :   cFont::Activate
-
-Purpose :   Makes font active for drawing
-
-===========================================================
-*/
-
-HFONT cFont::Activate ()
-{
-    glListBase( m_listBase );
-
-    return (HFONT )SelectObject( g_Application->get_glWnd()->get_hDC(), m_hFont );
+    return _name == name
+        && _size == size;
 }
 
 /*
@@ -262,53 +158,86 @@ Purpose :   draws a string
 ===========================================================
 */
 
-void cFont::Draw (char *szString, vec2 vPos, vec4 vColor)
+void font::draw(char const* string, vec2 position, vec4 color) const
 {
-    char    substr[MAX_STRING];
-    char    *cursor, *next;
+    // activate font if it isn't already
+    if (_active_font != _handle) {
+        HFONT prev_font = (HFONT )SelectObject(g_Application->get_glWnd()->get_hDC(), _handle);
 
-    int     xoffs = 0;
+        // keep track of the system font so it can be restored later
+        if (_system_font == NULL) {
+            _system_font = prev_font;
+        }
 
-    int     r,g,b,a;
+        glListBase(_list_base);
+        _active_font = _handle;
+    }
 
-    r = vColor.r * 255;
-    g = vColor.g * 255;
-    b = vColor.b * 255;
-    a = vColor.a * 255;
+    int xoffs = 0;
 
-    cursor = szString;
-    while ( *cursor )
-    {
-        next = strstr( cursor+1, "\\c" );
-        if ( !next )
+    int r = color.r * 255;
+    int g = color.g * 255;
+    int b = color.b * 255;
+    int a = color.a * 255;
+
+    char const* cursor = string;
+
+    while (*cursor) {
+        char const* next = strstr(cursor+1, "\\c");
+        if (!next) {
             next = cursor + strlen(cursor);
+        }
 
-        if ( strnicmp( cursor, "\\c", 2 ) == 0 )
-        {
+        if (strnicmp(cursor, "\\c", 2) == 0) {
             cursor += 2;    // skip past marker
-            if ( strnicmp( cursor, "x", 1 ) == 0 )
-            {
-                r = vColor.r * 255;
-                g = vColor.g * 255;
-                b = vColor.b * 255;
+            if (strnicmp(cursor, "x", 1) == 0) {
+                r = color.r * 255;
+                g = color.g * 255;
+                b = color.b * 255;
                 cursor++;
-            }
-            else
-            {
-                sscanf( cursor, "%02x%02x%02x", &r, &g, &b );
+            } else {
+                sscanf(cursor, "%02x%02x%02x", &r, &g, &b);
                 cursor += 6;    // skip past color
             }
         }
-    
-        strncpy( substr, cursor, next - cursor );
-        substr[next - cursor] = 0;
 
-        glColor4ub( r, g, b, a );
-        glRasterPos2f( vPos.x + xoffs, vPos.y );
-        glCallLists( next - cursor, GL_UNSIGNED_BYTE, substr );
+        glColor4ub(r, g, b, a);
+        glRasterPos2f(position.x + xoffs, position.y);
+        glCallLists(next - cursor, GL_UNSIGNED_BYTE, cursor);
 
-        for ( int i=0 ; i<(next-cursor) ; i++ )
-            xoffs += m_width[ substr[i] ];
-        cursor = next;
+        while (cursor < next) {
+            xoffs += _char_width[*cursor++];
+        }
     }
 }
+
+//------------------------------------------------------------------------------
+vec2 font::size(char const* string) const
+{
+    vec2 size(0, _size);
+    char const* cursor = string;
+
+    while (*cursor) {
+        char const* next = strstr(cursor+1, "\\c");
+        if (!next) {
+            next = cursor + strlen(cursor);
+        }
+
+        if (strnicmp(cursor, "\\c", 2) == 0) {
+            cursor += 2;    // skip past marker
+            if (strnicmp(cursor, "x", 1) == 0) {
+                cursor++;
+            } else {
+                cursor += 6;    // skip past color
+            }
+        }
+
+        while (cursor < next) {
+            size.x += _char_width[*cursor++];
+        }
+    }
+
+    return size;
+}
+
+} // namespace render
