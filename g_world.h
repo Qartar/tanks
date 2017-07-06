@@ -92,6 +92,9 @@ public:
 protected:
     friend world;
 
+    //! Game world which contains this object
+    world* _world;
+
     object* _owner;
 
     std::size_t _spawn_id;
@@ -182,7 +185,6 @@ protected:
 //------------------------------------------------------------------------------
 class world
 {
-    friend tank;
     friend cGame;
 
 public:
@@ -210,6 +212,9 @@ public:
     void add_sound(char const* name);
     void add_smoke_effect(vec2 position, vec2 velocity, int count);
     void add_effect(vec2 position, effect_type type, float strength = 1);
+
+    vec2 mins() const { return _mins; }
+    vec2 maxs() const { return _maxs; }
 
 private:
     //! Active objects in the world
@@ -255,10 +260,9 @@ T* world::spawn(Args&& ...args)
                   "'spawn': 'T' must be derived from 'game::object'");
 
     _pending.push_back(std::make_unique<T>(std::move(args)...));
+    _pending.back()->_world = this;
     _pending.back()->_spawn_id = ++_spawn_id;
     return static_cast<T*>(_pending.back().get());
 }
 
 } // namespace game
-
-extern game::world *g_World;

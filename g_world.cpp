@@ -18,8 +18,6 @@ Date    :   10/21/2004
 
 #include <algorithm>
 
-game::world *g_World;
-
 extern cvar_t   *g_arenaWidth;
 extern cvar_t   *g_arenaHeight;
 
@@ -40,7 +38,6 @@ void world::init()
     char    *command;
 
     clear_particles();
-    g_World = this;
 
     if ( (command = strstr( g_Application->InitString(), "particles=" )) ) {
         _use_particles = ( atoi(command+10) > 0 );

@@ -18,7 +18,8 @@ physics::circle_shape object::_default_shape(0.5f);
 
 //------------------------------------------------------------------------------
 object::object(object_type type, object* owner)
-    : _model(NULL)
+    : _world(nullptr)
+    , _model(nullptr)
     , _type(type)
     , _owner(owner)
     , _rigid_body(&_default_shape, &_default_material, _default_mass)

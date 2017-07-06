@@ -99,7 +99,6 @@ Purpose :   Stores higher-level information about the current game
 */
 
 class cMenu;
-class cWorld;
 class cRender;
 
 //

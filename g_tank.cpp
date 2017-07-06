@@ -155,17 +155,13 @@ void tank::think()
     if ( (_damage >= 1.0f) && g_Game->m_bMultiserver && (_dead_time+RESTART_TIME+HACK_TIME <= g_Game->m_flTime) )
     {
         // respawn
-
-        int nWidth = g_World->_mins.x - g_World->_mins.x;
-        int nHeight = g_World->_maxs.y - g_World->_maxs.y;
-
-        nWidth -= SPAWN_BUFFER*2;
-        nHeight -= SPAWN_BUFFER*2;
+        vec2 spawn_buffer = vec2(1,1) * SPAWN_BUFFER;
+        vec2 spawn_size = _world->maxs() - _world->mins() - spawn_buffer * 2.0f;
+        vec2 spawn_pos = _world->mins() + vec2(frand(), frand()) * spawn_size + spawn_buffer;
 
         _dead_time = 0.0f;
 
-        set_position(vec2(g_World->_mins.x + nWidth*frand()+SPAWN_BUFFER,
-                          g_World->_mins.y + nHeight*frand()+SPAWN_BUFFER));
+        set_position(spawn_pos);
         set_rotation(frand()*2.0f*M_PI);
         _turret_rotation = get_rotation();
 
@@ -200,8 +196,8 @@ void tank::think()
         // extra explosion
         if (_dead_time && (g_Game->m_flTime - _dead_time > 650) && (g_Game->m_flTime - _dead_time < 650+HACK_TIME/2))
         {
-            g_World->add_sound( sound_index[TANK_EXPLODE].name );
-            g_World->add_effect( get_position(), effect_type::explosion );
+            _world->add_sound( sound_index[TANK_EXPLODE].name );
+            _world->add_effect( get_position(), effect_type::explosion );
             _dead_time -= HACK_TIME;    // dont do it again
         }
     }
@@ -228,7 +224,7 @@ void tank::think()
         flPower = 1.5 - (g_Game->m_flTime - _fire_time)/1000.0f;
         flPower = clamp(flPower, 0.5f, 1.5f);
 
-        g_World->add_smoke_effect(
+        _world->add_smoke_effect(
             get_position() + rot(vOrg,_turret_rotation),
             rot(vOrg,_turret_rotation) * flPower * flPower * flPower * 2,
             flPower * flPower * 4 );
@@ -240,19 +236,19 @@ void tank::think()
         {
             vec2    vOrg(21,0);
 
-            g_World->add_smoke_effect(
+            _world->add_smoke_effect(
                 get_position() + rot(vOrg,_turret_rotation),
                 rot(vOrg,_turret_rotation) * 16,
                 64 );
 
             _fire_time = g_Game->m_flTime;
 
-            projectile* bullet = g_World->spawn<projectile>(this, _client->damage_mod);
+            projectile* bullet = _world->spawn<projectile>(this, _client->damage_mod);
 
             bullet->set_position(get_position() + rot(vOrg,_turret_rotation));
             bullet->set_linear_velocity(rot(vec2(1,0),_turret_rotation) * 20 * 96);
 
-            g_World->add_sound( sound_index[TANK_FIRE].name );
+            _world->add_sound( sound_index[TANK_FIRE].name );
         }
     }
 
@@ -405,10 +401,10 @@ projectile::projectile(tank* owner, float damage)
 //------------------------------------------------------------------------------
 void projectile::touch(object *other, float impulse)
 {
-    g_World->add_sound(sound_index[BULLET_EXPLODE].name);
-    g_World->add_effect(get_position(), effect_type::explosion);
+    _world->add_sound(sound_index[BULLET_EXPLODE].name);
+    _world->add_effect(get_position(), effect_type::explosion);
 
-    g_World->remove(this);
+    _world->remove(this);
 
     if (!other)
         return;
