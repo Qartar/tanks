@@ -68,8 +68,8 @@ public:
 
     physics::rigid_body const& rigid_body() const { return _rigid_body; }
 
-    void set_position(vec2 position) { _rigid_body.set_position(position); }
-    void set_rotation(float rotation) { _rigid_body.set_rotation(rotation); }
+    void set_position(vec2 position, bool teleport = false);
+    void set_rotation(float rotation, bool teleport = false);
     void set_linear_velocity(vec2 linear_velocity) { _rigid_body.set_linear_velocity(linear_velocity); }
     void set_angular_velocity(float angular_velocity) { _rigid_body.set_angular_velocity(angular_velocity); }
 
@@ -147,6 +147,8 @@ public:
     //! Get frame-interpolated turret rotation
     float get_turret_rotation(float lerp) const;
 
+    void set_turret_rotation(float rotation, bool teleport = false);
+    void set_turret_velocity(float velocity) { _turret_velocity = velocity; }
     float get_turret_rotation() const { return _turret_rotation; }
     float get_turret_velocity() const { return _turret_velocity; }
 

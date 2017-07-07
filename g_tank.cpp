@@ -245,7 +245,7 @@ void tank::think()
 
             projectile* bullet = _world->spawn<projectile>(this, _client->damage_mod);
 
-            bullet->set_position(get_position() + rot(vOrg,_turret_rotation));
+            bullet->set_position(get_position() + rot(vOrg,_turret_rotation), true);
             bullet->set_linear_velocity(rot(vec2(1,0),_turret_rotation) * 20 * 96);
 
             _world->add_sound( sound_index[TANK_FIRE].name );
@@ -259,6 +259,15 @@ void tank::think()
 float tank::get_turret_rotation(float lerp) const
 {
     return _old_turret_rotation + (_turret_rotation - _old_turret_rotation) * lerp;
+}
+
+//------------------------------------------------------------------------------
+void tank::set_turret_rotation(float rotation, bool teleport/* = false*/)
+{
+    _turret_rotation = rotation;
+    if (teleport) {
+        _old_turret_rotation = rotation;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -465,8 +474,8 @@ void projectile::draw() const
     float   flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
     vec2    p1, p2;
 
-    p1 = get_position( flLerp - 0.4f );
-    p2 = get_position( flLerp );
+    p1 = get_position( flLerp );
+    p2 = get_position( flLerp + 0.4f );
 
     g_Render->draw_line(p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0));
 }

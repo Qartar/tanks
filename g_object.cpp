@@ -55,4 +55,22 @@ float object::get_rotation(float lerp) const
     return _old_rotation + (get_rotation() - _old_rotation) * lerp;
 }
 
+//------------------------------------------------------------------------------
+void object::set_position(vec2 position, bool teleport/* = false*/)
+{
+    _rigid_body.set_position(position);
+    if (teleport) {
+        _old_position = position;
+    }
+}
+
+//------------------------------------------------------------------------------
+void object::set_rotation(float rotation, bool teleport/* = false*/)
+{
+    _rigid_body.set_rotation(rotation);
+    if (teleport) {
+        _old_rotation =  rotation;
+    }
+}
+
 } // namespace game

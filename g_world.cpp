@@ -141,11 +141,6 @@ Purpose :   Runs the world one frame, runs think funcs and movement
 
 void world::run_frame()
 {
-    for (auto& obj : _pending) {
-        _objects.push_back(std::move(obj));
-    }
-    _pending.clear();
-
     for (auto& obj : _objects) {
         obj->think();
     }
@@ -160,6 +155,11 @@ void world::run_frame()
         }));
     }
     _removed.clear();
+
+    for (auto& obj : _pending) {
+        _objects.push_back(std::move(obj));
+    }
+    _pending.clear();
 }
 
 /*
