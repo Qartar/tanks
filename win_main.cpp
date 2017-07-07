@@ -124,11 +124,11 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
     // create sound class
     vSound::Create( );
 
-    // init game
-    m_Game.Init( szCmdLine );
-
     // init opengl
     m_glWnd.Init( m_hInstance, (WNDPROC )m_WndProc );
+
+    // init game
+    m_Game.Init( szCmdLine );
 
     return ERROR_NONE;
 }

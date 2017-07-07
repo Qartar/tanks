@@ -47,7 +47,10 @@ void FindServer (bool bConnect);
 
 cGame::cGame()
     : m_Players{0}
-{}
+{
+    g_Game = this;
+    pMain = this;
+}
 
 /*
 ===========================================================
@@ -61,9 +64,9 @@ Purpose :   Initialization
 
 int cGame::Init (char *cmdline)
 {
-    g_Game = this;
-    pMain = this;
     g_Render = g_Application->get_glWnd()->get_Render();
+
+    _menu_image = g_Render->load_image(MAKEINTRESOURCE(IDB_BITMAP1));
 
     g_upgrade_frac      = pVariable->Get( "g_upgradeFrac", "0.50", "float", CVAR_ARCHIVE|CVAR_SERVER, "upgrade fraction" );
     g_upgrade_penalty   = pVariable->Get( "g_upgradePenalty", "0.20", "float", CVAR_ARCHIVE|CVAR_SERVER, "upgrade penalty" );
@@ -123,8 +126,6 @@ int cGame::Init (char *cmdline)
 
     m_Menu.Init( );
     m_World.init( );
-
-    menuImage = -2;
 
     m_netchan.Init( );
 
@@ -376,11 +377,7 @@ int cGame::RunFrame (float flMSec)
 
         m_getCursorPos( );
 
-        if ( menuImage < -1 ) { //  -1 indicates a failed load, don't keep trying
-            menuImage = g_Render->LoadImage( MAKEINTRESOURCE(IDB_BITMAP1) );
-        }
-
-        g_Render->DrawImage( menuImage, vec2( 0, 0 ), vec2( 640, 480 ), vec4( 1, 1, 1, 1 ) );
+        g_Render->draw_image(_menu_image, vec2( 0, 0 ), vec2( 640, 480 ), vec4( 1, 1, 1, 1 ) );
 
         m_Menu.Draw( m_vCursorPos );
     }

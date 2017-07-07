@@ -4,111 +4,147 @@
 #include "local.h"
 #pragma hdrstop
 
-#include "resource.h"
-#include <malloc.h>
+#ifndef GL_VERSION_1_2
+#define GL_BGR                            0x80E0
+#endif // GL_VERSION_1_2
 
-#define MAX_IMAGES  256
-#define TEXNUM_IMAGES   1024
-
-typedef struct image_s {
-    int     target;
-    float   u, v;       //  maximum u v coords
-} image_t;
-
-image_t g_images[ MAX_IMAGES ];
-int     numImages   = 0;
-
-rimage_t cRender::LoadImage( const char *szFilename ) {
-    HANDLE  hImage;
-    BITMAP  bm;
-
-    byte *  buffer;
-    byte *  copyBuf;
-    int     w, h;
-    int     i, j;
-
-    if ( numImages == MAX_IMAGES ) {
-        return -1;
-    }
-
-    //  try loading from resources first
-    if ( (hImage = ::LoadImage( g_Application->get_hInstance( ), szFilename, IMAGE_BITMAP, 0, 0,
-        LR_CREATEDIBSECTION ) ) == NULL ) {
-        int err = GetLastError( );
-        //  try loading from filesystem
-        hImage = ::LoadImage( NULL, szFilename, IMAGE_BITMAP, 0, 0,
-            LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE );
-    }
-
-    if ( hImage == NULL ) {
-        return -1;
-    }
-
-    GetObject( hImage, sizeof(bm), &bm );
-
-    for ( w=2 ; w<bm.bmWidth; w<<=1 )
-        ;
-    for ( h=2 ; h<bm.bmHeight ; h<<=1 )
-        ;
-
-    buffer = (byte *)_malloca( w * h * 4 );
-    copyBuf = (byte *)_malloca( bm.bmWidthBytes * bm.bmHeight );
-    
-    GetBitmapBits( (HBITMAP )hImage, bm.bmWidthBytes * bm.bmHeight, copyBuf );
-
-    memset( buffer, 0, w * h * 4 );
-
-    for ( j=0 ; j<bm.bmHeight ; j++ ) {
-        for ( i=0 ; i<bm.bmWidth ; i++ ) {
-            buffer[ 4*(j*w+i)+0 ] = copyBuf[ 3*(j*bm.bmWidth+i)+2 ];
-            buffer[ 4*(j*w+i)+1 ] = copyBuf[ 3*(j*bm.bmWidth+i)+1 ];
-            buffer[ 4*(j*w+i)+2 ] = copyBuf[ 3*(j*bm.bmWidth+i)+0 ];
-            buffer[ 4*(j*w+i)+3 ] = ( buffer[ 4*(j*w+i)+0 ] || buffer[ 4*(j*w+i)+1 ] || buffer[ 4*(j*w+i)+2 ] ) ? 255 : 0;
-        }
-    }
-
-    g_images[ numImages ].target = numImages + TEXNUM_IMAGES;
-    g_images[ numImages ].u = (float )bm.bmWidth / (float )w;
-    g_images[ numImages ].v = (float )bm.bmHeight / (float )h;
-
-    glBindTexture( GL_TEXTURE_2D, g_images[ numImages ].target );
-    glTexImage2D( GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-    DeleteObject( hImage );
-
-    return numImages++;
+//------------------------------------------------------------------------------
+render::image const* cRender::load_image(const char *name)
+{
+    _images.push_back(std::make_unique<render::image>(name));
+    return _images.back().get();
 }
 
-void cRender::DrawImage( rimage_t img, vec2 org, vec2 sz, vec4 color ) {
-    if ( img < 0 || img >= MAX_IMAGES ) {
+//------------------------------------------------------------------------------
+void cRender::draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color)
+{
+    if (img == nullptr) {
         return;
     }
 
-    glMatrixMode( GL_TEXTURE );
-    glLoadIdentity( );
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, img->texnum());
 
-    glScalef( g_images[ img ].u, g_images[ img ].v, 1.0f );
+    glColor4fv(color.v);
 
-    glEnable( GL_TEXTURE_2D );
-    glBindTexture( GL_TEXTURE_2D, g_images[ img ].target );
+    glBegin(GL_TRIANGLE_STRIP);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex2f(org.x, org.y);
 
-    glColor4f( color.r, color.g, color.b, color.a );
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex2f(org.x + sz.x, org.y);
 
-    glBegin( GL_TRIANGLE_STRIP );
-        glTexCoord2f( 0.0f, 0.0f );
-        glVertex2f( org.x, org.y );
+        glTexCoord2f(0.0f, 1.0f );
+        glVertex2f(org.x, org.y + sz.y);
 
-        glTexCoord2f( 1.0f, 0.0f );
-        glVertex2f( org.x + sz.x, org.y );
+        glTexCoord2f(1.0f, 1.0f );
+        glVertex2f(org.x + sz.x, org.y + sz.y);
+    glEnd();
 
-        glTexCoord2f( 0.0f, 1.0f );
-        glVertex2f( org.x, org.y + sz.y );
-
-        glTexCoord2f( 1.0f, 1.0f );
-        glVertex2f( org.x + sz.x, org.y + sz.y );
-    glEnd( );
-
-    glDisable( GL_TEXTURE_2D );
+    glDisable(GL_TEXTURE_2D);
 }
+
+namespace render {
+
+//------------------------------------------------------------------------------
+image::image(char const* name)
+    : _texnum(0)
+    , _width(0)
+    , _height(0)
+{
+    HBITMAP bitmap = NULL;
+
+    if ((bitmap = load_resource(name))) {
+        _name = va("<resource#%d>", (ULONG_PTR)name);
+    } else if ((bitmap = load_file(name))) {
+        _name = name;
+    } else {
+        _name = "<default>";
+    }
+
+    upload(bitmap);
+
+    if (bitmap) {
+        DeleteObject(bitmap);
+    }
+}
+
+//------------------------------------------------------------------------------
+image::~image()
+{
+    if (_texnum) {
+        glDeleteTextures(1, &_texnum);
+    }
+}
+
+//------------------------------------------------------------------------------
+HBITMAP image::load_resource(char const* name) const
+{
+    UINT flags = LR_CREATEDIBSECTION;
+
+    return (HBITMAP )LoadImageA(
+        g_Application->get_hInstance(), // hinst
+        name,                           // name
+        IMAGE_BITMAP,                   // type
+        0,                              // cx
+        0,                              // cy
+        flags                           // fuLoad
+    );
+}
+
+//------------------------------------------------------------------------------
+HBITMAP image::load_file(char const* name) const
+{
+    UINT flags = LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE;
+
+    return (HBITMAP )LoadImageA(
+        NULL,                           // hinst
+        name,                           // name
+        IMAGE_BITMAP,                   // type
+        0,                              // cx
+        0,                              // cy
+        flags                           // fuLoad
+    );
+}
+
+//------------------------------------------------------------------------------
+bool image::upload(HBITMAP bitmap)
+{
+    if (!bitmap) {
+        return false;
+    }
+
+    BITMAP bm;
+    
+    if (!GetObjectA(bitmap, sizeof(bm), &bm)) {
+        return false;
+    }
+
+    std::vector<uint8_t> buffer(bm.bmWidthBytes * bm.bmHeight);
+
+    if (!GetBitmapBits(bitmap, buffer.size(), buffer.data())) {
+        return false;
+    }
+
+    glGenTextures(1, &_texnum);
+    glBindTexture(GL_TEXTURE_2D, _texnum);
+
+    glTexImage2D(
+        GL_TEXTURE_2D,      // target
+        0,                  // level
+        GL_RGB,             // internalformat
+        bm.bmWidth,         // width
+        bm.bmHeight,        // height
+        0,                  // border
+        GL_BGR,             // format
+        GL_UNSIGNED_BYTE,   // type
+        buffer.data()       // pixels
+    );
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    return true;
+}
+
+} // namespace render

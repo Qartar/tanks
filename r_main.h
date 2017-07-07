@@ -14,6 +14,7 @@ Date    :   10/19/2004
 
 #ifndef _WINDOWS_
 typedef struct HFONT__* HFONT;
+typedef struct HBITMAP__* HBITMAP;
 #endif // _WINDOWS_
 
 namespace render {
@@ -53,6 +54,31 @@ private:
     static HFONT _active_font;
 };
 
+//------------------------------------------------------------------------------
+class image
+{
+public:
+    image(char const* name);
+    ~image();
+
+    std::string const& name() const { return _name; }
+    unsigned int texnum() const { return _texnum; }
+    int width() const { return _width; }
+    int height() const { return _height; }
+
+protected:
+    std::string _name;
+    unsigned int _texnum;
+    int _width;
+    int _height;
+
+protected:
+    HBITMAP load_resource(char const* name) const;
+    HBITMAP load_file(char const* name) const;
+
+    bool upload(HBITMAP bitmap);
+};
+
 } // namespace render
 
 /*
@@ -64,8 +90,6 @@ Purpose :   Rendering controller object
 
 ===========================================================
 */
-
-typedef int rimage_t;
 
 class cRender
 {
@@ -86,8 +110,8 @@ public:
     render::font const* load_font(char const* szName, int nSize);
 
     //  Image Interface (r_image.cpp)
-    rimage_t    LoadImage( const char *szFilename );
-    void        DrawImage( rimage_t img, vec2 org, vec2 sz, vec4 color );
+    render::image const* load_image(const char *name);
+    void draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color);
 
     // Drawing Functions (r_draw.cpp)
 
@@ -105,6 +129,8 @@ private:
     // More font stuff (r_font.cpp)
 
     std::vector<std::unique_ptr<render::font>> _fonts;
+
+    std::vector<std::unique_ptr<render::image>> _images;
 
     // Internal stuff
 

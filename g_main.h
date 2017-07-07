@@ -12,6 +12,10 @@ Date    :   10/20/2004
 
 #pragma once
 
+namespace render {
+class image;
+} // namespace render
+
 #define FRAMETIME   0.05f
 #define FRAMEMSEC   50.0f
 
@@ -213,7 +217,7 @@ private:
     cMenu   m_Menu;
     game::world m_World;
 
-    int     menuImage;
+    render::image const* _menu_image;
 
     void    m_getCursorPos ();
     vec2    m_vCursorPos;
