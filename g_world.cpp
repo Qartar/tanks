@@ -359,17 +359,17 @@ void world::add_effect(vec2 position, effect_type type, float strength)
 
             // smoke
 
-            for (int ii = 0; ii < 128; ++ii) {
+            for (int ii = 0; ii < 96; ++ii) {
                 if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
                 d = frand()*12;
 
-                p->position = position + vec2(cos(r)*d,sin(r)*d);
+                p->position = position + vec2(cos(r),sin(r))*d;
 
                 r = frand()*M_PI*2.0f;
-                d = square(1.0f - frand()) * 128.0f;
+                d = sqrt(frand()) * 128.0f;
 
                 p->velocity = vec2(cos(r),sin(r)) * d;
 
@@ -384,26 +384,26 @@ void world::add_effect(vec2 position, effect_type type, float strength)
 
             // fire
 
-            for (int ii = 0; ii < 96; ++ii) {
+            for (int ii = 0; ii < 64; ++ii) {
                 if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
                 d = frand()*8;
 
-                p->position = position + vec2(cos(r)*d,sin(r)*d);
+                p->position = position + vec2(cos(r),sin(r))*d;
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*128;
+                d = sqrt(frand()) * 128.0f;
 
-                p->velocity = vec2(cos(r)*d,sin(r)*d);
+                p->velocity = vec2(cos(r),sin(r))*d;
 
                 p->color = vec4(1.0f,frand(),0.0f,0.1f);
                 p->color_velocity = vec4(0,0,0,-p->color.a/(0.5+frand()*frand()*2.5f));
                 p->size = 8.0 + frand()*16.0f;
                 p->size_velocity = 1.0f;
 
-                p->drag = 1.0f + frand() * 3.0f;
+                p->drag = 2.0f + frand() * 2.0f;
             }
 
             // debris
@@ -453,8 +453,8 @@ void world::add_smoke_effect(vec2 position, vec2 velocity, int count)
         p->position = position + vec2(cos(r)*d,sin(r)*d);
         p->velocity = velocity * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
 
-        p->size = 4.0f + frand()*8.0f;
-        p->size_velocity = 2.0;
+        p->size = 2.0f + frand()*4.0f;
+        p->size_velocity = 2.0 + frand()*2.0f;
 
         p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
         p->color_velocity = vec4(0,0,0,-p->color.a / (1+frand()*1.0f));
