@@ -13,6 +13,11 @@ Date    :   10/19/2004
 #include "local.h"
 #pragma hdrstop
 
+namespace render {
+
+HFONT font::_system_font = NULL;
+HFONT font::_active_font = NULL;
+
 /*
 ===========================================================
 
@@ -23,7 +28,7 @@ Purpose :   Adds a font to m_Fonts
 ===========================================================
 */
 
-render::font const* cRender::load_font(char const* name, int size)
+render::font const* system::load_font(char const* name, int size)
 {
     for (auto const& f : _fonts) {
         if (f->compare(name, size)) {
@@ -33,11 +38,6 @@ render::font const* cRender::load_font(char const* name, int size)
     _fonts.push_back(std::make_unique<render::font>(name, size));
     return _fonts.back().get();
 }
-
-namespace render {
-
-HFONT font::_system_font = NULL;
-HFONT font::_active_font = NULL;
 
 /*
 ===========================================================

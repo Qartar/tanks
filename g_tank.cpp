@@ -93,10 +93,10 @@ void tank::draw() const
 
     // status bars
 
-    g_Render->DrawBox( vec2(20,2), pos + vec2(0,24), 0, vec4(0.5,0.5,0.5,1) );
-    g_Render->DrawBox( vec2(flTime,2), pos + vec2(0,24), 0, vTime );
-    g_Render->DrawBox( vec2(20,2), pos + vec2(0,22), 0, vec4(0.5,0.5,0.5,1) );
-    g_Render->DrawBox( vec2(flHealth,2), pos + vec2(0,22), 0, vHealth );
+    g_Render->draw_box(vec2(20,2), pos + vec2(0,24), vec4(0.5,0.5,0.5,1));
+    g_Render->draw_box(vec2(flTime,2), pos + vec2(0,24), vTime);
+    g_Render->draw_box(vec2(20,2), pos + vec2(0,22), vec4(0.5,0.5,0.5,1));
+    g_Render->draw_box(vec2(flHealth,2), pos + vec2(0,22), vHealth);
 
     // actual body
 
@@ -468,7 +468,7 @@ void projectile::draw() const
     p1 = get_position( flLerp - 0.4f );
     p2 = get_position( flLerp );
 
-    g_Render->DrawLine( p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0) );
+    g_Render->draw_line(p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0));
 }
 
 } // namespace game

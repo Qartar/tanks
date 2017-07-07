@@ -17,6 +17,8 @@ typedef struct HFONT__* HFONT;
 typedef struct HBITMAP__* HBITMAP;
 #endif // _WINDOWS_
 
+class cOpenGLWnd;
+
 namespace render {
 
 /*
@@ -79,8 +81,6 @@ protected:
     bool upload(HBITMAP bitmap);
 };
 
-} // namespace render
-
 /*
 ===========================================================
 
@@ -91,19 +91,20 @@ Purpose :   Rendering controller object
 ===========================================================
 */
 
-class cRender
+class system
 {
 public:
-    cRender () {}
-    ~cRender () {}
+    system(cOpenGLWnd* window)
+        : _window(window)
+    {}
 
-    int     Init ();
-    int     Shutdown ();
+    int init();
+    int shutdown();
 
-    void    BeginFrame ();
-    void    EndFrame ();
+    void begin_frame();
+    void end_frame();
 
-    void    Resize () { m_setDefaultState( ) ; }
+    void resize() { _set_default_state(); }
 
     // Font Interface (r_font.cpp)
 
@@ -118,11 +119,14 @@ public:
     void draw_string(char const* string, vec2 position, vec4 color);
     vec2 string_size(char const* string) const;
 
-    void    DrawLine (vec2 vOrg, vec2 vEnd, vec4 vColorO, vec4 vColorE);
-    void    DrawBox (vec2 vSize, vec2 vPos, float flAngle, vec4 vColor);
-    void    DrawParticles (float time, render::particle const* particles, std::size_t num_particles);
+    void draw_line(vec2 start, vec2 end, vec4 start_color, vec4 end_color);
+    void draw_box(vec2 size, vec2 position, vec4 color);
+    void draw_particles(float time, render::particle const* particles, std::size_t num_particles);
 
-    void    SetViewOrigin (vec2 vPos) { m_viewOrigin = vPos ; m_setDefaultState( ) ; }
+    void set_view_origin(vec2 position) {
+        _view_origin = position;
+        _set_default_state();
+    }
 
 private:
 
@@ -134,12 +138,14 @@ private:
 
     // Internal stuff
 
-    void    m_setDefaultState ();
+    cOpenGLWnd* _window;
 
-    vec2    m_viewOrigin;
+    void _set_default_state();
 
-    bool    m_bATI;
+    vec2 _view_origin;
 
-    float   costbl[360];
-    float   sintbl[360];
+    float _costbl[360];
+    float _sintbl[360];
 };
+
+} // namespace render

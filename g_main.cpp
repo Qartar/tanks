@@ -33,7 +33,7 @@ extern cvar_t   *net_serverName;    //  server name
 // global object
 vMain   *pMain;
 cGame   *g_Game;
-cRender *g_Render;
+render::system* g_Render;
 
 index_s sound_index[256];
 
@@ -314,7 +314,7 @@ int cGame::RunFrame (float flMSec)
 
     ref = g_Application->get_time( );
 
-    g_Render->BeginFrame( );
+    g_Render->begin_frame();
 
     fbeg = g_Application->get_time( );
 
@@ -354,15 +354,13 @@ int cGame::RunFrame (float flMSec)
     } else if ( centerY > worldHeight - ( viewHeight / 2 ) ) {
         centerY = worldHeight - ( viewHeight / 2 );
     }
-    g_Render->SetViewOrigin( cVec2(
-        centerX - viewWidth / 2,
-        centerY - viewHeight / 2 ) );
+    g_Render->set_view_origin(vec2(centerX - viewWidth / 2, centerY - viewHeight / 2));
 
     // draw world
     if (m_bGameActive)
         m_World.draw( );
 
-    g_Render->SetViewOrigin( cVec2( 0, 0 ) );
+    g_Render->set_view_origin(vec2(0,0));
 
     rworld = g_Application->get_time( );
 
@@ -393,7 +391,7 @@ int cGame::RunFrame (float flMSec)
 
     rmenu = g_Application->get_time( );
 
-    g_Render->EndFrame( );
+    g_Render->end_frame();
 
     // update sound
 
@@ -945,8 +943,8 @@ void cGame::m_DrawScore ()
         g_Render->draw_string("for help with upgrades press F9", vec2(8,24), menu_colors[7]);
     }
 
-    g_Render->DrawBox( vec2(96,8+12*count), vec2(nWidth-32-22,32+4+6*count), 0, menu_colors[4] );
-    g_Render->DrawBox( vec2(96,8+12*count-2), vec2(nWidth-32-22,32+4+6*count), 0, menu_colors[5] );
+    g_Render->draw_box(vec2(96,8+12*count), vec2(nWidth-32-22,32+4+6*count), menu_colors[4]);
+    g_Render->draw_box(vec2(96,8+12*count-2), vec2(nWidth-32-22,32+4+6*count), menu_colors[5]);
 
     memset( sort, -1, sizeof(sort) );
     for ( i=0 ; i<MAX_PLAYERS ; i++ ) {
@@ -983,8 +981,8 @@ void cGame::m_DrawScore ()
         else if ( i >= 2 )
             break;
 
-        g_Render->DrawBox( vec2(7,7), vec2(nWidth-96, 32+11+12*n), 0,
-            vec4( m_Players[ sort[ i ] ]->_color.r, m_Players[ sort[ i ] ]->_color.g, m_Players[ sort[ i ] ]->_color.b, 1 ) );
+        g_Render->draw_box(vec2(7,7), vec2(nWidth-96, 32+11+12*n),
+            vec4(m_Players[sort[i]]->_color.r, m_Players[sort[i]]->_color.g, m_Players[sort[i]]->_color.b, 1));
 
         g_Render->draw_string(svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7]);
         g_Render->draw_string(va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7]);

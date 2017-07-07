@@ -85,8 +85,8 @@ void cBaseButton::Draw (vec2 vCursorPos)
     vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
     vTextPos.y = m_vPos.y + 4;                              // char_height / 2
 
-    g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[nColorOut] );
-    g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
+    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
+    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
     g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
 }
 
@@ -184,8 +184,8 @@ void cCondButton::Draw (vec2 vCursorPos)
     vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
     vTextPos.y = m_vPos.y + 4;                              // char_height / 2
 
-    g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[nColorOut] );
-    g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
+    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
+    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
     g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
 }
 
@@ -279,8 +279,8 @@ void cMenuButton::Draw (vec2 vCursorPos)
     vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
     vTextPos.y = m_vPos.y + 4;                              // char_height / 2
 
-    g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[nColorOut] );
-    g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
+    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
+    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
     g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
 }
 
@@ -354,8 +354,8 @@ void cTankButton::Draw (vec2 vCursorPos)
     vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
     vTextPos.y = m_vPos.y + m_vSize.y / 2 - 4;
 
-    g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[nColorOut] );
-    g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
+    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
+    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
     g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
 
     m_pTank->_model->draw(m_vPos, 0, m_pTank->_color);
@@ -492,12 +492,12 @@ void cClientButton::Draw (vec2 vCursorPos)
     vTextBoxText.x = m_vPos.x - m_vSize.x / 2 + 12;
     vTextBoxText.y = m_vTextBoxPos.y + 4;
 
-    g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[nColorOut] );
-    g_Render->DrawBox( vInSize, m_vPos, 0, menu_colors[nColorIn] );
+    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
+    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
     g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
 
-    g_Render->DrawBox( m_vTextBoxSize, m_vTextBoxPos, 0, menu_colors[nTextOut] );
-    g_Render->DrawBox( vec2(m_vTextBoxSize.x-2,m_vTextBoxSize.y-2), m_vTextBoxPos, 0, menu_colors[nTextIn] );
+    g_Render->draw_box(m_vTextBoxSize, m_vTextBoxPos, menu_colors[nTextOut]);
+    g_Render->draw_box(vec2(m_vTextBoxSize.x-2,m_vTextBoxSize.y-2), m_vTextBoxPos, menu_colors[nTextIn]);
     g_Render->draw_string(g_Game->cls.name, vTextBoxText, menu_colors[7]);
 
     tank_body_model.draw(m_vPos, 0, *m_pColor);
@@ -547,8 +547,8 @@ void cCheckButton::Draw (vec2 vCursorPos)
     else
         nBoxIn = 3;
 
-    g_Render->DrawBox( vec2(12,12), m_vPos, 0, menu_colors[nBoxOut] );
-    g_Render->DrawBox( vec2(10,10), m_vPos, 0, menu_colors[nBoxIn] );
+    g_Render->draw_box(vec2(12,12), m_vPos, menu_colors[nBoxOut]);
+    g_Render->draw_box(vec2(10,10), m_vPos, menu_colors[nBoxIn]);
     g_Render->draw_string(m_szTitle, vec2(m_vPos.x+10,m_vPos.y+4), menu_colors[7]);
 }
 
@@ -606,10 +606,10 @@ void cServerButton::Draw (vec2 vCursorPos)
     int     nButtonOut;
     int     nText;
 
-    g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[4] );
-    g_Render->DrawBox( m_vSize-vec2(2,2), m_vPos, 0, menu_colors[3] );
-    g_Render->DrawBox( m_vSize-vec2(38,4), m_vPos-vec2(17,0), 0, menu_colors[2] );
-    g_Render->DrawBox( m_vSize-vec2(40,6), m_vPos-vec2(17,0), 0, menu_colors[0] );
+    g_Render->draw_box(m_vSize, m_vPos, menu_colors[4]);
+    g_Render->draw_box(m_vSize-vec2(2,2), m_vPos, menu_colors[3]);
+    g_Render->draw_box(m_vSize-vec2(38,4), m_vPos-vec2(17,0), menu_colors[2]);
+    g_Render->draw_box(m_vSize-vec2(40,6), m_vPos-vec2(17,0), menu_colors[0]);
 
     // join button
 
@@ -637,10 +637,9 @@ void cServerButton::Draw (vec2 vCursorPos)
         nText = 2;
     }
 
-    g_Render->DrawBox( vec2(32,m_vSize.y-4), m_vPos+vec2(m_vSize.x/2-18,0), 0, menu_colors[nButtonOut] );
-    g_Render->DrawBox( vec2(30,m_vSize.y-6), m_vPos+vec2(m_vSize.x/2-18,0), 0, menu_colors[nButtonIn] );
+    g_Render->draw_box(vec2(32,m_vSize.y-4), m_vPos+vec2(m_vSize.x/2-18,0), menu_colors[nButtonOut]);
+    g_Render->draw_box(vec2(30,m_vSize.y-6), m_vPos+vec2(m_vSize.x/2-18,0), menu_colors[nButtonIn]);
     g_Render->draw_string("Join", m_vPos+vec2(m_vSize.x/2-26,4), menu_colors[nText]);
-
 }
 
 /*
@@ -696,9 +695,9 @@ void cHostButton::Draw (vec2 vCursorPos)
     else
         nInner = 2;
 
-    g_Render->DrawBox( m_vSize, m_vPos, 0, menu_colors[4] );
-    g_Render->DrawBox( m_vSize-vec2(2,2), m_vPos, 0, menu_colors[3] );
-    g_Render->DrawBox( m_vSize-vec2(38,4), m_vPos-vec2(17,0), 0, menu_colors[nInner] );
+    g_Render->draw_box(m_vSize, m_vPos, menu_colors[4]);
+    g_Render->draw_box(m_vSize-vec2(2,2), m_vPos, menu_colors[3]);
+    g_Render->draw_box(m_vSize-vec2(38,4), m_vPos-vec2(17,0), menu_colors[nInner]);
 
     // create button
 
@@ -714,8 +713,8 @@ void cHostButton::Draw (vec2 vCursorPos)
     else
         nButtonIn = 5;
 
-    g_Render->DrawBox( vec2(32,m_vSize.y-4), m_vPos+vec2(m_vSize.x/2-18,0), 0, menu_colors[nButtonOut] );
-    g_Render->DrawBox( vec2(30,m_vSize.y-6), m_vPos+vec2(m_vSize.x/2-18,0), 0, menu_colors[nButtonIn] );
+    g_Render->draw_box(vec2(32,m_vSize.y-4), m_vPos+vec2(m_vSize.x/2-18,0), menu_colors[nButtonOut]);
+    g_Render->draw_box(vec2(30,m_vSize.y-6), m_vPos+vec2(m_vSize.x/2-18,0), menu_colors[nButtonIn]);
     g_Render->draw_string("Create", m_vPos+vec2(m_vSize.x/2-32,4), menu_colors[7]);
 
 }

@@ -32,7 +32,8 @@ Purpose :   Initialized member data and creates a default window
 ===========================================================
 */
 
-cOpenGLWnd::cOpenGLWnd ()
+cOpenGLWnd::cOpenGLWnd()
+    : _renderer(this)
 {
     m_fbo       = 0;
     m_rbo[0]    = 0;
@@ -86,7 +87,7 @@ int cOpenGLWnd::Init (HINSTANCE hInstance, WNDPROC WndProc)
         DEFAULT_Y,
         bFullscreen );
 
-    m_Render.Init( );
+    _renderer.init();
 
     return res;
 }
@@ -131,7 +132,7 @@ int cOpenGLWnd::Shutdown ()
         return ERROR_NONE;
     }
 
-    m_Render.Shutdown( );
+    _renderer.shutdown();
 
     return m_DestroyWindow( );
 }
@@ -479,7 +480,7 @@ LRESULT cOpenGLWnd::Message (UINT nCmd, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         m_WndParams.nSize[0] = LOWORD(lParam);
         m_WndParams.nSize[1] = HIWORD(lParam);
-        m_Render.Resize( ); // uses params in WndParams
+        _renderer.resize(); // uses params in WndParams
         return DefWindowProc( m_hWnd, nCmd, wParam, lParam );
 
     case WM_MOVE:

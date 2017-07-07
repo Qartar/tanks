@@ -41,7 +41,7 @@ void world::draw_particles () const
         }
     }
 
-    g_Application->get_glWnd()->get_Render()->DrawParticles(
+    g_Render->draw_particles(
         time,
         _particles.data(),
         _particles.size());

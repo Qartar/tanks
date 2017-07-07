@@ -8,15 +8,17 @@
 #define GL_BGR                            0x80E0
 #endif // GL_VERSION_1_2
 
+namespace render {
+
 //------------------------------------------------------------------------------
-render::image const* cRender::load_image(const char *name)
+render::image const* system::load_image(const char *name)
 {
     _images.push_back(std::make_unique<render::image>(name));
     return _images.back().get();
 }
 
 //------------------------------------------------------------------------------
-void cRender::draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color)
+void system::draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color)
 {
     if (img == nullptr) {
         return;
@@ -43,8 +45,6 @@ void cRender::draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color
 
     glDisable(GL_TEXTURE_2D);
 }
-
-namespace render {
 
 //------------------------------------------------------------------------------
 image::image(char const* name)

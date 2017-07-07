@@ -82,8 +82,6 @@ Purpose :   Windows Window using OpenGL
 ===========================================================
 */
 
-class cRender;
-
 class cOpenGLWnd
 {
 public:
@@ -98,7 +96,7 @@ public:
     HWND    get_hWnd () { return m_hWnd; }
     HDC     get_hDC () { return m_hDC; }
     sWndParam   &get_WndParams () { return m_WndParams; }
-    cRender     *get_Render () { return &m_Render; }
+    render::system* get_Render() { return &_renderer; }
 
     int EndFrame ();
 
@@ -117,7 +115,7 @@ private:
     bool        m_bRefreshing;
 
     sWndParam   m_WndParams;
-    cRender     m_Render;
+    render::system _renderer;
 
     HINSTANCE   m_hInstance;
     WNDPROC     m_WndProc;

@@ -14,6 +14,7 @@ Date    :   10/20/2004
 
 namespace render {
 class image;
+class system;
 } // namespace render
 
 #define FRAMETIME   0.05f
@@ -103,7 +104,6 @@ Purpose :   Stores higher-level information about the current game
 */
 
 class cMenu;
-class cRender;
 
 //
 // SERVER SIDE DATA
@@ -322,4 +322,4 @@ struct index_s
 extern index_s  sound_index[256];
 
 extern cGame *g_Game;
-extern cRender *g_Render;
+extern render::system* g_Render;

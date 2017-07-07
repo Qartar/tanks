@@ -13,6 +13,8 @@ Date    :   10/20/2004
 #include "local.h"
 #pragma hdrstop
 
+namespace render {
+
 /*
 ===========================================================
 
@@ -23,16 +25,15 @@ Purpose :   Object Initialization
 ===========================================================
 */
 
-int cRender::Init ()
+int system::init()
 {
-    SetViewOrigin( vec2(0,0) );
+    set_view_origin(vec2(0,0));
 
     _fonts.push_back(std::make_unique<render::font>("Tahoma", 12));
 
-    for (int i = 0; i < 360 ; i++)
-    {
-        sintbl[i] = sin(deg2rad<float>(i));
-        costbl[i] = cos(deg2rad<float>(i));
+    for (int ii = 0; ii < 360 ; ++ii) {
+        _sintbl[ii] = sin(deg2rad<float>(ii));
+        _costbl[ii] = cos(deg2rad<float>(ii));
     }
 
     return ERROR_NONE;
@@ -48,7 +49,7 @@ Purpose :   Shuts down object before removal
 ===========================================================
 */
 
-int cRender::Shutdown ()
+int system::shutdown()
 {
     _fonts.clear();
 
@@ -65,9 +66,9 @@ Purpose :   Preps the renderer for a new frame
 ===========================================================
 */
 
-void cRender::BeginFrame ()
+void system::begin_frame()
 {
-    glClear( GL_COLOR_BUFFER_BIT );
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 /*
@@ -80,9 +81,9 @@ Purpose :   End of Drawing, Swap to screen
 ===========================================================
 */
 
-void cRender::EndFrame ()
+void system::end_frame()
 {
-    g_Application->get_glWnd()->EndFrame();
+    _window->EndFrame();
 }
 
 /*
@@ -95,44 +96,46 @@ Purpose :   Sets default state based on window size
 ===========================================================
 */
 
-void cRender::m_setDefaultState ()
+void system::_set_default_state()
 {
-    glDisable( GL_TEXTURE_2D );
+    glDisable(GL_TEXTURE_2D);
 
-    glClearColor( 0, 0, 0, 0.1f );
+    glClearColor(0, 0, 0, 0.1f);
 
-    glEnable( GL_BLEND );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glEnable( GL_ALPHA_TEST );
-    glAlphaFunc( GL_GREATER, 0.0 );
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.0f);
 
-    glEnable( GL_POINT_SMOOTH );
-    glHint( GL_POINT_SMOOTH_HINT, GL_NICEST );
-    glPointSize( 2.0f );
+    glEnable(GL_POINT_SMOOTH );
+    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+    glPointSize(2.0f);
 
-    glEnable( GL_LINE_SMOOTH );
-    glHint( GL_LINE_SMOOTH_HINT, GL_NICEST );
+    glEnable(GL_LINE_SMOOTH);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-    glDisable( GL_DEPTH_TEST );
-    glDisable( GL_CULL_FACE );
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
 
-    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-    glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glViewport( 0, 0, DEFAULT_W, DEFAULT_H );
+    glViewport(0, 0, DEFAULT_W, DEFAULT_H);
 
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity( );
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
 
-    glOrtho( 0, DEFAULT_W, DEFAULT_H, 0, -99999, 99999 );
+    glOrtho(0, DEFAULT_W, DEFAULT_H, 0, -99999, 99999);
 
     glTranslatef(
-        -m_viewOrigin.x,
-        -m_viewOrigin.y,
+        -_view_origin.x,
+        -_view_origin.y,
         0 );
 
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity( );
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
+
+} // namespace render

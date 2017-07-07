@@ -11,6 +11,8 @@ Purpose :   drawing functions for cRender (r_main.h)
 #include "local.h"
 #pragma hdrstop
 
+namespace render {
+
 /*
 ===========================================================
 
@@ -21,7 +23,7 @@ Purpose :   draws a string to the screen
 ===========================================================
 */
 
-void cRender::draw_string(char const* string, vec2 position, vec4 color)
+void system::draw_string(char const* string, vec2 position, vec4 color)
 {
     _fonts[0]->draw(string, position, color);
 }
@@ -42,27 +44,23 @@ Purpose :   draws a rotated box to the screen
 ===========================================================
 */
 
-void cRender::DrawBox (vec2 vSize, vec2 vPos, float flAngle, vec4 vColor)
+void system::draw_box(vec2 size, vec2 position, vec4 color)
 {
     float   xl, xh, yl, yh;
 
-    glColor4f( vColor.r, vColor.g, vColor.b, vColor.a );
+    glColor4fv(color.v);
 
-    xl = vPos.x - vSize.x / 2;
-    xh = vPos.x + vSize.x / 2;
-    yl = vPos.y - vSize.y / 2;
-    yh = vPos.y + vSize.y / 2;
+    xl = position.x - size.x / 2;
+    xh = position.x + size.x / 2;
+    yl = position.y - size.y / 2;
+    yh = position.y + size.y / 2;
 
-    // ROTATE POINTS AROUND ORIGIN
-
-    glBegin( GL_QUADS );
-
-    glVertex2f( xl, yl );
-    glVertex2f( xh, yl );
-    glVertex2f( xh, yh );
-    glVertex2f( xl, yh );
-
-    glEnd( );
+    glBegin(GL_QUADS);
+        glVertex2f(xl, yl);
+        glVertex2f(xh, yl);
+        glVertex2f(xh, yh);
+        glVertex2f(xl, yh);
+    glEnd();
 }
 
 /*
@@ -75,7 +73,7 @@ Purpose :   draws a list of particles
 ===========================================================
 */
 
-void cRender::DrawParticles (float time, render::particle const* particles, std::size_t num_particles)
+void system::draw_particles(float time, render::particle const* particles, std::size_t num_particles)
 {
     render::particle const* end = particles + num_particles;
     for (render::particle const*p = particles; p < end; ++p) {
@@ -105,7 +103,7 @@ void cRender::DrawParticles (float time, render::particle const* particles, std:
             // draw circle outline
             glColor4fv(color_out.v);
             for (int ii = 0; ii < 360 ; ii += k) {
-                vec2 vertex = position + vec2(costbl[ii], sintbl[ii]) * radius;
+                vec2 vertex = position + vec2(_costbl[ii], _sintbl[ii]) * radius;
                 glVertex2fv(vertex.v);
             }
             glVertex2f(position.x + radius, position.y);
@@ -132,13 +130,13 @@ void cRender::DrawParticles (float time, render::particle const* particles, std:
             for (int ii = 0; ii < 360; ii += k0) {
                 if (ii < 180) {
                     // draw forward-facing half-circle
-                    vec2 vertex = position + (tangent * costbl[ii] + normal * sintbl[ii]) * radius;
+                    vec2 vertex = position + (tangent * _costbl[ii] + normal * _sintbl[ii]) * radius;
                     glVertex2fv(vertex.v);
                 } else {
                     // draw backward-facing elliptical tail
-                    float alpha = -sintbl[ii];
+                    float alpha = -_sintbl[ii];
                     vec4 vcolor = color_out * alpha + color_in * (1.0f - alpha);
-                    vec2 vertex = position + tangent * costbl[ii] * radius + normal * sintbl[ii] * distance;
+                    vec2 vertex = position + tangent * _costbl[ii] * radius + normal * _sintbl[ii] * distance;
 
                     glColor4fv(vcolor.v);
                     glVertex2fv(vertex.v);
@@ -163,17 +161,14 @@ Purpose :   draws a line
 ===========================================================
 */
 
-void cRender::DrawLine (vec2 vOrg, vec2 vEnd, vec4 vColorO, vec4 vColorE)
+void system::draw_line(vec2 start, vec2 end, vec4 start_color, vec4 end_color)
 {
-    glBegin( GL_LINES );
-
-    glColor4f( vColorO.r, vColorO.g, vColorO.b, vColorO.a );
-
-    glVertex2f( vOrg.x, vOrg.y );
-
-    glColor4f( vColorE.r, vColorE.g, vColorE.b, vColorE.a );
-
-    glVertex2f( vEnd.x, vEnd.y );
-
-    glEnd( );
+    glBegin(GL_LINES);
+        glColor4fv(start_color.v);
+        glVertex2fv(start.v);
+        glColor4fv(start_color.v);
+        glVertex2fv(end.v);
+    glEnd();
 }
+
+} // namespace render
