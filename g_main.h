@@ -103,8 +103,6 @@ Purpose :   Stores higher-level information about the current game
 ===========================================================
 */
 
-class cMenu;
-
 //
 // SERVER SIDE DATA
 //
@@ -163,8 +161,6 @@ typedef struct client_state_s
 
 class cGame : public vMain
 {
-    friend  cMenu;
-
 public:
     cGame ();
     ~cGame () {}
@@ -214,7 +210,7 @@ public:
     game::tank *     Player( int index ) { return m_Players[ index ]; }
 
 private:
-    cMenu   m_Menu;
+    menu::window m_Menu;
     game::world m_World;
 
     render::image const* _menu_image;

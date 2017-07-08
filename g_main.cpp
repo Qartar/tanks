@@ -126,7 +126,7 @@ int cGame::Init (char *cmdline)
 
     m_InitClient( );
 
-    m_Menu.Init( );
+    m_Menu.init( );
     m_World.init( );
 
     m_netchan.Init( );
@@ -200,7 +200,7 @@ int cGame::Shutdown ()
     m_EndClient( );
 
     m_World.shutdown( );
-    m_Menu.Shutdown( );
+    m_Menu.shutdown( );
 
     for ( int i=0 ; i<NUM_SOUNDS ; i++ )
         mem::free( sound_index[i].name );
@@ -379,7 +379,7 @@ int cGame::RunFrame (float flMSec)
 
         g_Render->draw_image(_menu_image, vec2( 0, 0 ), vec2( 640, 480 ), vec4( 1, 1, 1, 1 ) );
 
-        m_Menu.Draw( m_vCursorPos );
+        m_Menu.draw( m_vCursorPos );
     }
     else if ( bCursor )
     {
@@ -454,7 +454,7 @@ int cGame::Key_Event (unsigned char Key, bool Down)
     if (Key == K_MOUSE1)
     {
         m_getCursorPos( );
-        m_Menu.Click( m_vCursorPos, Down );
+        m_Menu.click( m_vCursorPos, Down );
 
         return true;
     }
@@ -917,8 +917,8 @@ void cGame::m_DrawScore ()
 
     if ( bClientSay )
     {
-        g_Render->draw_string("say:", vec2(nWidth/4,nHeight-16), menu_colors[7]);
-        g_Render->draw_string(m_clientsay, vec2(nWidth/4+32,nHeight-16), menu_colors[7]);
+        g_Render->draw_string("say:", vec2(nWidth/4,nHeight-16), menu::colors[7]);
+        g_Render->draw_string(m_clientsay, vec2(nWidth/4+32,nHeight-16), menu::colors[7]);
     }
 
     if ( m_bMenuActive )
@@ -939,14 +939,14 @@ void cGame::m_DrawScore ()
         int num = gameClients[cls.number].upgrades;
 
         if ( num > 1 )
-            g_Render->draw_string(va( "you have %i upgrades waiting...", num ), vec2(8,12), menu_colors[7]);
+            g_Render->draw_string(va( "you have %i upgrades waiting...", num ), vec2(8,12), menu::colors[7]);
         else
-            g_Render->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu_colors[7]);
-        g_Render->draw_string("for help with upgrades press F9", vec2(8,24), menu_colors[7]);
+            g_Render->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu::colors[7]);
+        g_Render->draw_string("for help with upgrades press F9", vec2(8,24), menu::colors[7]);
     }
 
-    g_Render->draw_box(vec2(96,8+12*count), vec2(nWidth-32-22,32+4+6*count), menu_colors[4]);
-    g_Render->draw_box(vec2(96,8+12*count-2), vec2(nWidth-32-22,32+4+6*count), menu_colors[5]);
+    g_Render->draw_box(vec2(96,8+12*count), vec2(nWidth-32-22,32+4+6*count), menu::colors[4]);
+    g_Render->draw_box(vec2(96,8+12*count-2), vec2(nWidth-32-22,32+4+6*count), menu::colors[5]);
 
     memset( sort, -1, sizeof(sort) );
     for ( i=0 ; i<MAX_PLAYERS ; i++ ) {
@@ -986,8 +986,8 @@ void cGame::m_DrawScore ()
         g_Render->draw_box(vec2(7,7), vec2(nWidth-96, 32+11+12*n),
             vec4(m_Players[sort[i]]->_color.r, m_Players[sort[i]]->_color.g, m_Players[sort[i]]->_color.b, 1));
 
-        g_Render->draw_string(svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu_colors[7]);
-        g_Render->draw_string(va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu_colors[7]);
+        g_Render->draw_string(svs.clients[ sort[ i ] ].name, vec2(nWidth-96+4, 32+14+12*n), menu::colors[7]);
+        g_Render->draw_string(va(": %i", m_nScore[ sort[ i ] ]), vec2(nWidth-96+64+4,32+14+12*n), menu::colors[7]);
 
         n++;
     }
@@ -996,7 +996,7 @@ void cGame::m_DrawScore ()
     {
         int     nTime = ceil((flRestartTime - m_flTime)/1000.0f);
 
-        g_Render->draw_string(va("Restart in... %i", nTime), vec2(nWidth/2-48,16+13), menu_colors[7]);
+        g_Render->draw_string(va("Restart in... %i", nTime), vec2(nWidth/2-48,16+13), menu::colors[7]);
     }
 }
 

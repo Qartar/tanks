@@ -12,7 +12,17 @@ Date    :   10/20/2004
 
 #pragma once
 
-static vec4 menu_colors[] = {
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace menu {
+
+class window;
+
+const vec4 colors[] =
+{
     vec4(0.000,0.000,0.000,1),
     vec4(0.125,0.125,0.125,1),
     vec4(0.250,0.250,0.250,1),
@@ -21,151 +31,174 @@ static vec4 menu_colors[] = {
     vec4(0.625,0.625,0.625,1),
     vec4(0.750,0.750,0.750,1),
     vec4(0.875,0.875,0.875,1),
-    vec4(1.000,1.000,1.000,1) };
-
-#define CHAR_WIDTH  2.5
-#define over(a,b,c) ( (clamp(a.x,b.x-c.x/2,b.x+c.x/2) == a.x ) && (clamp(a.y,b.y-c.y/2,b.y+c.y/2) == a.y ) )
-
-#define NUM_BUTTONS 4
-
-#define MAX_BUTTONS     8
-#define MAX_SUBMENUS    4
-
-typedef void (*func_t)();
-
-class cBaseButton
-{
-public:
-    cBaseButton () {}
-    cBaseButton (char *szTitle, vec2 vPos, vec2 vSize, func_t op_click);
-    ~cBaseButton () {}
-
-    virtual bool    Click (vec2 vCursorPos, bool bDown);
-    virtual void    Draw (vec2 vCursorPos);
-protected:
-    bool    m_Over (vec2 vCursorPos);
-
-    bool    m_bOver, m_bClicked;
-
-    char    m_szTitle[64];
-    vec2    m_vPos, m_vSize;
-    func_t  m_op_click;
+    vec4(1.000,1.000,1.000,1),
 };
 
-class cServerButton : public cBaseButton
+//------------------------------------------------------------------------------
+class rectangle
 {
 public:
-    cServerButton () {}
-    cServerButton (vec2 vPos, vec2 vSize, char *szServer, float *flPing, func_t op_click);
-    ~cServerButton () {}
+    rectangle() {}
+    rectangle(vec2 center, vec2 size)
+        : _position(center - size * 0.5f)
+        , _size(size)
+    {}
 
-    virtual bool    Click (vec2 vCursorPos, bool bDown);
-    virtual void    Draw (vec2 vCursorPos);
-    
+    //! Coordinate of top-left corner
+    vec2 position() const { return _position; }
+
+    //! Coordinate of center
+    vec2 center() const { return _position + _size * 0.5f; }
+
+    //! Rectangle size
+    vec2 size() const { return _size; }
+
+    //! Returns an equivalent rectangle translated by `v`
+    rectangle operator+(vec2 v) const { return rectangle(center() + v, _size); }
+
+    //! Returns an equivalent rectangle translated by the negative of `v`
+    rectangle operator-(vec2 v) const { return rectangle(center() - v, _size); }
+
+    //! Returns true if `point` is contained inside rectangle
+    bool contains(vec2 point) const {
+        return point.x > _position.x
+            && point.x < _position.x + _size.x
+            && point.y > _position.y
+            && point.y < _position.y + _size.y;
+    }
+
 protected:
-    char    *m_szServer;
-    float   *m_flPing;
-
-    func_t  m_op_click;
+    vec2 _position;
+    vec2 _size;
 };
 
-class cHostButton : public cBaseButton
+//------------------------------------------------------------------------------
+class button
 {
 public:
-    cHostButton () {}
-    cHostButton (vec2 vPos, vec2 vSize, func_t op_click);
-    ~cHostButton () {}
+    button(char const* text, vec2 center, vec2 size)
+        : _text(text)
+        , _rectangle(center, size)
+        , _down(false)
+    {}
 
-    virtual bool    Click (vec2 vCursorPos, bool bDown);
-    virtual void    Draw (vec2 vCursorPos);
+    template<typename Tfunc>
+    button(char const* text, vec2 center, vec2 size, Tfunc&& func)
+        : button(text, center, size)
+    {
+        _func = std::move(func);
+    }
+
+    virtual ~button() {}
+
+    virtual bool click(vec2 cursor_pos, bool down);
+    virtual void draw(vec2 cursor_pos) const;
 
 protected:
-    func_t  m_op_click;
+    std::string _text;
+    menu::rectangle _rectangle;
+    std::function<void()> _func;
+    bool _down;
+
+protected:
+    enum text_flags {
+        align_default   = 0,
+
+        // horizontal alignment
+        halign_center   = align_default,
+        halign_left     = BIT(0),
+        halign_right    = BIT(1),
+
+        // vertical alignment
+        valign_center   = align_default,
+        valign_top      = BIT(2),
+        valign_bottom   = BIT(3),
+    };
+
+    void draw_rectangle(menu::rectangle const& rect, vec4 color) const;
+    void draw_rectangle(menu::rectangle const& rect, vec4 color, vec4 border_color) const;
+    void draw_text(menu::rectangle const& rect, std::string const& text, vec4 color, int flags = align_default, float margin = 4.0f) const;
 };
 
-class cCondButton : public cBaseButton
+//------------------------------------------------------------------------------
+class server_button : public button
 {
 public:
-    cCondButton () {}
-    cCondButton (char *szTitle, vec2 vPos, vec2 vSize, func_t op_click, bool *bCond);
-    ~cCondButton () {}
+    server_button(vec2 position, vec2 size, char const* name_ptr, float const* ping_ptr, std::function<void()>&& op_click);
 
-    virtual bool    Click (vec2 vCursorPos, bool bDown);
-    virtual void    Draw (vec2 vCursorPos);
+    virtual bool click(vec2 cursor_pos, bool down) override;
+    virtual void draw(vec2 cursor_pos) const override;
 
 protected:
-    bool    *m_bCond;
+    char const* _name_ptr;
+    float const* _ping_ptr;
+
+    menu::rectangle _join_rectangle;
+    menu::rectangle _text_rectangle;
 };
 
-class cTankButton : public cBaseButton
+//------------------------------------------------------------------------------
+class host_button : public button
 {
 public:
-    cTankButton () {}
-    cTankButton (char *szTitle, vec2 vPos, vec2 vSize, game::tank *pTank);
-    ~cTankButton () {}
+    host_button(vec2 position, vec2 size, std::function<void()>&& op_click);
 
-    virtual bool    Click (vec2 vCursorPos, bool bDown);
-    virtual void    Draw (vec2 vCursorPos);
+    virtual bool click(vec2 cursor_pos, bool down) override;
+    virtual void draw(vec2 cursor_pos) const override;
 
 protected:
-    game::tank   *m_pTank;
-    int     m_nTankColor;
+    menu::rectangle _create_rectangle;
+    menu::rectangle _text_rectangle;
+
+    bool _create_down;
+    bool _text_down;
 };
 
-class cClientButton : public cBaseButton
+//------------------------------------------------------------------------------
+class conditional_button : public button
 {
 public:
-    cClientButton () {}
-    cClientButton (char *szTitle, vec2 vPos, vec2 vSize, vec4 *pColor);
-    ~cClientButton () {}
+    conditional_button(char const* text, vec2 position, vec2 size, bool *condition_ptr, std::function<void()>&& op_click);
 
-    virtual bool    Click (vec2 vCursorPos, bool bDown);
-    virtual void    Draw (vec2 vCursorPos);
+    virtual bool click(vec2 cursor_pos, bool down) override;
+    virtual void draw(vec2 cursor_pos) const override;
 
 protected:
-    vec4    *m_pColor;
-    int     m_nColor;
-
-    bool    m_bTextOver;
-    bool    m_bTextDown;
-
-    vec2    m_vTextBoxPos;
-    vec2    m_vTextBoxSize;
+    bool* _condition_ptr;
 };
 
-class cMenu;
-
-class cMenuButton : public cBaseButton
+//------------------------------------------------------------------------------
+class client_button : public button
 {
 public:
-    cMenuButton () {}
-    cMenuButton (char *szTitle, vec2 vPos, vec2 vSize, cMenu *pParent, cMenu *pMenu);
-    ~cMenuButton () {}
+    client_button(char const* text, vec2 position, vec2 size, vec4 *pColor);
 
-    virtual bool    Click (vec2 vCursorPos, bool bDown);
-    virtual void    Draw (vec2 vCursorPos);
-
-    void    Deactivate () { m_bActive = false; }
+    virtual bool click(vec2 cursor_pos, bool down) override;
+    virtual void draw(vec2 cursor_pos) const override;
 
 protected:
-    cMenu   *m_pParent, *m_pMenu;
-    bool    m_bActive;
+    vec4* _color_ptr;
+    int _color_index;
+
+    bool _text_down;
+
+    menu::rectangle _text_rectangle;
 };
 
-class cCheckButton : public cBaseButton
+//------------------------------------------------------------------------------
+class submenu_button : public button
 {
 public:
-    cCheckButton () {}
-    cCheckButton (char *szTitle, vec2 vPos, bool *pValue);
-    ~cCheckButton () {}
+    submenu_button (char const* text, vec2 position, vec2 size, menu::window *pParent, menu::window *pMenu);
 
-    virtual bool    Click (vec2 vCursorPos, bool bDown);
-    virtual void    Draw (vec2 vCursorPos);
+    virtual void draw(vec2 cursor_pos) const override;
+
+    void deactivate() { _active = false; }
 
 protected:
-    char    m_szTitle[64];
-    vec2    m_vPos;
-    bool    *m_pValue;
+    menu::window* _parent;
+    menu::window* _menu;
+    bool _active;
 };
 
 /*
@@ -178,45 +211,37 @@ Purpose :   controller class for a menu set
 ===========================================================
 */
 
-class cMenu
+class window
 {
 public:
-    cMenu () { 
-        memset(m_Buttons, 0, sizeof(m_Buttons));
-        memset(m_SubMenus,0,sizeof(m_SubMenus));
-        m_ActiveMenu = NULL;
-        m_ActiveButton = NULL; }
-    ~cMenu () {}
+    window ()
+        : _active_button(nullptr)
+        , _active_menu(nullptr)
+    {}
 
-    void    Init ();
-    void    Shutdown ();
+    void init ();
+    void shutdown ();
 
-    void    AddButton (cBaseButton *pButton);
+    template<typename T, typename... Args>
+    void add_button(Args&& ...args);
 
-    virtual void    Draw (vec2 vCursorPos);
-    virtual void    Click (vec2 vCursorPos, bool bDown);
+    virtual void draw(vec2 cursor_pos) const;
+    virtual void click(vec2 cursor_pos, bool down);
 
-    bool    ActivateMenu (cMenuButton *pButton, cMenu *pActiveMenu);
+    bool activate(submenu_button* button, menu::window* submenu);
 
 protected:
-    cBaseButton *m_Buttons[MAX_BUTTONS];
-    cMenu       *m_SubMenus[MAX_SUBMENUS];
+    std::vector<std::unique_ptr<menu::button>> _buttons;
+    std::vector<std::unique_ptr<menu::window>> _submenus;
 
-    cMenuButton *m_ActiveButton;
-    cMenu       *m_ActiveMenu;
+    submenu_button* _active_button;
+    menu::window* _active_menu;
 };
 
-class cOptionsMenu : public cMenu
+template<typename T, typename... Args>
+void window::add_button(Args&& ...args)
 {
-public:
-    cOptionsMenu () {}
-    cOptionsMenu (char *szTitle, vec2 vPos, vec2 vSize);
-    ~cOptionsMenu () {}
+    _buttons.push_back(std::make_unique<T>(args...));
+}
 
-    virtual void    Draw (vec2 vCursorPos);
-    virtual void    Click (vec2 vCursorPos, bool bDown);
-
-private:
-    char    m_szTitle[64];
-    vec2    m_vPos, m_vSize;
-};
+} // namespace menu

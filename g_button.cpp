@@ -13,10 +13,12 @@ Date    :   10/29/2004
 #include "local.h"
 #pragma hdrstop
 
+namespace menu {
+
 /*
 ===========================================================
 
-Name    :   cBaseButton
+Name    :   button
 
 Purpose :   Basic Base Button class, 
 
@@ -28,72 +30,73 @@ Purpose :   Basic Base Button class,
 ===========================================================
 */
 
-cBaseButton::cBaseButton (char *szTitle, vec2 vPos, vec2 vSize, func_t op_click)
+bool button::click(vec2 cursor_pos, bool down)
 {
-    strncpy( m_szTitle, szTitle, 64 );
-    m_vPos = vPos;
-    m_vSize = vSize;
-    m_op_click = op_click;
+    bool over = _rectangle.contains(cursor_pos);
 
-    m_bOver = false;
-    m_bClicked = false;
-}
-
-bool cBaseButton::Click (vec2 vCursorPos, bool bDown)
-{
-    m_bOver = m_Over( vCursorPos );
-
-    if (m_bOver && bDown)
-    {
-        m_bClicked = true;
-    }
-    else if (m_bClicked && m_bOver && !bDown)
-    {
-        m_bClicked = false;
-        if (m_op_click) m_op_click();
-    }
-    else if (!bDown)
-    {
-        m_bClicked = false;
+    if (over && down) {
+        _down = true;
+    } else if (!down) {
+        if (_down && over && _func) {
+            _func();
+        }
+        _down = false;
     }
 
     return false;
 }
 
-void cBaseButton::Draw (vec2 vCursorPos)
+void button::draw(vec2 cursor_pos) const
 {
-    int     nColorIn, nColorOut, nColorText;
-    vec2    vInSize, vTextPos;
+    bool over = _rectangle.contains(cursor_pos);
 
-    m_bOver = m_Over( vCursorPos );
+    int border_color = over ? 6 : 4;
+    int button_color = _down ? 3 : 5;
+    int text_color = button_color + 2;
 
-    if (m_bOver)
-        nColorOut = 6;
-    else
-        nColorOut = 4;
-
-    if (m_bClicked)
-        nColorIn = 3;
-    else
-        nColorIn = 5;
-
-    nColorText = nColorIn + 2;
-
-    vInSize.x = m_vSize.x - 2;
-    vInSize.y = m_vSize.y - 2;
-
-    vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
-    vTextPos.y = m_vPos.y + 4;                              // char_height / 2
-
-    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
-    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
-    g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
+    draw_rectangle(_rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(_rectangle, _text, menu::colors[text_color]);
 }
 
-bool cBaseButton::m_Over (vec2 vCursorPos)
+//------------------------------------------------------------------------------
+void button::draw_rectangle(menu::rectangle const& rect, vec4 color) const
 {
-    return ( (clamp(vCursorPos.x,m_vPos.x-m_vSize.x/2,m_vPos.x+m_vSize.x/2) == vCursorPos.x )
-        && (clamp(vCursorPos.y,m_vPos.y-m_vSize.y/2,m_vPos.y+m_vSize.y/2) == vCursorPos.y ) );
+    g_Render->draw_box(rect.size(), rect.center(), color);
+}
+
+//------------------------------------------------------------------------------
+void button::draw_rectangle(menu::rectangle const& rect, vec4 color, vec4 border_color) const
+{
+    g_Render->draw_box(rect.size(), rect.center(), border_color);
+    g_Render->draw_box(rect.size() - vec2(2, 2), rect.center(), color);
+}
+
+//------------------------------------------------------------------------------
+void button::draw_text(menu::rectangle const& rect, std::string const& text, vec4 color, int flags, float margin) const
+{
+    vec2 position = rect.center();
+    vec2 size = g_Render->string_size(text.c_str());
+
+    if (flags & halign_left) {
+        position.x -= rect.size().x * 0.5f - margin;
+    } else if (flags & halign_right) {
+        position.x += rect.size().x * 0.5f - size.x - margin;
+    } else {
+        position.x -= size.x * 0.5f;
+    }
+
+    if (flags & valign_top) {
+        position.y -= rect.size().y * 0.5f - size.y - margin;
+    } else if (flags & valign_bottom) {
+        position.y += rect.size().y * 0.5f - margin;
+    } else {
+        position.y += size.y * 0.5f;
+    }
+
+    position.x = std::floor(position.x + 0.5f);
+    position.y = std::floor(position.y + 0.5f);
+
+    g_Render->draw_string(text.c_str(), position, color);
 }
 
 /*
@@ -112,87 +115,43 @@ Purpose :   Derived button class
 ===========================================================
 */
 
-cCondButton::cCondButton (char *szTitle, vec2 vPos, vec2 vSize, func_t op_click, bool *bCond)
-{
-    strncpy( m_szTitle, szTitle, 64 );
-    m_vPos = vPos;
-    m_vSize = vSize;
-    m_op_click = op_click;
-    m_bCond = bCond;
+conditional_button::conditional_button(char const* text, vec2 position, vec2 size, bool* condition_ptr, std::function<void()>&& op_click)
+    : button(text, position, size, std::move(op_click))
+    , _condition_ptr(condition_ptr)
+{}
 
-    m_bOver = false;
-    m_bClicked = false;
-}
-
-bool cCondButton::Click (vec2 vCursorPos, bool bDown)
+bool conditional_button::click(vec2 cursor_pos, bool down)
 {
-    if ( m_bCond && !*m_bCond )
-    {
-        m_bOver = false;
-        m_bClicked = false;
+    if (_condition_ptr && !*_condition_ptr) {
+        _down = false;
         return false;
     }
 
-    m_bOver = m_Over( vCursorPos );
-
-    if (m_bOver && bDown)
-    {
-        m_bClicked = true;
-    }
-    else if (m_bClicked && m_bOver && !bDown)
-    {
-        m_bClicked = false;
-        if (m_op_click) m_op_click();
-    }
-    else if (!bDown)
-    {
-        m_bClicked = false;
-    }
-
-    return false;
+    return button::click(cursor_pos, down);
 }
 
-void cCondButton::Draw (vec2 vCursorPos)
+void conditional_button::draw(vec2 cursor_pos) const
 {
-    int     nColorIn, nColorOut, nColorText;
-    vec2    vInSize, vTextPos;
+    bool over = _rectangle.contains(cursor_pos);
 
-    m_bOver = m_Over( vCursorPos );
+    int border_color = over ? 6 : 4;
+    int button_color = _down ? 3 : 5;
+    int text_color = button_color + 2;
 
-    if (m_bOver)
-        nColorOut = 6;
-    else
-        nColorOut = 4;
-
-    if (m_bClicked)
-        nColorIn = 3;
-    else
-        nColorIn = 5;
-
-    nColorText = nColorIn + 2;
-
-    if ( m_bCond && !*m_bCond )
-    {
-        nColorIn = 2;
-        nColorOut = 1;
-        nColorText = 3;
+    if (_condition_ptr && !*_condition_ptr) {
+        border_color = 1;
+        button_color = 2;
+        text_color = 3;
     }
 
-    vInSize.x = m_vSize.x - 2;
-    vInSize.y = m_vSize.y - 2;
-
-    vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
-    vTextPos.y = m_vPos.y + 4;                              // char_height / 2
-
-    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
-    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
-    g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
+    draw_rectangle(_rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(_rectangle, _text, menu::colors[text_color]);
 }
 
 /*
 ===========================================================
 
-Name    :   cMenuButton
+Name    :   submenu_button
 
 Purpose :   Derived button class, activates a given submenu
 
@@ -205,161 +164,29 @@ Purpose :   Derived button class, activates a given submenu
 ===========================================================
 */
 
-cMenuButton::cMenuButton (char *szTitle, vec2 vPos, vec2 vSize, cMenu *pParent, cMenu *pMenu)
+submenu_button::submenu_button(char const* text, vec2 position, vec2 size, menu::window* parent, menu::window* menu)
+    : button(text, position, size, [this](){ _active = _parent->activate(this, _menu); })
+    , _parent(parent)
+    , _menu(menu)
+    , _active(false)
+{}
+
+void submenu_button::draw(vec2 cursor_pos) const
 {
-    strncpy( m_szTitle, szTitle, 64 );
-    m_vPos = vPos;
-    m_vSize = vSize;
+    bool over = _rectangle.contains(cursor_pos);
 
-    m_pParent = pParent;
-    m_pMenu = pMenu;
+    int border_color = over ? 6 : 4;
+    int button_color = (_down || _active) ? 3 : 5;
+    int text_color = button_color + 2;
 
-    m_bOver = false;
-    m_bClicked = false;
-    m_bActive = false;
-}
-
-bool cMenuButton::Click (vec2 vCursorPos, bool bDown)
-{
-    if ( ! m_pMenu )
-    {
-        m_bOver = false;
-        m_bClicked = false;
-        return false;
+    if (_menu == nullptr) {
+        border_color = 1;
+        button_color = 2;
+        text_color = 3;
     }
 
-    m_bOver = m_Over( vCursorPos );
-
-    if (m_bOver && bDown)
-    {
-        m_bClicked = true;
-    }
-    else if (m_bClicked && m_bOver && !bDown)
-    {
-        m_bClicked = false;
-        m_bActive = m_pParent->ActivateMenu( this, m_pMenu );
-    }
-    else if (!bDown)
-    {
-        m_bClicked = false;
-    }
-
-    return false;
-}
-
-void cMenuButton::Draw (vec2 vCursorPos)
-{
-    int     nColorIn, nColorOut, nColorText;
-    vec2    vInSize, vTextPos;
-
-    m_bOver = m_Over( vCursorPos );
-
-    if (m_bOver)
-        nColorOut = 6;
-    else
-        nColorOut = 4;
-
-    if (m_bClicked || m_bActive)
-        nColorIn = 3;
-    else
-        nColorIn = 5;
-
-    nColorText = nColorIn + 2;
-
-    if ( ! m_pMenu )
-    {
-        nColorIn = 2;
-        nColorOut = 1;
-        nColorText = 3;
-    }
-
-    vInSize.x = m_vSize.x - 2;
-    vInSize.y = m_vSize.y - 2;
-
-    vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
-    vTextPos.y = m_vPos.y + 4;                              // char_height / 2
-
-    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
-    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
-    g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
-}
-
-/*
-===========================================================
-
-Name    :   cTankButton
-
-Purpose :   various modifications on a tank
-
-===========================================================
-*/
-
-cTankButton::cTankButton (char *szTitle, vec2 vPos, vec2 vSize, game::tank *pTank)
-{
-    strncpy( m_szTitle, szTitle, 64 );
-    m_vPos = vPos;
-    m_vSize = vSize;
-
-    m_pTank = pTank;
-    m_nTankColor = pTank->_player_index;
-
-    m_bOver = false;
-    m_bClicked = false;
-}
-
-bool cTankButton::Click (vec2 vCursorPos, bool bDown)
-{
-    m_bOver = m_Over( vCursorPos );
-
-    if (m_bOver && bDown)
-    {
-        m_bClicked = true;
-    }
-    else if (m_bClicked && m_bOver && !bDown)
-    {
-        m_bClicked = false;
-        m_nTankColor = (m_nTankColor+1)%NUM_PLAYER_COLORS;
-        m_pTank->_color = player_colors[m_nTankColor];
-    }
-    else if (!bDown)
-    {
-        m_bClicked = false;
-    }
-
-    return false;
-}
-
-void cTankButton::Draw (vec2 vCursorPos)
-{
-    int     nColorIn, nColorOut, nColorText;
-    vec2    vInSize, vTextPos;
-
-    m_bOver = m_Over( vCursorPos );
-
-    if (m_bOver)
-        nColorOut = 6;
-    else
-        nColorOut = 4;
-
-    if (m_bClicked)
-        nColorIn = 3;
-    else
-        nColorIn = 5;
-
-    nColorText = nColorIn + 2;
-
-    vInSize.x = m_vSize.x - 2;
-    vInSize.y = m_vSize.y - 2;
-
-    vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
-    vTextPos.y = m_vPos.y + m_vSize.y / 2 - 4;
-
-    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
-    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
-    g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
-
-    m_pTank->_model->draw(m_vPos, 0, m_pTank->_color);
-    m_pTank->_turret_model->draw(m_vPos, 0, m_pTank->_color);
+    draw_rectangle(_rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(_rectangle, _text, menu::colors[text_color]);
 }
 
 /*
@@ -372,349 +199,183 @@ Purpose :   set the client color
 ===========================================================
 */
 
-cClientButton::cClientButton (char *szTitle, vec2 vPos, vec2 vSize, vec4 *pColor)
+client_button::client_button(char const* text, vec2 position, vec2 size, vec4 *color_ptr)
+    : button(text, position, size)
+    , _text_rectangle(position + vec2(0, size.y / 2.0f - 12.0f), vec2(size.x - 16.0f, 14.0f))
+    , _color_ptr(color_ptr)
+    , _color_index(0)
+    , _text_down(false)
+{}
+
+bool client_button::click(vec2 cursor_pos, bool down)
 {
-    strncpy( m_szTitle, szTitle, 64 );
-    m_vPos = vPos;
-    m_vSize = vSize;
+    bool text_over = _text_rectangle.contains(cursor_pos);
+    bool over = !text_over && _rectangle.contains(cursor_pos);
 
-    m_pColor = pColor;
-    m_nColor = 0;
-
-    m_bOver = false;
-    m_bClicked = false;
-
-    m_vTextBoxPos.x = m_vPos.x;
-    m_vTextBoxPos.y = m_vPos.y + m_vSize.y / 2 - 12;
-
-    m_vTextBoxSize.x = m_vSize.x - 16;
-    m_vTextBoxSize.y = 14;
-
-}
-
-bool cClientButton::Click (vec2 vCursorPos, bool bDown)
-{
-    m_bOver = m_Over( vCursorPos );
-
-    m_bTextOver = ( (clamp(vCursorPos.x,m_vTextBoxPos.x-m_vTextBoxSize.x/2,m_vPos.x+m_vTextBoxSize.x/2) == vCursorPos.x )
-        && (clamp(vCursorPos.y,m_vTextBoxPos.y-m_vTextBoxSize.y/2,m_vTextBoxPos.y+m_vTextBoxSize.y/2) == vCursorPos.y ) );
-
-    if ( m_bTextOver )
-    {
-        m_bOver = false;
-        m_bClicked = false;
-
-        if ( bDown )
-        {
+    if (text_over && down) {
+        _text_down = true;
+    } else if (!down) {
+        if (_text_down && text_over) {
             g_Game->bClientButton ^= 1;
-            m_bTextDown ^= 1;
         }
-    
-        return false;
-    }
-    else
-    {
-        m_bTextDown = false;
-        m_bTextOver = false;
+        _text_down = false;
     }
 
-    if (m_bOver && bDown)
-    {
-        m_bClicked = true;
+    if (over && down) {
+        _down = true;
+    } else if (!down) {
+        if (_down && over) {
+            _color_index = (_color_index+1)%NUM_PLAYER_COLORS;
+            *_color_ptr = player_colors[_color_index];
+        }
+        _down = false;
     }
-    else if (m_bClicked && m_bOver && !bDown)
-    {
-        m_bClicked = false;
-        m_nColor = (m_nColor+1)%NUM_PLAYER_COLORS;
-        *m_pColor = player_colors[m_nColor];
-    }
-    else if (!bDown)
-    {
-        m_bClicked = false;
-    }
+
     return false;
 }
 
-void cClientButton::Draw (vec2 vCursorPos)
+void client_button::draw(vec2 cursor_pos) const
 {
-    int     nColorIn, nColorOut, nColorText;
-    int     nTextIn, nTextOut;
-    vec2    vInSize, vTextPos;
+    bool text_over = _text_rectangle.contains(cursor_pos);
+    bool over = !text_over && _rectangle.contains(cursor_pos);
 
-    vec2    vTextBoxText;
+    int text_border_color = (g_Game->bClientButton || text_over) ? 6 : 4;
+    int text_button_color = (g_Game->bClientButton || _text_down) ? 3 : 5;
 
-    m_bOver = m_Over( vCursorPos );
+    int border_color = over ? 6 : 4;
+    int button_color = _down ? 3 : 5;
+    int text_color = button_color + 2;
 
-    m_bTextOver = ( (clamp(vCursorPos.x,m_vTextBoxPos.x-m_vTextBoxSize.x/2,m_vPos.x+m_vTextBoxSize.x/2) == vCursorPos.x )
-        && (clamp(vCursorPos.y,m_vTextBoxPos.y-m_vTextBoxSize.y/2,m_vTextBoxPos.y+m_vTextBoxSize.y/2) == vCursorPos.y ) );
+    draw_rectangle(_rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(_rectangle, _text, menu::colors[text_color], valign_top, 8.0f);
 
-    if ( !g_Game->bClientButton )
-    {
-        m_bTextOver = false;
-        m_bTextDown = false;
-    }
-    else if ( m_bTextOver )
-    {
-        m_bOver = false;
-        m_bClicked = false;
-    }
-    else
-        m_bTextOver = false;
+    draw_rectangle(_text_rectangle, menu::colors[text_button_color], menu::colors[text_border_color]);
+    draw_text(_text_rectangle, g_Game->cls.name, menu::colors[7], valign_bottom|halign_left);
 
-    if ( m_bTextOver )
-        nTextOut = 6;
-    else
-        nTextOut = 4;
-
-    if ( m_bTextDown )
-        nTextIn = 5;
-    else
-        nTextIn = 3;
-
-    if (m_bOver)
-        nColorOut = 6;
-    else
-        nColorOut = 4;
-
-    if (m_bClicked)
-        nColorIn = 3;
-    else
-        nColorIn = 5;
-
-    nColorText = nColorIn + 2;
-
-    vInSize.x = m_vSize.x - 2;
-    vInSize.y = m_vSize.y - 2;
-
-    vTextPos.x = m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH;   // len * char_width / 2
-    vTextPos.y = m_vPos.y - m_vSize.y / 2 + 16;
-    
-    vTextBoxText.x = m_vPos.x - m_vSize.x / 2 + 12;
-    vTextBoxText.y = m_vTextBoxPos.y + 4;
-
-    g_Render->draw_box(m_vSize, m_vPos, menu_colors[nColorOut]);
-    g_Render->draw_box(vInSize, m_vPos, menu_colors[nColorIn]);
-    g_Render->draw_string(m_szTitle, vTextPos, menu_colors[nColorText]);
-
-    g_Render->draw_box(m_vTextBoxSize, m_vTextBoxPos, menu_colors[nTextOut]);
-    g_Render->draw_box(vec2(m_vTextBoxSize.x-2,m_vTextBoxSize.y-2), m_vTextBoxPos, menu_colors[nTextIn]);
-    g_Render->draw_string(g_Game->cls.name, vTextBoxText, menu_colors[7]);
-
-    tank_body_model.draw(m_vPos, 0, *m_pColor);
-    tank_turret_model.draw(m_vPos, 0, *m_pColor);
+    tank_body_model.draw(_rectangle.center(), 0, *_color_ptr);
+    tank_turret_model.draw(_rectangle.center(), 0, *_color_ptr);
 }
 
 /*
 ===============================================================================
 
-Name    :   cCheckButton
+Name    :   server_button
 
 ===============================================================================
 */
 
-cCheckButton::cCheckButton (char *szTitle, vec2 vPos, bool *pValue)
+server_button::server_button(vec2 position, vec2 size, char const* name_ptr, float const* ping_ptr, std::function<void()>&& op_click)
+    : button("", position, size, std::move(op_click))
+    , _join_rectangle(position + vec2(size.x * 0.5f - 18.0f, 0), vec2(32, size.y - 4.0f))
+    , _text_rectangle(position - vec2(17, 0), size - vec2(38, 4))
+    , _name_ptr(name_ptr)
+    , _ping_ptr(ping_ptr)
+{}
+
+bool server_button::click(vec2 cursor_pos, bool down)
 {
-    strncpy( m_szTitle, szTitle, 64 );
-    m_vPos = vPos;
-    m_pValue = pValue;
+    bool over = _join_rectangle.contains(cursor_pos);
 
-    m_bOver = false;
-    m_bClicked = false;
-}
-
-bool cCheckButton::Click (vec2 vCursorPos, bool bDown)
-{
-    if ( over(vCursorPos,m_vPos,vec2(12,12)) )
-    {
-        if (bDown)
-            *m_pValue ^= 1;
-    }
-
-    return false;
-}
-
-void cCheckButton::Draw (vec2 vCursorPos)
-{
-    int nBoxIn, nBoxOut;
-
-    if ( over( vCursorPos, m_vPos, vec2(12,12)) )
-        nBoxOut = 6;
-    else
-        nBoxOut = 4;
-
-    if (*m_pValue)
-        nBoxIn = 6;
-    else
-        nBoxIn = 3;
-
-    g_Render->draw_box(vec2(12,12), m_vPos, menu_colors[nBoxOut]);
-    g_Render->draw_box(vec2(10,10), m_vPos, menu_colors[nBoxIn]);
-    g_Render->draw_string(m_szTitle, vec2(m_vPos.x+10,m_vPos.y+4), menu_colors[7]);
-}
-
-
-/*
-===============================================================================
-
-Name    :   cServerButton
-
-===============================================================================
-*/
-
-cServerButton::cServerButton (vec2 vPos, vec2 vSize, char *szServer, float *flPing, func_t op_click)
-{
-    m_szServer = szServer;
-    m_flPing = flPing;
-
-    m_vPos = vPos;
-    m_vSize = vSize;
-    m_op_click = op_click;
-}
-
-bool cServerButton::Click (vec2 vCursorPos, bool bDown)
-{
-    m_bOver = over( vCursorPos, vec2(m_vPos+vec2(m_vSize.x/2-18,0)), vec2(32,m_vSize.y-4) );
-
-    if ( !m_szServer || !m_szServer[0] )
-    {
-        m_bClicked = false;
-        m_bOver = false;
-
+    if (!_name_ptr || !_name_ptr[0]) {
+        _down = false;
         return false;
     }
 
-    if (m_bOver && bDown)
-    {
-        m_bClicked = true;
-    }
-    else if (m_bClicked && m_bOver && !bDown)
-    {
-        m_bClicked = false;
-        m_op_click( );
-    }
-    else if (!bDown)
-    {
-        m_bClicked = false;
+    if (over && down) {
+        _down = true;
+    } else if (!down) {
+        if (_down && over) {
+            _func();
+        }
+        _down = false;
     }
 
     return false;
 }
 
-void cServerButton::Draw (vec2 vCursorPos)
+void server_button::draw(vec2 cursor_pos) const
 {
-    int     nButtonIn;
-    int     nButtonOut;
-    int     nText;
-
-    g_Render->draw_box(m_vSize, m_vPos, menu_colors[4]);
-    g_Render->draw_box(m_vSize-vec2(2,2), m_vPos, menu_colors[3]);
-    g_Render->draw_box(m_vSize-vec2(38,4), m_vPos-vec2(17,0), menu_colors[2]);
-    g_Render->draw_box(m_vSize-vec2(40,6), m_vPos-vec2(17,0), menu_colors[0]);
+    draw_rectangle(_rectangle, menu::colors[3], menu::colors[4]);
+    draw_rectangle(_text_rectangle, menu::colors[0], menu::colors[2]);
 
     // join button
 
-    if ( m_szServer && m_szServer[0] )
-    {
-        g_Render->draw_string(m_szServer, m_vPos-vec2(m_vSize.x/2-4,-4), menu_colors[7]);
-        g_Render->draw_string(va("%i", (int)(*m_flPing)), m_vPos+vec2(m_vSize.x/2-64,4), menu_colors[7]);
+    if (_name_ptr && _name_ptr[0]) {
+        draw_text(_text_rectangle, _name_ptr, menu::colors[7], halign_left);
+        draw_text(_text_rectangle, va("%i", (int)(*_ping_ptr)), menu::colors[7], halign_right);
 
-        if ( over( vCursorPos, vec2(m_vPos+vec2(m_vSize.x/2-18,0)), vec2(32,m_vSize.y-4) ) )
-            nButtonOut = 6;
-        else
-            nButtonOut = 4;
+        bool over = _join_rectangle.contains(cursor_pos);
 
-        if ( m_bClicked )
-            nButtonIn = 3;
-        else
-            nButtonIn = 5;
+        int border_color = over ? 6 : 4;
+        int button_color = _down ? 3 : 5;
+        int text_color = 7;
 
-        nText = 7;
+        draw_rectangle(_join_rectangle, menu::colors[button_color], menu::colors[border_color]);
+        draw_text(_join_rectangle, "Join", menu::colors[text_color]);
+    } else {
+        draw_rectangle(_join_rectangle, menu::colors[4], menu::colors[2]);
+        draw_text(_join_rectangle, "Join", menu::colors[2]);
     }
-    else
-    {
-        nButtonIn = 4;
-        nButtonOut = 2;
-        nText = 2;
-    }
-
-    g_Render->draw_box(vec2(32,m_vSize.y-4), m_vPos+vec2(m_vSize.x/2-18,0), menu_colors[nButtonOut]);
-    g_Render->draw_box(vec2(30,m_vSize.y-6), m_vPos+vec2(m_vSize.x/2-18,0), menu_colors[nButtonIn]);
-    g_Render->draw_string("Join", m_vPos+vec2(m_vSize.x/2-26,4), menu_colors[nText]);
 }
 
 /*
 ===============================================================================
 
-Name    :   cHostButton
+Name    :   host_button
 
 ===============================================================================
 */
 
-cHostButton::cHostButton (vec2 vPos, vec2 vSize, func_t op_click)
-{
-    m_vPos = vPos;
-    m_vSize = vSize;
-    m_op_click = op_click;
-}
+host_button::host_button(vec2 position, vec2 size, std::function<void()>&& op_click)
+    : button("Host", position, size, std::move(op_click))
+    , _create_rectangle(position + vec2(size.x * 0.5f - 18.0f, 0), vec2(32, size.y - 4.0f))
+    , _text_rectangle(position - vec2(17, 0), size - vec2(38, 4))
+    , _create_down(false)
+    , _text_down(false)
+{}
 
-bool cHostButton::Click (vec2 vCursorPos, bool bDown)
+bool host_button::click(vec2 cursor_pos, bool down)
 {
-    m_bOver = over( vCursorPos, vec2(m_vPos+vec2(m_vSize.x/2-18,0)), vec2(32,m_vSize.y-4) );
+    bool text_over = _text_rectangle.contains(cursor_pos);
+    bool create_over = _create_rectangle.contains(cursor_pos);
 
-    if (m_bOver && bDown)
-    {
-        m_bClicked = true;
+    if (create_over && down) {
+        _create_down = true;
+    } else if (!down) {
+        if (_create_down && create_over) {
+            _func();
+        }
+        _create_down = false;
     }
-    else if (m_bClicked && m_bOver && !bDown)
-    {
-        m_bClicked = false;
-        m_op_click( );
-    }
-    else if ( over( vCursorPos, m_vPos, m_vSize ) )
-    {
-        if ( bDown )
-            g_Game->bServerButton ^= true;
-    }
-    else if (!bDown)
-    {
-        m_bClicked = false;
+
+    if (text_over && down) {
+        _text_down = true;
+    } else if (!down) {
+        if (_text_down && text_over) {
+            g_Game->bServerButton ^= 1;
+        }
+        _text_down = false;
     }
 
     return false;
 }
 
-void cHostButton::Draw (vec2 vCursorPos)
+void host_button::draw(vec2 cursor_pos) const
 {
-    int     nButtonIn;
-    int     nButtonOut;
+    int text_button_color = g_Game->bServerButton ? 5 : 3;
 
-    int     nInner;
+    draw_rectangle(_rectangle, menu::colors[3], menu::colors[4]);
+    draw_rectangle(_text_rectangle, menu::colors[text_button_color]);
+    draw_text(_text_rectangle, g_Game->svs.name, menu::colors[7], halign_left);
 
-    if ( g_Game->bServerButton )
-        nInner = 5;
-    else
-        nInner = 2;
+    bool over = _create_rectangle.contains(cursor_pos);
 
-    g_Render->draw_box(m_vSize, m_vPos, menu_colors[4]);
-    g_Render->draw_box(m_vSize-vec2(2,2), m_vPos, menu_colors[3]);
-    g_Render->draw_box(m_vSize-vec2(38,4), m_vPos-vec2(17,0), menu_colors[nInner]);
+    int border_color = over ? 6 : 4;
+    int button_color = _down ? 3 : 5;
+    int text_color = 7;
 
-    // create button
-
-    g_Render->draw_string(g_Game->svs.name, m_vPos-vec2(m_vSize.x/2-4,-4), menu_colors[7]);
-
-    if ( over( vCursorPos, vec2(m_vPos+vec2(m_vSize.x/2-18,0)), vec2(32,m_vSize.y-4) ) )
-        nButtonOut = 6;
-    else
-        nButtonOut = 4;
-
-    if ( m_bClicked )
-        nButtonIn = 3;
-    else
-        nButtonIn = 5;
-
-    g_Render->draw_box(vec2(32,m_vSize.y-4), m_vPos+vec2(m_vSize.x/2-18,0), menu_colors[nButtonOut]);
-    g_Render->draw_box(vec2(30,m_vSize.y-6), m_vPos+vec2(m_vSize.x/2-18,0), menu_colors[nButtonIn]);
-    g_Render->draw_string("Create", m_vPos+vec2(m_vSize.x/2-32,4), menu_colors[7]);
-
+    draw_rectangle(_create_rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(_create_rectangle, "Create", menu::colors[text_color]);
 }
+
+} // namespace menu

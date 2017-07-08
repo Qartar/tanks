@@ -13,19 +13,7 @@ Date    :   10/20/2004
 #include "local.h"
 #pragma hdrstop
 
-// menu func routines
-void menu_func_resume   () { g_Game->Resume( );     }
-void menu_func_newgame  () { g_Game->m_StopClient( ); g_Game->m_StopServer( ); g_Game->NewGame( );  }
-void menu_func_reset    () { g_Game->Reset( );      }
-void menu_func_quit     () { g_Game->m_StopClient( ); g_Game->m_StopServer( ); g_Application->Quit( 0 );    }
-
-void menu_func_host     () { g_Game->m_bDedicated = false; g_Game->m_StartServer( ); }
-void menu_func_refresh  () { g_Game->m_InfoAsk( ); }
-
-void menu_func_join0    () { g_Game->m_ConnectToServer( 0 ); }
-void menu_func_join1    () { g_Game->m_ConnectToServer( 1 ); }
-void menu_func_join2    () { g_Game->m_ConnectToServer( 2 ); }
-void menu_func_join3    () { g_Game->m_ConnectToServer( 3 ); }
+namespace menu {
 
 /*
 ===========================================================
@@ -37,99 +25,96 @@ Purpose :   Handles GUI
 ===========================================================
 */
 
-void cMenu::Init ()
+void window::init ()
 {
     // base
 
-    m_SubMenus[0] = new cMenu;  // local
-    m_SubMenus[1] = new cMenu;  // network
-    m_SubMenus[2] = new cMenu;  // options
-    AddButton( new cCondButton( "Resume",           vec2(64,32),    vec2(96,32),    menu_func_resume,   &g_Game->m_bGameActive ) );
-    AddButton( new cMenuButton( "Network Game",     vec2(192,32),   vec2(96,32),    this,   m_SubMenus[1] ) );
-    AddButton( new cMenuButton( "Local Game",       vec2(320,32),   vec2(96,32),    this,   m_SubMenus[0] ) );
-    AddButton( new cMenuButton( "Game Options",     vec2(448,32),   vec2(96,32),    this,   m_SubMenus[2] ) );
-    AddButton( new cBaseButton( "Quit",             vec2(576,32),   vec2(96,32),    menu_func_quit ) );
+    _submenus.emplace_back(new menu::window);  // local
+    _submenus.emplace_back(new menu::window);  // network
+    _submenus.emplace_back(new menu::window);  // options
+
+    add_button<conditional_button>("Resume", vec2(64,32), vec2(96,32), &g_Game->m_bGameActive, [](){
+        g_Game->Resume();
+    });
+
+    add_button<submenu_button>("Network Game", vec2(192,32), vec2(96,32), this, _submenus[1].get());
+    add_button<submenu_button>("Local Game", vec2(320,32), vec2(96,32), this, _submenus[0].get());
+    add_button<submenu_button>("Game Options", vec2(448,32), vec2(96,32), this, _submenus[2].get());
+
+    add_button<button>("Quit", vec2(576,32), vec2(96,32), [](){
+        g_Game->m_StopClient();
+        g_Game->m_StopServer();
+        g_Application->Quit(0);
+    });
 
     // local
 
-    m_SubMenus[0]->AddButton( new cBaseButton( "New Round", vec2(48,80),    vec2(64,32),    menu_func_newgame ) );
-    m_SubMenus[0]->AddButton( new cBaseButton( "Reset",     vec2(48,128),   vec2(64,32),    menu_func_reset ) );
+    _submenus[0]->add_button<button>("New Round", vec2(48,80), vec2(64,32), [](){
+        g_Game->m_StopClient();
+        g_Game->m_StopServer();
+        g_Game->NewGame();
+    });
+
+    _submenus[0]->add_button<button>("Reset", vec2(48,128), vec2(64,32), [](){
+        g_Game->Reset();
+    });
 
     // network
 
-    m_SubMenus[1]->m_SubMenus[0] = new cMenu;
-    m_SubMenus[1]->m_SubMenus[1] = new cMenu;
-    m_SubMenus[1]->AddButton( new cMenuButton( "Host",      vec2(48,80),    vec2(64,24),    m_SubMenus[1], m_SubMenus[1]->m_SubMenus[0] ) );
-    m_SubMenus[1]->AddButton( new cMenuButton( "Join",      vec2(128,80),   vec2(64,24),    m_SubMenus[1], m_SubMenus[1]->m_SubMenus[1] ) );
+    _submenus[1]->_submenus.emplace_back(new menu::window);
+    _submenus[1]->_submenus.emplace_back(new menu::window);
+    _submenus[1]->add_button<submenu_button>("Host", vec2(48,80), vec2(64,24), _submenus[1].get(), _submenus[1]->_submenus[0].get());
+    _submenus[1]->add_button<submenu_button>("Join", vec2(128,80), vec2(64,24), _submenus[1].get(), _submenus[1]->_submenus[1].get());
 
     // network->host
 
-    m_SubMenus[1]->m_SubMenus[0]->AddButton( new cHostButton( vec2(144,128), vec2(256,24),  menu_func_host ) );
+    _submenus[1]->_submenus[0]->add_button<host_button>(vec2(144,128), vec2(256,24), [](){
+        g_Game->m_bDedicated = false;
+        g_Game->m_StartServer();
+    });
 
     // network->join
 
-    m_SubMenus[1]->m_SubMenus[1]->AddButton( new cBaseButton( "Refresh",    vec2(240,80),   vec2(64,24),    menu_func_refresh   )   );
-    m_SubMenus[1]->m_SubMenus[1]->AddButton( new cServerButton( vec2(144,128), vec2(256,24), g_Game->cls.servers[0].name, &g_Game->cls.servers[0].ping, menu_func_join0 ) );
-    m_SubMenus[1]->m_SubMenus[1]->AddButton( new cServerButton( vec2(144,160), vec2(256,24), g_Game->cls.servers[1].name, &g_Game->cls.servers[1].ping, menu_func_join1 ) );
-    m_SubMenus[1]->m_SubMenus[1]->AddButton( new cServerButton( vec2(144,192), vec2(256,24), g_Game->cls.servers[2].name, &g_Game->cls.servers[2].ping, menu_func_join2 ) );
-    m_SubMenus[1]->m_SubMenus[1]->AddButton( new cServerButton( vec2(144,224), vec2(256,24), g_Game->cls.servers[3].name, &g_Game->cls.servers[3].ping, menu_func_join3 ) );
+    _submenus[1]->_submenus[1]->add_button<button>("Refresh", vec2(240,80), vec2(64,24), [](){
+        g_Game->m_InfoAsk( );
+    });
+
+    for (int ii = 0; ii < 8; ++ii) {
+        _submenus[1]->_submenus[1]->add_button<server_button>(vec2(144,128+ii*32), vec2(256,24), g_Game->cls.servers[ii].name, &g_Game->cls.servers[ii].ping, [ii](){
+            g_Game->m_ConnectToServer(ii);
+        });
+    }
 
     // options
 
-    m_SubMenus[2]->AddButton( new cClientButton( "Player",  vec2(64,104),   vec2(96,80),    &g_Game->cls.color ) );
+    _submenus[2]->add_button<client_button>("Player", vec2(64,104), vec2(96,80), &g_Game->cls.color);
 }
 
-void cMenu::Shutdown ()
+//------------------------------------------------------------------------------
+void window::shutdown()
 {
-    int         i;
-
-    for (i=0 ; i<MAX_BUTTONS ; i++)
-        if (m_Buttons[i])
-            delete m_Buttons[i];
-
-    for (i=0 ; i<MAX_SUBMENUS ; i++)
-        if (m_SubMenus[i])
-        {
-            m_SubMenus[i]->Shutdown( );
-            delete m_SubMenus[i];
-        }
+    _buttons.clear();
+    _submenus.clear();
 }
 
-void cMenu::AddButton (cBaseButton *pButton)
+//------------------------------------------------------------------------------
+bool window::activate(submenu_button* button, menu::window* submenu)
 {
-    int         i;
-
-    for (i=0 ; i<MAX_BUTTONS ; i++)
+    if (submenu == _active_menu)
     {
-        if (m_Buttons[i])
-            continue;
-
-        m_Buttons[i] = pButton;
-        return;
-    }
-
-    // couldn't add it, delete it to avoid mem leaks
-    delete pButton;
-}
-
-bool cMenu::ActivateMenu (cMenuButton *pButton, cMenu *pActiveMenu)
-{
-    if (pActiveMenu == m_ActiveMenu)
-    {
-        m_ActiveMenu = NULL;
-        m_ActiveButton = NULL;
+        _active_button = nullptr;
+        _active_menu = nullptr;
         return false;   // deactivates caller
     }
 
-    if (m_ActiveButton)
-        m_ActiveButton->Deactivate( );
-    m_ActiveButton = pButton;
-
-    m_ActiveMenu = pActiveMenu;
+    if (_active_button) {
+        _active_button->deactivate();
+    }
+    _active_button = button;
+    _active_menu = submenu;
 
     return true;
 }
-
 
 /*
 ===========================================================
@@ -141,26 +126,17 @@ Purpose :   Draws the menu to the screen
 ===========================================================
 */
 
-#define COL1    320-96+4
-#define COL2    320-16
-#define COL3    320+48
-
-#define ROW     240-128+16
-
-void cMenu::Draw (vec2 vCursorPos)
+void window::draw(vec2 cursor_pos) const
 {
-    int         i;
-
     // draw buttons
-
-    for (i=0 ; i<MAX_BUTTONS ; i++)
-        if (m_Buttons[i])
-            m_Buttons[i]->Draw( vCursorPos );
+    for (auto const& button : _buttons) {
+        button->draw(cursor_pos);
+    }
 
     // draw submenu
-
-    if (m_ActiveMenu)
-        m_ActiveMenu->Draw( vCursorPos );
+    if (_active_menu) {
+        _active_menu->draw(cursor_pos);
+    }
 }
 
 /*
@@ -173,56 +149,14 @@ Purpose :   Processes a click from the user
 ===========================================================
 */
 
-void cMenu::Click (vec2 vCursorPos, bool bDown)
+void window::click(vec2 cursor_pos, bool down)
 {
-    int         i = 0;
-
-    for (i=0 ; i<MAX_BUTTONS ; i++)
-        if (m_Buttons[i])
-            m_Buttons[i]->Click( vCursorPos, bDown );
-
-    if (m_ActiveMenu)
-        m_ActiveMenu->Click( vCursorPos, bDown );
+    for (auto& button : _buttons) {
+        button->click(cursor_pos, down);
+    }
+    if (_active_menu) {
+        _active_menu->click(cursor_pos, down);
+    }
 }
 
-/*
-===========================================================
-
-Name    :   cOptionsMenu
-
-Purpose :   behaves a bit different than cMenu
-
-===========================================================
-*/
-
-cOptionsMenu::cOptionsMenu (char *szTitle, vec2 vPos, vec2 vSize)
-{
-    strncpy( m_szTitle, szTitle, 64 );
-    m_vPos = vPos;
-    m_vSize = vSize;
-}
-
-void cOptionsMenu::Draw (vec2 vCursorPos)
-{
-    int         i;
-
-    g_Render->draw_box(m_vSize, m_vPos, menu_colors[4]);
-    g_Render->draw_box(vec2(m_vSize.x-2,m_vSize.y-2), m_vPos, menu_colors[5]);
-    g_Render->draw_string(m_szTitle, vec2(m_vPos.x - strlen(m_szTitle)*CHAR_WIDTH,m_vPos.y - m_vSize.y / 2 + 12), menu_colors[7]);
-
-    for (i=0 ; i<MAX_BUTTONS ; i++)
-        if (m_Buttons[i])
-            m_Buttons[i]->Draw( vCursorPos );
-}
-
-void cOptionsMenu::Click (vec2 vCursorPos, bool bDown)
-{
-    int         i = 0;
-
-    for (i=0 ; i<MAX_BUTTONS ; i++)
-        if (m_Buttons[i])
-            m_Buttons[i]->Click( vCursorPos, bDown );
-
-    if (m_ActiveMenu)
-        m_ActiveMenu->Click( vCursorPos, bDown );
-}
+} // namespace menu
