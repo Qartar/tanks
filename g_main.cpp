@@ -47,6 +47,8 @@ void FindServer (bool bConnect);
 
 cGame::cGame()
     : m_Players{0}
+    , bClientButton(false)
+    , bServerButton(false)
 {
     g_Game = this;
     pMain = this;
@@ -709,7 +711,7 @@ int cGame::Key_Event (unsigned char Key, bool Down)
         case 'L':
         case 'k':   // fire
         case 'K':
-            if ( !m_bMultiactive || m_bMultiserver )
+            if ( (!m_bMultiactive || m_bMultiserver) && m_Players[0] )
                 m_Players[0]->update_keys( Key, Down );
             else
                 m_ClientKeys( Key, Down );
@@ -725,7 +727,7 @@ int cGame::Key_Event (unsigned char Key, bool Down)
         case K_KP_RIGHTARROW:
         case '5':           // fire
         case K_KP_5:
-            if ( !m_bMultiactive )
+            if ( !m_bMultiactive && m_Players[1] )
                 m_Players[1]->update_keys( Key, Down );
             break;
 
