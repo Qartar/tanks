@@ -26,7 +26,7 @@ object::object(object_type type, object* owner)
 {}
 
 //------------------------------------------------------------------------------
-void object::touch(object* /*other*/, float /*impulse = 0*/)
+void object::touch(object* /*other*/, physics::contact const* /*contact*/)
 {
 }
 

@@ -11,6 +11,7 @@ Purpose :   tanks!
 #include "local.h"
 #pragma hdrstop
 
+#include "p_collide.h"
 #include "keys.h"
 
 namespace game {
@@ -111,17 +112,21 @@ void tank::draw() const
 }
 
 //------------------------------------------------------------------------------
-void tank::touch(object *other, float impulse)
+void tank::touch(object *other, physics::contact const* contact)
 {
-    if (!other) {
+    if (!other || !contact) {
         return;
     }
+
+    float impulse = contact->impulse.length();
+    float strength = clamp((impulse - 5.0f) / 5.0f, 0.0f, 1.0f);
+    _world->add_effect(effect_type::sparks, contact->point, -contact->normal, strength);
 
     if (other->_type != object_type::tank) {
         return;
     }
 
-    float base_damage = (max(0, impulse - 5.0f) / 5.0f) * FRAMETIME;
+    float base_damage = std::max<float>(0, contact->impulse.length() - 5.0f) / 5.0f * FRAMETIME;
     tank* other_tank = static_cast<tank*>(other);
 
     this->collide(other_tank, base_damage);
@@ -203,7 +208,7 @@ void tank::think()
         if (_dead_time && (g_Game->m_flTime - _dead_time > 650) && (g_Game->m_flTime - _dead_time < 650+HACK_TIME/2))
         {
             _world->add_sound(_sound_explode);
-            _world->add_effect(get_position(), effect_type::explosion);
+            _world->add_effect(effect_type::explosion, get_position());
             _dead_time -= HACK_TIME;    // dont do it again
         }
     }
@@ -230,7 +235,8 @@ void tank::think()
         flPower = 1.5 - (g_Game->m_flTime - _fire_time)/1000.0f;
         flPower = clamp(flPower, 0.5f, 1.5f);
 
-        _world->add_smoke_effect(
+        _world->add_effect(
+            effect_type::smoke,
             get_position() + rot(vOrg,_turret_rotation),
             rot(vOrg,_turret_rotation) * flPower * flPower * flPower * 2,
             flPower * flPower * 4 );
@@ -242,7 +248,8 @@ void tank::think()
         {
             vec2    vOrg(21,0);
 
-            _world->add_smoke_effect(
+            _world->add_effect(
+                effect_type::smoke,
                 get_position() + rot(vOrg,_turret_rotation),
                 rot(vOrg,_turret_rotation) * 16,
                 64 );
@@ -415,10 +422,10 @@ projectile::projectile(tank* owner, float damage)
 #define DAMAGE_FULL     1.0f
 
 //------------------------------------------------------------------------------
-void projectile::touch(object *other, float impulse)
+void projectile::touch(object *other, physics::contact const* contact)
 {
     _world->add_sound(_sound_explode);
-    _world->add_effect(get_position(), effect_type::explosion);
+    _world->add_effect(effect_type::explosion, get_position(), contact ? -contact->normal : vec2(0,0));
 
     _world->remove(this);
 

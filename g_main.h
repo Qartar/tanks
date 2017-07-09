@@ -250,7 +250,7 @@ public:
     void    m_InfoAsk ();
 
     void    m_WriteSound (int nSound);
-    void    m_WriteEffect (int type, vec2 pos, vec2 vel, int count);
+    void    m_WriteEffect (int type, vec2 pos, vec2 vel, float strength);
 
     client_state_t  cls;
     server_state_t  svs;

@@ -854,46 +854,34 @@ void cGame::m_ReadSound ()
     pSound->playSound( nSound, vec3(0,0,0), 1.0f, 0.0f );
 }
 
-void cGame::m_WriteEffect (int type, vec2 pos, vec2 vel, int count)
+void cGame::m_WriteEffect (int type, vec2 pos, vec2 vel, float strength)
 {
     netmsg_t    netmsg;
     static byte netmsgbuf[MAX_MSGLEN];
 
-    if ( !m_bMultiserver )
+    if (!m_bMultiserver)
         return;
 
-    netmsg.Init( netmsgbuf, MAX_MSGLEN );
-    netmsg.Clear( );
+    netmsg.Init(netmsgbuf, MAX_MSGLEN);
+    netmsg.Clear();
 
-    netmsg.WriteByte( svc_effect );
-    netmsg.WriteByte( type );
-    netmsg.WriteVector( pos );
-    if ( type == static_cast<int>(game::effect_type::smoke) )
-    {
-        netmsg.WriteVector( vel );
-        netmsg.WriteShort( count );
-    }
+    netmsg.WriteByte(svc_effect);
+    netmsg.WriteByte(type);
+    netmsg.WriteVector(pos);
+    netmsg.WriteVector(vel);
+    netmsg.WriteFloat(strength);
 
-    m_Broadcast( netmsg.nCurSize, netmsgbuf );
+    m_Broadcast(netmsg.nCurSize, netmsgbuf);
 }
 
 void cGame::m_ReadEffect ()
 {
-    int     type;
-    vec2    pos;
-    vec2    vel;
-    int     count;
+    int type = m_netmsg.ReadByte();
+    vec2 pos = m_netmsg.ReadVector();
+    vec2 vel = m_netmsg.ReadVector();
+    float strength = m_netmsg.ReadFloat();
 
-    type = m_netmsg.ReadByte( );
-    pos = m_netmsg.ReadVector( );
-    if ( type == static_cast<int>(game::effect_type::smoke) )
-    {
-        vel = m_netmsg.ReadVector( );
-        count = m_netmsg.ReadShort( );
-        m_World.add_smoke_effect( pos, vel, count );
-    }
-    else
-        m_World.add_effect( pos, static_cast<game::effect_type>(type) );
+    m_World.add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
 }
 
 /*

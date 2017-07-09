@@ -27,6 +27,10 @@ Date    :   10/21/2004
 
 class cGame;
 
+namespace physics {
+struct contact;
+}
+
 namespace game {
 
 class tank;
@@ -57,7 +61,7 @@ public:
     std::size_t spawn_id() const { return _spawn_id; }
 
     virtual void draw() const;
-    virtual void touch(object *other, float impulse = 0);
+    virtual void touch(object *other, physics::contact const* contact);
     virtual void think();
 
     //! Get frame-interpolated position
@@ -124,7 +128,7 @@ public:
     projectile(tank* owner, float damage);
 
     virtual void draw() const override;
-    virtual void touch(object *other, float impulse = 0) override;
+    virtual void touch(object *other, physics::contact const* contact) override;
 
     static physics::circle_shape _shape;
     static physics::material _material;
@@ -143,7 +147,7 @@ public:
     ~tank();
 
     virtual void draw() const override;
-    virtual void touch(object *other, float impulse = 0) override;
+    virtual void touch(object *other, physics::contact const* contact) override;
     virtual void think() override;
 
     //! Get frame-interpolated turret rotation
@@ -220,8 +224,7 @@ public:
     void remove(object* object);
 
     void add_sound(int sound_index);
-    void add_smoke_effect(vec2 position, vec2 velocity, int count);
-    void add_effect(vec2 position, effect_type type, float strength = 1);
+    void add_effect(effect_type type, vec2 position, vec2 direction = vec2(0,0), float strength = 1);
 
     vec2 mins() const { return _mins; }
     vec2 maxs() const { return _maxs; }

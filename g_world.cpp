@@ -194,6 +194,7 @@ void world::move_object(game::object *object)
     if (object->_type == object_type::projectile) {
         game::object* bestObject = NULL;
         float bestFraction = 1.f;
+        physics::contact contact;
 
         vec2 start = object->get_position();
         vec2 end = start + object->get_linear_velocity() * FRAMETIME;
@@ -212,12 +213,13 @@ void world::move_object(game::object *object)
             if (tr.get_fraction() < bestFraction) {
                 bestFraction = tr.get_fraction();
                 bestObject = other.get();
+                contact = tr.get_contact();
             }
         }
 
         if (bestObject) {
             object->set_position(start + (end - start) * bestFraction);
-            object->touch( bestObject );
+            object->touch(bestObject, &contact);
         } else {
             object->set_position(end);
         }
@@ -234,10 +236,6 @@ void world::move_object(game::object *object)
             auto c = physics::collide(&object->rigid_body(), &other->rigid_body());
 
             if (c.has_contact()) {
-                float impulse = c.get_contact().impulse.length();
-                float strength = clamp((impulse - 5.0f) / 5.0f, 0.0f, 1.0f);
-                add_effect(c.get_contact().point, effect_type::sparks, strength);
-
                 object->apply_impulse(
                     -c.get_contact().impulse,
                     c.get_contact().point
@@ -248,7 +246,7 @@ void world::move_object(game::object *object)
                     c.get_contact().point
                 );
 
-                object->touch(other.get(), impulse);
+                object->touch(other.get(), &c.get_contact());
             }
         }
 
@@ -282,13 +280,37 @@ Purpose :   adds particle effects
 ===========================================================
 */
 
-void world::add_effect(vec2 position, effect_type type, float strength)
+void world::add_effect(effect_type type, vec2 position, vec2 direction, float strength)
 {
-    g_Game->m_WriteEffect(static_cast<int>(type), position, vec2(0,0), 0);
+    g_Game->m_WriteEffect(static_cast<int>(type), position, direction, strength);
 
     float   r, d;
 
     switch (type) {
+        case effect_type::smoke: {
+            int count = strength;
+            render::particle* p;
+
+            for (int ii = 0; ii < count; ++ii) {
+                if ( (p = add_particle()) == NULL )
+                    return;
+
+                r = frand()*M_PI*2.0f;
+                d = frand();
+                p->position = position + vec2(cos(r)*d,sin(r)*d);
+                p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
+
+                p->size = 2.0f + frand()*4.0f;
+                p->size_velocity = 2.0 + frand()*2.0f;
+
+                p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color_velocity = vec4(0,0,0,-p->color.a / (1+frand()*1.0f));
+
+                p->drag = 1.5f + frand() * 1.5f;
+            }
+            break;
+        }
+
         case effect_type::sparks: {
             render::particle* p;
 
@@ -302,6 +324,7 @@ void world::add_effect(vec2 position, effect_type type, float strength)
                 d = frand()*128;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
+                p->velocity += direction * d * 0.5f;
 
                 p->color = vec4(1,0.5+frand()*0.5,0,strength*(0.5f+frand()));
                 p->color_velocity = vec4(0,-1.0f,0,-2.0f - frand());
@@ -324,6 +347,7 @@ void world::add_effect(vec2 position, effect_type type, float strength)
                 d = frand()*24;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
+                p->velocity += direction * d * 0.5f;
 
                 p->size = 4.0f + frand()*8.0f;
                 p->size_velocity = 2.0;
@@ -345,7 +369,7 @@ void world::add_effect(vec2 position, effect_type type, float strength)
                 return;
 
             p->position = position;
-            p->velocity = vec2(0,0);
+            p->velocity = direction * 48.0f;
 
             p->color = vec4(1.0f,1.0f,0.5f,0.5f);
             p->color_velocity = -p->color * vec4(0,1,3,3);
@@ -368,6 +392,7 @@ void world::add_effect(vec2 position, effect_type type, float strength)
                 d = sqrt(frand()) * 128.0f;
 
                 p->velocity = vec2(cos(r),sin(r)) * d;
+                p->velocity += direction * d * 0.5f;
 
                 p->size = 4.0f + frand()*8.0f;
                 p->size_velocity = 2.0;
@@ -393,6 +418,7 @@ void world::add_effect(vec2 position, effect_type type, float strength)
                 d = sqrt(frand()) * 128.0f;
 
                 p->velocity = vec2(cos(r),sin(r))*d;
+                p->velocity += direction * d * 0.5f;
 
                 p->color = vec4(1.0f,frand(),0.0f,0.1f);
                 p->color_velocity = vec4(0,0,0,-p->color.a/(0.5+frand()*frand()*2.5f));
@@ -417,6 +443,7 @@ void world::add_effect(vec2 position, effect_type type, float strength)
                 d = frand()*128;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
+                p->velocity += direction * d * 0.5f;
 
                 p->color = vec4(1,0.5+frand()*0.5,0,1);
                 p->color_velocity = vec4(0,0,0,-1.5f-frand());
@@ -430,32 +457,6 @@ void world::add_effect(vec2 position, effect_type type, float strength)
 
         default:
             break;
-    }
-}
-
-void world::add_smoke_effect(vec2 position, vec2 velocity, int count)
-{
-    render::particle* p;
-    float       r, d;
-
-    g_Game->m_WriteEffect(static_cast<int>(effect_type::smoke), position, velocity, count);
-
-    for (int ii = 0; ii < count; ++ii) {
-        if ( (p = add_particle()) == NULL )
-            return;
-
-        r = frand()*M_PI*2.0f;
-        d = frand();
-        p->position = position + vec2(cos(r)*d,sin(r)*d);
-        p->velocity = velocity * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
-
-        p->size = 2.0f + frand()*4.0f;
-        p->size_velocity = 2.0 + frand()*2.0f;
-
-        p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
-        p->color_velocity = vec4(0,0,0,-p->color.a / (1+frand()*1.0f));
-
-        p->drag = 1.5f + frand() * 1.5f;
     }
 }
 
