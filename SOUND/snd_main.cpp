@@ -44,7 +44,7 @@ int cSound::Init ()
         GetSystemInfo( &sysinfo );
 
         if ( (m_hHeap = HeapCreate( 0, sysinfo.dwPageSize, 0 )) == NULL )
-            pMain->Message( "sound heap allocation failed\n" );
+            pMain->message( "sound heap allocation failed\n" );
     }
     else
         m_hHeap = false;
@@ -235,7 +235,7 @@ snd_link_t *cSound::Create (char *szFilename)
         pLink->nNumber = MAX_SOUNDS;
         Delete( pLink );
 
-        pMain->Message( "could not load %s: out of room\n", szFilename );
+        pMain->message( "could not load %s: out of room\n", szFilename );
         return NULL;
     }
 

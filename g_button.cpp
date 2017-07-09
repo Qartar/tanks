@@ -216,7 +216,7 @@ bool client_button::click(vec2 cursor_pos, bool down)
         _text_down = true;
     } else if (!down) {
         if (_text_down && text_over) {
-            g_Game->bClientButton ^= 1;
+            g_Game->_client_button_down ^= 1;
         }
         _text_down = false;
     }
@@ -226,7 +226,7 @@ bool client_button::click(vec2 cursor_pos, bool down)
     } else if (!down) {
         if (_down && over) {
             _color_index = (_color_index+1)%NUM_PLAYER_COLORS;
-            *_color_ptr = player_colors[_color_index];
+            *_color_ptr = game::player_colors[_color_index];
         }
         _down = false;
     }
@@ -239,8 +239,8 @@ void client_button::draw(vec2 cursor_pos) const
     bool text_over = _text_rectangle.contains(cursor_pos);
     bool over = !text_over && _rectangle.contains(cursor_pos);
 
-    int text_border_color = (g_Game->bClientButton || text_over) ? 6 : 4;
-    int text_button_color = (g_Game->bClientButton || _text_down) ? 3 : 5;
+    int text_border_color = (g_Game->_client_button_down || text_over) ? 6 : 4;
+    int text_button_color = (g_Game->_client_button_down || _text_down) ? 3 : 5;
 
     int border_color = over ? 6 : 4;
     int button_color = _down ? 3 : 5;
@@ -352,7 +352,7 @@ bool host_button::click(vec2 cursor_pos, bool down)
         _text_down = true;
     } else if (!down) {
         if (_text_down && text_over) {
-            g_Game->bServerButton ^= 1;
+            g_Game->_server_button_down ^= 1;
         }
         _text_down = false;
     }
@@ -362,7 +362,7 @@ bool host_button::click(vec2 cursor_pos, bool down)
 
 void host_button::draw(vec2 cursor_pos) const
 {
-    int text_button_color = g_Game->bServerButton ? 5 : 3;
+    int text_button_color = g_Game->_server_button_down ? 5 : 3;
 
     draw_rectangle(_rectangle, menu::colors[3], menu::colors[4]);
     draw_rectangle(_text_rectangle, menu::colors[text_button_color]);

@@ -59,7 +59,7 @@ int cSoundChannel::playSound (int nSound, bool bLooping)
 
     if ( !m_pSound )
     {
-        pMain->Message( "could not play sound %i: does not exist\n", nSound );
+        pMain->message( "could not play sound %i: does not exist\n", nSound );
         return ERROR_FAIL;
     }
 

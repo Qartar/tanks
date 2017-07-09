@@ -52,7 +52,7 @@ public:
 class vMain
 {
 public:
-    virtual int Message (char *szMessage, ...) = 0;
+    virtual int message (char const* message, ...) = 0;
 };
 
 extern vMain    *pMain;

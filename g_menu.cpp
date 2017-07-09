@@ -33,8 +33,8 @@ void window::init ()
     _submenus.emplace_back(new menu::window);  // network
     _submenus.emplace_back(new menu::window);  // options
 
-    add_button<conditional_button>("Resume", vec2(64,32), vec2(96,32), &g_Game->m_bGameActive, [](){
-        g_Game->Resume();
+    add_button<conditional_button>("Resume", vec2(64,32), vec2(96,32), &g_Game->_game_active, [](){
+        g_Game->resume();
     });
 
     add_button<submenu_button>("Network Game", vec2(192,32), vec2(96,32), this, _submenus[1].get());
@@ -42,21 +42,21 @@ void window::init ()
     add_button<submenu_button>("Game Options", vec2(448,32), vec2(96,32), this, _submenus[2].get());
 
     add_button<button>("Quit", vec2(576,32), vec2(96,32), [](){
-        g_Game->m_StopClient();
-        g_Game->m_StopServer();
+        g_Game->stop_client();
+        g_Game->stop_server();
         g_Application->Quit(0);
     });
 
     // local
 
     _submenus[0]->add_button<button>("New Round", vec2(48,80), vec2(64,32), [](){
-        g_Game->m_StopClient();
-        g_Game->m_StopServer();
-        g_Game->NewGame();
+        g_Game->stop_client();
+        g_Game->stop_server();
+        g_Game->new_game();
     });
 
     _submenus[0]->add_button<button>("Reset", vec2(48,128), vec2(64,32), [](){
-        g_Game->Reset();
+        g_Game->reset();
     });
 
     // network
@@ -69,19 +69,19 @@ void window::init ()
     // network->host
 
     _submenus[1]->_submenus[0]->add_button<host_button>(vec2(144,128), vec2(256,24), [](){
-        g_Game->m_bDedicated = false;
-        g_Game->m_StartServer();
+        g_Game->_dedicated = false;
+        g_Game->start_server();
     });
 
     // network->join
 
     _submenus[1]->_submenus[1]->add_button<button>("Refresh", vec2(240,80), vec2(64,24), [](){
-        g_Game->m_InfoAsk( );
+        g_Game->info_ask( );
     });
 
     for (int ii = 0; ii < 8; ++ii) {
         _submenus[1]->_submenus[1]->add_button<server_button>(vec2(144,128+ii*32), vec2(256,24), g_Game->cls.servers[ii].name, &g_Game->cls.servers[ii].ping, [ii](){
-            g_Game->m_ConnectToServer(ii);
+            g_Game->connect_to_server(ii);
         });
     }
 

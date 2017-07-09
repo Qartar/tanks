@@ -18,7 +18,7 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
 {
     HRESULT         hResult;
 
-    pMain->Message( "attempting to use DirectSound..." );
+    pMain->message( "attempting to use DirectSound..." );
 
     pDirectSound = NULL;
     pSoundBuffer = NULL;
@@ -34,30 +34,30 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
 
     m_State = device_fail;
 
-    pMain->Message( "...linking dsound.dll: " );
+    pMain->message( "...linking dsound.dll: " );
 
     if ( (hDirectSound = LoadLibrary( "dsound.dll" )) == NULL )
     {
-        pMain->Message( "failed" );
+        pMain->message( "failed" );
         return;
     }
 
     if ( (pDirectSoundCreate = (HRESULT (__stdcall *)(GUID *, LPDIRECTSOUND8 *, IUnknown *))GetProcAddress( hDirectSound, "DirectSoundCreate8" )) == NULL )
     {
-        pMain->Message( "...GetProcAddress failed" );
+        pMain->message( "...GetProcAddress failed" );
         return;
     }
 
-    pMain->Message( "...creating DirectSound object: " );
+    pMain->message( "...creating DirectSound object: " );
     if ( ( hResult = pDirectSoundCreate( NULL, &pDirectSound, NULL )) != DS_OK )
     {
         if ( hResult == DSERR_ALLOCATED )
         {
-            pMain->Message( "failed, device in use" );
+            pMain->message( "failed, device in use" );
             m_State = device_abort;
         }
         else
-            pMain->Message( "failed" );
+            pMain->message( "failed" );
 
         return;
     }
@@ -65,20 +65,20 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
     m_DeviceCaps.dwSize = sizeof(DSCAPS);
     if ( pDirectSound->GetCaps( &m_DeviceCaps ) != DS_OK )
     {
-        pMain->Message( "...GetCaps failed" );
+        pMain->message( "...GetCaps failed" );
         return;
     }
 
     if ( m_DeviceCaps.dwFlags & DSCAPS_EMULDRIVER )
     {
-        pMain->Message( "...sound drivers not present" );
+        pMain->message( "...sound drivers not present" );
         return;
     }
 
     if ( CreateBuffers( ) != ERROR_NONE )
         return;
 
-    pMain->Message( "...completed successfully" );
+    pMain->message( "...completed successfully" );
     m_State = device_ready;
 }
 
@@ -87,14 +87,14 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
 
 void cDirectSoundDevice::Destroy ()
 {
-    pMain->Message( "shutting down DirectSound..." );
+    pMain->message( "shutting down DirectSound..." );
 
     if ( pSoundBuffer )
         DestroyBuffers( );
 
     if ( pDirectSound )
     {
-        pMain->Message( "...releasing DirectSound object" );
+        pMain->message( "...releasing DirectSound object" );
 
         pDirectSound->Release( );
         pDirectSound = NULL;
@@ -102,7 +102,7 @@ void cDirectSoundDevice::Destroy ()
 
     if ( hDirectSound )
     {
-        pMain->Message( "...releasing dsound.dll" );
+        pMain->message( "...releasing dsound.dll" );
 
         FreeLibrary( hDirectSound );
         hDirectSound = NULL;
@@ -118,12 +118,12 @@ int cDirectSoundDevice::CreateBuffers ()
     WAVEFORMATEX        wfx;
     bool                primary_set = false;
 
-    pMain->Message( "creating DirectSound buffers..." );
+    pMain->message( "creating DirectSound buffers..." );
 
-    pMain->Message( "...setting coop level to exclusive: " );
+    pMain->message( "...setting coop level to exclusive: " );
     if ( pDirectSound->SetCooperativeLevel( m_hWnd, DSSCL_EXCLUSIVE ) != DS_OK )
     {
-        pMain->Message( "failed" );
+        pMain->message( "failed" );
         return ERROR_FAIL;
     }
 
@@ -145,21 +145,21 @@ int cDirectSoundDevice::CreateBuffers ()
     memset( &m_BufferCaps, 0, sizeof(DSBCAPS) );
     m_BufferCaps.dwSize = sizeof(DSBCAPS);
 
-    pMain->Message( "...creating primary buffer: " );
+    pMain->message( "...creating primary buffer: " );
     if ( pDirectSound->CreateSoundBuffer( &dsbd, &pPrimaryBuffer, 0 ) == DS_OK )
     {
 
         m_BufferFormat = wfx;
         if ( pPrimaryBuffer->SetFormat( &m_BufferFormat ) != DS_OK )
-            pMain->Message( "...setting primary format: failed" );
+            pMain->message( "...setting primary format: failed" );
         else
         {
-            pMain->Message( "...setting primary format: ok" );
+            pMain->message( "...setting primary format: ok" );
             primary_set = true;
         }
     }
     else
-        pMain->Message( "failed" );
+        pMain->message( "failed" );
 
     if ( !primary_set || !snd_primary->getBool( ) )
     {
@@ -174,44 +174,44 @@ int cDirectSoundDevice::CreateBuffers ()
         if ( snd_dsfocus->getBool( ) )
             dsbd.dwFlags |= DSBCAPS_STICKYFOCUS;
 
-        pMain->Message( "...creating secondary buffer: " );
+        pMain->message( "...creating secondary buffer: " );
         if ( pDirectSound->CreateSoundBuffer( &dsbd, &pSoundBuffer, 0 ) != DS_OK )
         {
-            pMain->Message( "failed" );
+            pMain->message( "failed" );
             return ERROR_FAIL;
         }
 
         if ( pSoundBuffer->GetCaps( &m_BufferCaps ) != DS_OK )
         {
-            pMain->Message( "...GetCaps failed" );
+            pMain->message( "...GetCaps failed" );
             return ERROR_FAIL;
         }
 
-        pMain->Message( "...using secondary buffer" );
+        pMain->message( "...using secondary buffer" );
     }
     else
     {
-        pMain->Message( "...setting coop level to writeprimary: " );
+        pMain->message( "...setting coop level to writeprimary: " );
         if ( pDirectSound->SetCooperativeLevel( m_hWnd, DSSCL_WRITEPRIMARY ) != DS_OK )
         {
-            pMain->Message( "failed\n" );
+            pMain->message( "failed\n" );
             return ERROR_FAIL;
         }
 
         if ( pPrimaryBuffer->GetCaps( &m_BufferCaps ) != DS_OK )
         {
-            pMain->Message( "...GetCaps failed\n" );
+            pMain->message( "...GetCaps failed\n" );
             return ERROR_FAIL;
         }
 
         pSoundBuffer = pPrimaryBuffer;
-        pMain->Message( "...using primary buffer" );
+        pMain->message( "...using primary buffer" );
     }
 
-    pMain->Message( "output buffer format:" );
-    pMain->Message( "...channels:  %i", m_BufferFormat.nChannels );
-    pMain->Message( "...bit width: %i", m_BufferFormat.wBitsPerSample );
-    pMain->Message( "...frequency: %i", m_BufferFormat.nSamplesPerSec );
+    pMain->message( "output buffer format:" );
+    pMain->message( "...channels:  %i", m_BufferFormat.nChannels );
+    pMain->message( "...bit width: %i", m_BufferFormat.wBitsPerSample );
+    pMain->message( "...frequency: %i", m_BufferFormat.nSamplesPerSec );
 
     pSoundBuffer->Play( 0, 0, DSBPLAY_LOOPING );
     m_nOffset = 0;
@@ -224,23 +224,23 @@ int cDirectSoundDevice::CreateBuffers ()
 
 void cDirectSoundDevice::DestroyBuffers ( )
 {
-    pMain->Message( "destroying DirectSound buffers..." );
+    pMain->message( "destroying DirectSound buffers..." );
 
     if ( pDirectSound )
     {
-        pMain->Message( "...setting coop level to normal" );
+        pMain->message( "...setting coop level to normal" );
         pDirectSound->SetCooperativeLevel( m_hWnd, DSSCL_NORMAL );
     }
 
     if ( pSoundBuffer && pSoundBuffer != pPrimaryBuffer )
     {
-        pMain->Message( "...releasing secondary buffer" );
+        pMain->message( "...releasing secondary buffer" );
         pSoundBuffer->Stop( );
         pSoundBuffer->Release( );
         
         if ( pPrimaryBuffer )
         {
-            pMain->Message( "...releasing primary buffer" );
+            pMain->message( "...releasing primary buffer" );
             pPrimaryBuffer->Release( );
         }
 
@@ -249,7 +249,7 @@ void cDirectSoundDevice::DestroyBuffers ( )
     }
     else if ( pSoundBuffer )
     {
-        pMain->Message( "...releasing primary buffer" );
+        pMain->message( "...releasing primary buffer" );
 
         pSoundBuffer->Stop( );
         pSoundBuffer->Release( );

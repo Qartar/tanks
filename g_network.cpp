@@ -30,6 +30,8 @@ cvar_t          *net_serverName;        //  name of local server
 
 #define PROTOCOL_VERSION    3
 
+namespace game {
+
 /*
 ===========================================================
 
@@ -38,19 +40,19 @@ Name    :   m_StartServer   m_StopServer
 ===========================================================
 */
 
-void cGame::m_StartServer ()
+void session::start_server ()
 {
-    m_StopClient( );
+    stop_client( );
 
-    m_bMultiplayer = true;
-    m_bMultiserver = true;
-    m_bMultiactive = true;
+    _multiplayer = true;
+    _multiserver = true;
+    _multiplayer_active = true;
 
-    Reset( );
+    reset();
 
     // init local player
 
-    if ( !m_bDedicated )
+    if ( !_dedicated )
     {
         svs.clients[0].active = true;
         svs.clients[0].local = true;
@@ -65,66 +67,66 @@ void cGame::m_StartServer ()
         svs.clients[0].local = false;
     }
 
-    m_bGameActive = true;
-    m_bMenuActive = false;
+    _game_active = true;
+    _menu_active = false;
 
     svs.active = true;
     net_serverName->setString( svs.name );
 
-    m_netchan.Setup( NS_SERVER, m_netfrom );    // remote doesn't matter
+    _netchan.Setup( NS_SERVER, _netfrom );    // remote doesn't matter
 }
 
-void cGame::m_StopServer ()
+void session::stop_server ()
 {
     int             i;
     client_t        *cl;
 
-    if ( !m_bMultiserver )
+    if ( !_multiserver )
         return;
 
     svs.active = false;
 
-    m_bMultiplayer = false;
-    m_bMultiserver = false;
-    m_bMultiactive = false;
+    _multiplayer = false;
+    _multiserver = false;
+    _multiplayer_active = false;
 
     for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
     {
-        m_Players[ i ] = nullptr;
+        _players[ i ] = nullptr;
 
         if ( cl->local )
             continue;
         if ( !cl->active )
             continue;
 
-        m_ClientDisconnect( i );
+        client_disconnect( i );
 
         cl->netchan.message.WriteByte( svc_disconnect );
         cl->netchan.Transmit( cl->netchan.message.nCurSize, cl->netchan.messagebuf );
         cl->netchan.message.Clear( );
     }
 
-    m_World.reset( );
+    _world.reset( );
 
-    m_bGameActive = false;
+    _game_active = false;
 }
 
-void cGame::m_StopClient ()
+void session::stop_client ()
 {
-    if ( m_bMultiplayer && !m_bMultiserver && m_bMultiactive )
+    if ( _multiplayer && !_multiserver && _multiplayer_active )
     {
-        m_netchan.message.WriteByte( clc_disconnect );
-        m_netchan.Transmit( m_netchan.message.nCurSize, m_netchan.messagebuf );
-        m_netchan.message.Clear( );
+        _netchan.message.WriteByte( clc_disconnect );
+        _netchan.Transmit( _netchan.message.nCurSize, _netchan.messagebuf );
+        _netchan.message.Clear( );
     }
 
-    m_World.reset();
+    _world.reset();
 
-    m_bMultiplayer = false;
-    m_bMultiactive = false;
+    _multiplayer = false;
+    _multiplayer_active = false;
 
-    m_bGameActive = false;
-    m_bMenuActive = true;
+    _game_active = false;
+    _menu_active = true;
 }
 
 /*
@@ -135,7 +137,7 @@ Name    :   m_GetPackets    m_GetFrame  m_WriteFrame    m_SendPackets
 ===========================================================
 */
 
-void cGame::m_GetPackets ()
+void session::get_packets ()
 {
     netsock_t   socket;
     client_t    *cl;
@@ -143,16 +145,16 @@ void cGame::m_GetPackets ()
 
     float       time = g_Application->get_time( );
 
-    if ( m_bMultiserver )
+    if ( _multiserver )
         socket = NS_SERVER;
     else
         socket = NS_CLIENT;
 
-    while ( pNet->Get( socket, &m_netfrom, &m_netmsg ) )
+    while ( pNet->Get( socket, &_netfrom, &_netmsg ) )
     {
-        if ( *(int *)m_netmsg.pData == -1 )
+        if ( *(int *)_netmsg.pData == -1 )
         {
-            m_Connectionless( socket );
+            connectionless( socket );
             continue;
         }
 
@@ -160,9 +162,9 @@ void cGame::m_GetPackets ()
         {
             int     netport;
 
-            m_netmsg.Begin( );
-            m_netmsg.ReadLong( );   // trash
-            netport = m_netmsg.ReadShort( );
+            _netmsg.Begin( );
+            _netmsg.ReadLong( );   // trash
+            netport = _netmsg.ReadShort( );
 
             for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
             {
@@ -170,37 +172,37 @@ void cGame::m_GetPackets ()
                     continue;
                 if ( !cl->active )
                     continue;
-                if ( cl->netchan.address != m_netfrom )
+                if ( cl->netchan.address != _netfrom )
                     continue;
                 if ( cl->netchan.netport != netport )
                     continue;
 
                 // found him
-                m_netclient = i;
+                _netclient = i;
                 break;
             }
 
             if ( i == MAX_PLAYERS )
                 continue;   // bad client
 
-            cl->netchan.Process( &m_netmsg );
+            cl->netchan.Process( &_netmsg );
         }
         else
         {
-            if ( m_netfrom != m_netserver )
+            if ( _netfrom != _netserver )
                 break;  // not from our server
 
-            m_netchan.Process( &m_netmsg );
+            _netchan.Process( &_netmsg );
         }
 
-        m_Packet( socket );
+        packet( socket );
     }
 
     //
     // check for timeouts
     //
 
-    if ( m_bMultiserver )
+    if ( _multiserver )
     {
         for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
         {
@@ -215,49 +217,49 @@ void cGame::m_GetPackets ()
                 cl->netchan.message.WriteByte( svc_disconnect );
                 cl->netchan.Transmit( cl->netchan.message.nCurSize, cl->netchan.messagebuf );
 
-                m_WriteMessage( va("%s timed out.", cl->name ) );
-                m_ClientDisconnect( i );
+                write_message( va("%s timed out.", cl->name ) );
+                client_disconnect( i );
             }
         }
     }
-    else if ( m_bMultiactive )
+    else if ( _multiplayer_active )
     {
-        if ( m_netchan.last_received + 10000 < time )
+        if ( _netchan.last_received + 10000 < time )
         {
-            m_WriteMessage( "Server timed out." );
-            m_StopClient( );
+            write_message( "Server timed out." );
+            stop_client( );
         }
     }
 }
 
-void cGame::m_Connectionless (netsock_t socket)
+void session::connectionless (netsock_t socket)
 {
-    static char *szCmd; 
+    static char* cmd; 
 
-    m_netmsg.Begin( );
-    m_netmsg.ReadLong( );
+    _netmsg.Begin( );
+    _netmsg.ReadLong( );
 
-    szCmd = m_netstring = m_netmsg.ReadString( );
+    cmd = _netstring = _netmsg.ReadString( );
 
     if ( socket == NS_SERVER )
     {
-        if ( (strstr( szCmd, "info" ) ) )
-            m_InfoSend( );
-        else if ( (strstr( szCmd, "connect" ) ) )
-            m_ClientConnect( );
+        if ( (strstr( cmd, "info" ) ) )
+            info_send( );
+        else if ( (strstr( cmd, "connect" ) ) )
+            client_connect( );
     }
     else if ( socket == NS_CLIENT )
     {
-        if ( (strstr( szCmd, "info" ) ) )
-            m_InfoGet( );
-        else if ( (strstr( szCmd, "connect" ) ) )
-            m_ConnectAck( );
-        else if ( (strstr( szCmd, "fail" ) ) )
-            m_ReadFail( );
+        if ( (strstr( cmd, "info" ) ) )
+            info_get( );
+        else if ( (strstr( cmd, "connect" ) ) )
+            connect_ack( );
+        else if ( (strstr( cmd, "fail" ) ) )
+            read_fail( );
     }
 }
 
-void cGame::m_Packet (netsock_t socket)
+void session::packet (netsock_t socket)
 {
     int     net_cmd;
     char    *string;
@@ -265,10 +267,10 @@ void cGame::m_Packet (netsock_t socket)
 
     while ( true )
     {
-        if ( m_netmsg.nReadCount > m_netmsg.nCurSize )
+        if ( _netmsg.nReadCount > _netmsg.nCurSize )
             break;
 
-        net_cmd = m_netmsg.ReadByte( );
+        net_cmd = _netmsg.ReadByte( );
 
         if ( net_cmd == -1 )
             return;
@@ -278,30 +280,30 @@ void cGame::m_Packet (netsock_t socket)
             switch ( net_cmd )
             {
             case clc_command:
-                m_ClientCommand( );
+                client_command( );
                 break;
 
             case clc_disconnect:
-                m_WriteMessage( va("%s disconnected.", svs.clients[m_netclient].name ) );
-                m_ClientDisconnect( m_netclient );
+                write_message( va("%s disconnected.", svs.clients[_netclient].name ) );
+                client_disconnect( _netclient );
                 break;
 
             case clc_say:
-                string = m_netmsg.ReadString( );
-                m_WriteMessage( va( "\\c%02x%02x%02x%s\\cx: %s",
-                    (int )(m_Players[m_netclient]->_color.r * 255),
-                    (int )(m_Players[m_netclient]->_color.g * 255),
-                    (int )(m_Players[m_netclient]->_color.b * 255),
-                    svs.clients[m_netclient].name, string ) ); 
+                string = _netmsg.ReadString( );
+                write_message( va( "\\c%02x%02x%02x%s\\cx: %s",
+                    (int )(_players[_netclient]->_color.r * 255),
+                    (int )(_players[_netclient]->_color.g * 255),
+                    (int )(_players[_netclient]->_color.b * 255),
+                    svs.clients[_netclient].name, string ) ); 
                 break;
 
             case clc_upgrade:
-                net_read = m_netmsg.ReadByte( );
-                m_ReadUpgrade( net_read );
+                net_read = _netmsg.ReadByte( );
+                read_upgrade( net_read );
                 break;
 
             case svc_info:
-                m_ReadInfo( );
+                read_info( );
                 break;
 
             default:
@@ -313,32 +315,32 @@ void cGame::m_Packet (netsock_t socket)
             switch ( net_cmd )
             {
             case svc_disconnect:
-                m_bMultiactive = false;
-                m_WriteMessage( "Disconnected from server." );
-                m_StopClient( );
+                _multiplayer_active = false;
+                write_message( "Disconnected from server." );
+                stop_client( );
                 break;
             case svc_message:
-                string = m_netmsg.ReadString( );
-                m_WriteMessage( string );
+                string = _netmsg.ReadString( );
+                write_message( string );
                 break;
             case svc_score:
-                net_read = m_netmsg.ReadByte( );
-                m_nScore[net_read] = m_netmsg.ReadByte( );
+                net_read = _netmsg.ReadByte( );
+                _score[net_read] = _netmsg.ReadByte( );
                 break;
             case svc_info:
-                m_ReadInfo( );
+                read_info( );
                 break;
             case svc_frame:
-                m_GetFrame( );
+                get_frame( );
                 break;
             case svc_effect:
-                m_ReadEffect( );
+                read_effect( );
                 break;
             case svc_sound:
-                m_ReadSound( );
+                read_sound( );
                 break;
             case svc_restart:
-                flRestartTime = m_flTime + m_netmsg.ReadByte( ) * 1000; //   time is in msec?
+                _restart_time = _frametime + _netmsg.ReadByte( ) * 1000; //   time is in msec?
                 break;
             default:
                 return;
@@ -347,7 +349,7 @@ void cGame::m_Packet (netsock_t socket)
     }
 }
 
-void cGame::m_Broadcast (int len, byte *data)
+void session::broadcast (int len, byte *data)
 {
     int             i;
     client_t        *cl;
@@ -363,7 +365,7 @@ void cGame::m_Broadcast (int len, byte *data)
     }
 }
 
-void cGame::m_Broadcast_Print (char *message)
+void session::broadcast_print (char const* message)
 {
     netmsg_t    netmsg;
     byte        netmsgbuf[MAX_MSGLEN];
@@ -373,62 +375,62 @@ void cGame::m_Broadcast_Print (char *message)
     netmsg.WriteByte( svc_message );
     netmsg.WriteString( message );
 
-    m_Broadcast( netmsg.nCurSize, netmsgbuf );
+    broadcast( netmsg.nCurSize, netmsgbuf );
 }
 
 #define CLAMP_TIME  10.0f
 
-void cGame::m_GetFrame ()
+void session::get_frame ()
 {
     int             i;
     int             readbyte;
     int             framenum;
 
-    m_World.reset( );
+    _world.reset( );
 
-    framenum = m_netmsg.ReadLong( );
+    framenum = _netmsg.ReadLong( );
 
     if ( framenum < cls.last_frame )
         return;
 
     cls.last_frame = framenum;
-    m_nFramenum = framenum;
+    _framenum = framenum;
 
     //
     // allow some leeway for arriving packets, if they exceed it
     // clamp the time so that the velocity lerping doesn't goof up
     //
 
-    m_flTime = (float )m_nFramenum * FRAMEMSEC;
+    _frametime = (float )_framenum * FRAMEMSEC;
 
     i = 0;
     while ( true )
     {
-        readbyte = m_netmsg.ReadByte( );
+        readbyte = _netmsg.ReadByte( );
         if ( !readbyte )
             break;
 
-        i = m_netmsg.ReadByte( );
+        i = _netmsg.ReadByte( );
 
-        m_Players[i]->_old_position = m_Players[i]->get_position();
-        m_Players[i]->_old_rotation = m_Players[i]->get_rotation();
-        m_Players[i]->_old_turret_rotation  = m_Players[i]->_turret_rotation;
+        _players[i]->_old_position = _players[i]->get_position();
+        _players[i]->_old_rotation = _players[i]->get_rotation();
+        _players[i]->_old_turret_rotation  = _players[i]->_turret_rotation;
 
-        m_Players[i]->set_position(m_netmsg.ReadVector());
-        m_Players[i]->set_linear_velocity(m_netmsg.ReadVector());
-        m_Players[i]->set_rotation(m_netmsg.ReadFloat());
-        m_Players[i]->set_angular_velocity(m_netmsg.ReadFloat());
-        m_Players[i]->_turret_rotation = m_netmsg.ReadFloat( );
-        m_Players[i]->_turret_velocity = m_netmsg.ReadFloat( );
+        _players[i]->set_position(_netmsg.ReadVector());
+        _players[i]->set_linear_velocity(_netmsg.ReadVector());
+        _players[i]->set_rotation(_netmsg.ReadFloat());
+        _players[i]->set_angular_velocity(_netmsg.ReadFloat());
+        _players[i]->_turret_rotation = _netmsg.ReadFloat( );
+        _players[i]->_turret_velocity = _netmsg.ReadFloat( );
 
-        m_Players[i]->_damage = m_netmsg.ReadFloat( );
-        m_Players[i]->_fire_time = m_netmsg.ReadFloat( );
+        _players[i]->_damage = _netmsg.ReadFloat( );
+        _players[i]->_fire_time = _netmsg.ReadFloat( );
 
         //m_World.AddObject( &m_Players[i] );
 
         // this is normally run on cTank::Think but is this 
         // not called on clients and must be called here
-        m_Players[i]->update_sound( );
+        _players[i]->update_sound( );
 
 
         //readbyte = m_netmsg.ReadByte( );
@@ -455,7 +457,7 @@ void cGame::m_GetFrame ()
     return;
 }
 
-void cGame::m_WriteFrame ()
+void session::write_frame ()
 {
     netmsg_t    message;
     static byte messagebuf[MAX_MSGLEN];
@@ -465,13 +467,13 @@ void cGame::m_WriteFrame ()
 
     // HACK: update local players color here
     if ( svs.clients[0].local )
-        m_Players[0]->_color = cls.color;
+        _players[0]->_color = cls.color;
 
     message.Init( messagebuf, MAX_MSGLEN );
     message.Clear( );
 
     message.WriteByte( svc_frame );
-    message.WriteLong( m_nFramenum );
+    message.WriteLong( _framenum );
     for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
     {
         if ( !cl->active )
@@ -480,15 +482,15 @@ void cGame::m_WriteFrame ()
         message.WriteByte( 1 );
         message.WriteByte( i );
 
-        message.WriteVector( m_Players[i]->get_position() );
-        message.WriteVector( m_Players[i]->get_linear_velocity() );
-        message.WriteFloat( m_Players[i]->get_rotation() );
-        message.WriteFloat( m_Players[i]->get_angular_velocity() );
-        message.WriteFloat( m_Players[i]->_turret_rotation );
-        message.WriteFloat( m_Players[i]->_turret_velocity );
+        message.WriteVector( _players[i]->get_position() );
+        message.WriteVector( _players[i]->get_linear_velocity() );
+        message.WriteFloat( _players[i]->get_rotation() );
+        message.WriteFloat( _players[i]->get_angular_velocity() );
+        message.WriteFloat( _players[i]->_turret_rotation );
+        message.WriteFloat( _players[i]->_turret_velocity );
 
-        message.WriteFloat( m_Players[i]->_damage );
-        message.WriteFloat( m_Players[i]->_fire_time );
+        message.WriteFloat( _players[i]->_damage );
+        message.WriteFloat( _players[i]->_fire_time );
 
         //if ( m_Players[i].m_Bullet.bInGame )
         //{
@@ -503,28 +505,28 @@ void cGame::m_WriteFrame ()
 
     message.WriteByte( 0 );
 
-    m_Broadcast( message.nCurSize, messagebuf );
+    broadcast( message.nCurSize, messagebuf );
 
     return;
 }
 
-void cGame::m_SendPackets ()
+void session::send_packets ()
 {
     int         i;
     client_t    *cl;
 
-    if ( !m_bMultiactive )
+    if ( !_multiplayer_active )
         return;
 
-    if ( m_bMultiserver )
+    if ( _multiserver )
         goto server;
 
-    m_clientsend( );    // write move commands
+    client_send( );    // write move commands
 
-    if ( m_netchan.message.nCurSize )
+    if ( _netchan.message.nCurSize )
     {
-        m_netchan.Transmit( m_netchan.message.nCurSize, m_netchan.messagebuf );
-        m_netchan.message.Clear( );
+        _netchan.Transmit( _netchan.message.nCurSize, _netchan.messagebuf );
+        _netchan.message.Clear( );
     }
 
     return;
@@ -554,59 +556,59 @@ Name    :   m_ClientConnect m_ClientDisconnect  m_ClientPacket
 ===========================================================
 */
 
-void cGame::m_ConnectToServer (int index)
+void session::connect_to_server (int index)
 {
     // ask server for a connection
 
-    m_StopClient( );
-    m_StopServer( );
+    stop_client( );
+    stop_server( );
 
     if ( index > 0 )
-        m_netserver = cls.servers[index].address;
+        _netserver = cls.servers[index].address;
 
-    m_netserver.type = NA_IP;
-    if ( !m_netserver.port )
-        m_netserver.port = BIG_SHORT( PORT_SERVER );
+    _netserver.type = NA_IP;
+    if ( !_netserver.port )
+        _netserver.port = BIG_SHORT( PORT_SERVER );
 
-    pNet->Print( NS_CLIENT, m_netserver, va( "connect %i %s %i", PROTOCOL_VERSION, cls.name, m_netchan.netport ) );
+    pNet->Print( NS_CLIENT, _netserver, va( "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport ) );
 }
 
-void cGame::m_ConnectAck ()
+void session::connect_ack ()
 {
     char    tempbuf[32];
 
     // server has ack'd our connect
 
-    sscanf( m_netstring, "%s %i", tempbuf, &cls.number );
+    sscanf( _netstring, "%s %i", tempbuf, &cls.number );
 
-    m_netchan.Setup( NS_CLIENT, m_netserver );
+    _netchan.Setup( NS_CLIENT, _netserver );
 
-    m_flTime = 0.0f;
+    _frametime = 0.0f;
     cls.last_frame = 0;
 
-    m_bMultiplayer = true;      // wtf are all these bools?
-    m_bMultiactive = true;      // i dont even remember
+    _multiplayer = true;      // wtf are all these bools?
+    _multiplayer_active = true;      // i dont even remember
 
-    m_bMenuActive = false;      // so you're totally screwed
-    m_bGameActive = true;       // if you ever want to know
+    _menu_active = false;      // so you're totally screwed
+    _game_active = true;       // if you ever want to know
 
-    m_Players[cls.number]->_color.r = cls.color.r;
-    m_Players[cls.number]->_color.g = cls.color.g;
-    m_Players[cls.number]->_color.b = cls.color.b;
+    _players[cls.number]->_color.r = cls.color.r;
+    _players[cls.number]->_color.g = cls.color.g;
+    _players[cls.number]->_color.b = cls.color.b;
 
-    gameClients[cls.number].upgrades = 0;
-    gameClients[cls.number].damage_mod = 1.0f;
-    gameClients[cls.number].armor_mod = 1.0f;
-    gameClients[cls.number].refire_mod = 1.0f;
-    gameClients[cls.number].speed_mod = 1.0f;
+    _clients[cls.number].upgrades = 0;
+    _clients[cls.number].damage_mod = 1.0f;
+    _clients[cls.number].armor_mod = 1.0f;
+    _clients[cls.number].refire_mod = 1.0f;
+    _clients[cls.number].speed_mod = 1.0f;
 
     svs.clients[cls.number].active = true;
     strcpy( svs.clients[cls.number].name, cls.name );
 
-    m_WriteInfo( cls.number, &m_netchan.message );
+    write_info( cls.number, &_netchan.message );
 }
 
-void cGame::m_ClientConnect ()
+void session::client_connect ()
 {
     // client has asked for connection
 
@@ -621,20 +623,20 @@ void cGame::m_ClientConnect ()
 
     message.Init( messagebuf, MAX_MSGLEN );
 
-    int nWidth = 640;
-    int nHeight = 480;
+    int width = 640;
+    int height = 480;
 
-    nWidth -= SPAWN_BUFFER*2;
-    nHeight -= SPAWN_BUFFER*2;
+    width -= SPAWN_BUFFER*2;
+    height -= SPAWN_BUFFER*2;
 
-    if ( !m_bMultiserver )
+    if ( !_multiserver )
         return;
 
-    sscanf( m_netstring, "%s %i %s %i", tempbuf, &version, clname, &netport );
+    sscanf( _netstring, "%s %i %s %i", tempbuf, &version, clname, &netport );
 
     if ( version != PROTOCOL_VERSION )
     {
-        pNet->Print( NS_SERVER, m_netfrom, va("fail \"Bad protocol version: %i\"", version )  );
+        pNet->Print( NS_SERVER, _netfrom, va("fail \"Bad protocol version: %i\"", version )  );
         return;
     }
 
@@ -646,7 +648,7 @@ void cGame::m_ClientConnect ()
             cl = &svs.clients[i];
             break;
         }
-        if ( svs.clients[i].netchan.address == m_netfrom )
+        if ( svs.clients[i].netchan.address == _netfrom )
         {
             // this client is already connected
             if ( svs.clients[i].netchan.netport == netport )
@@ -656,7 +658,7 @@ void cGame::m_ClientConnect ()
 
     if ( !cl )  // couldn't find client slot
     {
-        pNet->Print( NS_SERVER, m_netfrom, "fail \"Server is full\"" );
+        pNet->Print( NS_SERVER, _netfrom, "fail \"Server is full\"" );
         return;
     }
 
@@ -664,7 +666,7 @@ void cGame::m_ClientConnect ()
 
     cl->active = true;
     cl->local = false;
-    cl->netchan.Setup( NS_SERVER, m_netfrom, netport );
+    cl->netchan.Setup( NS_SERVER, _netfrom, netport );
 
     strncpy( cl->name, clname, SHORT_STRING );
 
@@ -674,29 +676,29 @@ void cGame::m_ClientConnect ()
 
     spawn_player(i);
 
-    m_WriteMessage( va( "%s connected.", cl->name ) );
+    write_message( va( "%s connected.", cl->name ) );
 
     for ( i=0 ; i<svs.max_clients ; i++ )
     {
         if ( cl == &svs.clients[i] )
             continue;
 
-        m_WriteInfo( i, &cl->netchan.message );
+        write_info( i, &cl->netchan.message );
     }
 
     return;
 }
 
-void cGame::m_ReadFail ()
+void session::read_fail ()
 {
     textutils_c text;
 
-    text.parse( m_netstring );
+    text.parse( _netstring );
 
-    m_WriteMessage( va( "Failed to connect: %s", text.argv(1) ) );
+    write_message( va( "Failed to connect: %s", text.argv(1) ) );
 }
 
-void cGame::m_WriteInfo (int client, netmsg_t *message)
+void session::write_info (int client, netmsg_t *message)
 {
     message->WriteByte( svc_info );
     message->WriteByte( client );
@@ -705,59 +707,59 @@ void cGame::m_WriteInfo (int client, netmsg_t *message)
 
     //  write extra shit
 
-    message->WriteByte( gameClients[client].upgrades );
-    message->WriteByte( gameClients[client].armor_mod * 10 );
-    message->WriteByte( gameClients[client].damage_mod * 10 );
-    message->WriteByte( gameClients[client].refire_mod * 10 );
-    message->WriteByte( gameClients[client].speed_mod * 10 );
+    message->WriteByte( _clients[client].upgrades );
+    message->WriteByte( _clients[client].armor_mod * 10 );
+    message->WriteByte( _clients[client].damage_mod * 10 );
+    message->WriteByte( _clients[client].refire_mod * 10 );
+    message->WriteByte( _clients[client].speed_mod * 10 );
 
-    message->WriteByte( m_Players[client]->_color.r * 255 );
-    message->WriteByte( m_Players[client]->_color.g * 255 );
-    message->WriteByte( m_Players[client]->_color.b * 255 );
+    message->WriteByte( _players[client]->_color.r * 255 );
+    message->WriteByte( _players[client]->_color.g * 255 );
+    message->WriteByte( _players[client]->_color.b * 255 );
 
     // also write score
 
     message->WriteByte( svc_score );
     message->WriteByte( client );
-    message->WriteByte( m_nScore[client] );
+    message->WriteByte( _score[client] );
 }
 
-void cGame::m_ReadInfo ()
+void session::read_info ()
 {
     int     client;
     int     active;
     char    *string;
 
-    client = m_netmsg.ReadByte( );
-    active = m_netmsg.ReadByte( );
+    client = _netmsg.ReadByte( );
+    active = _netmsg.ReadByte( );
 
     svs.clients[client].active = ( active == 1 );
     
-    string = m_netmsg.ReadString( );
+    string = _netmsg.ReadString( );
     strncpy( svs.clients[client].name, string, SHORT_STRING );
 
-    gameClients[client].upgrades = m_netmsg.ReadByte( );
-    gameClients[client].armor_mod = m_netmsg.ReadByte( ) / 10.0f;
-    gameClients[client].damage_mod = m_netmsg.ReadByte( ) / 10.0f;
-    gameClients[client].refire_mod = m_netmsg.ReadByte( ) / 10.0f;
-    gameClients[client].speed_mod = m_netmsg.ReadByte( ) / 10.0f;
+    _clients[client].upgrades = _netmsg.ReadByte( );
+    _clients[client].armor_mod = _netmsg.ReadByte( ) / 10.0f;
+    _clients[client].damage_mod = _netmsg.ReadByte( ) / 10.0f;
+    _clients[client].refire_mod = _netmsg.ReadByte( ) / 10.0f;
+    _clients[client].speed_mod = _netmsg.ReadByte( ) / 10.0f;
 
-    m_Players[client]->_color.r = m_netmsg.ReadByte( ) / 255.0f;
-    m_Players[client]->_color.g = m_netmsg.ReadByte( ) / 255.0f;
-    m_Players[client]->_color.b = m_netmsg.ReadByte( ) / 255.0f;
+    _players[client]->_color.r = _netmsg.ReadByte( ) / 255.0f;
+    _players[client]->_color.g = _netmsg.ReadByte( ) / 255.0f;
+    _players[client]->_color.b = _netmsg.ReadByte( ) / 255.0f;
 
-    if ( m_bMultiserver || m_bDedicated )
+    if ( _multiserver || _dedicated )
     {
         netmsg_t    netmsg;
         byte        msgbuf[MAX_MSGLEN];
 
         netmsg.Init( msgbuf, MAX_MSGLEN );
-        m_WriteInfo( client, &netmsg );
-        m_Broadcast( netmsg.nCurSize, netmsg.pData );
+        write_info( client, &netmsg );
+        broadcast( netmsg.nCurSize, netmsg.pData );
     }
 }
 
-void cGame::m_ClientDisconnect (int nClient)
+void session::client_disconnect (int nClient)
 {
     netmsg_t    message;
     byte        messagebuf[MAX_MSGLEN];
@@ -767,99 +769,96 @@ void cGame::m_ClientDisconnect (int nClient)
     if ( !svs.clients[nClient].active )
         return;
 
-    m_World.remove( m_Players[nClient] );
-    m_Players[nClient] = nullptr;
+    _world.remove( _players[nClient] );
+    _players[nClient] = nullptr;
     svs.clients[nClient].active = false;
 
-    m_WriteInfo( nClient, &message );
-    m_Broadcast( message.nCurSize, messagebuf );
+    write_info( nClient, &message );
+    broadcast( message.nCurSize, messagebuf );
 }
 
-void cGame::m_ClientCommand ()
+void session::client_command ()
 {
-    game::tank* pTank;
+    game::tank* tank;
     int     bits;
 
-    bits = m_netmsg.ReadByte( );
-    pTank = m_Players[m_netclient];
+    bits = _netmsg.ReadByte( );
+    tank = _players[_netclient];
 
-    memset( pTank->_keys, 0, sizeof(pTank->_keys) );
+    memset( tank->_keys, 0, sizeof(tank->_keys) );
 
     if ( bits & BIT(KEY_FORWARD) )
-        pTank->_keys[KEY_FORWARD] = true;
+        tank->_keys[KEY_FORWARD] = true;
     if ( bits & BIT(KEY_BACK) )
-        pTank->_keys[KEY_BACK] = true;
+        tank->_keys[KEY_BACK] = true;
 
     if ( bits & BIT(KEY_LEFT) )
-        pTank->_keys[KEY_LEFT] = true;
+        tank->_keys[KEY_LEFT] = true;
     if ( bits & BIT(KEY_RIGHT) )
-        pTank->_keys[KEY_RIGHT] = true;
+        tank->_keys[KEY_RIGHT] = true;
 
     if ( bits & BIT(KEY_TLEFT) )
-        pTank->_keys[KEY_TLEFT] = true;
+        tank->_keys[KEY_TLEFT] = true;
     if ( bits & BIT(KEY_TRIGHT) )
-        pTank->_keys[KEY_TRIGHT] = true;
+        tank->_keys[KEY_TRIGHT] = true;
     if ( bits & BIT(KEY_FIRE) )
-        pTank->_keys[KEY_FIRE] = true;
+        tank->_keys[KEY_FIRE] = true;
 }
 
-void cGame::m_clientsend ()
+void session::client_send ()
 {
     int     bits = 0;
 
-    if ( m_clientkeys[KEY_FORWARD] == true )
+    if ( _client_keys[KEY_FORWARD] == true )
         bits |= BIT(KEY_FORWARD);
-    if ( m_clientkeys[KEY_BACK] == true )
+    if ( _client_keys[KEY_BACK] == true )
         bits |= BIT(KEY_BACK);
 
-    if ( m_clientkeys[KEY_LEFT] == true )
+    if ( _client_keys[KEY_LEFT] == true )
         bits |= BIT(KEY_LEFT);
-    if ( m_clientkeys[KEY_RIGHT] == true )
+    if ( _client_keys[KEY_RIGHT] == true )
         bits |= BIT(KEY_RIGHT);
 
-    if ( m_clientkeys[KEY_TLEFT] == true )
+    if ( _client_keys[KEY_TLEFT] == true )
         bits |= BIT(KEY_TLEFT);
-    if ( m_clientkeys[KEY_TRIGHT] == true )
+    if ( _client_keys[KEY_TRIGHT] == true )
         bits |= BIT(KEY_TRIGHT);
-    if ( m_clientkeys[KEY_FIRE] == true )
+    if ( _client_keys[KEY_FIRE] == true )
         bits |= BIT(KEY_FIRE);
 
-    m_netchan.message.WriteByte( clc_command );
-    m_netchan.message.WriteByte( bits );
+    _netchan.message.WriteByte( clc_command );
+    _netchan.message.WriteByte( bits );
 }
 
-void cGame::m_WriteSound (int nSound)
+void session::write_sound(int sound_index)
 {
     netmsg_t    netmsg;
     static byte netmsgbuf[MAX_MSGLEN];
 
-    if ( !m_bMultiserver )
+    if ( !_multiserver )
         return;
 
     netmsg.Init( netmsgbuf, MAX_MSGLEN );
     netmsg.Clear( );
 
     netmsg.WriteByte( svc_sound );
-    netmsg.WriteLong( nSound );
+    netmsg.WriteLong( sound_index );
 
-    m_Broadcast( netmsg.nCurSize, netmsgbuf );
+    broadcast( netmsg.nCurSize, netmsgbuf );
 }
 
-void cGame::m_ReadSound ()
+void session::read_sound ()
 {
-    int nSound;
-
-    nSound = m_netmsg.ReadLong( );
-
-    pSound->playSound( nSound, vec3(0,0,0), 1.0f, 0.0f );
+    int sound_index = _netmsg.ReadLong();
+    pSound->playSound(sound_index, vec3(0,0,0), 1.0f, 0.0f);
 }
 
-void cGame::m_WriteEffect (int type, vec2 pos, vec2 vel, float strength)
+void session::write_effect (int type, vec2 pos, vec2 vel, float strength)
 {
     netmsg_t    netmsg;
     static byte netmsgbuf[MAX_MSGLEN];
 
-    if (!m_bMultiserver)
+    if (!_multiserver)
         return;
 
     netmsg.Init(netmsgbuf, MAX_MSGLEN);
@@ -871,17 +870,17 @@ void cGame::m_WriteEffect (int type, vec2 pos, vec2 vel, float strength)
     netmsg.WriteVector(vel);
     netmsg.WriteFloat(strength);
 
-    m_Broadcast(netmsg.nCurSize, netmsgbuf);
+    broadcast(netmsg.nCurSize, netmsgbuf);
 }
 
-void cGame::m_ReadEffect ()
+void session::read_effect ()
 {
-    int type = m_netmsg.ReadByte();
-    vec2 pos = m_netmsg.ReadVector();
-    vec2 vel = m_netmsg.ReadVector();
-    float strength = m_netmsg.ReadFloat();
+    int type = _netmsg.ReadByte();
+    vec2 pos = _netmsg.ReadVector();
+    vec2 vel = _netmsg.ReadVector();
+    float strength = _netmsg.ReadFloat();
 
-    m_World.add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
+    _world.add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
 }
 
 /*
@@ -892,7 +891,7 @@ Name    :   m_InfoAsk   m_InfoSend  m_InfoGet
 ===========================================================
 */
 
-void cGame::m_InfoAsk ()
+void session::info_ask ()
 {
     netadr_t    addr;
 
@@ -902,12 +901,12 @@ void cGame::m_InfoAsk ()
         cls.servers[i].active = false;
     }
 
-    cls.ping_time = m_flTime;
+    cls.ping_time = _frametime;
 
-    m_StopClient( );
-    m_StopServer( );
+    stop_client( );
+    stop_server( );
 
-    m_bHaveServer = false;
+    _have_server = false;
 
     //  ping master server
     pNet->StringToNet( net_master->getString( ), &addr );
@@ -922,7 +921,7 @@ void cGame::m_InfoAsk ()
     pNet->Print( NS_CLIENT, addr, "info" );
 }
 
-void cGame::m_InfoSend ()
+void session::info_send ()
 {
     int     i;
 
@@ -938,35 +937,35 @@ void cGame::m_InfoSend ()
     if ( i == MAX_PLAYERS )
         return;
 
-    pNet->Print( NS_SERVER, m_netfrom, va( "info %s", svs.name) );
+    pNet->Print( NS_SERVER, _netfrom, va( "info %s", svs.name) );
 }
 
-void cGame::m_InfoGet ()
+void session::info_get ()
 {
     int         i;
 
     for ( i=0 ; i<MAX_SERVERS ; i++ )
     {
         // already exists and active, abort
-        if ( cls.servers[i].address == m_netfrom && cls.servers[i].active )
+        if ( cls.servers[i].address == _netfrom && cls.servers[i].active )
             return;
 
         // slot taken, try next
         if ( cls.servers[i].active )
             continue;
 
-        cls.servers[i].address = m_netfrom;
-        cls.servers[i].ping = m_flTime - cls.ping_time;
+        cls.servers[i].address = _netfrom;
+        cls.servers[i].ping = _frametime - cls.ping_time;
 
-        strcpy( cls.servers[i].name, m_netstring + 5 );
+        strcpy( cls.servers[i].name, _netstring + 5 );
 
         cls.servers[i].active = true;
 
         // old server code
-        if ( !m_bHaveServer )
+        if ( !_have_server )
         {
-            m_netserver = m_netfrom;
-            m_bHaveServer = true;
+            _netserver = _netfrom;
+            _have_server = true;
         }
 
         return;
@@ -979,64 +978,66 @@ char    *sz_upgrades[] = {
     "gunnery",
     "speed" };
 
-void cGame::m_ReadUpgrade (int index)
+void session::read_upgrade (int index)
 {
-    if ( gameClients[m_netclient].upgrades )
+    if ( _clients[_netclient].upgrades )
     {
         netmsg_t    netmsg;
         byte        msgbuf[MAX_MSGLEN];
 
-        gameClients[m_netclient].upgrades--;
+        _clients[_netclient].upgrades--;
         if ( index == 0 )
         {
-            gameClients[m_netclient].damage_mod += UPGRADE_FRAC;
-            gameClients[m_netclient].refire_mod -= UPGRADE_PENALTY;
-            if ( gameClients[m_netclient].refire_mod < UPGRADE_MIN )
-                gameClients[m_netclient].refire_mod = UPGRADE_MIN;
+            _clients[_netclient].damage_mod += UPGRADE_FRAC;
+            _clients[_netclient].refire_mod -= UPGRADE_PENALTY;
+            if ( _clients[_netclient].refire_mod < UPGRADE_MIN )
+                _clients[_netclient].refire_mod = UPGRADE_MIN;
         }
         else if ( index == 1 )
         {
-            gameClients[m_netclient].armor_mod += UPGRADE_FRAC;
-            gameClients[m_netclient].speed_mod -= UPGRADE_PENALTY;
-            if ( gameClients[m_netclient].speed_mod < UPGRADE_MIN )
-                gameClients[m_netclient].speed_mod = UPGRADE_MIN;
+            _clients[_netclient].armor_mod += UPGRADE_FRAC;
+            _clients[_netclient].speed_mod -= UPGRADE_PENALTY;
+            if ( _clients[_netclient].speed_mod < UPGRADE_MIN )
+                _clients[_netclient].speed_mod = UPGRADE_MIN;
         }
         else if ( index == 2 )
         {
-            gameClients[m_netclient].refire_mod += UPGRADE_FRAC;
-            gameClients[m_netclient].damage_mod -= UPGRADE_PENALTY;
-            if ( gameClients[m_netclient].damage_mod < UPGRADE_MIN )
-                gameClients[m_netclient].damage_mod = UPGRADE_MIN;
+            _clients[_netclient].refire_mod += UPGRADE_FRAC;
+            _clients[_netclient].damage_mod -= UPGRADE_PENALTY;
+            if ( _clients[_netclient].damage_mod < UPGRADE_MIN )
+                _clients[_netclient].damage_mod = UPGRADE_MIN;
         }
         else if ( index == 3 )
         {
-            gameClients[m_netclient].speed_mod += UPGRADE_FRAC;
-            gameClients[m_netclient].armor_mod -= UPGRADE_PENALTY;
-            if ( gameClients[m_netclient].armor_mod < UPGRADE_MIN )
-                gameClients[m_netclient].armor_mod = UPGRADE_MIN;
+            _clients[_netclient].speed_mod += UPGRADE_FRAC;
+            _clients[_netclient].armor_mod -= UPGRADE_PENALTY;
+            if ( _clients[_netclient].armor_mod < UPGRADE_MIN )
+                _clients[_netclient].armor_mod = UPGRADE_MIN;
         }
 
-        m_WriteMessage( va( "\\c%02x%02x%02x%s\\cx has upgraded their %s!",
-            (int )(m_Players[m_netclient]->_color.r * 255),
-            (int )(m_Players[m_netclient]->_color.g * 255),
-            (int )(m_Players[m_netclient]->_color.b * 255),
-            svs.clients[m_netclient].name, sz_upgrades[index] ) ); 
+        write_message( va( "\\c%02x%02x%02x%s\\cx has upgraded their %s!",
+            (int )(_players[_netclient]->_color.r * 255),
+            (int )(_players[_netclient]->_color.g * 255),
+            (int )(_players[_netclient]->_color.b * 255),
+            svs.clients[_netclient].name, sz_upgrades[index] ) ); 
 
         netmsg.Init( msgbuf, MAX_MSGLEN );
-        m_WriteInfo( m_netclient, &netmsg );
-        m_Broadcast( netmsg.nCurSize, netmsg.pData );
+        write_info( _netclient, &netmsg );
+        broadcast( netmsg.nCurSize, netmsg.pData );
     }
 }
 
-void cGame::m_WriteUpgrade (int upgrade)
+void session::write_upgrade (int upgrade)
 {
-    if ( m_bMultiserver )
+    if ( _multiserver )
     {
-        m_netclient = 0;
-        m_ReadUpgrade( upgrade );
+        _netclient = 0;
+        read_upgrade( upgrade );
         return;
     }
 
-    m_netchan.message.WriteByte( clc_upgrade );
-    m_netchan.message.WriteByte( upgrade );
+    _netchan.message.WriteByte( clc_upgrade );
+    _netchan.message.WriteByte( upgrade );
 }
+
+} // namespace game

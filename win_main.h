@@ -27,7 +27,6 @@ Purpose :   this is THE windows class winmain calls cWinApp::Main
 */
 
 class cNetwork;
-class cGame;
 
 class cWinApp
 {
@@ -57,7 +56,7 @@ private:
     int         m_nExitCode;
 
     render::window _window;
-    cGame       m_Game;
+    game::session _game;
 
     char        *m_szInitString;
 

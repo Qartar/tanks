@@ -90,7 +90,7 @@ int cWinApp::Main (LPSTR szCmdLine, int nCmdShow)
         flTime = flNewTime - flOldTime;
         flOldTime = flNewTime;
 
-        m_Game.RunFrame( flTime );
+        _game.run_frame( flTime );
     }
 
     // abnormal termination
@@ -134,7 +134,7 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
     _window.create();
 
     // init game
-    m_Game.Init( szCmdLine );
+    _game.init( szCmdLine );
 
     return ERROR_NONE;
 }
@@ -156,7 +156,7 @@ int cWinApp::Shutdown ()
     _window.destroy();
 
     // shutdown game
-    m_Game.Shutdown( );
+    _game.shutdown( );
 
     // shutdown sound
     vSound::Destroy( );
@@ -349,7 +349,7 @@ void cWinApp::m_KeyEvent (int Param, bool Down)
         }
     }
 
-    m_Game.Key_Event( result, Down );
+    _game.key_event( result, Down );
 }
 
 /*
@@ -373,13 +373,13 @@ void cWinApp::m_MouseEvent (int mstate)
         if ( (mstate & (1<<i)) &&
             !(oldstate & (1<<i)) )
         {
-            m_Game.Key_Event (K_MOUSE1 + i, true);
+            _game.key_event (K_MOUSE1 + i, true);
         }
 
         if ( !(mstate & (1<<i)) &&
             (oldstate & (1<<i)) )
         {
-            m_Game.Key_Event (K_MOUSE1 + i, false);
+            _game.key_event (K_MOUSE1 + i, false);
         }
     }   
         

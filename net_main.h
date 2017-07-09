@@ -60,7 +60,7 @@ public:
 
     void    Init (byte *pData, int nMaxSize);
     void    Clear ();
-    void    Write (void *pData, int nSize);
+    void    Write (void const* pData, int nSize);
     int Read (void *pOut, int nSize);
 
     void    WriteByte (int b);
@@ -68,7 +68,7 @@ public:
     void    WriteLong (int l);
     void    WriteFloat (float f);
     void    WriteChar (int c);
-    void    WriteString (char *sz);
+    void    WriteString (char const* sz);
     void    WriteAngle (float f);
     void    WriteVector (vec2 v);
 

@@ -58,7 +58,7 @@ void *cNetMessage::Alloc (int nSize)
     return ret;
 }
 
-void cNetMessage::Write (void *pData, int nSize)
+void cNetMessage::Write (void const* pData, int nSize)
 {
     void    *buf = Alloc( nSize );
 
@@ -140,7 +140,7 @@ void cNetMessage::WriteChar (int b)
         buf[0] = b & 0xff;
 }
 
-void cNetMessage::WriteString (char *sz)
+void cNetMessage::WriteString (char const* sz)
 {
     if ( sz )
         Write( sz, strlen(sz)+1 );

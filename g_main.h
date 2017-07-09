@@ -34,6 +34,8 @@ class system;
 #define KEY_TRIGHT  5
 #define KEY_FIRE    6
 
+namespace game {
+
 static vec4 player_colors[] = {
     vec4(   1.000f, 0.000f, 0.000f, 1),     // 0: red
     vec4(   0.000f, 0.000f, 1.000f, 1),     // 1: blue
@@ -78,11 +80,11 @@ typedef enum netops_e
     svc_restart     //  game restart
 } netops_t;
 
-enum eGameType
+enum class game_mode
 {
-    game_singleplay,
-    game_deathmatch,
-    game_coop
+    singleplayer,
+    deathmatch,
+    cooperative,
 };
 
 typedef struct  message_s
@@ -159,156 +161,158 @@ typedef struct client_state_s
 
 // if your brain hasn't exploded yet it will now
 
-class cGame : public vMain
+class session : public vMain
 {
 public:
-    cGame ();
-    ~cGame () {}
+    session();
+    ~session() {}
 
-    int     Init (char *cmdline);
-    int     Shutdown ();
+    int init (char *cmdline);
+    int shutdown ();
 
-    void    m_InitClient ();
-    void    m_EndClient ();
+    void init_client();
+    void shutdown_client();
 
-    virtual int Message (char *szMessage, ...);
+    virtual int message(char const* message, ...);
 
-    int     RunFrame (float flMSec);
+    int run_frame(float milliseconds);
 
-    int     Key_Event (unsigned char Key, bool Down);
+    int key_event(unsigned char key, bool down);
 
-    void    Reset ();
-    void    NewGame ();
-    void    Restart ();
-    void    Resume ();
+    void reset();
+    void new_game();
+    void restart();
+    void resume();
 
-    void    AddScore (int nPlayer, int nScore);
+    void add_score(int player_index, int score);
 
-    bool    m_bMenuActive;
-    bool    m_bGameActive;
+    bool _menu_active;
+    bool _game_active;
 
-    bool    m_bMultiplayer;     // is multiplayer
-    bool    m_bMultiserver;     // hosting multiplayer
-    bool    m_bHaveServer;      // found a server
-    bool    m_bMultiactive;     // active and playing
-    bool    m_bDedicated;
+    bool _multiplayer;     // is multiplayer
+    bool _multiserver;     // hosting multiplayer
+    bool _have_server;      // found a server
+    bool _multiplayer_active;     // active and playing
+    bool _dedicated;
 
-    float   m_flTime;
-    int     m_nFramenum;
+    float _frametime;
+    int _framenum;
 
-    eGameType   m_eGameType;
+    game_mode _mode;
 
-    bool    bExtendedArmor;
-    bool    bRandomSpawn;
-    bool    bAutoRestart;
-    bool    bManualRestart;
+    bool _extended_armor;
+    bool _random_spawn;
+    bool _auto_restart;
+    bool _manual_restart;
 
-    float   flRestartTime;
+    float _restart_time;
 
-    static int  FindServerByName (void *lpvoid);
+    static int find_server_by_name(void *lpvoid);
 
-    game::tank *     Player( int index ) { return m_Players[ index ]; }
+    game::tank* player( int index ) { return _players[ index ]; }
 
 private:
-    menu::window m_Menu;
-    game::world m_World;
+    menu::window _menu;
+    game::world _world;
 
     render::image const* _menu_image;
 
-    void    m_getCursorPos ();
-    vec2    m_vCursorPos;
+    void get_cursor();
+    vec2 _cursor;
 
-    int     m_nScore[MAX_PLAYERS];
-    void    m_DrawScore ();
+    int _score[MAX_PLAYERS];
+    void draw_score ();
 
-    game::tank* m_Players[MAX_PLAYERS];
+    game::tank* _players[MAX_PLAYERS];
     void spawn_player(int num);
     void respawn_player(int num);
 
-    message_t   m_Messages[MAX_MESSAGES];
-    int         m_nMessage;
+    message_t _messages[MAX_MESSAGES];
+    int _num_messages;
 
-    void    m_DrawMessages ();
+    void draw_messages ();
 
-    char    m_ShiftKeys[256];
+    char _shift_keys[256];
 
 public:
-    void    m_WriteMessage (char *szMessage, bool broadcast=true);
-    void    m_WriteMessageClient( char *szMessage ) { m_WriteMessage( szMessage, false ); }
+    void write_message (char const* message, bool broadcast=true);
+    void write_message_client(char const* message) { write_message(message, false); }
 
-    game_client_t   gameClients[MAX_PLAYERS];
+    game_client_t _clients[MAX_PLAYERS];
     // NETWORKING
 
 public:
-    void    m_StartServer ();
-    void    m_StopServer ();
+    void start_server();
+    void stop_server();
 
-    void    m_StopClient ();
+    void stop_client();
 
-    void    m_ConnectToServer (int index);
+    void connect_to_server(int index);
 
-    void    m_InfoAsk ();
+    void info_ask();
 
-    void    m_WriteSound (int nSound);
-    void    m_WriteEffect (int type, vec2 pos, vec2 vel, float strength);
+    void write_sound(int sound_index);
+    void write_effect(int type, vec2 pos, vec2 vel, float strength);
 
     client_state_t  cls;
     server_state_t  svs;
 
-    bool    bClientButton;
-    bool    bServerButton;
-    bool    bClientSay;
+    bool _client_button_down;
+    bool _server_button_down;
+    bool _client_say;
 
 private:
-    void    m_GetPackets ();
-    void    m_GetFrame ();
-    void    m_WriteFrame ();
-    void    m_SendPackets ();
+    void get_packets ();
+    void get_frame ();
+    void write_frame ();
+    void send_packets ();
 
-    void    m_Broadcast (int len, byte *data);
-    void    m_Broadcast_Print (char *message);
+    void broadcast (int len, byte *data);
+    void broadcast_print (char const* message);
 
-    void    m_Connectionless (netsock_t socket);
-    void    m_Packet (netsock_t socket);
+    void connectionless (netsock_t socket);
+    void packet (netsock_t socket);
 
-    void    m_ConnectAck ();
+    void connect_ack ();
 
-    void    m_ClientConnect ();
-    void    m_ClientDisconnect (int nClient);
-    void    m_ClientCommand ();
+    void client_connect ();
+    void client_disconnect (int nClient);
+    void client_command ();
 
-    void    m_ReadUpgrade (int index);
-    void    m_WriteUpgrade (int upgrade);
+    void read_upgrade (int index);
+    void write_upgrade (int upgrade);
 
-    void    m_ReadSound ();
-    void    m_ReadEffect ();
+    void read_sound ();
+    void read_effect ();
 
-    void    m_ClientKeys (int key, bool down);
-    void    m_clientsend ();
+    void client_keys (int key, bool down);
+    void client_send ();
 
-    void    m_InfoSend ();
-    void    m_InfoGet ();
+    void info_send ();
+    void info_get ();
 
-    void    m_ReadInfo ();
-    void    m_WriteInfo (int client, netmsg_t *message);
+    void read_info ();
+    void write_info (int client, netmsg_t *message);
 
-    void    m_ReadFail ();
+    void read_fail ();
 
-    bool    m_clientkeys[8];
+    bool _client_keys[8];
 
-    netadr_t    m_netserver;
+    netadr_t _netserver;
 
-    netchan_t   m_netchan;
-    netadr_t    m_netfrom;
+    netchan_t _netchan;
+    netadr_t _netfrom;
 
-    byte        m_netmsgbuf[MAX_MSGLEN];
-    netmsg_t    m_netmsg;
+    byte _netmsgbuf[MAX_MSGLEN];
+    netmsg_t _netmsg;
 
-    int         m_netclient;
-    char        *m_netstring;
+    int _netclient;
+    char* _netstring;
 
-    char        m_clientsay[LONG_STRING];
+    char _clientsay[LONG_STRING];
 };
 
-extern cGame *g_Game;
+} // namespace game
+
+extern game::session* g_Game;
 extern render::system* g_Render;

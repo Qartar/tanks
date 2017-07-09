@@ -329,7 +329,7 @@ void cVar::Create (char *szName, char *szValue, char *szType, int bitFlags, char
     }
     if ( i == cvar_num_types )
     {
-        pMain->Message( "cvar::Create | %s has invalid type %s\n", szName, szType );
+        pMain->message( "cvar::Create | %s has invalid type %s\n", szName, szType );
         m_Type = cvar_string;
     }
 

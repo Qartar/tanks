@@ -192,8 +192,8 @@ void world::move_object(game::object *object)
     }
 
     if (object->_type == object_type::projectile) {
-        game::object* bestObject = NULL;
-        float bestFraction = 1.f;
+        game::object* best_object = NULL;
+        float best_fraction = 1.f;
         physics::contact contact;
 
         vec2 start = object->get_position();
@@ -210,16 +210,16 @@ void world::move_object(game::object *object)
 
             auto tr = physics::trace(&other->rigid_body(), start, end);
 
-            if (tr.get_fraction() < bestFraction) {
-                bestFraction = tr.get_fraction();
-                bestObject = other.get();
+            if (tr.get_fraction() < best_fraction) {
+                best_fraction = tr.get_fraction();
+                best_object = other.get();
                 contact = tr.get_contact();
             }
         }
 
-        if (bestObject) {
-            object->set_position(start + (end - start) * bestFraction);
-            object->touch(bestObject, &contact);
+        if (best_object) {
+            object->set_position(start + (end - start) * best_fraction);
+            object->touch(best_object, &contact);
         } else {
             object->set_position(end);
         }
@@ -266,7 +266,7 @@ Purpose :   sound!
 */
 
 void world::add_sound(int sound_index) {
-    g_Game->m_WriteSound(sound_index);
+    g_Game->write_sound(sound_index);
     pSound->playSound(sound_index, vec3(0,0,0), 1.0f, 0.0f);
 }
 
@@ -282,7 +282,7 @@ Purpose :   adds particle effects
 
 void world::add_effect(effect_type type, vec2 position, vec2 direction, float strength)
 {
-    g_Game->m_WriteEffect(static_cast<int>(type), position, direction, strength);
+    g_Game->write_effect(static_cast<int>(type), position, direction, strength);
 
     float   r, d;
 

@@ -25,8 +25,6 @@ Date    :   10/21/2004
 #include <type_traits>
 #include <vector>
 
-class cGame;
-
 namespace physics {
 struct contact;
 }
@@ -199,8 +197,6 @@ protected:
 //------------------------------------------------------------------------------
 class world
 {
-    friend cGame;
-
 public:
     world ()
         : _spawn_id(0)

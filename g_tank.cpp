@@ -64,32 +64,32 @@ tank::~tank()
 //------------------------------------------------------------------------------
 void tank::draw() const
 {
-    float   flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
-    float   flTime = clamp(((g_Game->m_flTime - _fire_time) / 150.f) * _client->refire_mod,0.0f,20.0f);
-    float   flHealth = clamp((1.0f - _damage) * 20.f, 0.0f, 20.0f);
+    float lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
+    float reload = clamp(((g_Game->_frametime - _fire_time) / 150.f) * _client->refire_mod,0.0f,20.0f);
+    float health = clamp((1.0f - _damage) * 20.f, 0.0f, 20.0f);
 
-    if ( flLerp > 1.0f ) {
-        flLerp = 1.0f;
-    } else if ( flLerp < 0.0f ) {
-        flLerp = 0.0f;
+    if ( lerp > 1.0f ) {
+        lerp = 1.0f;
+    } else if ( lerp < 0.0f ) {
+        lerp = 0.0f;
     }
 
-    vec2    pos = get_position( flLerp );
-    float   angle = get_rotation( flLerp );
-    float   tangle = get_turret_rotation( flLerp );
+    vec2    pos = get_position( lerp );
+    float   angle = get_rotation( lerp );
+    float   tangle = get_turret_rotation( lerp );
 
-    vec4    vHealth;
-    vec4    vTime;
+    vec4    color_health;
+    vec4    color_reload;
 
-    vHealth.r = ( flHealth < 10.0f ? 1.0f : (10.0f - (flHealth - 10.0f)) / 10.0f );
-    vHealth.g = ( flHealth > 10.0f ? 1.0f : (flHealth / 10.0f) );
-    vHealth.b = 0.0f;
-    vHealth.a = 1.0f;
+    color_health.r = ( health < 10.0f ? 1.0f : (10.0f - (health - 10.0f)) / 10.0f );
+    color_health.g = ( health > 10.0f ? 1.0f : (health / 10.0f) );
+    color_health.b = 0.0f;
+    color_health.a = 1.0f;
 
-    vTime.r = 1.0f;
-    vTime.g = flTime/20.0f;
-    vTime.b = ( flTime == 20.0f ? 1.0f : 0.0f );
-    vTime.a = 1.0f;
+    color_reload.r = 1.0f;
+    color_reload.g = reload/20.0f;
+    color_reload.b = ( reload == 20.0f ? 1.0f : 0.0f );
+    color_reload.a = 1.0f;
 
     if (_damage >= 1.0f)
     {
@@ -101,9 +101,9 @@ void tank::draw() const
     // status bars
 
     g_Render->draw_box(vec2(20,2), pos + vec2(0,24), vec4(0.5,0.5,0.5,1));
-    g_Render->draw_box(vec2(flTime,2), pos + vec2(0,24), vTime);
+    g_Render->draw_box(vec2(reload,2), pos + vec2(0,24), color_reload);
     g_Render->draw_box(vec2(20,2), pos + vec2(0,22), vec4(0.5,0.5,0.5,1));
-    g_Render->draw_box(vec2(flHealth,2), pos + vec2(0,22), vHealth);
+    g_Render->draw_box(vec2(health,2), pos + vec2(0,22), color_health);
 
     // actual body
 
@@ -141,12 +141,12 @@ void tank::collide(tank* other, float base_damage)
 
         if (other->_damage >= 1.0f)
         {
-            g_Game->AddScore(_player_index, 1);
-            other->_dead_time = g_Game->m_flTime;
-            if (g_Game->bAutoRestart && !g_Game->m_bMultiplayer)
-                g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
+            g_Game->add_score(_player_index, 1);
+            other->_dead_time = g_Game->_frametime;
+            if (g_Game->_auto_restart && !g_Game->_multiplayer)
+                g_Game->_restart_time = g_Game->_frametime + RESTART_TIME;
 
-            g_Game->m_WriteMessage( va("%s got a little too cozy with %s.", other->player_name(), player_name() ) );
+            g_Game->write_message( va("%s got a little too cozy with %s.", other->player_name(), player_name() ) );
         }
     }
 }
@@ -156,14 +156,14 @@ void tank::collide(tank* other, float base_damage)
 //------------------------------------------------------------------------------
 void tank::think()
 {
-    float   flForward;
-    float   flLeft;
-    float   flTLeft;
-    float   flVel;
+    float   input_forward;
+    float   input_left;
+    float   input_turret_left;
+    float   speed;
 
     _old_turret_rotation = _turret_rotation;
 
-    if ( (_damage >= 1.0f) && g_Game->m_bMultiserver && (_dead_time+RESTART_TIME+HACK_TIME <= g_Game->m_flTime) )
+    if ( (_damage >= 1.0f) && g_Game->_multiserver && (_dead_time+RESTART_TIME+HACK_TIME <= g_Game->_frametime) )
     {
         // respawn
         vec2 spawn_buffer = vec2(1,1) * SPAWN_BUFFER;
@@ -183,12 +183,12 @@ void tank::think()
         _damage = 0.0f;
     }
 
-    flForward = _keys[KEY_FORWARD] - _keys[KEY_BACK];
-    flLeft = _keys[KEY_LEFT] - _keys[KEY_RIGHT];
-    flTLeft = _keys[KEY_TLEFT] - _keys[KEY_TRIGHT];
+    input_forward = _keys[KEY_FORWARD] - _keys[KEY_BACK];
+    input_left = _keys[KEY_LEFT] - _keys[KEY_RIGHT];
+    input_turret_left = _keys[KEY_TLEFT] - _keys[KEY_TRIGHT];
 
     vec2 forward = rot(vec2(1,0), get_rotation());
-    flVel = forward.dot(get_linear_velocity());
+    speed = forward.dot(get_linear_velocity());
 
     vec2 track_velocity = rot(vec2(_track_speed,0), get_rotation());
     vec2 delta_velocity = track_velocity - get_linear_velocity();
@@ -198,14 +198,14 @@ void tank::think()
 
     if (_damage >= 1.0f)
     {
-        vec2 vVel = vec2(flVel * 0.98 * (1-FRAMETIME),0);
+        vec2 vVel = vec2(speed * 0.98 * (1-FRAMETIME),0);
 
         set_linear_velocity(rot(vVel,get_rotation()));
         set_angular_velocity(get_angular_velocity() * 0.9f);
         _turret_velocity *= 0.9f;
 
         // extra explosion
-        if (_dead_time && (g_Game->m_flTime - _dead_time > 650) && (g_Game->m_flTime - _dead_time < 650+HACK_TIME/2))
+        if (_dead_time && (g_Game->_frametime - _dead_time > 650) && (g_Game->_frametime - _dead_time < 650+HACK_TIME/2))
         {
             _world->add_sound(_sound_explode);
             _world->add_effect(effect_type::explosion, get_position());
@@ -214,51 +214,51 @@ void tank::think()
     }
     else
     {
-        float new_speed = _track_speed * 0.9 * (1 - FRAMETIME) + flForward * 192 * _client->speed_mod * FRAMETIME;
+        float new_speed = _track_speed * 0.9 * (1 - FRAMETIME) + input_forward * 192 * _client->speed_mod * FRAMETIME;
         new_speed = clamp(new_speed, -32 * _client->speed_mod, 48 * _client->speed_mod);
 
         set_linear_velocity(get_linear_velocity() + forward * (new_speed - _track_speed));
         _track_speed = new_speed;
 
-        set_angular_velocity(deg2rad(-flLeft * 90));
-        _turret_velocity = deg2rad(-flTLeft * 90);
+        set_angular_velocity(deg2rad(-input_left * 90));
+        _turret_velocity = deg2rad(-input_turret_left * 90);
     }
 
     // update position here because Move doesn't
     _turret_rotation += _turret_velocity * FRAMETIME;
 
-    if ((_fire_time + 2500/_client->refire_mod) > g_Game->m_flTime)  // just fired
+    if ((_fire_time + 2500/_client->refire_mod) > g_Game->_frametime)  // just fired
     {
-        vec2    vOrg(21,0);
-        float   flPower;
+        vec2 effect_origin(21,0);
+        float power;
 
-        flPower = 1.5 - (g_Game->m_flTime - _fire_time)/1000.0f;
-        flPower = clamp(flPower, 0.5f, 1.5f);
+        power = 1.5 - (g_Game->_frametime - _fire_time)/1000.0f;
+        power = clamp(power, 0.5f, 1.5f);
 
         _world->add_effect(
             effect_type::smoke,
-            get_position() + rot(vOrg,_turret_rotation),
-            rot(vOrg,_turret_rotation) * flPower * flPower * flPower * 2,
-            flPower * flPower * 4 );
+            get_position() + rot(effect_origin,_turret_rotation),
+            rot(effect_origin,_turret_rotation) * power * power * power * 2,
+            power * power * 4 );
     }
-    else if ((_fire_time + 3000/_client->refire_mod) < g_Game->m_flTime) // can fire
+    else if ((_fire_time + 3000/_client->refire_mod) < g_Game->_frametime) // can fire
     {
         // check for firing
         if (_keys[KEY_FIRE] && _damage < 1.0f)
         {
-            vec2    vOrg(21,0);
+            vec2 effect_origin(21,0);
 
             _world->add_effect(
                 effect_type::smoke,
-                get_position() + rot(vOrg,_turret_rotation),
-                rot(vOrg,_turret_rotation) * 16,
+                get_position() + rot(effect_origin,_turret_rotation),
+                rot(effect_origin,_turret_rotation) * 16,
                 64 );
 
-            _fire_time = g_Game->m_flTime;
+            _fire_time = g_Game->_frametime;
 
             projectile* bullet = _world->spawn<projectile>(this, _client->damage_mod);
 
-            bullet->set_position(get_position() + rot(vOrg,_turret_rotation), true);
+            bullet->set_position(get_position() + rot(effect_origin,_turret_rotation), true);
             bullet->set_linear_velocity(rot(vec2(1,0),_turret_rotation) * 20 * 96);
 
             _world->add_sound(_sound_fire);
@@ -436,46 +436,45 @@ void projectile::touch(object *other, physics::contact const* contact)
         tank* owner_tank = static_cast<tank*>(_owner);
         tank* other_tank = static_cast<tank*>(other);
 
-        vec2    vOrg, vDir;
-        float   flDot, damage;
+        vec2    impact_normal, forward;
+        float   impact_angle, damage;
 
         if (other_tank->_damage >= 1.0f) {
             return; // dont add damage or score
         }
 
-        vOrg = -get_linear_velocity().normalize();
-        vDir = vec2(1,0);
-        vDir = rot(vDir,other->get_rotation());
-        flDot = (vOrg.x*vDir.x + vOrg.y*vDir.y);
+        impact_normal = -get_linear_velocity().normalize();
+        forward = rot(vec2(1,0), other->get_rotation());
+        impact_angle = impact_normal.dot(forward);
 
         damage = owner_tank->_client->damage_mod / other_tank->_client->armor_mod;
 
-        if (!g_Game->bExtendedArmor && !g_Game->m_bMultiplayer) {
+        if (!g_Game->_extended_armor && !g_Game->_multiplayer) {
             other_tank->_damage += damage * DAMAGE_FULL;
-        } else if (flDot > M_SQRT1_2) {
+        } else if (impact_angle > M_SQRT1_2) {
             other_tank->_damage += damage * DAMAGE_FRONT;
-        } else if (flDot > -M_SQRT1_2) {
+        } else if (impact_angle > -M_SQRT1_2) {
             other_tank->_damage += damage * DAMAGE_SIDE;
         } else {
             other_tank->_damage += damage * DAMAGE_REAR;
         }
 
         if (other_tank->_damage >= 1.0f) {
-            g_Game->AddScore( owner_tank->_player_index, 1 );
-            other_tank->_dead_time = g_Game->m_flTime;
-            if (g_Game->bAutoRestart && !g_Game->m_bMultiplayer)
-                g_Game->flRestartTime = g_Game->m_flTime + RESTART_TIME;
+            g_Game->add_score( owner_tank->_player_index, 1 );
+            other_tank->_dead_time = g_Game->_frametime;
+            if (g_Game->_auto_restart && !g_Game->_multiplayer)
+                g_Game->_restart_time = g_Game->_frametime + RESTART_TIME;
 
             int r = rand()%3;
             switch (r) {
                 case 0:
-                    g_Game->m_WriteMessage(va("%s couldn't take %s's HEAT.", other_tank->player_name(), owner_tank->player_name()));
+                    g_Game->write_message(va("%s couldn't take %s's HEAT.", other_tank->player_name(), owner_tank->player_name()));
                     break;
                 case 1:
-                    g_Game->m_WriteMessage(va("%s was on the wrong end of %s's cannon.", other_tank->player_name(), owner_tank->player_name()));
+                    g_Game->write_message(va("%s was on the wrong end of %s's cannon.", other_tank->player_name(), owner_tank->player_name()));
                     break;
                 case 2:
-                    g_Game->m_WriteMessage(va("%s ate all 125mm of %s's boom stick.", other_tank->player_name(), owner_tank->player_name()));
+                    g_Game->write_message(va("%s ate all 125mm of %s's boom stick.", other_tank->player_name(), owner_tank->player_name()));
                     break;
             }
         }
@@ -485,11 +484,11 @@ void projectile::touch(object *other, physics::contact const* contact)
 //------------------------------------------------------------------------------
 void projectile::draw() const
 {
-    float   flLerp = (g_Game->m_flTime - (g_Game->m_nFramenum-1) * FRAMEMSEC) / FRAMEMSEC;
+    float   lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
     vec2    p1, p2;
 
-    p1 = get_position( flLerp );
-    p2 = get_position( flLerp + 0.4f );
+    p1 = get_position( lerp );
+    p2 = get_position( lerp + 0.4f );
 
     g_Render->draw_line(p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0));
 }

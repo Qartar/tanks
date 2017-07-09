@@ -17,7 +17,7 @@ namespace game {
 render::particle* world::add_particle ()
 {
     _particles.emplace_back(render::particle{0});
-    _particles.back().time = 1e-3f * g_Game->m_flTime;
+    _particles.back().time = 1e-3f * g_Game->_frametime;
     return &_particles.back();
 }
 
@@ -31,7 +31,7 @@ void world::free_particle (render::particle *p) const
 //------------------------------------------------------------------------------
 void world::draw_particles () const
 {
-    float time = 1e-3f * g_Game->m_flTime;
+    float time = 1e-3f * g_Game->_frametime;
 
     for (std::size_t ii = 0; ii < _particles.size(); ++ii) {
         float ptime = time - _particles[ii].time;
