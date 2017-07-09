@@ -19,6 +19,11 @@ namespace game {
 physics::material tank::_material(0.5f, 1.0f, 5.0f);
 physics::box_shape tank::_shape(vec2(24, 16));
 
+#define DAMAGE_FRONT    0.334f
+#define DAMAGE_SIDE     0.5f
+#define DAMAGE_REAR     1.0f
+#define DAMAGE_FULL     1.0f
+
 //------------------------------------------------------------------------------
 tank::tank ()
     : object(object_type::tank)
@@ -126,28 +131,45 @@ void tank::touch(object *other, physics::contact const* contact)
         return;
     }
 
-    float base_damage = std::max<float>(0, contact->impulse.length() - 5.0f) / 5.0f * FRAMETIME;
     tank* other_tank = static_cast<tank*>(other);
 
-    this->collide(other_tank, base_damage);
-    other_tank->collide(this, base_damage);
+    this->collide(other_tank, contact);
+    other_tank->collide(this, contact);
 }
 
 //------------------------------------------------------------------------------
-void tank::collide(tank* other, float base_damage)
+void tank::collide(tank* other, physics::contact const* contact)
 {
-    if (other->_damage < 1.0f) {
-        other->_damage += base_damage / other->_client->armor_mod;
+    if (other->_damage >= 1.0f) {
+        return;
+    }
 
-        if (other->_damage >= 1.0f)
-        {
-            g_Game->add_score(_player_index, 1);
-            other->_dead_time = g_Game->_frametime;
-            if (g_Game->_auto_restart && !g_Game->_multiplayer)
-                g_Game->_restart_time = g_Game->_frametime + RESTART_TIME;
+    float base_damage = std::max<float>(0, contact->impulse.dot(contact->normal) - 10.0f) / 2.0f * FRAMETIME;
 
-            g_Game->write_message( va("%s got a little too cozy with %s.", other->player_name(), player_name() ) );
-        }
+    vec2 direction = (contact->point - other->get_position()).normalize();
+    vec2 forward = rot(vec2(1,0), other->get_rotation());
+    float impact_angle = direction.dot(forward);
+
+    if (!g_Game->_extended_armor && !g_Game->_multiplayer) {
+        base_damage *= DAMAGE_FULL;
+    } else if (impact_angle > M_SQRT1_2) {
+        base_damage *= DAMAGE_FRONT;
+    } else if (impact_angle > -M_SQRT1_2) {
+        base_damage *= DAMAGE_SIDE;
+    } else {
+        base_damage *= DAMAGE_REAR;
+    }
+
+    other->_damage += base_damage / other->_client->armor_mod;
+
+    if (other->_damage >= 1.0f)
+    {
+        g_Game->add_score(_player_index, 1);
+        other->_dead_time = g_Game->_frametime;
+        if (g_Game->_auto_restart && !g_Game->_multiplayer)
+            g_Game->_restart_time = g_Game->_frametime + RESTART_TIME;
+
+        g_Game->write_message( va("%s got a little too cozy with %s.", other->player_name(), player_name() ) );
     }
 }
 
@@ -412,15 +434,6 @@ projectile::projectile(tank* owner, float damage)
     _sound_explode = pSound->Register("ASSETS\\SOUND\\BULLET_EXPLODE.wav");
 }
 
-#ifndef M_SQRT1_2
-#define M_SQRT1_2  0.707106781186547524401
-#endif // M_SQRT1_2
-
-#define DAMAGE_FRONT    0.334f
-#define DAMAGE_SIDE     0.5f
-#define DAMAGE_REAR     1.0f
-#define DAMAGE_FULL     1.0f
-
 //------------------------------------------------------------------------------
 void projectile::touch(object *other, physics::contact const* contact)
 {
@@ -443,7 +456,8 @@ void projectile::touch(object *other, physics::contact const* contact)
             return; // dont add damage or score
         }
 
-        impact_normal = -get_linear_velocity().normalize();
+        impact_normal = contact ? -contact->normal
+                                : -get_linear_velocity().normalize();
         forward = rot(vec2(1,0), other->get_rotation());
         impact_angle = impact_normal.dot(forward);
 

@@ -181,7 +181,7 @@ public:
     game_client_t* _client;
 
 protected:
-    void collide(tank* other, float base_damage);
+    void collide(tank* other, physics::contact const* contact);
 
 protected:
     static physics::material _material;
