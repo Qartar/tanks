@@ -24,9 +24,6 @@ cvar_t  *g_upgrades = NULL;
 cvar_t  *g_arenaWidth = NULL;
 cvar_t  *g_arenaHeight = NULL;
 
-cvar_t  *cl_name = NULL;
-cvar_t  *cl_color = NULL;
-
 extern cvar_t   *net_master;        //  master server
 extern cvar_t   *net_serverName;    //  server name
 
@@ -197,61 +194,6 @@ int session::shutdown()
     _menu.shutdown( );
 
     return ERROR_NONE;
-}
-
-/*
-===========================================================
-
-Name    :   session::m_InitClient session::m_EndClient
-
-Purpose :   Shutdown
-
-===========================================================
-*/
-
-const float colorMinFrac = 0.75f;
-
-void session::init_client()
-{
-    int length;
-    float   csum;
-
-    textutils_c text;
-
-    _client_button_down = 0;
-    _client_say = 0;
-
-    cl_name = pVariable->Get( "ui_name", "", "string", CVAR_ARCHIVE, "user info: name" );
-    cl_color = pVariable->Get( "ui_color", "255 0 0", "string", CVAR_ARCHIVE, "user info: color" );
-
-    if ( strlen( cl_name->getString( )) )
-        strcpy( cls.name, cl_name->getString( ) );
-    else
-        GetUserNameA( cls.name, (LPDWORD )&length );
-
-    text.parse( cl_color->getString( ) );
-    cls.color.r = (float )atoi(text.argv(0)) / 255.0f;
-    cls.color.g = (float )atoi(text.argv(1)) / 255.0f;
-    cls.color.b = (float )atoi(text.argv(2)) / 255.0f;
-
-    csum = cls.color.r + cls.color.g + cls.color.b;
-    if ( csum < colorMinFrac ) {
-        if ( csum == 0.0f ) {
-            cls.color.r = cls.color.g = cls.color.b = colorMinFrac * 0.334f;
-        } else {
-            float   invsum = colorMinFrac / csum;
-
-            cls.color.r *= invsum;
-            cls.color.g *= invsum;
-            cls.color.b *= invsum;
-        }
-    }
-}
-
-void session::shutdown_client()
-{
-    cl_name->setString( cls.name );
-    cl_color->setString( va("%i %i %i", (int )(cls.color.r*255), (int )(cls.color.g*255), (int )(cls.color.b*255) ) );
 }
 
 /*
@@ -834,24 +776,6 @@ int session::key_event(unsigned char key, bool down)
     }
 
     return false;
-}
-
-void session::client_keys (int key, bool down)
-{
-    if ( key == 'w' || key == 'W' )
-        _client_keys[KEY_FORWARD] = down;
-    else if ( key == 's' || key == 'S' )
-        _client_keys[KEY_BACK] = down;
-    else if ( key == 'a' || key == 'A' )
-        _client_keys[KEY_LEFT] = down;
-    else if ( key == 'd' || key == 'D' )
-        _client_keys[KEY_RIGHT] = down;
-    else if ( key == 'j' || key == 'J' )
-        _client_keys[KEY_TLEFT] = down;
-    else if ( key == 'l' || key == 'L' )
-        _client_keys[KEY_TRIGHT] = down;
-    else if ( key == 'k' || key == 'K' )
-        _client_keys[KEY_FIRE] = down;
 }
 
 /*

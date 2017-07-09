@@ -34,6 +34,8 @@ class system;
 #define KEY_TRIGHT  5
 #define KEY_FIRE    6
 
+#define PROTOCOL_VERSION    3
+
 namespace game {
 
 static vec4 player_colors[] = {
