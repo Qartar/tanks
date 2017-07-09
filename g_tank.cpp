@@ -41,6 +41,12 @@ tank::tank ()
             chan = pSound->allocChan();
         }
     }
+
+    _sound_idle = pSound->Register("ASSETS\\SOUND\\TANK_IDLE.wav");
+    _sound_move = pSound->Register("ASSETS\\SOUND\\TANK_MOVE.wav");
+    _sound_turret_move = pSound->Register("ASSETS\\SOUND\\TURRET_MOVE.wav");
+    _sound_fire = pSound->Register("ASSETS\\SOUND\\TANK_FIRE.wav");
+    _sound_explode = pSound->Register("ASSETS\\SOUND\\TANK_EXPLODE.wav");
 }
 
 //------------------------------------------------------------------------------
@@ -196,8 +202,8 @@ void tank::think()
         // extra explosion
         if (_dead_time && (g_Game->m_flTime - _dead_time > 650) && (g_Game->m_flTime - _dead_time < 650+HACK_TIME/2))
         {
-            _world->add_sound( sound_index[TANK_EXPLODE].name );
-            _world->add_effect( get_position(), effect_type::explosion );
+            _world->add_sound(_sound_explode);
+            _world->add_effect(get_position(), effect_type::explosion);
             _dead_time -= HACK_TIME;    // dont do it again
         }
     }
@@ -248,7 +254,7 @@ void tank::think()
             bullet->set_position(get_position() + rot(vOrg,_turret_rotation), true);
             bullet->set_linear_velocity(rot(vec2(1,0),_turret_rotation) * 20 * 96);
 
-            _world->add_sound( sound_index[TANK_FIRE].name );
+            _world->add_sound(_sound_fire);
         }
     }
 
@@ -329,7 +335,7 @@ void tank::update_sound()
     if (_channels[0]) {
         if (_damage < 1.0f) {
             if (!_channels[0]->isPlaying()) {
-                _channels[0]->playLoop(sound_index[TANK_IDLE].index);
+                _channels[0]->playLoop(_sound_idle);
             }
             _channels[0]->setVolume(1.0f);
             _channels[0]->setAttenuation(0.0f);
@@ -344,7 +350,7 @@ void tank::update_sound()
     if (_channels[1]) {
         if (get_linear_velocity().lengthsq() > 1.0f || fabs(get_angular_velocity()) > deg2rad(1.0f)) {
             if (!_channels[1]->isPlaying()) {
-                _channels[1]->playLoop(sound_index[TANK_MOVE].index);
+                _channels[1]->playLoop(_sound_move);
             }
             _channels[1]->setVolume(1.0f);
             _channels[1]->setAttenuation(0.0f);
@@ -358,7 +364,7 @@ void tank::update_sound()
     if (_channels[2]) {
         if (fabs(get_angular_velocity() - _turret_velocity) > deg2rad(1.0f)) {
             if (!_channels[2]->isPlaying()) {
-                _channels[2]->playLoop( sound_index[TURRET_MOVE].index );
+                _channels[2]->playLoop(_sound_turret_move);
             }
             _channels[2]->setVolume(1.0f);
             _channels[2]->setAttenuation(0.0f);
@@ -396,6 +402,7 @@ projectile::projectile(tank* owner, float damage)
     , _damage(damage)
 {
     _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
+    _sound_explode = pSound->Register("ASSETS\\SOUND\\BULLET_EXPLODE.wav");
 }
 
 #ifndef M_SQRT1_2
@@ -410,7 +417,7 @@ projectile::projectile(tank* owner, float damage)
 //------------------------------------------------------------------------------
 void projectile::touch(object *other, float impulse)
 {
-    _world->add_sound(sound_index[BULLET_EXPLODE].name);
+    _world->add_sound(_sound_explode);
     _world->add_effect(get_position(), effect_type::explosion);
 
     _world->remove(this);

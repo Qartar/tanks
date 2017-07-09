@@ -267,13 +267,9 @@ Purpose :   sound!
 ===========================================================
 */
 
-void world::add_sound(char const* name) {
-    for (int ii=0; ii < NUM_SOUNDS; ++ii) {
-        if (sound_index[ii].name && stricmp( name, sound_index[ii].name) == 0) {
-            g_Game->m_WriteSound(sound_index[ii].index);
-            pSound->playSound(sound_index[ii].index, vec3(0,0,0), 1.0f, 0.0f);
-        }
-    }
+void world::add_sound(int sound_index) {
+    g_Game->m_WriteSound(sound_index);
+    pSound->playSound(sound_index, vec3(0,0,0), 1.0f, 0.0f);
 }
 
 /*

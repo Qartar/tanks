@@ -310,12 +310,5 @@ private:
     char        m_clientsay[LONG_STRING];
 };
 
-struct index_s
-{
-    char    *name;
-    int     index;
-};
-extern index_s  sound_index[256];
-
 extern cGame *g_Game;
 extern render::system* g_Render;

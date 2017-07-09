@@ -35,15 +35,7 @@ vMain   *pMain;
 cGame   *g_Game;
 render::system* g_Render;
 
-index_s sound_index[256];
-
 void FindServer (bool bConnect);
-
-#define register_sound(i,a)                                 \
-    sound_index[i].index = pSound->Register( a );           \
-    sound_index[i].name = (char *)mem::alloc(strlen(a)+1);  \
-    strcpy( sound_index[i].name, a );                       \
-    *(sound_index[i].name + strlen(a)) = 0
 
 cGame::cGame()
     : m_Players{0}
@@ -170,14 +162,14 @@ int cGame::Init (char *cmdline)
     m_ShiftKeys['`'] = '~';
     m_ShiftKeys['\\'] = '|';
 
-    memset( sound_index, 0, sizeof(sound_index) );
-
-    register_sound( 0, "ASSETS\\SOUND\\TANK_MOVE.wav" );
-    register_sound( 1, "ASSETS\\SOUND\\TANK_IDLE.wav" );
-    register_sound( 2, "ASSETS\\SOUND\\TANK_FIRE.wav" );
-    register_sound( 3, "ASSETS\\SOUND\\TANK_EXPLODE.wav" );
-    register_sound( 4, "ASSETS\\SOUND\\BULLET_EXPLODE.wav" );
-    register_sound( 5, "ASSETS\\SOUND\\TURRET_MOVE.wav" );
+    // sound indices are shared over the network so sounds
+    // need to be registed in the same order on all clients
+    pSound->Register("ASSETS\\SOUND\\TANK_MOVE.wav");
+    pSound->Register("ASSETS\\SOUND\\TANK_IDLE.wav");
+    pSound->Register("ASSETS\\SOUND\\TANK_FIRE.wav");
+    pSound->Register("ASSETS\\SOUND\\TANK_EXPLODE.wav");
+    pSound->Register("ASSETS\\SOUND\\BULLET_EXPLODE.wav");
+    pSound->Register("ASSETS\\SOUND\\TURRET_MOVE.wav");
 
     m_WriteMessage( "Welcome to Tanks! Press F1 for help." );
 
@@ -201,9 +193,6 @@ int cGame::Shutdown ()
 
     m_World.shutdown( );
     m_Menu.shutdown( );
-
-    for ( int i=0 ; i<NUM_SOUNDS ; i++ )
-        mem::free( sound_index[i].name );
 
     return ERROR_NONE;
 }

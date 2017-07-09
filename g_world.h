@@ -131,6 +131,8 @@ public:
 
 protected:
     float _damage;
+
+    int _sound_explode;
 };
 
 //------------------------------------------------------------------------------
@@ -182,6 +184,12 @@ protected:
 protected:
     static physics::material _material;
     static physics::box_shape _shape;
+
+    int _sound_idle;
+    int _sound_move;
+    int _sound_turret_move;
+    int _sound_fire;
+    int _sound_explode;
 };
 
 //------------------------------------------------------------------------------
@@ -211,7 +219,7 @@ public:
 
     void remove(object* object);
 
-    void add_sound(char const* name);
+    void add_sound(int sound_index);
     void add_smoke_effect(vec2 position, vec2 velocity, int count);
     void add_effect(vec2 position, effect_type type, float strength = 1);
 
