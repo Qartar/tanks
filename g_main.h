@@ -222,6 +222,8 @@ private:
     void get_cursor();
     vec2 _cursor;
 
+    void update_screen();
+
     int _score[MAX_PLAYERS];
     void draw_score ();
 

@@ -208,18 +208,9 @@ Purpose :   runframe
 
 int session::run_frame(float milliseconds)
 {
-    float   beg, getp, wframe, sendp, rmenu, rworld, snd, end;
-    float   ref, fbeg;
-
-    static bool show_cursor = true;
-
     rand( );
 
-    beg = g_Application->get_time( );
-
     get_packets( );
-
-    getp = g_Application->get_time( );
 
     _frametime += milliseconds;
 
@@ -236,21 +227,29 @@ int session::run_frame(float milliseconds)
         }
     }
 
-    wframe = g_Application->get_time( );
-
     send_packets( );
 
-    sendp = g_Application->get_time( );
+    // draw everything
 
-    //
-    // client side shit
-    //
+    update_screen();
 
-    ref = g_Application->get_time( );
+    // update sound
+
+    pSound->Update( );
+
+    if ( _restart_time && (_frametime > _restart_time) && !_menu_active ) {
+        restart();
+    }
+
+    return ERROR_NONE;
+}
+
+//------------------------------------------------------------------------------
+void session::update_screen()
+{
+    static bool show_cursor = true;
 
     g_Render->begin_frame();
-
-    fbeg = g_Application->get_time( );
 
     //  set view center
     int world_width, world_height;
@@ -296,8 +295,6 @@ int session::run_frame(float milliseconds)
 
     g_Render->set_view_origin(vec2(0,0));
 
-    rworld = g_Application->get_time( );
-
     // draw menu
     if (_menu_active)
     {
@@ -323,23 +320,7 @@ int session::run_frame(float milliseconds)
 
     draw_messages( );
 
-    rmenu = g_Application->get_time( );
-
     g_Render->end_frame();
-
-    // update sound
-
-    pSound->Update( );
-
-    snd = g_Application->get_time( );
-
-    if ( _restart_time && (_frametime > _restart_time) && !_menu_active ) {
-        restart();
-    }
-
-    end = g_Application->get_time( );
-
-    return ERROR_NONE;
 }
 
 /*
