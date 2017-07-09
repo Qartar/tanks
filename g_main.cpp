@@ -58,7 +58,7 @@ Purpose :   Initialization
 
 int cGame::Init (char *cmdline)
 {
-    g_Render = g_Application->get_glWnd()->get_Render();
+    g_Render = g_Application->window()->renderer();
 
     _menu_image = g_Render->load_image(MAKEINTRESOURCE(IDB_BITMAP1));
 
@@ -268,7 +268,6 @@ int cGame::RunFrame (float flMSec)
     float   ref, fbeg;
 
     static bool bCursor = true;
-    bool        bFullscreen = g_Application->get_glWnd()->get_WndParams().bFullscreen;
 
     rand( );
 
@@ -413,14 +412,15 @@ void cGame::m_getCursorPos ()
 {
     POINT   ptCursor;
 
-    sWndParam wndParam = g_Application->get_glWnd()->get_WndParams();
+    vec2 position = g_Application->window()->position();
+    vec2 size = g_Application->window()->size();
 
     GetCursorPos( &ptCursor );
 
     // copy to member value
 
-    m_vCursorPos.x = (ptCursor.x - wndParam.nPos[0]) * DEFAULT_W / wndParam.nSize[0];
-    m_vCursorPos.y = (ptCursor.y - wndParam.nPos[1]) * DEFAULT_H / wndParam.nSize[1];
+    m_vCursorPos.x = (ptCursor.x - position.x) * DEFAULT_W / size.x;
+    m_vCursorPos.y = (ptCursor.y - position.y) * DEFAULT_H / size.y;
 }
 
 /*

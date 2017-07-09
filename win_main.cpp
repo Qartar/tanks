@@ -32,12 +32,18 @@ Purpose :   Program Entry ; routes to cWinApp::Main
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR szCmdLine, int nCmdShow)
 {
-    cWinApp Application;
+    cWinApp Application(hInstance);
 
     g_Application = &Application;   // set up global object
 
-    return Application.Main( hInstance, szCmdLine, nCmdShow );
+    return Application.Main( szCmdLine, nCmdShow );
 }
+
+cWinApp::cWinApp(HINSTANCE hInstance)
+    : m_hInstance(hInstance)
+    , _window(hInstance, (WNDPROC )m_WndProc)
+    , m_nExitCode(0)
+{}
 
 /*
 ===========================================================
@@ -49,12 +55,12 @@ Purpose :   internal replacement for WinMain (or main in console)
 ===========================================================
 */
 
-int cWinApp::Main (HINSTANCE hInstance, LPSTR szCmdLine, int nCmdShow)
+int cWinApp::Main (LPSTR szCmdLine, int nCmdShow)
 {
     float   flTime, flNewTime, flOldTime;
     MSG     msgMessage;
 
-    Init( hInstance, szCmdLine );
+    Init( m_hInstance, szCmdLine );
 
     flOldTime = get_time( );
 
@@ -75,7 +81,7 @@ int cWinApp::Main (HINSTANCE hInstance, LPSTR szCmdLine, int nCmdShow)
 
         // inactive/idle loop
 
-        if ( !m_glWnd.get_WndParams().bActive )
+        if (!_window.active())
             Sleep( 1 );
 
         // wait loop
@@ -125,7 +131,7 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
     vSound::Create( );
 
     // init opengl
-    m_glWnd.Init( m_hInstance, (WNDPROC )m_WndProc );
+    _window.create();
 
     // init game
     m_Game.Init( szCmdLine );
@@ -147,7 +153,7 @@ Purpose :   shuts down the application completely
 int cWinApp::Shutdown ()
 {
     // shutdown opengl
-    m_glWnd.Shutdown( );
+    _window.destroy();
 
     // shutdown game
     m_Game.Shutdown( );
@@ -256,7 +262,7 @@ LRESULT cWinApp::m_WndProc (HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     case WM_MOVE:
     case WM_SYSKEYDOWN:
     case WM_DESTROY:
-        return g_Application->m_glWnd.Message( nCmd, wParam, lParam );
+        return g_Application->_window.message( nCmd, wParam, lParam );
 
     default:
         return DefWindowProc( hWnd, nCmd, wParam, lParam );

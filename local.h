@@ -27,7 +27,6 @@ Purpose :   General top-down include file
 #include "g_main.h"
 //  rendering headers
 #include "r_main.h"
-//  opengl headers
-#include "gl_main.h"
+#include "r_window.h"
 //  windows headers
 #include "win_main.h"

@@ -81,7 +81,7 @@ font::font(char const* name, int size)
     );
 
     // set our new font to the system
-    HFONT prev_font = (HFONT )SelectObject(g_Application->get_glWnd()->get_hDC(), _handle);
+    HFONT prev_font = (HFONT )SelectObject(g_Application->window()->hdc(), _handle);
 
     // generate font bitmaps with selected HFONT
     memset( &m, 0, sizeof(m) );
@@ -90,14 +90,14 @@ font::font(char const* name, int size)
     m.eM21.value = 0;
     m.eM22.value = 1;
 
-    wglUseFontBitmapsA(g_Application->get_glWnd()->get_hDC(), 0, kNumChars-1, _list_base);
+    wglUseFontBitmapsA(g_Application->window()->hdc(), 0, kNumChars-1, _list_base);
     for (int ii = 0; ii < kNumChars; ++ii) {
-        GetGlyphOutlineA(g_Application->get_glWnd()->get_hDC(), ii, GGO_METRICS, &gm, 0, NULL, &m);
+        GetGlyphOutlineA(g_Application->window()->hdc(), ii, GGO_METRICS, &gm, 0, NULL, &m);
         _char_width[ii] = gm.gmCellIncX;
     }
 
     // restore previous font
-    SelectObject(g_Application->get_glWnd()->get_hDC(), prev_font);
+    SelectObject(g_Application->window()->hdc(), prev_font);
 }
 
 /*
@@ -115,7 +115,7 @@ font::~font()
     // restore system font if this is the active font
     if (_active_font == _handle) {
         glListBase(0);
-        SelectObject(g_Application->get_glWnd()->get_hDC(), _system_font);
+        SelectObject(g_Application->window()->hdc(), _system_font);
 
         _active_font = _system_font;
         _system_font = NULL;
@@ -162,7 +162,7 @@ void font::draw(char const* string, vec2 position, vec4 color) const
 {
     // activate font if it isn't already
     if (_active_font != _handle) {
-        HFONT prev_font = (HFONT )SelectObject(g_Application->get_glWnd()->get_hDC(), _handle);
+        HFONT prev_font = (HFONT )SelectObject(g_Application->window()->hdc(), _handle);
 
         // keep track of the system font so it can be restored later
         if (_system_font == NULL) {

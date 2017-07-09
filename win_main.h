@@ -27,16 +27,15 @@ Purpose :   this is THE windows class winmain calls cWinApp::Main
 */
 
 class cNetwork;
-class cOpenGLWnd;
 class cGame;
 
 class cWinApp
 {
 public:
-    cWinApp () : m_nExitCode(0) {}
+    cWinApp (HINSTANCE hInstance);
     ~cWinApp () {}
 
-    int     Main (HINSTANCE hInstance, LPSTR szCmdLine, int nCmdShow);
+    int     Main (LPSTR szCmdLine, int nCmdShow);
 
     int     Init (HINSTANCE hInstance, LPSTR szCmdLine);
     int     Shutdown ();
@@ -51,13 +50,13 @@ public:
     float       get_time () { QueryPerformanceCounter( &m_timerCounter ) ; return ( (float)(m_timerCounter.QuadPart - m_timerBase.QuadPart) / (float)(m_timerFrequency.QuadPart) * 1000.0f ) ; }
 
     HINSTANCE   get_hInstance () { return m_hInstance; }
-    cOpenGLWnd  *get_glWnd () { return &m_glWnd; }
+    render::window* window() { return &_window; }
 
 private:
     HINSTANCE   m_hInstance;
     int         m_nExitCode;
 
-    cOpenGLWnd  m_glWnd;
+    render::window _window;
     cGame       m_Game;
 
     char        *m_szInitString;

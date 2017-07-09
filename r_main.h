@@ -17,9 +17,9 @@ typedef struct HFONT__* HFONT;
 typedef struct HBITMAP__* HBITMAP;
 #endif // _WINDOWS_
 
-class cOpenGLWnd;
-
 namespace render {
+
+class window;
 
 /*
 ===========================================================
@@ -94,7 +94,7 @@ Purpose :   Rendering controller object
 class system
 {
 public:
-    system(cOpenGLWnd* window)
+    system(render::window* window)
         : _window(window)
     {}
 
@@ -138,7 +138,7 @@ private:
 
     // Internal stuff
 
-    cOpenGLWnd* _window;
+    render::window* _window;
 
     void _set_default_state();
 

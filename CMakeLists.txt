@@ -23,8 +23,6 @@ add_executable(tanks WIN32
     g_tank.cpp
     g_world.cpp
     g_world.h
-    gl_main.cpp
-    gl_main.h
     keys.h
     local.h
     net_chan.cpp
@@ -53,6 +51,8 @@ add_executable(tanks WIN32
     r_model.cpp
     r_model.h
     r_particle.h
+    r_window.cpp
+    r_window.h
     resource.rc
     resource.h
     shared.h

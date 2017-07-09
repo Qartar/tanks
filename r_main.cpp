@@ -83,7 +83,7 @@ Purpose :   End of Drawing, Swap to screen
 
 void system::end_frame()
 {
-    _window->EndFrame();
+    _window->end_frame();
 }
 
 /*
