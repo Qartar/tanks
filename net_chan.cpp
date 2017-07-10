@@ -13,6 +13,8 @@ Date    :   04/14/2004
 #include "local.h"
 #pragma hdrstop
 
+namespace network {
+
 /*
 ===========================================================
 
@@ -23,7 +25,7 @@ Purpose :
 ===========================================================
 */
 
-int cNetChannel::Init (int netport)
+int channel::Init (int netport)
 {
     LARGE_INTEGER   nCounter;
 
@@ -37,7 +39,7 @@ int cNetChannel::Init (int netport)
     return ERROR_NONE;
 }
 
-int cNetChannel::Setup (netsock_t socket, netadr_t remote, int netport)
+int channel::Setup (network::socket socket, network::address remote, int netport)
 {
     if ( netport )
         this->netport = netport;
@@ -64,17 +66,17 @@ Purpose :   transmits a data to a remote destination
 ===========================================================
 */
 
-int cNetChannel::Transmit (int nLength, byte *pData)
+int channel::Transmit (int nLength, byte *pData)
 {
     static  byte    netmsgbuf[MAX_MSGLEN];
-    netmsg_t        netmsg;
+    network::message        netmsg;
 
     netmsg.Init( netmsgbuf, MAX_MSGLEN );
 
     // write netport if were are client
 
     netmsg.WriteLong( 0 );  // trash
-    if (socket == NS_CLIENT)
+    if (socket == network::socket::client)
         netmsg.WriteShort( netport );
 
     // copy the rest over
@@ -98,17 +100,19 @@ Purpose :   processes a received packet
 ===========================================================
 */
 
-int cNetChannel::Process (netmsg_t *pMessage)
+int channel::Process (network::message *pMessage)
 {
     int netport;
 
     pMessage->Begin( );
 
     pMessage->ReadLong( );  // trash
-    if (socket == NS_SERVER)
+    if (socket == network::socket::server)
         netport = pMessage->ReadShort( );
 
     last_received = g_Application->get_time( );
 
     return ERROR_NONE;
 }
+
+} // namespace network

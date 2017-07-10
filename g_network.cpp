@@ -10,16 +10,16 @@ namespace game {
 //------------------------------------------------------------------------------
 void session::get_packets ()
 {
-    netsock_t   socket;
+    network::socket   socket;
     client_t    *cl;
     int         i;
 
     float       time = g_Application->get_time( );
 
     if ( _multiserver )
-        socket = NS_SERVER;
+        socket = network::socket::server;
     else
-        socket = NS_CLIENT;
+        socket = network::socket::client;
 
     while ( pNet->Get( socket, &_netfrom, &_netmsg ) )
     {
@@ -29,7 +29,7 @@ void session::get_packets ()
             continue;
         }
 
-        if ( socket == NS_SERVER )
+        if ( socket == network::socket::server )
         {
             int     netport;
 
@@ -104,7 +104,7 @@ void session::get_packets ()
 }
 
 //------------------------------------------------------------------------------
-void session::connectionless (netsock_t socket)
+void session::connectionless (network::socket socket)
 {
     static char* cmd; 
 
@@ -113,14 +113,14 @@ void session::connectionless (netsock_t socket)
 
     cmd = _netstring = _netmsg.ReadString( );
 
-    if ( socket == NS_SERVER )
+    if ( socket == network::socket::server )
     {
         if ( (strstr( cmd, "info" ) ) )
             info_send( );
         else if ( (strstr( cmd, "connect" ) ) )
             client_connect( );
     }
-    else if ( socket == NS_CLIENT )
+    else if ( socket == network::socket::client )
     {
         if ( (strstr( cmd, "info" ) ) )
             info_get( );
@@ -132,7 +132,7 @@ void session::connectionless (netsock_t socket)
 }
 
 //------------------------------------------------------------------------------
-void session::packet (netsock_t socket)
+void session::packet (network::socket socket)
 {
     int     net_cmd;
     char    *string;
@@ -148,7 +148,7 @@ void session::packet (netsock_t socket)
         if ( net_cmd == -1 )
             return;
 
-        if ( socket == NS_SERVER )
+        if ( socket == network::socket::server )
         {
             switch ( net_cmd )
             {
@@ -183,7 +183,7 @@ void session::packet (netsock_t socket)
                 return;
             }
         }
-        else if ( socket == NS_CLIENT )
+        else if ( socket == network::socket::client )
         {
             switch ( net_cmd )
             {
@@ -242,7 +242,7 @@ void session::broadcast (int len, byte *data)
 //------------------------------------------------------------------------------
 void session::broadcast_print (char const* message)
 {
-    netmsg_t    netmsg;
+    network::message    netmsg;
     byte        netmsgbuf[MAX_MSGLEN];
 
     netmsg.Init( netmsgbuf, MAX_MSGLEN );
@@ -303,7 +303,7 @@ void session::read_fail ()
 }
 
 //------------------------------------------------------------------------------
-void session::write_info (int client, netmsg_t *message)
+void session::write_info (int client, network::message *message)
 {
     message->WriteByte( svc_info );
     message->WriteByte( client );
@@ -356,7 +356,7 @@ void session::read_info ()
 
     if ( _multiserver || _dedicated )
     {
-        netmsg_t    netmsg;
+        network::message    netmsg;
         byte        msgbuf[MAX_MSGLEN];
 
         netmsg.Init( msgbuf, MAX_MSGLEN );

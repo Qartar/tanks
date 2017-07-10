@@ -705,7 +705,7 @@ void session::add_score(int player_index, int score)
 
     if ( _multiserver )
     {
-        netmsg_t    netmsg;
+        network::message    netmsg;
         byte        buf[MAX_MSGLEN];
 
         byte    msg[3];
@@ -871,7 +871,7 @@ void session::new_game()
 
     if ( _multiserver )
     {
-        netmsg_t    netmsg;
+        network::message    netmsg;
         byte        buf[MAX_MSGLEN];
 
         netmsg.Init( buf, MAX_MSGLEN );

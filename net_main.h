@@ -1,14 +1,5 @@
-/*
-===============================================================================
-
-Name    :   net_main.h
-
-Purpose :   network communication
-
-Date    :   03/31/2005
-
-===============================================================================
-*/
+// net_main.h
+//
 
 #pragma once
 
@@ -27,25 +18,30 @@ Date    :   03/31/2005
 
 #define MAX_MSGLEN  1400
 
-typedef enum netadrtype_s {NA_LOOPBACK, NA_BROADCAST, NA_IP, NA_IPX, NA_BROADCAST_IPX} netadrtype_t;
-typedef enum netsock_s { NS_CLIENT, NS_SERVER, NUM_SOCKETS } netsock_t;
+////////////////////////////////////////////////////////////////////////////////
+namespace network {
 
-typedef class cNetAddress
+enum address_type {loopback, broadcast, ip, ipx, broadcast_ipx};
+enum socket { client, server, NUM_SOCKETS };
+
+//------------------------------------------------------------------------------
+class address
 {
 public:
-    bool operator == (cNetAddress &other);
-    bool operator != (cNetAddress &other) { return !(*this == other); }
-    bool isLocal() { return (type == NA_LOOPBACK); }
+    bool operator == (network::address &other);
+    bool operator != (network::address &other) { return !(*this == other); }
+    bool isLocal() { return (type == network::address_type::loopback); }
 
-    netadrtype_t    type;
+    address_type    type;
 
     byte    ip[4];
     byte    ipx[10];
 
     unsigned short      port;
-} netadr_t;
+};
 
-typedef class cNetMessage
+//------------------------------------------------------------------------------
+class message
 {
 public:
     byte    *pData;
@@ -83,23 +79,24 @@ public:
     char    *ReadLine ();
     float   ReadAngle ();
     vec2    ReadVector ();
-} netmsg_t;
+};
 
-typedef class cNetChannel
+//------------------------------------------------------------------------------
+class channel
 {
 public:
     int Init (int netport = 0);
-    int Setup (netsock_t socket, netadr_t remote, int netport = 0);
+    int Setup (network::socket socket, network::address remote, int netport = 0);
 
     int Transmit (int nLength, byte *pData);
-    int Process (netmsg_t *pMessage);
+    int Process (network::message *pMessage);
 
-    netsock_t   socket;
+    network::socket   socket;
 
-    netadr_t    address;    //  remote address
+    network::address    address;    //  remote address
     int         netport;    //  port translation
 
-    netmsg_t    message;    // outgoing
+    network::message    message;    // outgoing
     byte        messagebuf[MAX_MSGLEN];
 
     float       last_sent;
@@ -107,16 +104,9 @@ public:
 
     float       connect_time;
     int         connect_tries;
-} netchan_t;
+};
 
-/*
-===========================================================
-
-    Internal Components
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 typedef struct loopmsg_s
 {
     byte    data[MAX_MSGLEN];
@@ -125,41 +115,35 @@ typedef struct loopmsg_s
 
 #define MAX_LOOPBACK    4
 
+//------------------------------------------------------------------------------
 typedef struct loopback_s
 {
     loopmsg_t   msgs[MAX_LOOPBACK];
     int     get, send;
 } loopback_t;
 
-/*
-===========================================================
-
-Name    :   cNetwork
-
-===========================================================
-*/
-
-class cNetwork
+//------------------------------------------------------------------------------
+class manager
 {
 public:
-    friend  cNetChannel;
+    friend  channel;
 
     int Init ();
     int Shutdown ();
 
     int Config (bool multiplayer);
 
-    int Print (netsock_t socket, netadr_t to, char *szMessage);
+    int Print (network::socket socket, network::address to, char *szMessage);
 
-    int Get (netsock_t socket, netadr_t *pFrom, netmsg_t *pMessage);
+    int Get (network::socket socket, network::address *pFrom, network::message *pMessage);
 
-    bool    StringToNet (char *addr, netadr_t *net);
-    char    *NetToString (netadr_t a);
+    bool    StringToNet (char *addr, network::address *net);
+    char    *NetToString (network::address a);
 private:
-    int Send (netsock_t socket, int nLength, void *pData, netadr_t to);
+    int Send (network::socket socket, int nLength, void *pData, network::address to);
 
-    int GetLoop (netsock_t socket, netadr_t *pFrom, netmsg_t *pMessage);
-    int SendLoop (netsock_t socket, int nLength, void *pData, netadr_t to);
+    int GetLoop (network::socket socket, network::address *pFrom, network::message *pMessage);
+    int SendLoop (network::socket socket, int nLength, void *pData, network::address to);
 
     loopback_t  m_Loopbacks[NUM_SOCKETS];
 
@@ -180,10 +164,12 @@ private:
     int     IP_Socket (int port);
     int     IPX_Socket (int port);
 
-    void        NetToSock (netadr_t *net, sockaddr *sock);
-    void        SockToNet (sockaddr *sock, netadr_t *net);
+    void        NetToSock (network::address *net, sockaddr *sock);
+    void        SockToNet (sockaddr *sock, network::address *net);
     bool        StringToSock (char *addr, sockaddr *sock);
 
 };
 
-extern cNetwork *pNet;
+} // namespace network
+
+extern network::manager *pNet;

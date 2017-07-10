@@ -47,7 +47,7 @@ void session::start_server ()
     svs.active = true;
     net_serverName->setString( svs.name );
 
-    _netchan.Setup( NS_SERVER, _netfrom );    // remote doesn't matter
+    _netchan.Setup( network::socket::server, _netfrom );    // remote doesn't matter
 }
 
 //------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ void session::stop_server ()
 //------------------------------------------------------------------------------
 void session::write_frame ()
 {
-    netmsg_t    message;
+    network::message    message;
     static byte messagebuf[MAX_MSGLEN];
 
     int             i;
@@ -149,7 +149,7 @@ void session::client_connect ()
     char        tempbuf[SHORT_STRING];
     char        clname[SHORT_STRING];
 
-    netmsg_t    message;
+    network::message    message;
     byte        messagebuf[MAX_MSGLEN];
 
     message.Init( messagebuf, MAX_MSGLEN );
@@ -167,7 +167,7 @@ void session::client_connect ()
 
     if ( version != PROTOCOL_VERSION )
     {
-        pNet->Print( NS_SERVER, _netfrom, va("fail \"Bad protocol version: %i\"", version )  );
+        pNet->Print( network::socket::server, _netfrom, va("fail \"Bad protocol version: %i\"", version )  );
         return;
     }
 
@@ -189,7 +189,7 @@ void session::client_connect ()
 
     if ( !cl )  // couldn't find client slot
     {
-        pNet->Print( NS_SERVER, _netfrom, "fail \"Server is full\"" );
+        pNet->Print( network::socket::server, _netfrom, "fail \"Server is full\"" );
         return;
     }
 
@@ -197,11 +197,11 @@ void session::client_connect ()
 
     cl->active = true;
     cl->local = false;
-    cl->netchan.Setup( NS_SERVER, _netfrom, netport );
+    cl->netchan.Setup( network::socket::server, _netfrom, netport );
 
     strncpy( cl->name, clname, SHORT_STRING );
 
-    pNet->Print( NS_SERVER, cl->netchan.address, va( "connect %i", i ) );
+    pNet->Print( network::socket::server, cl->netchan.address, va( "connect %i", i ) );
 
     // init their tank
 
@@ -223,7 +223,7 @@ void session::client_connect ()
 //------------------------------------------------------------------------------
 void session::client_disconnect (int nClient)
 {
-    netmsg_t    message;
+    network::message    message;
     byte        messagebuf[MAX_MSGLEN];
 
     message.Init( messagebuf, MAX_MSGLEN );
@@ -256,7 +256,7 @@ void session::client_command ()
 //------------------------------------------------------------------------------
 void session::write_sound(int sound_index)
 {
-    netmsg_t    netmsg;
+    network::message    netmsg;
     static byte netmsgbuf[MAX_MSGLEN];
 
     if ( !_multiserver )
@@ -274,7 +274,7 @@ void session::write_sound(int sound_index)
 //------------------------------------------------------------------------------
 void session::write_effect (int type, vec2 pos, vec2 vel, float strength)
 {
-    netmsg_t    netmsg;
+    network::message    netmsg;
     static byte netmsgbuf[MAX_MSGLEN];
 
     if (!_multiserver)
@@ -309,7 +309,7 @@ void session::info_send ()
     if ( i == MAX_PLAYERS )
         return;
 
-    pNet->Print( NS_SERVER, _netfrom, va( "info %s", svs.name) );
+    pNet->Print( network::socket::server, _netfrom, va( "info %s", svs.name) );
 }
 
 char    *sz_upgrades[] = {
@@ -323,7 +323,7 @@ void session::read_upgrade (int index)
 {
     if ( _clients[_netclient].upgrades )
     {
-        netmsg_t    netmsg;
+        network::message    netmsg;
         byte        msgbuf[MAX_MSGLEN];
 
         _clients[_netclient].upgrades--;

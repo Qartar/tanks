@@ -26,7 +26,7 @@ Purpose :   this is THE windows class winmain calls cWinApp::Main
 ===========================================================
 */
 
-class cNetwork;
+class manager;
 
 class cWinApp
 {
@@ -69,7 +69,7 @@ private:
     void        m_KeyEvent (int Param, bool Down);
     void        m_MouseEvent (int mstate);
 
-    cNetwork    m_Network;
+    network::manager    m_Network;
 };
 
 extern cWinApp *g_Application;

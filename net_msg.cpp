@@ -15,6 +15,8 @@ Date    :   04/01/2005
 #define ANGLE2SHORT(x)  ((int)((x)*(32768.0/360)))
 #define SHORT2ANGLE(x)  ((x)*(360.0/32768))
 
+namespace network {
+
 /*
 ===========================================================
 
@@ -23,9 +25,9 @@ Name    :   initialization / utility functions
 ===========================================================
 */
 
-void cNetMessage::Init (byte *pData, int nMaxSize)
+void message::Init (byte *pData, int nMaxSize)
 {
-    memset( this, 0, sizeof(netmsg_t) );
+    memset( this, 0, sizeof(network::message) );
     this->pData = pData;
     this->nMaxSize = nMaxSize;
 
@@ -33,7 +35,7 @@ void cNetMessage::Init (byte *pData, int nMaxSize)
     this->nCurSize = 0;
 }
 
-void cNetMessage::Clear ()
+void message::Clear ()
 {
     memset( pData, 0, nCurSize );
     nCurSize = 0;
@@ -41,7 +43,7 @@ void cNetMessage::Clear ()
     bOverflowed = false;
 }
 
-void *cNetMessage::Alloc (int nSize)
+void *message::Alloc (int nSize)
 {
     void    *ret;
 
@@ -58,7 +60,7 @@ void *cNetMessage::Alloc (int nSize)
     return ret;
 }
 
-void cNetMessage::Write (void const* pData, int nSize)
+void message::Write (void const* pData, int nSize)
 {
     void    *buf = Alloc( nSize );
 
@@ -66,7 +68,7 @@ void cNetMessage::Write (void const* pData, int nSize)
         memcpy( buf, pData, nSize );
 }
 
-int cNetMessage::Read (void *pOut, int nSize)
+int message::Read (void *pOut, int nSize)
 {
     if ( nReadCount + nSize > nMaxSize )
         return -1;
@@ -86,7 +88,7 @@ Name    :   writing functions
 ===========================================================
 */
 
-void cNetMessage::WriteByte (int b)
+void message::WriteByte (int b)
 {
     byte    *buf = (byte *)Alloc( 1 );
 
@@ -94,7 +96,7 @@ void cNetMessage::WriteByte (int b)
         buf[0] = b & 0xff;
 }
 
-void cNetMessage::WriteShort (int s)
+void message::WriteShort (int s)
 {
     byte    *buf = (byte *)Alloc( 2 );
 
@@ -105,7 +107,7 @@ void cNetMessage::WriteShort (int s)
     }
 }
 
-void cNetMessage::WriteLong (int l)
+void message::WriteLong (int l)
 {
     byte    *buf = (byte *)Alloc( 4 );
 
@@ -118,7 +120,7 @@ void cNetMessage::WriteLong (int l)
     }
 }
 
-void cNetMessage::WriteFloat (float f)
+void message::WriteFloat (float f)
 {
     union
     {
@@ -132,7 +134,7 @@ void cNetMessage::WriteFloat (float f)
     Write( &dat.l, 4 );
 }
 
-void cNetMessage::WriteChar (int b)
+void message::WriteChar (int b)
 {
     char    *buf = (char *)Alloc( 1 );
 
@@ -140,7 +142,7 @@ void cNetMessage::WriteChar (int b)
         buf[0] = b & 0xff;
 }
 
-void cNetMessage::WriteString (char const* sz)
+void message::WriteString (char const* sz)
 {
     if ( sz )
         Write( sz, strlen(sz)+1 );
@@ -148,12 +150,12 @@ void cNetMessage::WriteString (char const* sz)
         Write( "", 1 );
 }
 
-void cNetMessage::WriteAngle (float f)
+void message::WriteAngle (float f)
 {
     WriteShort( ANGLE2SHORT(f) );
 }
 
-void cNetMessage::WriteVector (vec2 v)
+void message::WriteVector (vec2 v)
 {
     WriteFloat( v.x );
     WriteFloat( v.y );
@@ -167,12 +169,12 @@ Name    :   reading functions
 ===========================================================
 */
 
-void cNetMessage::Begin ()
+void message::Begin ()
 {
     nReadCount = 0;
 }
 
-int cNetMessage::ReadByte ()
+int message::ReadByte ()
 {
     int b;
 
@@ -186,7 +188,7 @@ int cNetMessage::ReadByte ()
     return b;
 }
 
-int cNetMessage::ReadShort ()
+int message::ReadShort ()
 {
     int s;
 
@@ -201,7 +203,7 @@ int cNetMessage::ReadShort ()
     return s;
 }
 
-int cNetMessage::ReadLong ()
+int message::ReadLong ()
 {
     int l;
 
@@ -218,7 +220,7 @@ int cNetMessage::ReadLong ()
     return l;
 }
 
-float cNetMessage::ReadFloat ()
+float message::ReadFloat ()
 {
     union
     {
@@ -244,7 +246,7 @@ float cNetMessage::ReadFloat ()
     return dat.f;
 }
 
-int cNetMessage::ReadChar ()
+int message::ReadChar ()
 {
     int b;
 
@@ -259,7 +261,7 @@ int cNetMessage::ReadChar ()
 }
 
 
-char *cNetMessage::ReadString ()
+char *message::ReadString ()
 {
     static char string[MAX_STRING];
     int         i,c;
@@ -277,7 +279,7 @@ char *cNetMessage::ReadString ()
 }
 
 
-char *cNetMessage::ReadLine ()
+char *message::ReadLine ()
 {
     static char string[MAX_STRING];
     int         i,c;
@@ -294,7 +296,7 @@ char *cNetMessage::ReadLine ()
     return string;
 }
 
-float cNetMessage::ReadAngle ()
+float message::ReadAngle ()
 {
     int     out;
 
@@ -303,7 +305,7 @@ float cNetMessage::ReadAngle ()
     return ( SHORT2ANGLE(out) );
 }
 
-vec2 cNetMessage::ReadVector ()
+vec2 message::ReadVector ()
 {
     float   outx, outy;
 
@@ -315,3 +317,5 @@ vec2 cNetMessage::ReadVector ()
 
     return vec2( outx, outy );
 }
+
+} // namespace network

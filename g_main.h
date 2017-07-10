@@ -114,7 +114,7 @@ typedef struct client_s
     bool    active;
     bool    local;
 
-    netchan_t   netchan;
+    network::channel   netchan;
 
     char        name[SHORT_STRING];
 } client_t;
@@ -138,7 +138,7 @@ typedef struct server_state_s
 typedef struct remote_server_s
 {
     char        name[SHORT_STRING];
-    netadr_t    address;
+    network::address    address;
 
     float       ping;
     bool        active;
@@ -272,8 +272,8 @@ private:
     void broadcast (int len, byte *data);
     void broadcast_print (char const* message);
 
-    void connectionless (netsock_t socket);
-    void packet (netsock_t socket);
+    void connectionless (network::socket socket);
+    void packet (network::socket socket);
 
     void connect_ack ();
 
@@ -293,17 +293,17 @@ private:
     void info_get ();
 
     void read_info ();
-    void write_info (int client, netmsg_t *message);
+    void write_info (int client, network::message *message);
 
     void read_fail ();
 
-    netadr_t _netserver;
+    network::address _netserver;
 
-    netchan_t _netchan;
-    netadr_t _netfrom;
+    network::channel _netchan;
+    network::address _netfrom;
 
     byte _netmsgbuf[MAX_MSGLEN];
-    netmsg_t _netmsg;
+    network::message _netmsg;
 
     int _netclient;
     char* _netstring;

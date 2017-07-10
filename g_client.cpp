@@ -169,11 +169,11 @@ void session::connect_to_server (int index)
     if ( index > 0 )
         _netserver = cls.servers[index].address;
 
-    _netserver.type = NA_IP;
+    _netserver.type = network::address_type::ip;
     if ( !_netserver.port )
         _netserver.port = BIG_SHORT( PORT_SERVER );
 
-    pNet->Print( NS_CLIENT, _netserver, va( "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport ) );
+    pNet->Print( network::socket::client, _netserver, va( "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport ) );
 }
 
 //------------------------------------------------------------------------------
@@ -185,7 +185,7 @@ void session::connect_ack ()
 
     sscanf( _netstring, "%s %i", tempbuf, &cls.number );
 
-    _netchan.Setup( NS_CLIENT, _netserver );
+    _netchan.Setup( network::socket::client, _netserver );
 
     _frametime = 0.0f;
     cls.last_frame = 0;
@@ -244,7 +244,7 @@ void session::read_effect ()
 //------------------------------------------------------------------------------
 void session::info_ask ()
 {
-    netadr_t    addr;
+    network::address    addr;
 
     for ( int i=0 ; i<MAX_SERVERS ; i++ )
     {
@@ -261,15 +261,15 @@ void session::info_ask ()
 
     //  ping master server
     pNet->StringToNet( net_master->getString( ), &addr );
-    addr.type = NA_IP;
+    addr.type = network::address_type::ip;
     addr.port = BIG_SHORT( PORT_SERVER );
-    pNet->Print( NS_CLIENT, addr, "info" );
+    pNet->Print( network::socket::client, addr, "info" );
 
     //  ping local network
-    addr.type = NA_BROADCAST;
+    addr.type = network::address_type::broadcast;
     addr.port = BIG_SHORT( PORT_SERVER );
 
-    pNet->Print( NS_CLIENT, addr, "info" );
+    pNet->Print( network::socket::client, addr, "info" );
 }
 
 //------------------------------------------------------------------------------

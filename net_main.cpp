@@ -12,7 +12,9 @@ Date    :   04/01/2005
 
 #include "net_main.h"
 
-cNetwork    *pNet;  // extern
+network::manager    *pNet;  // extern
+
+namespace network {
 
 /*
 ===========================================================
@@ -24,22 +26,22 @@ Purpose :   compares base address
 ===========================================================
 */
 
-bool cNetAddress::operator == (cNetAddress &other)
+bool address::operator == (network::address &other)
 {
     if ( type != other.type )
         return false;
 
-    if ( type == NA_LOOPBACK )
+    if ( type == network::address_type::loopback )
         return true;
 
-    if ( type == NA_IP )
+    if ( type == network::address_type::ip )
     {
         if ( memcmp( ip, other.ip, 4 ) == 0 )
             return true;
         return false;
     }
 
-    if ( type == NA_IPX )
+    if ( type == network::address_type::ipx )
     {
         if ( memcmp( ipx, other.ipx, 10 ) == 0 )
             return true;
@@ -59,7 +61,7 @@ Purpose :
 ===========================================================
 */
 
-int cNetwork::Init ()
+int manager::Init ()
 {
     m_multiplayer = false;
 
@@ -80,7 +82,7 @@ int cNetwork::Init ()
     return ERROR_NONE;
 }
 
-int cNetwork::Shutdown ()
+int manager::Shutdown ()
 {
     Config( false );
 
@@ -89,7 +91,7 @@ int cNetwork::Shutdown ()
     return ERROR_NONE;
 }
 
-int cNetwork::Config (bool multiplayer)
+int manager::Config (bool multiplayer)
 {
     if ( multiplayer == m_multiplayer )
         return ERROR_NONE;
@@ -124,7 +126,7 @@ int cNetwork::Config (bool multiplayer)
     return ERROR_NONE;
 }
 
-char *cNetwork::WSAErrorString (int code)
+char *manager::WSAErrorString (int code)
 {
     if ( !code )
         code = WSAGetLastError ();
@@ -190,36 +192,36 @@ Name    :   IP
 
 #define PORT_ANY    -1
 
-int cNetwork::OpenIP ()
+int manager::OpenIP ()
 {
     int port;
 
-    if ( !ip_sockets[NS_SERVER] )
+    if ( !ip_sockets[network::socket::server] )
     {
         port = PORT_SERVER;
 
-        ip_sockets[NS_SERVER] = IP_Socket( port );
+        ip_sockets[network::socket::server] = IP_Socket( port );
     }
 
-    if ( !ip_sockets[NS_CLIENT] )
+    if ( !ip_sockets[network::socket::client] )
     {
         port = PORT_CLIENT;
 
-        if ( !(ip_sockets[NS_CLIENT] = IP_Socket( port )) )
-            ip_sockets[NS_CLIENT] = IP_Socket( PORT_ANY );
+        if ( !(ip_sockets[network::socket::client] = IP_Socket( port )) )
+            ip_sockets[network::socket::client] = IP_Socket( PORT_ANY );
     }
 
     return ERROR_NONE;
 }
 
-int cNetwork::IP_Socket (int port)
+int manager::IP_Socket (int port)
 {
     sockaddr_in     address;
     int     newsocket;
     unsigned long       args;
 
     // get socket
-    if ( (newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    if ( (newsocket = ::socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
         return 0;
 
     // disable blocking
@@ -254,12 +256,12 @@ Name    :   IPX
 ===============================================================================
 */
 
-int cNetwork::OpenIPX ()
+int manager::OpenIPX ()
 {
     return ERROR_NONE;
 }
 
-int cNetwork::IPX_Socket (int port)
+int manager::IPX_Socket (int port)
 {
     return 0;
 }
@@ -272,15 +274,15 @@ Name    :   address conversions
 ===============================================================================
 */
 
-char *cNetwork::NetToString (netadr_t a)
+char *manager::NetToString (network::address a)
 {
     static char szString[LONG_STRING];
 
-    if ( a.type == NA_LOOPBACK )
+    if ( a.type == network::address_type::loopback )
         fmt( szString, "loopback\0" );
-    else if (a.type == NA_IP )
+    else if (a.type == network::address_type::ip )
         fmt( szString, "%i.%i.%i.%i:%i\0", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs( a.port ) );
-    else if ( a.type == NA_IPX )
+    else if ( a.type == network::address_type::ipx )
         fmt( szString, "%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%i\0", a.ipx[0], a.ipx[1], a.ipx[2], a.ipx[3], a.ipx[4], a.ipx[5], a.ipx[6], a.ipx[7], a.ipx[8], a.ipx[9], ntohs(a.port));
 
     return szString;
@@ -292,7 +294,7 @@ char *cNetwork::NetToString (netadr_t a)
     sscanf (copy, "%x", &val);  \
     ((struct sockaddr_ipx *)sock)->dest = val
 
-bool cNetwork::StringToSock (char *addr, sockaddr *sock)
+bool manager::StringToSock (char *addr, sockaddr *sock)
 {
     struct hostent  *h;
     char    *colon;
@@ -350,14 +352,14 @@ bool cNetwork::StringToSock (char *addr, sockaddr *sock)
 
 #undef DO
 
-bool cNetwork::StringToNet (char *addr, netadr_t *net)
+bool manager::StringToNet (char *addr, network::address *net)
 {
     sockaddr    sadr;
     
     if ( strcmp( addr, "localhost" ) == 0 )
     {
         memset (net, 0, sizeof(*net));
-        net->type = NA_LOOPBACK;
+        net->type = network::address_type::loopback;
         return true;
     }
 
@@ -369,30 +371,30 @@ bool cNetwork::StringToNet (char *addr, netadr_t *net)
     return true;
 }
 
-void cNetwork::NetToSock (netadr_t *net, sockaddr *sock)
+void manager::NetToSock (network::address *net, sockaddr *sock)
 {
     memset (sock, 0, sizeof(*sock));
 
-    if (net->type == NA_BROADCAST)
+    if (net->type == network::address_type::broadcast)
     {
         ((struct sockaddr_in *)sock)->sin_family = AF_INET;
         ((struct sockaddr_in *)sock)->sin_port = net->port;
         ((struct sockaddr_in *)sock)->sin_addr.s_addr = INADDR_BROADCAST;
     }
-    else if (net->type == NA_IP)
+    else if (net->type == network::address_type::ip)
     {
         ((struct sockaddr_in *)sock)->sin_family = AF_INET;
         ((struct sockaddr_in *)sock)->sin_addr.s_addr = *(int *)&net->ip;
         ((struct sockaddr_in *)sock)->sin_port = net->port;
     }
-    else if (net->type == NA_IPX)
+    else if (net->type == network::address_type::ipx)
     {
         ((struct sockaddr_ipx *)sock)->sa_family = AF_IPX;
         memcpy(((struct sockaddr_ipx *)sock)->sa_netnum, &net->ipx[0], 4);
         memcpy(((struct sockaddr_ipx *)sock)->sa_nodenum, &net->ipx[4], 6);
         ((struct sockaddr_ipx *)sock)->sa_socket = net->port;
     }
-    else if (net->type == NA_BROADCAST_IPX)
+    else if (net->type == network::address_type::broadcast_ipx)
     {
         ((struct sockaddr_ipx *)sock)->sa_family = AF_IPX;
         memset(((struct sockaddr_ipx *)sock)->sa_netnum, 0, 4);
@@ -401,17 +403,17 @@ void cNetwork::NetToSock (netadr_t *net, sockaddr *sock)
     }
 }
 
-void cNetwork::SockToNet (sockaddr *sock, netadr_t *net)
+void manager::SockToNet (sockaddr *sock, network::address *net)
 {
     if (sock->sa_family == AF_INET)
     {
-        net->type = NA_IP;
+        net->type = network::address_type::ip;
         *(int *)&net->ip = ((struct sockaddr_in *)sock)->sin_addr.s_addr;
         net->port = ((struct sockaddr_in *)sock)->sin_port;
     }
     else if (sock->sa_family == AF_IPX)
     {
-        net->type = NA_IPX;
+        net->type = network::address_type::ipx;
         memcpy(&net->ipx[0], ((struct sockaddr_ipx *)sock)->sa_netnum, 4);
         memcpy(&net->ipx[4], ((struct sockaddr_ipx *)sock)->sa_nodenum, 6);
         net->port = ((struct sockaddr_ipx *)sock)->sa_socket;
@@ -428,10 +430,10 @@ Purpose :   sends a connectionless packet
 ===========================================================
 */
 
-int cNetwork::Print (netsock_t socket, netadr_t to, char *szMessage)
+int manager::Print (network::socket socket, network::address to, char *szMessage)
 {
     byte        msgbuf[MAX_MSGLEN];
-    netmsg_t    msg;
+    network::message    msg;
 
     msg.Init( msgbuf, MAX_MSGLEN );
 
@@ -451,21 +453,21 @@ Purpose :   sends a packet across the network
 ===========================================================
 */
 
-int cNetwork::Send (netsock_t socket, int nLength, void *pData, netadr_t to)
+int manager::Send (network::socket socket, int nLength, void *pData, network::address to)
 {
     sockaddr    address;
     int     net_socket;
 
-    if ( to.type == NA_LOOPBACK )
+    if ( to.type == network::address_type::loopback )
         return SendLoop( socket, nLength, pData, to );
 
-    if ( to.type == NA_BROADCAST )
+    if ( to.type == network::address_type::broadcast )
         net_socket = ip_sockets[socket];
-    else if ( to.type == NA_IP )
+    else if ( to.type == network::address_type::ip )
         net_socket = ip_sockets[socket];
-    else if ( to.type == NA_IPX )
+    else if ( to.type == network::address_type::ipx )
         net_socket = ip_sockets[socket];
-    else if ( to.type == NA_BROADCAST_IPX )
+    else if ( to.type == network::address_type::broadcast_ipx )
         net_socket = ipx_sockets[socket];
 
     if ( !net_socket )
@@ -480,7 +482,7 @@ int cNetwork::Send (netsock_t socket, int nLength, void *pData, netadr_t to)
         if (err == WSAEWOULDBLOCK)
             return ERROR_NONE;
 
-        if ((err == WSAEADDRNOTAVAIL) && ((to.type == NA_BROADCAST) || (to.type == NA_BROADCAST_IPX)))
+        if ((err == WSAEADDRNOTAVAIL) && ((to.type == network::address_type::broadcast) || (to.type == network::address_type::broadcast_ipx)))
             return ERROR_NONE;
 
         return ERROR_FAIL;
@@ -499,7 +501,7 @@ Purpose :   gets any packets queued
 ===========================================================
 */
 
-int cNetwork::Get (netsock_t socket, netadr_t *pFrom, netmsg_t *pMessage)
+int manager::Get (network::socket socket, network::address *pFrom, network::message *pMessage)
 {
     int     protocol;
     sockaddr    from;
@@ -557,7 +559,7 @@ Purpose :   sends a packet to loopback
 ===========================================================
 */
 
-int cNetwork::SendLoop (netsock_t socket, int nLength, void *pData, netadr_t to)
+int manager::SendLoop (network::socket socket, int nLength, void *pData, network::address to)
 {
     int     i;
     loopback_t  *loop;
@@ -583,7 +585,7 @@ Purpose :   gets a packet from loopback
 ===========================================================
 */
 
-int cNetwork::GetLoop (netsock_t socket, netadr_t *pFrom, netmsg_t *pMessage)
+int manager::GetLoop (network::socket socket, network::address *pFrom, network::message *pMessage)
 {
     int     i;
     loopback_t  *loop;
@@ -602,8 +604,10 @@ int cNetwork::GetLoop (netsock_t socket, netadr_t *pFrom, netmsg_t *pMessage)
     memcpy (pMessage->pData, loop->msgs[i].data, loop->msgs[i].size);
     pMessage->nCurSize = loop->msgs[i].size;
 
-    memset( pFrom, 0, sizeof(netadr_t) );
-    pFrom->type = NA_LOOPBACK;
+    memset( pFrom, 0, sizeof(network::address) );
+    pFrom->type = network::address_type::loopback;
 
     return true;
 }
+
+} // namespace network
