@@ -1,14 +1,5 @@
-/*
-===============================================================================
-
-Name    :   gl_main.h
-
-Purpose :   OpenGL Window Abstraction Layer
-
-Date    :   10/15/2004
-
-===============================================================================
-*/
+// r_window.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
@@ -55,18 +46,10 @@ static PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
 
 } // anonymous namespace
 
+////////////////////////////////////////////////////////////////////////////////
 namespace render {
 
-/*
-===========================================================
-
-Name    :   window::window
-
-Purpose :   Initialized member data and creates a default window
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 window::window(HINSTANCE hInstance, WNDPROC WndProc)
     : _hinst(hInstance)
     , _wndproc(WndProc)
@@ -77,16 +60,7 @@ window::window(HINSTANCE hInstance, WNDPROC WndProc)
     _rbo[1]    = 0;
 }
 
-/*
-===========================================================
-
-Name    :   window::Init
-
-Purpose :   Initialized member data and creates a default window
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void window::create()
 {
     char* command;
@@ -135,16 +109,7 @@ void window::end_frame ()
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
 }
 
-/*
-===========================================================
-
-Name    :   window::Shutdown
-
-Purpose :   Shuts down window and opengl
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 window::~window()
 {
     if (_hwnd)
@@ -154,15 +119,7 @@ window::~window()
     }
 }
 
-/*
-===========================================================
-
-Name    :   window::m_CreateWindow
-
-Purpose :   Creates a window ; calls m_InitGL
-
-===========================================================
-*/
+//------------------------------------------------------------------------------
 int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
 {
     WNDCLASSA   wc;
@@ -274,16 +231,7 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
     return ERROR_NONE;
 }
 
-/*
-===========================================================
-
-Name    :   window::m_InitGL
-
-Purpose :   Initializes OpenGL
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int window::init_opengl()
 {
     int     pixelformat;
@@ -352,16 +300,7 @@ int window::init_opengl()
     return ERROR_NONE;
 }
 
-/*
-===========================================================
-
-Name    :   window::m_CreateFramebuffer
-
-Purpose :   
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int window::create_framebuffer(int, int)
 {
     if (_fbo) {
@@ -384,32 +323,14 @@ int window::create_framebuffer(int, int)
     return ERROR_NONE;
 }
 
-/*
-===========================================================
-
-Name    :   window::m_DestroyFramebuffer
-
-Purpose :   
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void window::destroy_framebuffer()
 {
     glDeleteRenderbuffers(2, _rbo);
     glDeleteFramebuffers(1, &_fbo);
 }
 
-/*
-===========================================================
-
-Name    :   window::m_DestroyWindow
-
-Purpose :   Destroys the window and calls m_ShutdownGL
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void window::destroy()
 {
     if (_hwnd) {
@@ -421,16 +342,7 @@ void window::destroy()
     }
 }
 
-/*
-===========================================================
-
-Name    :   window::m_ShutdownGL
-
-Purpose :   Shuts down OpenGL
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void window::shutdown_opengl()
 {
     wglMakeCurrent(NULL, NULL);
@@ -446,16 +358,7 @@ void window::shutdown_opengl()
     }
 }
 
-/*
-===========================================================
-
-Name    :   window::Message
-
-Purpose :   Message routing from Windows
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
 {
     switch ( nCmd )
@@ -485,16 +388,7 @@ LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
     return DefWindowProcA( _hwnd, nCmd, wParam, lParam );
 }
 
-/*
-===========================================================
-
-Name    :   window::m_Activate
-
-Purpose :   handles WM_ACTIVATE messages
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int window::activate(bool active, bool minimized)
 {
     if (active && !minimized) {

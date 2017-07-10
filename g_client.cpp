@@ -9,17 +9,8 @@ cvar_t          *net_master;            //  master server ip/hostname
 cvar_t  *cl_name = NULL;
 cvar_t  *cl_color = NULL;
 
+////////////////////////////////////////////////////////////////////////////////
 namespace game {
-
-/*
-===========================================================
-
-Name    :   session::m_InitClient session::m_EndClient
-
-Purpose :   Shutdown
-
-===========================================================
-*/
 
 const float colorMinFrac = 0.75f;
 
@@ -167,14 +158,6 @@ void session::get_frame ()
     return;
 }
 
-/*
-===========================================================
-
-Name    :   m_ClientConnect m_ClientDisconnect  m_ClientPacket
-
-===========================================================
-*/
-
 //------------------------------------------------------------------------------
 void session::connect_to_server (int index)
 {
@@ -258,14 +241,7 @@ void session::read_effect ()
     _world.add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
 }
 
-/*
-===========================================================
-
-Name    :   m_InfoAsk   m_InfoSend  m_InfoGet
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void session::info_ask ()
 {
     netadr_t    addr;

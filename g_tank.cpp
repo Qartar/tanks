@@ -1,18 +1,12 @@
-/*
-===============================================================================
-
-Name    :   g_tank.cpp
-
-Purpose :   tanks!
-
-===============================================================================
-*/
+// g_tank.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
 
 #include "p_collide.h"
 
+////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
 physics::material tank::_material(0.5f, 1.0f, 5.0f);
@@ -356,14 +350,7 @@ char const* tank::player_name() const
               g_Game->svs.clients[_player_index].name);
 }
 
-/*
-===========================================================
-
-Name    :   projectile
-
-===========================================================
-*/
-
+////////////////////////////////////////////////////////////////////////////////
 physics::circle_shape projectile::_shape(1.0f);
 physics::material projectile::_material(0.5f, 1.0f);
 

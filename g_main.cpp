@@ -1,14 +1,5 @@
-/*
-===============================================================================
-
-Name    :   g_main.cpp
-
-Purpose :   Game Object
-
-Date    :   10/20/2004
-
-===============================================================================
-*/
+// g_main.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
@@ -33,8 +24,10 @@ game::session* g_Game;
 
 void find_server(bool connect);
 
+////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
+//------------------------------------------------------------------------------
 session::session()
     : _players{0}
     , _client_button_down(false)
@@ -44,16 +37,7 @@ session::session()
     pMain = this;
 }
 
-/*
-===========================================================
-
-Name    :   session::Init
-
-Purpose :   Initialization
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int session::init (char *cmdline)
 {
     _renderer = g_Application->window()->renderer();
@@ -192,16 +176,7 @@ int session::init (char *cmdline)
     return ERROR_NONE;
 }
 
-/*
-===========================================================
-
-Name    :   session::Shutdown
-
-Purpose :   Shutdown
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int session::shutdown()
 {
     stop_client( );
@@ -213,16 +188,7 @@ int session::shutdown()
     return ERROR_NONE;
 }
 
-/*
-===========================================================
-
-Name    :   session::RunFrame
-
-Purpose :   runframe
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int session::run_frame(float milliseconds)
 {
     rand( );
@@ -340,16 +306,7 @@ void session::update_screen()
     _renderer->end_frame();
 }
 
-/*
-===========================================================
-
-Name    :   session::m_getCursorPos
-
-Purpose :   Gets cursor position from windows and translates it
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void session::get_cursor ()
 {
     vec2 position = g_Application->window()->position();
@@ -363,16 +320,7 @@ void session::get_cursor ()
     _cursor.y = (pt.y - position.y) * DEFAULT_H / size.y;
 }
 
-/*
-===========================================================
-
-Name    :   session::Key_Event
-
-Purpose :   Processes key events sent from windows
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int session::key_event(unsigned char key, bool down)
 {
     static bool shift = false;
@@ -740,14 +688,7 @@ int session::key_event(unsigned char key, bool down)
     return false;
 }
 
-/*
-===========================================================
-
-Name    :   Score functions
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void session::add_score(int player_index, int score)
 {
     player_index = clamp(player_index,0,MAX_PLAYERS);
@@ -781,6 +722,7 @@ void session::add_score(int player_index, int score)
     }
 }
 
+//------------------------------------------------------------------------------
 void session::draw_score ()
 {
     int i, n, count;
@@ -875,14 +817,7 @@ void session::draw_score ()
     }
 }
 
-/*
-===========================================================
-
-Name    :   Menu functions
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void session::reset()
 {
     for ( int i=0 ; i<MAX_PLAYERS ; i++ )
@@ -902,12 +837,14 @@ void session::reset()
     _world.reset( );
 }
 
+//------------------------------------------------------------------------------
 void session::resume()
 {
     _game_active = true;
     _menu_active = false;
 }
 
+//------------------------------------------------------------------------------
 void session::new_game()
 {
     _restart_time = 0.0f;
@@ -975,6 +912,7 @@ void session::new_game()
     _menu_active = false;
 }
 
+//------------------------------------------------------------------------------
 void session::restart()
 {
     _restart_time = 0.0f;
@@ -1000,6 +938,7 @@ void session::restart()
     _menu_active = false;
 }
 
+//------------------------------------------------------------------------------
 void session::spawn_player(int num)
 {
     //
@@ -1033,6 +972,7 @@ void session::spawn_player(int num)
     fmt( svs.clients[num].name, "Player %i", num+1 );
 }
 
+//------------------------------------------------------------------------------
 void session::respawn_player(int num)
 {
     int width = _world.maxs().x - _world.mins().x - SPAWN_BUFFER * 2;
@@ -1057,14 +997,7 @@ void session::respawn_player(int num)
     _players[num]->_fire_time = 0.0f;
 }
 
-/*
-===========================================================
-
-Name    :   messages
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int session::message(char const* format, ...)
 {
     va_list list;
@@ -1077,6 +1010,7 @@ int session::message(char const* format, ...)
     return ERROR_NONE;
 }
 
+//------------------------------------------------------------------------------
 void session::write_message (char const* message, bool broadcast)
 {
     if ( _multiserver && broadcast )
@@ -1089,6 +1023,7 @@ void session::write_message (char const* message, bool broadcast)
     _num_messages = (_num_messages+1)%MAX_MESSAGES;
 }
 
+//------------------------------------------------------------------------------
 void session::draw_messages ()
 {
     int         i;
@@ -1115,18 +1050,7 @@ void session::draw_messages ()
     }
 }
 
-/*
-===========================================================
-
-Name    :   FindServer
-
-Purpose :   asynchronous search for a server
-
-            this has a very large potential for fucking something up
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 static bool gs_try_connect = false;
 
 int session::find_server_by_name(void *lpvoid)
@@ -1149,6 +1073,7 @@ int session::find_server_by_name(void *lpvoid)
 
 } // namespace game
 
+//------------------------------------------------------------------------------
 void find_server(bool connect)
 {
     unsigned int    id;

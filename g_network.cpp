@@ -1,36 +1,13 @@
-/*
-===============================================================================
-
-Name    :   g_network.cpp
-
-Purpose :   NETORKING!!!
-
-Comments:   this code is messy sloppy and bad, it was hacked together from
-            the networking classes that i made for another app, the code
-            here is poorly written and hardly intelligble, especially considering
-            the lack of comments
-
-            networking was mostly an afterthought for this program, you might
-            see that there really isn't any sort of server-client architecture.
-            basically clients are their own mini-server, where the real server
-            gives it UNCOMPRESSED information EVERY FRAME for EVERY OBJECT
-
-===============================================================================
-*/
+// g_network.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
 
+////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
-/*
-===========================================================
-
-Name    :   m_GetPackets    m_GetFrame  m_WriteFrame    m_SendPackets
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void session::get_packets ()
 {
     netsock_t   socket;
@@ -126,6 +103,7 @@ void session::get_packets ()
     }
 }
 
+//------------------------------------------------------------------------------
 void session::connectionless (netsock_t socket)
 {
     static char* cmd; 
@@ -153,6 +131,7 @@ void session::connectionless (netsock_t socket)
     }
 }
 
+//------------------------------------------------------------------------------
 void session::packet (netsock_t socket)
 {
     int     net_cmd;
@@ -243,6 +222,7 @@ void session::packet (netsock_t socket)
     }
 }
 
+//------------------------------------------------------------------------------
 void session::broadcast (int len, byte *data)
 {
     int             i;
@@ -259,6 +239,7 @@ void session::broadcast (int len, byte *data)
     }
 }
 
+//------------------------------------------------------------------------------
 void session::broadcast_print (char const* message)
 {
     netmsg_t    netmsg;
@@ -272,6 +253,7 @@ void session::broadcast_print (char const* message)
     broadcast( netmsg.nCurSize, netmsgbuf );
 }
 
+//------------------------------------------------------------------------------
 void session::send_packets ()
 {
     int         i;
@@ -310,6 +292,7 @@ server:
     }
 }
 
+//------------------------------------------------------------------------------
 void session::read_fail ()
 {
     textutils_c text;
@@ -319,6 +302,7 @@ void session::read_fail ()
     write_message( va( "Failed to connect: %s", text.argv(1) ) );
 }
 
+//------------------------------------------------------------------------------
 void session::write_info (int client, netmsg_t *message)
 {
     message->WriteByte( svc_info );
@@ -345,6 +329,7 @@ void session::write_info (int client, netmsg_t *message)
     message->WriteByte( _score[client] );
 }
 
+//------------------------------------------------------------------------------
 void session::read_info ()
 {
     int     client;

@@ -1,28 +1,13 @@
-/*
-===============================================================================
-
-Name    :   r_draw.cpp
-
-Purpose :   drawing functions for cRender (r_main.h)
-
-===============================================================================
-*/
+// r_draw.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
 
+////////////////////////////////////////////////////////////////////////////////
 namespace render {
 
-/*
-===========================================================
-
-Name    :   DrawString
-
-Purpose :   draws a string to the screen
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void system::draw_string(char const* string, vec2 position, vec4 color)
 {
     _fonts[0]->draw(string, position, color);
@@ -34,16 +19,7 @@ vec2 system::string_size(char const* string) const
     return _fonts[0]->size(string);
 }
 
-/*
-===========================================================
-
-Name    :   DrawBox
-
-Purpose :   draws a rotated box to the screen
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void system::draw_box(vec2 size, vec2 position, vec4 color)
 {
     float   xl, xh, yl, yh;
@@ -63,16 +39,7 @@ void system::draw_box(vec2 size, vec2 position, vec4 color)
     glEnd();
 }
 
-/*
-===========================================================
-
-Name    :   cRender::DrawParticles
-
-Purpose :   draws a list of particles
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void system::draw_particles(float time, render::particle const* particles, std::size_t num_particles)
 {
     render::particle const* end = particles + num_particles;
@@ -151,16 +118,7 @@ void system::draw_particles(float time, render::particle const* particles, std::
     }
 }
 
-/*
-===========================================================
-
-Name    :   cRender::DrawLine
-
-Purpose :   draws a line
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void system::draw_line(vec2 start, vec2 end, vec4 start_color, vec4 end_color)
 {
     glBegin(GL_LINES);

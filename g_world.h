@@ -1,14 +1,5 @@
-/*
-===============================================================================
-
-Name    :   g_world.h
-
-Purpose :   World Object
-
-Date    :   10/21/2004
-
-===============================================================================
-*/
+// g_world.h
+//
 
 #pragma once
 
@@ -29,12 +20,13 @@ Date    :   10/21/2004
 
 namespace physics {
 struct contact;
-}
+} // namespace physics
 
 namespace render {
 class system;
-}
+} // namespace render
 
+////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
 class tank;
@@ -42,6 +34,7 @@ class world;
 
 typedef struct game_client_s game_client_t;
 
+//------------------------------------------------------------------------------
 enum class object_type
 {
     object,
@@ -50,6 +43,7 @@ enum class object_type
     tank,
 };
 
+//------------------------------------------------------------------------------
 enum class effect_type
 {
     smoke,

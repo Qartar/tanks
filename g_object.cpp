@@ -1,16 +1,10 @@
-/*
-===============================================================================
-
-Name    :   g_object.cpp
-
-Purpose :   implementation of object class
-
-===============================================================================
-*/
+// g_object.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
 
+////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
 physics::material object::_default_material(0.5f, 0.5f);

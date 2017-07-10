@@ -1,12 +1,15 @@
 //  r_particle.h
+//
 
 #pragma once
 
 #include "oed_types.h"
 #include "oed_shared.h"
 
+////////////////////////////////////////////////////////////////////////////////
 namespace render {
 
+//------------------------------------------------------------------------------
 struct particle
 {
     enum flag_bits

@@ -1,33 +1,16 @@
-/*
-===============================================================================
-
-Name    :   r_font.cpp
-
-Purpose :   OpenGL Font Encapsulation
-
-Date    :   10/19/2004
-
-===============================================================================
-*/
+// r_font.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
 
+////////////////////////////////////////////////////////////////////////////////
 namespace render {
 
 HFONT font::_system_font = NULL;
 HFONT font::_active_font = NULL;
 
-/*
-===========================================================
-
-Name    :   cRender::AddFont
-
-Purpose :   Adds a font to m_Fonts
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 render::font const* system::load_font(char const* name, int size)
 {
     for (auto const& f : _fonts) {
@@ -39,16 +22,7 @@ render::font const* system::load_font(char const* name, int size)
     return _fonts.back().get();
 }
 
-/*
-===========================================================
-
-Name    :   cFont::Init
-
-Purpose :   Initializes a new usable font
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 font::font(char const* name, int size)
     : _name(name)
     , _size(size)
@@ -100,16 +74,7 @@ font::font(char const* name, int size)
     SelectObject(g_Application->window()->hdc(), prev_font);
 }
 
-/*
-===========================================================
-
-Name    :   cFont::Shutdown
-
-Purpose :   Deletes font object
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 font::~font()
 {
     // restore system font if this is the active font
@@ -132,32 +97,14 @@ font::~font()
     }
 }
 
-/*
-===========================================================
-
-Name    :   cFont::Compare
-
-Purpose :   equality comparison
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 bool font::compare(char const* name, int size) const
 {
     return _name == name
         && _size == size;
 }
 
-/*
-===========================================================
-
-Name    :   cFont::Draw
-
-Purpose :   draws a string
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void font::draw(char const* string, vec2 position, vec4 color) const
 {
     // activate font if it isn't already

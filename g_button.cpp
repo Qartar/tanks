@@ -1,35 +1,13 @@
-/*
-===============================================================================
-
-Name    :   g_button.cpp
-
-Purpose :   all the button crap for the menus
-
-Date    :   10/29/2004
-
-===============================================================================
-*/
+// g_button.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
 
+////////////////////////////////////////////////////////////////////////////////
 namespace menu {
 
-/*
-===========================================================
-
-Name    :   button
-
-Purpose :   Basic Base Button class, 
-
-            title
-            position
-            size
-            click operation
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 bool button::click(vec2 cursor_pos, bool down)
 {
     bool over = _rectangle.contains(cursor_pos);
@@ -46,6 +24,7 @@ bool button::click(vec2 cursor_pos, bool down)
     return false;
 }
 
+//------------------------------------------------------------------------------
 void button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     bool over = _rectangle.contains(cursor_pos);
@@ -99,27 +78,13 @@ void button::draw_text(render::system* renderer, menu::rectangle const& rect, st
     renderer->draw_string(text.c_str(), position, color);
 }
 
-/*
-===========================================================
-
-Name    :   mCondButton
-
-Purpose :   Derived button class
-
-            title
-            position
-            size
-            click operation
-            conditional bool
-
-===========================================================
-*/
-
+////////////////////////////////////////////////////////////////////////////////
 conditional_button::conditional_button(char const* text, vec2 position, vec2 size, bool* condition_ptr, std::function<void()>&& op_click)
     : button(text, position, size, std::move(op_click))
     , _condition_ptr(condition_ptr)
 {}
 
+//------------------------------------------------------------------------------
 bool conditional_button::click(vec2 cursor_pos, bool down)
 {
     if (_condition_ptr && !*_condition_ptr) {
@@ -130,6 +95,7 @@ bool conditional_button::click(vec2 cursor_pos, bool down)
     return button::click(cursor_pos, down);
 }
 
+//------------------------------------------------------------------------------
 void conditional_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     bool over = _rectangle.contains(cursor_pos);
@@ -148,22 +114,8 @@ void conditional_button::draw(render::system* renderer, vec2 cursor_pos) const
     draw_text(renderer, _rectangle, _text, menu::colors[text_color]);
 }
 
-/*
-===========================================================
 
-Name    :   submenu_button
-
-Purpose :   Derived button class, activates a given submenu
-
-            title
-            position
-            size
-            parent menu
-            submenu
-
-===========================================================
-*/
-
+////////////////////////////////////////////////////////////////////////////////
 submenu_button::submenu_button(char const* text, vec2 position, vec2 size, menu::window* parent, menu::window* menu)
     : button(text, position, size, [this](){ _active = _parent->activate(this, _menu); })
     , _parent(parent)
@@ -171,6 +123,7 @@ submenu_button::submenu_button(char const* text, vec2 position, vec2 size, menu:
     , _active(false)
 {}
 
+//------------------------------------------------------------------------------
 void submenu_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     bool over = _rectangle.contains(cursor_pos);
@@ -189,16 +142,7 @@ void submenu_button::draw(render::system* renderer, vec2 cursor_pos) const
     draw_text(renderer, _rectangle, _text, menu::colors[text_color]);
 }
 
-/*
-===========================================================
-
-Name    :   cColorButton
-
-Purpose :   set the client color
-
-===========================================================
-*/
-
+////////////////////////////////////////////////////////////////////////////////
 client_button::client_button(char const* text, vec2 position, vec2 size, vec4 *color_ptr)
     : button(text, position, size)
     , _text_rectangle(position + vec2(0, size.y / 2.0f - 12.0f), vec2(size.x - 16.0f, 14.0f))
@@ -207,6 +151,7 @@ client_button::client_button(char const* text, vec2 position, vec2 size, vec4 *c
     , _text_down(false)
 {}
 
+//------------------------------------------------------------------------------
 bool client_button::click(vec2 cursor_pos, bool down)
 {
     bool text_over = _text_rectangle.contains(cursor_pos);
@@ -234,6 +179,7 @@ bool client_button::click(vec2 cursor_pos, bool down)
     return false;
 }
 
+//------------------------------------------------------------------------------
 void client_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     bool text_over = _text_rectangle.contains(cursor_pos);
@@ -256,14 +202,7 @@ void client_button::draw(render::system* renderer, vec2 cursor_pos) const
     tank_turret_model.draw(_rectangle.center(), 0, *_color_ptr);
 }
 
-/*
-===============================================================================
-
-Name    :   server_button
-
-===============================================================================
-*/
-
+////////////////////////////////////////////////////////////////////////////////
 server_button::server_button(vec2 position, vec2 size, char const* name_ptr, float const* ping_ptr, std::function<void()>&& op_click)
     : button("", position, size, std::move(op_click))
     , _join_rectangle(position + vec2(size.x * 0.5f - 18.0f, 0), vec2(32, size.y - 4.0f))
@@ -272,6 +211,7 @@ server_button::server_button(vec2 position, vec2 size, char const* name_ptr, flo
     , _ping_ptr(ping_ptr)
 {}
 
+//------------------------------------------------------------------------------
 bool server_button::click(vec2 cursor_pos, bool down)
 {
     bool over = _join_rectangle.contains(cursor_pos);
@@ -293,6 +233,7 @@ bool server_button::click(vec2 cursor_pos, bool down)
     return false;
 }
 
+//------------------------------------------------------------------------------
 void server_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     draw_rectangle(renderer, _rectangle, menu::colors[3], menu::colors[4]);
@@ -318,14 +259,7 @@ void server_button::draw(render::system* renderer, vec2 cursor_pos) const
     }
 }
 
-/*
-===============================================================================
-
-Name    :   host_button
-
-===============================================================================
-*/
-
+////////////////////////////////////////////////////////////////////////////////
 host_button::host_button(vec2 position, vec2 size, std::function<void()>&& op_click)
     : button("Host", position, size, std::move(op_click))
     , _create_rectangle(position + vec2(size.x * 0.5f - 18.0f, 0), vec2(32, size.y - 4.0f))
@@ -334,6 +268,7 @@ host_button::host_button(vec2 position, vec2 size, std::function<void()>&& op_cl
     , _text_down(false)
 {}
 
+//------------------------------------------------------------------------------
 bool host_button::click(vec2 cursor_pos, bool down)
 {
     bool text_over = _text_rectangle.contains(cursor_pos);
@@ -360,6 +295,7 @@ bool host_button::click(vec2 cursor_pos, bool down)
     return false;
 }
 
+//------------------------------------------------------------------------------
 void host_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     int text_button_color = g_Game->_server_button_down ? 5 : 3;

@@ -6,8 +6,10 @@
 #include "p_rigidbody.h"
 #include "p_shape.h"
 
+////////////////////////////////////////////////////////////////////////////////
 namespace physics {
 
+//------------------------------------------------------------------------------
 trace::trace(rigid_body const* body, vec2 start, vec2 end)
 {
     physics::material material(0,0);

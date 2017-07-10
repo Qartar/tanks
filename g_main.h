@@ -1,14 +1,5 @@
-/*
-===============================================================================
-
-Name    :   g_main.h
-
-Purpose :   Game Object
-
-Date    :   10/20/2004
-
-===============================================================================
-*/
+// g_main.h
+//
 
 #pragma once
 
@@ -32,8 +23,10 @@ class system;
 #define UPGRADE_PENALTY g_upgrade_penalty->getFloat()
 #define UPGRADE_MIN     g_upgrade_min->getFloat()
 
+////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
+//------------------------------------------------------------------------------
 typedef struct game_client_s
 {
     vec3    color;
@@ -48,6 +41,7 @@ typedef struct game_client_s
     usercmdgen input;
 } game_client_t;
 
+//------------------------------------------------------------------------------
 static vec4 player_colors[] = {
     vec4(   1.000f, 0.000f, 0.000f, 1),     // 0: red
     vec4(   0.000f, 0.000f, 1.000f, 1),     // 1: blue
@@ -72,6 +66,7 @@ static vec4 player_colors[] = {
 };
 #define NUM_PLAYER_COLORS   20
 
+//------------------------------------------------------------------------------
 typedef enum netops_e
 {
     net_bad,
@@ -92,6 +87,7 @@ typedef enum netops_e
     svc_restart     //  game restart
 } netops_t;
 
+//------------------------------------------------------------------------------
 enum class game_mode
 {
     singleplayer,
@@ -99,6 +95,7 @@ enum class game_mode
     cooperative,
 };
 
+//------------------------------------------------------------------------------
 typedef struct  message_s
 {
     char    string[MAX_STRING];
@@ -107,20 +104,11 @@ typedef struct  message_s
 
 #define MAX_MESSAGES    32
 
-/*
-===========================================================
-
-Name    :   cGame
-
-Purpose :   Stores higher-level information about the current game
-
-===========================================================
-*/
-
 //
 // SERVER SIDE DATA
 //
 
+//------------------------------------------------------------------------------
 typedef struct client_s
 {
     bool    active;
@@ -131,6 +119,7 @@ typedef struct client_s
     char        name[SHORT_STRING];
 } client_t;
 
+//------------------------------------------------------------------------------
 typedef struct server_state_s
 {
     bool    active;
@@ -145,6 +134,7 @@ typedef struct server_state_s
 // CLIENT SIDE DATA
 //
 
+//------------------------------------------------------------------------------
 typedef struct remote_server_s
 {
     char        name[SHORT_STRING];
@@ -156,6 +146,7 @@ typedef struct remote_server_s
 
 #define MAX_SERVERS 8
 
+//------------------------------------------------------------------------------
 typedef struct client_state_s
 {
     vec4    color;
@@ -169,10 +160,7 @@ typedef struct client_state_s
     remote_server_t servers[MAX_SERVERS];
 } client_state_t;
 
-// SHARED DATA
-
-// if your brain hasn't exploded yet it will now
-
+//------------------------------------------------------------------------------
 class session : public vMain
 {
 public:

@@ -1,30 +1,13 @@
-/*
-===============================================================================
-
-Name    :   g_menu.h
-
-Purpose :   handles menu functions
-
-Date    :   10/20/2004
-
-===============================================================================
-*/
+// g_menu.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
 
+////////////////////////////////////////////////////////////////////////////////
 namespace menu {
 
-/*
-===========================================================
-
-Name    :   cMenu::Init
-
-Purpose :   Handles GUI
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void window::init ()
 {
     // base
@@ -116,16 +99,7 @@ bool window::activate(submenu_button* button, menu::window* submenu)
     return true;
 }
 
-/*
-===========================================================
-
-Name    :   cMenu::Draw
-
-Purpose :   Draws the menu to the screen
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void window::draw(render::system* renderer, vec2 cursor_pos) const
 {
     // draw buttons
@@ -139,16 +113,7 @@ void window::draw(render::system* renderer, vec2 cursor_pos) const
     }
 }
 
-/*
-===========================================================
-
-Name    :   cMenu::Click
-
-Purpose :   Processes a click from the user
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void window::click(vec2 cursor_pos, bool down)
 {
     for (auto& button : _buttons) {

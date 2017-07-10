@@ -1,14 +1,5 @@
-/*
-===============================================================================
-
-Name    :   g_world.cpp
-
-Purpose :   World Object
-
-Date    :   10/21/2004
-
-===============================================================================
-*/
+// g_world.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
@@ -21,18 +12,10 @@ Date    :   10/21/2004
 extern cvar_t   *g_arenaWidth;
 extern cvar_t   *g_arenaHeight;
 
+////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
-/*
-===========================================================
-
-Name    :   world::Init
-
-Purpose :   Initializes world
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void world::init()
 {
     char    *command;
@@ -50,10 +33,12 @@ void world::init()
     reset();
 }
 
+//------------------------------------------------------------------------------
 void world::shutdown()
 {
 }
 
+//------------------------------------------------------------------------------
 void world::reset()
 {
     _mins = vec2(0,0);
@@ -95,31 +80,13 @@ void world::reset()
     }
 }
 
-/*
-===========================================================
-
-Name    :   world::AddObject / ::DelObject
-
-Purpose :   adds and removes objects from the object list
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void world::remove(game::object* object)
 {
     _removed.insert(object);
 }
 
-/*
-===========================================================
-
-Name    :   world::Draw
-
-Purpose :   Renders the world to the screen
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void world::draw(render::system* renderer) const
 {
     for (auto& obj : _objects) {
@@ -129,16 +96,7 @@ void world::draw(render::system* renderer) const
     draw_particles(renderer);
 }
 
-/*
-===========================================================
-
-Name    :   world::RunFrame
-
-Purpose :   Runs the world one frame, runs think funcs and movement
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void world::run_frame()
 {
     for (auto& obj : _objects) {
@@ -162,25 +120,7 @@ void world::run_frame()
     _pending.clear();
 }
 
-/*
-===========================================================
-
-Name    :   world::MoveObject
-
-Purpose :   moves an object in the world according to its velocity
-
-===========================================================
-*/
-
-#define NUM_STEPS   8
-#define STEP_SIZE   0.125
-
-int segs[4][2] = {
-    { 0, 1 },
-    { 1, 2 },
-    { 2, 3 },
-    { 3, 0 } };
-
+//------------------------------------------------------------------------------
 void world::move_object(game::object *object)
 {
     object->_old_position = object->get_position();
@@ -255,31 +195,14 @@ void world::move_object(game::object *object)
     }
 }
 
-/*
-===========================================================
-
-Name    :   world::AddSound
-
-Purpose :   sound!
-
-===========================================================
-*/
-
-void world::add_sound(int sound_index) {
+//------------------------------------------------------------------------------
+void world::add_sound(int sound_index)
+{
     g_Game->write_sound(sound_index);
     pSound->playSound(sound_index, vec3(0,0,0), 1.0f, 0.0f);
 }
 
-/*
-===========================================================
-
-Name    :   world::AddEffect
-
-Purpose :   adds particle effects
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void world::add_effect(effect_type type, vec2 position, vec2 direction, float strength)
 {
     g_Game->write_effect(static_cast<int>(type), position, direction, strength);
@@ -460,6 +383,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
     }
 }
 
+//------------------------------------------------------------------------------
 void world::clear_particles()
 {
     _particles.clear();
