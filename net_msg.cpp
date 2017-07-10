@@ -1,30 +1,15 @@
-/*
-===============================================================================
-
-Name    :   net_msg.cpp
-
-Purpose :   net message formatting
-
-Date    :   04/01/2005
-
-===============================================================================
-*/
+// net_msg.cpp
+//
 
 #include "net_main.h"
 
 #define ANGLE2SHORT(x)  ((int)((x)*(32768.0/360)))
 #define SHORT2ANGLE(x)  ((x)*(360.0/32768))
 
+////////////////////////////////////////////////////////////////////////////////
 namespace network {
 
-/*
-===========================================================
-
-Name    :   initialization / utility functions
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void message::init (byte *buffer, int buffer_size)
 {
     memset( this, 0, sizeof(network::message) );
@@ -35,6 +20,7 @@ void message::init (byte *buffer, int buffer_size)
     this->bytes_written = 0;
 }
 
+//------------------------------------------------------------------------------
 void message::clear ()
 {
     memset( data, 0, bytes_written );
@@ -43,6 +29,7 @@ void message::clear ()
     overflowed = false;
 }
 
+//------------------------------------------------------------------------------
 void *message::alloc (int length)
 {
     void    *ret;
@@ -60,6 +47,7 @@ void *message::alloc (int length)
     return ret;
 }
 
+//------------------------------------------------------------------------------
 void message::write (void const* buffer, int length)
 {
     void    *buf = alloc( length );
@@ -68,6 +56,7 @@ void message::write (void const* buffer, int length)
         memcpy( buf, buffer, length );
 }
 
+//------------------------------------------------------------------------------
 int message::read (void *buffer, int length)
 {
     if ( bytes_read + length > size )
@@ -80,14 +69,7 @@ int message::read (void *buffer, int length)
     return 0;
 }
 
-/*
-===========================================================
-
-Name    :   writing functions
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void message::write_byte (int b)
 {
     byte    *buf = (byte *)alloc( 1 );
@@ -96,6 +78,7 @@ void message::write_byte (int b)
         buf[0] = b & 0xff;
 }
 
+//------------------------------------------------------------------------------
 void message::write_short (int s)
 {
     byte    *buf = (byte *)alloc( 2 );
@@ -107,6 +90,7 @@ void message::write_short (int s)
     }
 }
 
+//------------------------------------------------------------------------------
 void message::write_long (int l)
 {
     byte    *buf = (byte *)alloc( 4 );
@@ -120,6 +104,7 @@ void message::write_long (int l)
     }
 }
 
+//------------------------------------------------------------------------------
 void message::write_float (float f)
 {
     union
@@ -134,6 +119,7 @@ void message::write_float (float f)
     write( &dat.l, 4 );
 }
 
+//------------------------------------------------------------------------------
 void message::write_char (int b)
 {
     char    *buf = (char *)alloc( 1 );
@@ -142,6 +128,7 @@ void message::write_char (int b)
         buf[0] = b & 0xff;
 }
 
+//------------------------------------------------------------------------------
 void message::write_string (char const* sz)
 {
     if ( sz )
@@ -150,30 +137,26 @@ void message::write_string (char const* sz)
         write( "", 1 );
 }
 
+//------------------------------------------------------------------------------
 void message::write_angle (float f)
 {
     write_short( ANGLE2SHORT(f) );
 }
 
+//------------------------------------------------------------------------------
 void message::write_vector (vec2 v)
 {
     write_float( v.x );
     write_float( v.y );
 }
 
-/*
-===========================================================
-
-Name    :   reading functions
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 void message::begin ()
 {
     bytes_read = 0;
 }
 
+//------------------------------------------------------------------------------
 int message::read_byte ()
 {
     int b;
@@ -188,6 +171,7 @@ int message::read_byte ()
     return b;
 }
 
+//------------------------------------------------------------------------------
 int message::read_short ()
 {
     int s;
@@ -203,6 +187,7 @@ int message::read_short ()
     return s;
 }
 
+//------------------------------------------------------------------------------
 int message::read_long ()
 {
     int l;
@@ -220,6 +205,7 @@ int message::read_long ()
     return l;
 }
 
+//------------------------------------------------------------------------------
 float message::read_float ()
 {
     union
@@ -246,6 +232,7 @@ float message::read_float ()
     return dat.f;
 }
 
+//------------------------------------------------------------------------------
 int message::read_char ()
 {
     int b;
@@ -261,6 +248,7 @@ int message::read_char ()
 }
 
 
+//------------------------------------------------------------------------------
 char *message::read_string ()
 {
     static char string[MAX_STRING];
@@ -279,6 +267,7 @@ char *message::read_string ()
 }
 
 
+//------------------------------------------------------------------------------
 char *message::read_line ()
 {
     static char string[MAX_STRING];
@@ -296,6 +285,7 @@ char *message::read_line ()
     return string;
 }
 
+//------------------------------------------------------------------------------
 float message::read_angle ()
 {
     int     out;
@@ -305,6 +295,7 @@ float message::read_angle ()
     return ( SHORT2ANGLE(out) );
 }
 
+//------------------------------------------------------------------------------
 vec2 message::read_vector ()
 {
     float   outx, outy;

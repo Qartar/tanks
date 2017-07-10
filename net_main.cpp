@@ -1,31 +1,14 @@
-/*
-===============================================================================
-
-Name    :   net_main.cpp
-
-Purpose :   network communication
-
-Date    :   04/01/2005
-
-===============================================================================
-*/
+// net_main.cpp
+//
 
 #include "net_main.h"
 
 network::manager    *pNet;  // extern
 
+////////////////////////////////////////////////////////////////////////////////
 namespace network {
 
-/*
-===========================================================
-
-Name    :   cNetAddress::operator==
-
-Purpose :   compares base address
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 bool address::operator == (network::address &other)
 {
     if ( type != other.type )
@@ -51,16 +34,7 @@ bool address::operator == (network::address &other)
     return false;
 }
 
-/*
-===========================================================
-
-Name    :   cNetwork::Init
-
-Purpose :   
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int manager::init ()
 {
     _multiplayer = false;
@@ -82,6 +56,7 @@ int manager::init ()
     return ERROR_NONE;
 }
 
+//------------------------------------------------------------------------------
 int manager::shutdown ()
 {
     config( false );
@@ -91,6 +66,7 @@ int manager::shutdown ()
     return ERROR_NONE;
 }
 
+//------------------------------------------------------------------------------
 int manager::config (bool multiplayer)
 {
     if ( multiplayer == _multiplayer )
@@ -122,10 +98,10 @@ int manager::config (bool multiplayer)
         }
     }
 
-
     return ERROR_NONE;
 }
 
+//------------------------------------------------------------------------------
 char *manager::WSAErrorString (int code)
 {
     if ( !code )
@@ -182,14 +158,7 @@ char *manager::WSAErrorString (int code)
     }
 }
 
-/*
-===============================================================================
-
-Name    :   IP
-
-===============================================================================
-*/
-
+//------------------------------------------------------------------------------
 #define PORT_ANY    -1
 
 int manager::open_ip ()
@@ -214,6 +183,7 @@ int manager::open_ip ()
     return ERROR_NONE;
 }
 
+//------------------------------------------------------------------------------
 int manager::ip_socket (int port)
 {
     sockaddr_in     address;
@@ -248,32 +218,19 @@ int manager::ip_socket (int port)
     return newsocket;
 }
 
-/*
-===============================================================================
-
-Name    :   IPX
-
-===============================================================================
-*/
-
+//------------------------------------------------------------------------------
 int manager::open_ipx ()
 {
     return ERROR_NONE;
 }
 
+//------------------------------------------------------------------------------
 int manager::ipx_socket (int port)
 {
     return 0;
 }
 
-/*
-===============================================================================
-
-Name    :   address conversions
-
-===============================================================================
-*/
-
+//------------------------------------------------------------------------------
 char *manager::address_to_string (network::address a)
 {
     static char szString[LONG_STRING];
@@ -288,6 +245,7 @@ char *manager::address_to_string (network::address a)
     return szString;
 }
 
+//------------------------------------------------------------------------------
 #define DO(src,dest)    \
     copy[0] = addr[src];    \
     copy[1] = addr[src + 1];    \
@@ -352,6 +310,7 @@ bool manager::string_to_sockaddr (char *addr, sockaddr *sock)
 
 #undef DO
 
+//------------------------------------------------------------------------------
 bool manager::string_to_address (char *addr, network::address *net)
 {
     sockaddr    sadr;
@@ -371,6 +330,7 @@ bool manager::string_to_address (char *addr, network::address *net)
     return true;
 }
 
+//------------------------------------------------------------------------------
 void manager::address_to_sockaddr (network::address *net, sockaddr *sock)
 {
     memset (sock, 0, sizeof(*sock));
@@ -403,6 +363,7 @@ void manager::address_to_sockaddr (network::address *net, sockaddr *sock)
     }
 }
 
+//------------------------------------------------------------------------------
 void manager::sockaddr_to_address (sockaddr *sock, network::address *net)
 {
     if (sock->sa_family == AF_INET)
@@ -420,16 +381,7 @@ void manager::sockaddr_to_address (sockaddr *sock, network::address *net)
     }
 }
 
-/*
-===========================================================
-
-Name    :   cNetwork::Print
-
-Purpose :   sends a connectionless packet
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int manager::print (network::socket socket, network::address to, char *string)
 {
     byte        msgbuf[MAX_MSGLEN];
@@ -443,16 +395,7 @@ int manager::print (network::socket socket, network::address to, char *string)
     return send( socket, msg.bytes_written, msgbuf, to );
 }
 
-/*
-===========================================================
-
-Name    :   cNetwork::Send
-
-Purpose :   sends a packet across the network
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int manager::send (network::socket socket, int length, void *data, network::address to)
 {
     sockaddr    address;
@@ -491,16 +434,7 @@ int manager::send (network::socket socket, int length, void *data, network::addr
     return ERROR_NONE;
 }
 
-/*
-===========================================================
-
-Name    :   cNetwork::Get
-
-Purpose :   gets any packets queued
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int manager::get (network::socket socket, network::address *remote_address, network::message *message)
 {
     int     protocol;
@@ -549,16 +483,7 @@ int manager::get (network::socket socket, network::address *remote_address, netw
     return false;
 }
 
-/*
-===========================================================
-
-Name    :   cNetwork::SendLoop
-
-Purpose :   sends a packet to loopback
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int manager::send_loopback (network::socket socket, int length, void *data, network::address to)
 {
     int     i;
@@ -575,16 +500,7 @@ int manager::send_loopback (network::socket socket, int length, void *data, netw
     return ERROR_NONE;
 }
 
-/*
-===========================================================
-
-Name    :   cNetwork::GetLoop
-
-Purpose :   gets a packet from loopback
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int manager::get_loopback (network::socket socket, network::address *remote_address, network::message *message)
 {
     int     i;

@@ -1,30 +1,13 @@
-/*
-===============================================================================
-
-Name    :   net_chan.cpp
-
-Purpose :   network channel
-
-Date    :   04/14/2004
-
-===============================================================================
-*/
+// net_chan.cpp
+//
 
 #include "local.h"
 #pragma hdrstop
 
+////////////////////////////////////////////////////////////////////////////////
 namespace network {
 
-/*
-===========================================================
-
-Name    :   cNetChannel::Init
-
-Purpose :
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int channel::init (int netport)
 {
     LARGE_INTEGER   nCounter;
@@ -39,6 +22,7 @@ int channel::init (int netport)
     return ERROR_NONE;
 }
 
+//------------------------------------------------------------------------------
 int channel::setup (network::socket socket, network::address remote, int netport)
 {
     if ( netport )
@@ -56,16 +40,7 @@ int channel::setup (network::socket socket, network::address remote, int netport
     return ERROR_NONE;
 }
 
-/*
-===========================================================
-
-Name    :   cNetChannel::Transmit
-
-Purpose :   transmits a data to a remote destination
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int channel::transmit (int length, byte *data)
 {
     static  byte    netmsgbuf[MAX_MSGLEN];
@@ -90,16 +65,7 @@ int channel::transmit (int length, byte *data)
     return pNet->send( socket, netmsg.bytes_written, netmsgbuf, address );
 }
 
-/*
-===========================================================
-
-Name    :   cNetChannel::Process
-
-Purpose :   processes a received packet
-
-===========================================================
-*/
-
+//------------------------------------------------------------------------------
 int channel::process (network::message *message)
 {
     int netport;
