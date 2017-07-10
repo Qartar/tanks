@@ -226,7 +226,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
                 p->color_velocity = vec4(0,0,0,-p->color.a / (1+frand()*1.0f));
 
-                p->drag = 1.5f + frand() * 1.5f;
+                p->drag = 2.5f + frand() * 1.5f;
             }
             break;
         }
@@ -282,6 +282,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
         case effect_type::explosion: {
             render::particle* p;
+            float scale = std::sqrt(strength);
 
             // shock wave
 
@@ -289,78 +290,78 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 return;
 
             p->position = position;
-            p->velocity = direction * 48.0f;
+            p->velocity = direction * 48.0f * scale;
 
             p->color = vec4(1.0f,1.0f,0.5f,0.5f);
             p->color_velocity = -p->color * vec4(0,1,3,3);
-            p->size = 12.0;
-            p->size_velocity = 192.0f;
+            p->size = 12.0 * scale;
+            p->size_velocity = 192.0f * scale;
             p->flags = render::particle::invert;
 
             // smoke
 
-            for (int ii = 0; ii < 96; ++ii) {
+            for (int ii = 0; ii < 96 * scale; ++ii) {
                 if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*12;
+                d = frand()*12 * scale;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
                 r = frand()*M_PI*2.0f;
-                d = sqrt(frand()) * 128.0f;
+                d = sqrt(frand()) * 128.0f * strength;
 
                 p->velocity = vec2(cos(r),sin(r)) * d;
                 p->velocity += direction * d * 0.5f;
 
-                p->size = 4.0f + frand()*8.0f;
-                p->size_velocity = 2.0;
+                p->size = (4.0f + frand()*8.0f) * scale;
+                p->size_velocity = 2.0 * strength;
 
                 p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
                 p->color_velocity = vec4(0,0,0,-p->color.a / (2+frand()*1.5f));
 
-                p->drag = 3.0f + frand() * 1.0f;
+                p->drag = (3.0f + frand() * 1.0f) * scale;
             }
 
             // fire
 
-            for (int ii = 0; ii < 64; ++ii) {
+            for (int ii = 0; ii < 64 * scale; ++ii) {
                 if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*8;
+                d = frand()*8 * scale;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
                 r = frand()*M_PI*2.0f;
-                d = sqrt(frand()) * 128.0f;
+                d = sqrt(frand()) * 128.0f * strength;
 
                 p->velocity = vec2(cos(r),sin(r))*d;
                 p->velocity += direction * d * 0.5f;
 
                 p->color = vec4(1.0f,frand(),0.0f,0.1f);
                 p->color_velocity = vec4(0,0,0,-p->color.a/(0.5+frand()*frand()*2.5f));
-                p->size = 8.0 + frand()*16.0f;
-                p->size_velocity = 1.0f;
+                p->size = (8.0 + frand()*16.0f) * scale;
+                p->size_velocity = 1.0f * strength;
 
-                p->drag = 2.0f + frand() * 2.0f;
+                p->drag = (2.0f + frand() * 2.0f) * scale;
             }
 
             // debris
 
-            for (int ii = 0; ii < 32; ++ii) {
+            for (int ii = 0; ii < 32 * scale; ++ii) {
                 if ( (p = add_particle()) == NULL )
                     return;
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*2;
+                d = frand()*2 * scale;
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
                 r = frand()*M_PI*2.0f;
-                d = frand()*128;
+                d = frand()*128 * scale;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;

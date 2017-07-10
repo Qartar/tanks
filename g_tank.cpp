@@ -212,7 +212,7 @@ void tank::think()
         if (_dead_time && (g_Game->_frametime - _dead_time > 650) && (g_Game->_frametime - _dead_time < 650+HACK_TIME/2))
         {
             _world->add_sound(_sound_explode);
-            _world->add_effect(effect_type::explosion, get_position());
+            _world->add_effect(effect_type::explosion, get_position(), vec2(0,0), _client->damage_mod);
             _dead_time -= HACK_TIME;    // dont do it again
         }
     }
@@ -367,7 +367,7 @@ projectile::projectile(tank* owner, float damage)
 void projectile::touch(object *other, physics::contact const* contact)
 {
     _world->add_sound(_sound_explode);
-    _world->add_effect(effect_type::explosion, get_position(), contact ? -contact->normal : vec2(0,0));
+    _world->add_effect(effect_type::explosion, get_position(), contact ? -contact->normal : vec2(0,0), 0.5f * _damage);
 
     _world->remove(this);
 
