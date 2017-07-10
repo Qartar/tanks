@@ -26,17 +26,27 @@ class system;
 
 #define MAX_PLAYERS 16
 
-#define KEY_FORWARD 0
-#define KEY_BACK    1
-#define KEY_LEFT    2
-#define KEY_RIGHT   3
-#define KEY_TLEFT   4
-#define KEY_TRIGHT  5
-#define KEY_FIRE    6
-
 #define PROTOCOL_VERSION    3
 
+#define UPGRADE_FRAC    g_upgrade_frac->getFloat()
+#define UPGRADE_PENALTY g_upgrade_penalty->getFloat()
+#define UPGRADE_MIN     g_upgrade_min->getFloat()
+
 namespace game {
+
+typedef struct game_client_s
+{
+    vec3    color;
+
+    float   damage_mod;
+    float   armor_mod;
+    float   refire_mod;
+    float   speed_mod;
+
+    int     upgrades;
+
+    usercmdgen input;
+} game_client_t;
 
 static vec4 player_colors[] = {
     vec4(   1.000f, 0.000f, 0.000f, 1),     // 0: red
@@ -287,7 +297,6 @@ private:
     void read_sound ();
     void read_effect ();
 
-    void client_keys (int key, bool down);
     void client_send ();
 
     void info_send ();
@@ -297,8 +306,6 @@ private:
     void write_info (int client, netmsg_t *message);
 
     void read_fail ();
-
-    bool _client_keys[8];
 
     netadr_t _netserver;
 

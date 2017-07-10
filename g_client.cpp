@@ -167,25 +167,6 @@ void session::get_frame ()
     return;
 }
 
-//------------------------------------------------------------------------------
-void session::client_keys (int key, bool down)
-{
-    if ( key == 'w' || key == 'W' )
-        _client_keys[KEY_FORWARD] = down;
-    else if ( key == 's' || key == 'S' )
-        _client_keys[KEY_BACK] = down;
-    else if ( key == 'a' || key == 'A' )
-        _client_keys[KEY_LEFT] = down;
-    else if ( key == 'd' || key == 'D' )
-        _client_keys[KEY_RIGHT] = down;
-    else if ( key == 'j' || key == 'J' )
-        _client_keys[KEY_TLEFT] = down;
-    else if ( key == 'l' || key == 'L' )
-        _client_keys[KEY_TRIGHT] = down;
-    else if ( key == 'k' || key == 'K' )
-        _client_keys[KEY_FIRE] = down;
-}
-
 /*
 ===========================================================
 
@@ -251,27 +232,12 @@ void session::connect_ack ()
 //------------------------------------------------------------------------------
 void session::client_send ()
 {
-    int     bits = 0;
+    game::usercmd cmd = _clients[0].input.generate();
 
-    if ( _client_keys[KEY_FORWARD] == true )
-        bits |= BIT(KEY_FORWARD);
-    if ( _client_keys[KEY_BACK] == true )
-        bits |= BIT(KEY_BACK);
-
-    if ( _client_keys[KEY_LEFT] == true )
-        bits |= BIT(KEY_LEFT);
-    if ( _client_keys[KEY_RIGHT] == true )
-        bits |= BIT(KEY_RIGHT);
-
-    if ( _client_keys[KEY_TLEFT] == true )
-        bits |= BIT(KEY_TLEFT);
-    if ( _client_keys[KEY_TRIGHT] == true )
-        bits |= BIT(KEY_TRIGHT);
-    if ( _client_keys[KEY_FIRE] == true )
-        bits |= BIT(KEY_FIRE);
-
-    _netchan.message.WriteByte( clc_command );
-    _netchan.message.WriteByte( bits );
+    _netchan.message.WriteByte(clc_command);
+    _netchan.message.WriteVector(cmd.move);
+    _netchan.message.WriteVector(cmd.look);
+    _netchan.message.WriteByte(static_cast<int>(cmd.action));
 }
 
 //------------------------------------------------------------------------------

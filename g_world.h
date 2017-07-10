@@ -12,6 +12,8 @@ Date    :   10/21/2004
 
 #pragma once
 
+#include "g_usercmd.h"
+
 #include "p_material.h"
 #include "p_rigidbody.h"
 #include "p_shape.h"
@@ -33,6 +35,8 @@ namespace game {
 
 class tank;
 class world;
+
+typedef struct game_client_s game_client_t;
 
 enum class object_type
 {
@@ -156,7 +160,7 @@ public:
     float get_turret_rotation() const { return _turret_rotation; }
     float get_turret_velocity() const { return _turret_velocity; }
 
-    void update_keys(int key, bool is_down);
+    void update_usercmd(game::usercmd usercmd);
 
     void update_sound();
 
@@ -175,7 +179,7 @@ public:
     float _dead_time;
     float _fire_time;
 
-    bool _keys[8];
+    game::usercmd _usercmd;
 
     std::array<sndchan_t*,3> _channels;
     game_client_t* _client;

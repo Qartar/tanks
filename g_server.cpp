@@ -248,30 +248,15 @@ void session::client_disconnect (int nClient)
 //------------------------------------------------------------------------------
 void session::client_command ()
 {
-    game::tank* tank;
-    int     bits;
+    game::usercmd cmd{};
 
-    bits = _netmsg.ReadByte( );
-    tank = _players[_netclient];
+    cmd.move = _netmsg.ReadVector();
+    cmd.look = _netmsg.ReadVector();
+    cmd.action = static_cast<decltype(cmd.action)>(_netmsg.ReadByte());
 
-    memset( tank->_keys, 0, sizeof(tank->_keys) );
-
-    if ( bits & BIT(KEY_FORWARD) )
-        tank->_keys[KEY_FORWARD] = true;
-    if ( bits & BIT(KEY_BACK) )
-        tank->_keys[KEY_BACK] = true;
-
-    if ( bits & BIT(KEY_LEFT) )
-        tank->_keys[KEY_LEFT] = true;
-    if ( bits & BIT(KEY_RIGHT) )
-        tank->_keys[KEY_RIGHT] = true;
-
-    if ( bits & BIT(KEY_TLEFT) )
-        tank->_keys[KEY_TLEFT] = true;
-    if ( bits & BIT(KEY_TRIGHT) )
-        tank->_keys[KEY_TRIGHT] = true;
-    if ( bits & BIT(KEY_FIRE) )
-        tank->_keys[KEY_FIRE] = true;
+    if (_players[_netclient]) {
+        _players[_netclient]->update_usercmd(cmd);
+    }
 }
 
 //------------------------------------------------------------------------------

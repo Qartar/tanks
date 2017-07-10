@@ -77,19 +77,3 @@ static cVec2 rot (cVec2 v, float rad)
     return cVec2( v.x*cos(rad) - v.y*sin(rad),
                   v.y*cos(rad) + v.x*sin(rad) );
 }
-
-#define UPGRADE_FRAC    g_upgrade_frac->getFloat()
-#define UPGRADE_PENALTY g_upgrade_penalty->getFloat()
-#define UPGRADE_MIN     g_upgrade_min->getFloat()
-
-typedef struct game_client_s
-{
-    vec3    color;
-
-    float   damage_mod;
-    float   armor_mod;
-    float   refire_mod;
-    float   speed_mod;
-
-    int     upgrades;
-} game_client_t;

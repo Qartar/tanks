@@ -113,6 +113,26 @@ int session::init (char *cmdline)
 
     cls.number = 0;
 
+    _clients[0].input.bind({
+        {'w', usercmdgen::button::forward},
+        {'s', usercmdgen::button::back},
+        {'a', usercmdgen::button::left},
+        {'d', usercmdgen::button::right},
+        {'j', usercmdgen::button::turret_left},
+        {'l', usercmdgen::button::turret_right},
+        {'k', usercmdgen::button::fire},
+    });
+
+    _clients[1].input.bind({
+        {K_UPARROW, usercmdgen::button::forward},
+        {K_DOWNARROW, usercmdgen::button::back},
+        {K_LEFTARROW, usercmdgen::button::left},
+        {K_RIGHTARROW, usercmdgen::button::right},
+        {K_KP_LEFTARROW, usercmdgen::button::turret_left},
+        {K_KP_RIGHTARROW, usercmdgen::button::turret_right},
+        {K_KP_5, usercmdgen::button::fire},
+    });
+
     init_client();
 
     _menu.init( );
@@ -604,45 +624,10 @@ int session::key_event(unsigned char key, bool down)
 
     if ( ! _dedicated )
     {
-
-        switch ( key )
-        {
-        case 'w':   // fwd
-        case 'W':
-        case 's':   // back
-        case 'S':
-        case 'a':   // left
-        case 'A':
-        case 'd':   // right
-        case 'D':
-        case 'j':   // turret left
-        case 'J':
-        case 'l':   // turret right
-        case 'L':
-        case 'k':   // fire
-        case 'K':
-            if ( (!_multiplayer_active || _multiserver) && _players[0] )
-                _players[0]->update_keys( key, down );
-            else
-                client_keys( key, down );
-            break;
-
-        case K_UPARROW:     // fwd
-        case K_DOWNARROW:   // back
-        case K_LEFTARROW:   // left
-        case K_RIGHTARROW:  // right
-        case '4':           // turret left
-        case K_KP_LEFTARROW:
-        case '6':           // turret right
-        case K_KP_RIGHTARROW:
-        case '5':           // fire
-        case K_KP_5:
-            if ( !_multiplayer_active && _players[1] )
-                _players[1]->update_keys( key, down );
-            break;
-
-        default:
-            break;
+        for (int ii = 0; ii < MAX_PLAYERS; ++ii) {
+            if (_players[ii] && _clients[ii].input.key_event(key, down)) {
+                _players[ii]->update_usercmd(_clients[ii].input.generate());
+            }
         }
     }
 

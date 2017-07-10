@@ -23,6 +23,8 @@ add_executable(tanks WIN32
     g_particles.cpp
     g_server.cpp
     g_tank.cpp
+    g_usercmd.cpp
+    g_usercmd.h
     g_world.cpp
     g_world.h
     keys.h
