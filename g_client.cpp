@@ -64,9 +64,9 @@ void session::stop_client ()
 {
     if ( _multiplayer && !_multiserver && _multiplayer_active )
     {
-        _netchan.message.WriteByte( clc_disconnect );
-        _netchan.Transmit( _netchan.message.nCurSize, _netchan.messagebuf );
-        _netchan.message.Clear( );
+        _netchan.message.write_byte( clc_disconnect );
+        _netchan.transmit( _netchan.message.bytes_written, _netchan.messagebuf );
+        _netchan.message.clear( );
     }
 
     _world.reset();
@@ -89,7 +89,7 @@ void session::get_frame ()
 
     _world.reset( );
 
-    framenum = _netmsg.ReadLong( );
+    framenum = _netmsg.read_long( );
 
     if ( framenum < cls.last_frame )
         return;
@@ -107,25 +107,25 @@ void session::get_frame ()
     i = 0;
     while ( true )
     {
-        readbyte = _netmsg.ReadByte( );
+        readbyte = _netmsg.read_byte( );
         if ( !readbyte )
             break;
 
-        i = _netmsg.ReadByte( );
+        i = _netmsg.read_byte( );
 
         _players[i]->_old_position = _players[i]->get_position();
         _players[i]->_old_rotation = _players[i]->get_rotation();
         _players[i]->_old_turret_rotation  = _players[i]->_turret_rotation;
 
-        _players[i]->set_position(_netmsg.ReadVector());
-        _players[i]->set_linear_velocity(_netmsg.ReadVector());
-        _players[i]->set_rotation(_netmsg.ReadFloat());
-        _players[i]->set_angular_velocity(_netmsg.ReadFloat());
-        _players[i]->_turret_rotation = _netmsg.ReadFloat( );
-        _players[i]->_turret_velocity = _netmsg.ReadFloat( );
+        _players[i]->set_position(_netmsg.read_vector());
+        _players[i]->set_linear_velocity(_netmsg.read_vector());
+        _players[i]->set_rotation(_netmsg.read_float());
+        _players[i]->set_angular_velocity(_netmsg.read_float());
+        _players[i]->_turret_rotation = _netmsg.read_float( );
+        _players[i]->_turret_velocity = _netmsg.read_float( );
 
-        _players[i]->_damage = _netmsg.ReadFloat( );
-        _players[i]->_fire_time = _netmsg.ReadFloat( );
+        _players[i]->_damage = _netmsg.read_float( );
+        _players[i]->_fire_time = _netmsg.read_float( );
 
         //m_World.AddObject( &m_Players[i] );
 
@@ -173,7 +173,7 @@ void session::connect_to_server (int index)
     if ( !_netserver.port )
         _netserver.port = BIG_SHORT( PORT_SERVER );
 
-    pNet->Print( network::socket::client, _netserver, va( "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport ) );
+    pNet->print( network::socket::client, _netserver, va( "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport ) );
 }
 
 //------------------------------------------------------------------------------
@@ -185,7 +185,7 @@ void session::connect_ack ()
 
     sscanf( _netstring, "%s %i", tempbuf, &cls.number );
 
-    _netchan.Setup( network::socket::client, _netserver );
+    _netchan.setup( network::socket::client, _netserver );
 
     _frametime = 0.0f;
     cls.last_frame = 0;
@@ -217,26 +217,26 @@ void session::client_send ()
 {
     game::usercmd cmd = _clients[0].input.generate();
 
-    _netchan.message.WriteByte(clc_command);
-    _netchan.message.WriteVector(cmd.move);
-    _netchan.message.WriteVector(cmd.look);
-    _netchan.message.WriteByte(static_cast<int>(cmd.action));
+    _netchan.message.write_byte(clc_command);
+    _netchan.message.write_vector(cmd.move);
+    _netchan.message.write_vector(cmd.look);
+    _netchan.message.write_byte(static_cast<int>(cmd.action));
 }
 
 //------------------------------------------------------------------------------
 void session::read_sound ()
 {
-    int sound_index = _netmsg.ReadLong();
+    int sound_index = _netmsg.read_long();
     pSound->playSound(sound_index, vec3(0,0,0), 1.0f, 0.0f);
 }
 
 //------------------------------------------------------------------------------
 void session::read_effect ()
 {
-    int type = _netmsg.ReadByte();
-    vec2 pos = _netmsg.ReadVector();
-    vec2 vel = _netmsg.ReadVector();
-    float strength = _netmsg.ReadFloat();
+    int type = _netmsg.read_byte();
+    vec2 pos = _netmsg.read_vector();
+    vec2 vel = _netmsg.read_vector();
+    float strength = _netmsg.read_float();
 
     _world.add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
 }
@@ -260,16 +260,16 @@ void session::info_ask ()
     _have_server = false;
 
     //  ping master server
-    pNet->StringToNet( net_master->getString( ), &addr );
+    pNet->string_to_address( net_master->getString( ), &addr );
     addr.type = network::address_type::ip;
     addr.port = BIG_SHORT( PORT_SERVER );
-    pNet->Print( network::socket::client, addr, "info" );
+    pNet->print( network::socket::client, addr, "info" );
 
     //  ping local network
     addr.type = network::address_type::broadcast;
     addr.port = BIG_SHORT( PORT_SERVER );
 
-    pNet->Print( network::socket::client, addr, "info" );
+    pNet->print( network::socket::client, addr, "info" );
 }
 
 //------------------------------------------------------------------------------
@@ -315,8 +315,8 @@ void session::write_upgrade (int upgrade)
         return;
     }
 
-    _netchan.message.WriteByte( clc_upgrade );
-    _netchan.message.WriteByte( upgrade );
+    _netchan.message.write_byte( clc_upgrade );
+    _netchan.message.write_byte( upgrade );
 }
 
 } // namespace game

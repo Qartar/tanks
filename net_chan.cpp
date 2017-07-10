@@ -25,7 +25,7 @@ Purpose :
 ===========================================================
 */
 
-int channel::Init (int netport)
+int channel::init (int netport)
 {
     LARGE_INTEGER   nCounter;
 
@@ -39,7 +39,7 @@ int channel::Init (int netport)
     return ERROR_NONE;
 }
 
-int channel::Setup (network::socket socket, network::address remote, int netport)
+int channel::setup (network::socket socket, network::address remote, int netport)
 {
     if ( netport )
         this->netport = netport;
@@ -47,8 +47,8 @@ int channel::Setup (network::socket socket, network::address remote, int netport
     this->socket = socket;
     this->address = remote;
 
-    this->message.Init( this->messagebuf, MAX_MSGLEN );
-    this->message.bAllowOverflow = true;
+    this->message.init( this->messagebuf, MAX_MSGLEN );
+    this->message.allow_overflow = true;
 
     this->last_sent = g_Application->get_time( );
     this->last_received = g_Application->get_time( );
@@ -66,28 +66,28 @@ Purpose :   transmits a data to a remote destination
 ===========================================================
 */
 
-int channel::Transmit (int nLength, byte *pData)
+int channel::transmit (int nLength, byte *pData)
 {
     static  byte    netmsgbuf[MAX_MSGLEN];
     network::message        netmsg;
 
-    netmsg.Init( netmsgbuf, MAX_MSGLEN );
+    netmsg.init( netmsgbuf, MAX_MSGLEN );
 
     // write netport if were are client
 
-    netmsg.WriteLong( 0 );  // trash
+    netmsg.write_long( 0 );  // trash
     if (socket == network::socket::client)
-        netmsg.WriteShort( netport );
+        netmsg.write_short( netport );
 
     // copy the rest over
 
-    netmsg.Write( pData, nLength );
+    netmsg.write( pData, nLength );
 
     // send it off
 
     last_sent = g_Application->get_time( );
 
-    return pNet->Send( socket, netmsg.nCurSize, netmsgbuf, address );
+    return pNet->send( socket, netmsg.bytes_written, netmsgbuf, address );
 }
 
 /*
@@ -100,15 +100,15 @@ Purpose :   processes a received packet
 ===========================================================
 */
 
-int channel::Process (network::message *pMessage)
+int channel::process (network::message *pMessage)
 {
     int netport;
 
-    pMessage->Begin( );
+    pMessage->begin( );
 
-    pMessage->ReadLong( );  // trash
+    pMessage->read_long( );  // trash
     if (socket == network::socket::server)
-        netport = pMessage->ReadShort( );
+        netport = pMessage->read_short( );
 
     last_received = g_Application->get_time( );
 

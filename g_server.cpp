@@ -47,7 +47,7 @@ void session::start_server ()
     svs.active = true;
     net_serverName->setString( svs.name );
 
-    _netchan.Setup( network::socket::server, _netfrom );    // remote doesn't matter
+    _netchan.setup( network::socket::server, _netfrom );    // remote doesn't matter
 }
 
 //------------------------------------------------------------------------------
@@ -76,9 +76,9 @@ void session::stop_server ()
 
         client_disconnect( i );
 
-        cl->netchan.message.WriteByte( svc_disconnect );
-        cl->netchan.Transmit( cl->netchan.message.nCurSize, cl->netchan.messagebuf );
-        cl->netchan.message.Clear( );
+        cl->netchan.message.write_byte( svc_disconnect );
+        cl->netchan.transmit( cl->netchan.message.bytes_written, cl->netchan.messagebuf );
+        cl->netchan.message.clear( );
     }
 
     _world.reset( );
@@ -99,28 +99,28 @@ void session::write_frame ()
     if ( svs.clients[0].local )
         _players[0]->_color = cls.color;
 
-    message.Init( messagebuf, MAX_MSGLEN );
-    message.Clear( );
+    message.init( messagebuf, MAX_MSGLEN );
+    message.clear( );
 
-    message.WriteByte( svc_frame );
-    message.WriteLong( _framenum );
+    message.write_byte( svc_frame );
+    message.write_long( _framenum );
     for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
     {
         if ( !cl->active )
             continue;
 
-        message.WriteByte( 1 );
-        message.WriteByte( i );
+        message.write_byte( 1 );
+        message.write_byte( i );
 
-        message.WriteVector( _players[i]->get_position() );
-        message.WriteVector( _players[i]->get_linear_velocity() );
-        message.WriteFloat( _players[i]->get_rotation() );
-        message.WriteFloat( _players[i]->get_angular_velocity() );
-        message.WriteFloat( _players[i]->_turret_rotation );
-        message.WriteFloat( _players[i]->_turret_velocity );
+        message.write_vector( _players[i]->get_position() );
+        message.write_vector( _players[i]->get_linear_velocity() );
+        message.write_float( _players[i]->get_rotation() );
+        message.write_float( _players[i]->get_angular_velocity() );
+        message.write_float( _players[i]->_turret_rotation );
+        message.write_float( _players[i]->_turret_velocity );
 
-        message.WriteFloat( _players[i]->_damage );
-        message.WriteFloat( _players[i]->_fire_time );
+        message.write_float( _players[i]->_damage );
+        message.write_float( _players[i]->_fire_time );
 
         //if ( m_Players[i].m_Bullet.bInGame )
         //{
@@ -133,9 +133,9 @@ void session::write_frame ()
         //    message.WriteByte( 0 );
     }
 
-    message.WriteByte( 0 );
+    message.write_byte( 0 );
 
-    broadcast( message.nCurSize, messagebuf );
+    broadcast( message.bytes_written, messagebuf );
 }
 
 //------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ void session::client_connect ()
     network::message    message;
     byte        messagebuf[MAX_MSGLEN];
 
-    message.Init( messagebuf, MAX_MSGLEN );
+    message.init( messagebuf, MAX_MSGLEN );
 
     int width = 640;
     int height = 480;
@@ -167,7 +167,7 @@ void session::client_connect ()
 
     if ( version != PROTOCOL_VERSION )
     {
-        pNet->Print( network::socket::server, _netfrom, va("fail \"Bad protocol version: %i\"", version )  );
+        pNet->print( network::socket::server, _netfrom, va("fail \"Bad protocol version: %i\"", version )  );
         return;
     }
 
@@ -189,7 +189,7 @@ void session::client_connect ()
 
     if ( !cl )  // couldn't find client slot
     {
-        pNet->Print( network::socket::server, _netfrom, "fail \"Server is full\"" );
+        pNet->print( network::socket::server, _netfrom, "fail \"Server is full\"" );
         return;
     }
 
@@ -197,11 +197,11 @@ void session::client_connect ()
 
     cl->active = true;
     cl->local = false;
-    cl->netchan.Setup( network::socket::server, _netfrom, netport );
+    cl->netchan.setup( network::socket::server, _netfrom, netport );
 
     strncpy( cl->name, clname, SHORT_STRING );
 
-    pNet->Print( network::socket::server, cl->netchan.address, va( "connect %i", i ) );
+    pNet->print( network::socket::server, cl->netchan.address, va( "connect %i", i ) );
 
     // init their tank
 
@@ -226,7 +226,7 @@ void session::client_disconnect (int nClient)
     network::message    message;
     byte        messagebuf[MAX_MSGLEN];
 
-    message.Init( messagebuf, MAX_MSGLEN );
+    message.init( messagebuf, MAX_MSGLEN );
 
     if ( !svs.clients[nClient].active )
         return;
@@ -236,7 +236,7 @@ void session::client_disconnect (int nClient)
     svs.clients[nClient].active = false;
 
     write_info( nClient, &message );
-    broadcast( message.nCurSize, messagebuf );
+    broadcast( message.bytes_written, messagebuf );
 }
 
 //------------------------------------------------------------------------------
@@ -244,9 +244,9 @@ void session::client_command ()
 {
     game::usercmd cmd{};
 
-    cmd.move = _netmsg.ReadVector();
-    cmd.look = _netmsg.ReadVector();
-    cmd.action = static_cast<decltype(cmd.action)>(_netmsg.ReadByte());
+    cmd.move = _netmsg.read_vector();
+    cmd.look = _netmsg.read_vector();
+    cmd.action = static_cast<decltype(cmd.action)>(_netmsg.read_byte());
 
     if (_players[_netclient]) {
         _players[_netclient]->update_usercmd(cmd);
@@ -262,13 +262,13 @@ void session::write_sound(int sound_index)
     if ( !_multiserver )
         return;
 
-    netmsg.Init( netmsgbuf, MAX_MSGLEN );
-    netmsg.Clear( );
+    netmsg.init( netmsgbuf, MAX_MSGLEN );
+    netmsg.clear( );
 
-    netmsg.WriteByte( svc_sound );
-    netmsg.WriteLong( sound_index );
+    netmsg.write_byte( svc_sound );
+    netmsg.write_long( sound_index );
 
-    broadcast( netmsg.nCurSize, netmsgbuf );
+    broadcast( netmsg.bytes_written, netmsgbuf );
 }
 
 //------------------------------------------------------------------------------
@@ -280,16 +280,16 @@ void session::write_effect (int type, vec2 pos, vec2 vel, float strength)
     if (!_multiserver)
         return;
 
-    netmsg.Init(netmsgbuf, MAX_MSGLEN);
-    netmsg.Clear();
+    netmsg.init(netmsgbuf, MAX_MSGLEN);
+    netmsg.clear();
 
-    netmsg.WriteByte(svc_effect);
-    netmsg.WriteByte(type);
-    netmsg.WriteVector(pos);
-    netmsg.WriteVector(vel);
-    netmsg.WriteFloat(strength);
+    netmsg.write_byte(svc_effect);
+    netmsg.write_byte(type);
+    netmsg.write_vector(pos);
+    netmsg.write_vector(vel);
+    netmsg.write_float(strength);
 
-    broadcast(netmsg.nCurSize, netmsgbuf);
+    broadcast(netmsg.bytes_written, netmsgbuf);
 }
 
 //------------------------------------------------------------------------------
@@ -309,7 +309,7 @@ void session::info_send ()
     if ( i == MAX_PLAYERS )
         return;
 
-    pNet->Print( network::socket::server, _netfrom, va( "info %s", svs.name) );
+    pNet->print( network::socket::server, _netfrom, va( "info %s", svs.name) );
 }
 
 char    *sz_upgrades[] = {
@@ -362,9 +362,9 @@ void session::read_upgrade (int index)
             (int )(_players[_netclient]->_color.b * 255),
             svs.clients[_netclient].name, sz_upgrades[index] ) ); 
 
-        netmsg.Init( msgbuf, MAX_MSGLEN );
+        netmsg.init( msgbuf, MAX_MSGLEN );
         write_info( _netclient, &netmsg );
-        broadcast( netmsg.nCurSize, netmsg.pData );
+        broadcast( netmsg.bytes_written, netmsg.data );
     }
 }
 

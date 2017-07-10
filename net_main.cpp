@@ -61,45 +61,45 @@ Purpose :
 ===========================================================
 */
 
-int manager::Init ()
+int manager::init ()
 {
-    m_multiplayer = false;
+    _multiplayer = false;
 
-    memset( &m_wsadata, 0, sizeof(m_wsadata) );
+    memset( &_wsadata, 0, sizeof(_wsadata) );
 
     for ( int i=0 ; i<NUM_SOCKETS ; i++ ) {
-        memset( &m_Loopbacks[i], 0, sizeof(m_Loopbacks[i]) );
+        memset( &_loopbacks[i], 0, sizeof(_loopbacks[i]) );
 
-        ip_sockets[ i ] = 0;
-        ipx_sockets[ i ] = 0;
+        _ip_sockets[ i ] = 0;
+        _ipx_sockets[ i ] = 0;
     }
 
-    if ( WSAStartup( MAKEWORD( 1, 1 ), &m_wsadata ) )
+    if ( WSAStartup( MAKEWORD( 1, 1 ), &_wsadata ) )
         return ERROR_FAIL;
 
-    Config( false );
+    config( false );
 
     return ERROR_NONE;
 }
 
-int manager::Shutdown ()
+int manager::shutdown ()
 {
-    Config( false );
+    config( false );
 
     WSACleanup( );
 
     return ERROR_NONE;
 }
 
-int manager::Config (bool multiplayer)
+int manager::config (bool multiplayer)
 {
-    if ( multiplayer == m_multiplayer )
+    if ( multiplayer == _multiplayer )
         return ERROR_NONE;
 
-    if ( m_multiplayer = multiplayer )
+    if ( _multiplayer = multiplayer )
     {
-        OpenIP( );
-        OpenIPX( );
+        open_ip( );
+        open_ipx( );
     }
     else
     {
@@ -108,16 +108,16 @@ int manager::Config (bool multiplayer)
         // shut it down
         for (i=0 ; i<NUM_SOCKETS ; i++)
         {
-            if ( ip_sockets[i] )
+            if ( _ip_sockets[i] )
             {
-                closesocket( ip_sockets[i] );
-                ip_sockets[i] = 0;
+                closesocket( _ip_sockets[i] );
+                _ip_sockets[i] = 0;
             }
 
-            if ( ipx_sockets[i] )
+            if ( _ipx_sockets[i] )
             {
-                closesocket( ipx_sockets[i] );
-                ipx_sockets[i] = 0;
+                closesocket( _ipx_sockets[i] );
+                _ipx_sockets[i] = 0;
             }
         }
     }
@@ -192,29 +192,29 @@ Name    :   IP
 
 #define PORT_ANY    -1
 
-int manager::OpenIP ()
+int manager::open_ip ()
 {
     int port;
 
-    if ( !ip_sockets[network::socket::server] )
+    if ( !_ip_sockets[network::socket::server] )
     {
         port = PORT_SERVER;
 
-        ip_sockets[network::socket::server] = IP_Socket( port );
+        _ip_sockets[network::socket::server] = ip_socket( port );
     }
 
-    if ( !ip_sockets[network::socket::client] )
+    if ( !_ip_sockets[network::socket::client] )
     {
         port = PORT_CLIENT;
 
-        if ( !(ip_sockets[network::socket::client] = IP_Socket( port )) )
-            ip_sockets[network::socket::client] = IP_Socket( PORT_ANY );
+        if ( !(_ip_sockets[network::socket::client] = ip_socket( port )) )
+            _ip_sockets[network::socket::client] = ip_socket( PORT_ANY );
     }
 
     return ERROR_NONE;
 }
 
-int manager::IP_Socket (int port)
+int manager::ip_socket (int port)
 {
     sockaddr_in     address;
     int     newsocket;
@@ -256,12 +256,12 @@ Name    :   IPX
 ===============================================================================
 */
 
-int manager::OpenIPX ()
+int manager::open_ipx ()
 {
     return ERROR_NONE;
 }
 
-int manager::IPX_Socket (int port)
+int manager::ipx_socket (int port)
 {
     return 0;
 }
@@ -274,7 +274,7 @@ Name    :   address conversions
 ===============================================================================
 */
 
-char *manager::NetToString (network::address a)
+char *manager::address_to_string (network::address a)
 {
     static char szString[LONG_STRING];
 
@@ -294,7 +294,7 @@ char *manager::NetToString (network::address a)
     sscanf (copy, "%x", &val);  \
     ((struct sockaddr_ipx *)sock)->dest = val
 
-bool manager::StringToSock (char *addr, sockaddr *sock)
+bool manager::string_to_sockaddr (char *addr, sockaddr *sock)
 {
     struct hostent  *h;
     char    *colon;
@@ -352,7 +352,7 @@ bool manager::StringToSock (char *addr, sockaddr *sock)
 
 #undef DO
 
-bool manager::StringToNet (char *addr, network::address *net)
+bool manager::string_to_address (char *addr, network::address *net)
 {
     sockaddr    sadr;
     
@@ -363,15 +363,15 @@ bool manager::StringToNet (char *addr, network::address *net)
         return true;
     }
 
-    if (!StringToSock (addr, &sadr))
+    if (!string_to_sockaddr (addr, &sadr))
         return false;
     
-    SockToNet (&sadr, net);
+    sockaddr_to_address (&sadr, net);
 
     return true;
 }
 
-void manager::NetToSock (network::address *net, sockaddr *sock)
+void manager::address_to_sockaddr (network::address *net, sockaddr *sock)
 {
     memset (sock, 0, sizeof(*sock));
 
@@ -403,7 +403,7 @@ void manager::NetToSock (network::address *net, sockaddr *sock)
     }
 }
 
-void manager::SockToNet (sockaddr *sock, network::address *net)
+void manager::sockaddr_to_address (sockaddr *sock, network::address *net)
 {
     if (sock->sa_family == AF_INET)
     {
@@ -430,17 +430,17 @@ Purpose :   sends a connectionless packet
 ===========================================================
 */
 
-int manager::Print (network::socket socket, network::address to, char *szMessage)
+int manager::print (network::socket socket, network::address to, char *szMessage)
 {
     byte        msgbuf[MAX_MSGLEN];
     network::message    msg;
 
-    msg.Init( msgbuf, MAX_MSGLEN );
+    msg.init( msgbuf, MAX_MSGLEN );
 
-    msg.WriteLong( -1 );    //  connectionless
-    msg.Write( szMessage, strlen( szMessage ) );
+    msg.write_long( -1 );    //  connectionless
+    msg.write( szMessage, strlen( szMessage ) );
 
-    return Send( socket, msg.nCurSize, msgbuf, to );
+    return send( socket, msg.bytes_written, msgbuf, to );
 }
 
 /*
@@ -453,27 +453,27 @@ Purpose :   sends a packet across the network
 ===========================================================
 */
 
-int manager::Send (network::socket socket, int nLength, void *pData, network::address to)
+int manager::send (network::socket socket, int nLength, void *pData, network::address to)
 {
     sockaddr    address;
     int     net_socket;
 
     if ( to.type == network::address_type::loopback )
-        return SendLoop( socket, nLength, pData, to );
+        return send_loopback( socket, nLength, pData, to );
 
     if ( to.type == network::address_type::broadcast )
-        net_socket = ip_sockets[socket];
+        net_socket = _ip_sockets[socket];
     else if ( to.type == network::address_type::ip )
-        net_socket = ip_sockets[socket];
+        net_socket = _ip_sockets[socket];
     else if ( to.type == network::address_type::ipx )
-        net_socket = ip_sockets[socket];
+        net_socket = _ip_sockets[socket];
     else if ( to.type == network::address_type::broadcast_ipx )
-        net_socket = ipx_sockets[socket];
+        net_socket = _ipx_sockets[socket];
 
     if ( !net_socket )
         return ERROR_FAIL;
 
-    NetToSock( &to, &address );
+    address_to_sockaddr( &to, &address );
 
     if ( (sendto( net_socket, (char *)pData, nLength, 0, &address, sizeof(address) )) == -1 )
     {
@@ -501,7 +501,7 @@ Purpose :   gets any packets queued
 ===========================================================
 */
 
-int manager::Get (network::socket socket, network::address *pFrom, network::message *pMessage)
+int manager::get (network::socket socket, network::address *pFrom, network::message *pMessage)
 {
     int     protocol;
     sockaddr    from;
@@ -509,23 +509,23 @@ int manager::Get (network::socket socket, network::address *pFrom, network::mess
     int     net_socket;
     int     ret;
 
-    if ( GetLoop( socket, pFrom, pMessage ) )
+    if ( get_loopback( socket, pFrom, pMessage ) )
         return true;
 
     for ( protocol = 0 ; protocol < 2 ; protocol++ )
     {
         if ( protocol == 0 )
-            net_socket = ip_sockets[socket];
+            net_socket = _ip_sockets[socket];
         else
-            net_socket = ip_sockets[socket];
+            net_socket = _ip_sockets[socket];
 
         if ( !net_socket )
             continue;
 
         fromlen = sizeof( from );
-        ret = recvfrom( net_socket, (char *)pMessage->pData, pMessage->nMaxSize, 0, &from, &fromlen );
+        ret = recvfrom( net_socket, (char *)pMessage->data, pMessage->size, 0, &from, &fromlen );
 
-        SockToNet( &from, pFrom );
+        sockaddr_to_address( &from, pFrom );
 
         if ( ret == -1 )
         {
@@ -539,10 +539,10 @@ int manager::Get (network::socket socket, network::address *pFrom, network::mess
             continue;
         }
 
-        if ( ret == pMessage->nMaxSize )
+        if ( ret == pMessage->size )
             continue;
 
-        pMessage->nCurSize = ret;
+        pMessage->bytes_written = ret;
         return true;
     }
 
@@ -559,12 +559,12 @@ Purpose :   sends a packet to loopback
 ===========================================================
 */
 
-int manager::SendLoop (network::socket socket, int nLength, void *pData, network::address to)
+int manager::send_loopback (network::socket socket, int nLength, void *pData, network::address to)
 {
     int     i;
     loopback_t  *loop;
 
-    loop = &m_Loopbacks[socket^1];
+    loop = &_loopbacks[socket^1];
 
     i = loop->send & (MAX_LOOPBACK-1);
     loop->send++;
@@ -585,12 +585,12 @@ Purpose :   gets a packet from loopback
 ===========================================================
 */
 
-int manager::GetLoop (network::socket socket, network::address *pFrom, network::message *pMessage)
+int manager::get_loopback (network::socket socket, network::address *pFrom, network::message *pMessage)
 {
     int     i;
     loopback_t  *loop;
 
-    loop = &m_Loopbacks[socket];
+    loop = &_loopbacks[socket];
 
     if (loop->send - loop->get > MAX_LOOPBACK)
         loop->get = loop->send - MAX_LOOPBACK;
@@ -601,8 +601,8 @@ int manager::GetLoop (network::socket socket, network::address *pFrom, network::
     i = loop->get & (MAX_LOOPBACK-1);
     loop->get++;
 
-    memcpy (pMessage->pData, loop->msgs[i].data, loop->msgs[i].size);
-    pMessage->nCurSize = loop->msgs[i].size;
+    memcpy (pMessage->data, loop->msgs[i].data, loop->msgs[i].size);
+    pMessage->bytes_written = loop->msgs[i].size;
 
     memset( pFrom, 0, sizeof(network::address) );
     pFrom->type = network::address_type::loopback;

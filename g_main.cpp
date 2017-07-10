@@ -121,12 +121,12 @@ int session::init (char *cmdline)
     _menu.init( );
     _world.init( );
 
-    _netchan.Init( );
+    _netchan.init( );
 
-    _netmsg.Init( _netmsgbuf, MAX_MSGLEN );
-    _netmsg.Clear( );
+    _netmsg.init( _netmsgbuf, MAX_MSGLEN );
+    _netmsg.clear( );
 
-    pNet->Config( true );
+    pNet->config( true );
 
     info_ask( );
 
@@ -504,8 +504,8 @@ int session::key_event(unsigned char key, bool down)
                 else if ( _multiplayer )
                 {
                     // say it
-                    _netchan.message.WriteByte( clc_say );
-                    _netchan.message.WriteString( _clientsay );
+                    _netchan.message.write_byte( clc_say );
+                    _netchan.message.write_string( _clientsay );
 
                     if ( _multiserver )
                     {
@@ -716,9 +716,9 @@ void session::add_score(int player_index, int score)
 
         broadcast( 3, msg );
 
-        netmsg.Init( buf, MAX_MSGLEN );
+        netmsg.init( buf, MAX_MSGLEN );
         write_info( player_index, &netmsg );
-        broadcast( netmsg.nCurSize, netmsg.pData );
+        broadcast( netmsg.bytes_written, netmsg.data );
     }
 }
 
@@ -874,13 +874,13 @@ void session::new_game()
         network::message    netmsg;
         byte        buf[MAX_MSGLEN];
 
-        netmsg.Init( buf, MAX_MSGLEN );
+        netmsg.init( buf, MAX_MSGLEN );
         for ( int i=0 ; i<MAX_PLAYERS ; i++ ) {
-            netmsg.WriteByte( svc_score );  //  score command
-            netmsg.WriteByte( i );          //  player index
-            netmsg.WriteByte( 0 );          //  current score
+            netmsg.write_byte( svc_score );  //  score command
+            netmsg.write_byte( i );          //  player index
+            netmsg.write_byte( 0 );          //  current score
         }
-        broadcast( netmsg.nCurSize, netmsg.pData );
+        broadcast( netmsg.bytes_written, netmsg.data );
     }
 
     //
@@ -1057,11 +1057,11 @@ int session::find_server_by_name(void *lpvoid)
 {
     g_Game->write_message( va("searching for: %s", g_Game->cls.server ) );
 
-    if ( !pNet->StringToNet( g_Game->cls.server, &g_Game->_netserver ) )
+    if ( !pNet->string_to_address( g_Game->cls.server, &g_Game->_netserver ) )
         g_Game->write_message( va("could not find server: %s", g_Game->cls.server ) );
     else
     {
-        g_Game->write_message( va("found: %s", pNet->NetToString( g_Game->_netserver) ) );
+        g_Game->write_message( va("found: %s", pNet->address_to_string( g_Game->_netserver) ) );
         g_Game->_have_server = true;
     }
 

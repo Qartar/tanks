@@ -21,9 +21,9 @@ void session::get_packets ()
     else
         socket = network::socket::client;
 
-    while ( pNet->Get( socket, &_netfrom, &_netmsg ) )
+    while ( pNet->get( socket, &_netfrom, &_netmsg ) )
     {
-        if ( *(int *)_netmsg.pData == -1 )
+        if ( *(int *)_netmsg.data == -1 )
         {
             connectionless( socket );
             continue;
@@ -33,9 +33,9 @@ void session::get_packets ()
         {
             int     netport;
 
-            _netmsg.Begin( );
-            _netmsg.ReadLong( );   // trash
-            netport = _netmsg.ReadShort( );
+            _netmsg.begin( );
+            _netmsg.read_long( );   // trash
+            netport = _netmsg.read_short( );
 
             for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
             {
@@ -56,14 +56,14 @@ void session::get_packets ()
             if ( i == MAX_PLAYERS )
                 continue;   // bad client
 
-            cl->netchan.Process( &_netmsg );
+            cl->netchan.process( &_netmsg );
         }
         else
         {
             if ( _netfrom != _netserver )
                 break;  // not from our server
 
-            _netchan.Process( &_netmsg );
+            _netchan.process( &_netmsg );
         }
 
         packet( socket );
@@ -85,8 +85,8 @@ void session::get_packets ()
 
             if ( cl->netchan.last_received + 10000 < time )
             {
-                cl->netchan.message.WriteByte( svc_disconnect );
-                cl->netchan.Transmit( cl->netchan.message.nCurSize, cl->netchan.messagebuf );
+                cl->netchan.message.write_byte( svc_disconnect );
+                cl->netchan.transmit( cl->netchan.message.bytes_written, cl->netchan.messagebuf );
 
                 write_message( va("%s timed out.", cl->name ) );
                 client_disconnect( i );
@@ -108,10 +108,10 @@ void session::connectionless (network::socket socket)
 {
     static char* cmd; 
 
-    _netmsg.Begin( );
-    _netmsg.ReadLong( );
+    _netmsg.begin( );
+    _netmsg.read_long( );
 
-    cmd = _netstring = _netmsg.ReadString( );
+    cmd = _netstring = _netmsg.read_string( );
 
     if ( socket == network::socket::server )
     {
@@ -140,10 +140,10 @@ void session::packet (network::socket socket)
 
     while ( true )
     {
-        if ( _netmsg.nReadCount > _netmsg.nCurSize )
+        if ( _netmsg.bytes_read > _netmsg.bytes_written )
             break;
 
-        net_cmd = _netmsg.ReadByte( );
+        net_cmd = _netmsg.read_byte( );
 
         if ( net_cmd == -1 )
             return;
@@ -162,7 +162,7 @@ void session::packet (network::socket socket)
                 break;
 
             case clc_say:
-                string = _netmsg.ReadString( );
+                string = _netmsg.read_string( );
                 write_message( va( "\\c%02x%02x%02x%s\\cx: %s",
                     (int )(_players[_netclient]->_color.r * 255),
                     (int )(_players[_netclient]->_color.g * 255),
@@ -171,7 +171,7 @@ void session::packet (network::socket socket)
                 break;
 
             case clc_upgrade:
-                net_read = _netmsg.ReadByte( );
+                net_read = _netmsg.read_byte( );
                 read_upgrade( net_read );
                 break;
 
@@ -193,12 +193,12 @@ void session::packet (network::socket socket)
                 stop_client( );
                 break;
             case svc_message:
-                string = _netmsg.ReadString( );
+                string = _netmsg.read_string( );
                 write_message( string );
                 break;
             case svc_score:
-                net_read = _netmsg.ReadByte( );
-                _score[net_read] = _netmsg.ReadByte( );
+                net_read = _netmsg.read_byte( );
+                _score[net_read] = _netmsg.read_byte( );
                 break;
             case svc_info:
                 read_info( );
@@ -213,7 +213,7 @@ void session::packet (network::socket socket)
                 read_sound( );
                 break;
             case svc_restart:
-                _restart_time = _frametime + _netmsg.ReadByte( ) * 1000; //   time is in msec?
+                _restart_time = _frametime + _netmsg.read_byte( ) * 1000; //   time is in msec?
                 break;
             default:
                 return;
@@ -235,7 +235,7 @@ void session::broadcast (int len, byte *data)
         if ( !cl->active )
             continue;
 
-        cl->netchan.message.Write( data, len );
+        cl->netchan.message.write( data, len );
     }
 }
 
@@ -245,12 +245,12 @@ void session::broadcast_print (char const* message)
     network::message    netmsg;
     byte        netmsgbuf[MAX_MSGLEN];
 
-    netmsg.Init( netmsgbuf, MAX_MSGLEN );
+    netmsg.init( netmsgbuf, MAX_MSGLEN );
         
-    netmsg.WriteByte( svc_message );
-    netmsg.WriteString( message );
+    netmsg.write_byte( svc_message );
+    netmsg.write_string( message );
 
-    broadcast( netmsg.nCurSize, netmsgbuf );
+    broadcast( netmsg.bytes_written, netmsgbuf );
 }
 
 //------------------------------------------------------------------------------
@@ -267,10 +267,10 @@ void session::send_packets ()
 
     client_send( );    // write move commands
 
-    if ( _netchan.message.nCurSize )
+    if ( _netchan.message.bytes_written )
     {
-        _netchan.Transmit( _netchan.message.nCurSize, _netchan.messagebuf );
-        _netchan.message.Clear( );
+        _netchan.transmit( _netchan.message.bytes_written, _netchan.messagebuf );
+        _netchan.message.clear( );
     }
 
     return;
@@ -284,11 +284,11 @@ server:
         if ( !cl->active )
             continue;
 
-        if ( !cl->netchan.message.nCurSize )
+        if ( !cl->netchan.message.bytes_written )
             continue;
 
-        cl->netchan.Transmit( cl->netchan.message.nCurSize, cl->netchan.messagebuf );
-        cl->netchan.message.Clear( );
+        cl->netchan.transmit( cl->netchan.message.bytes_written, cl->netchan.messagebuf );
+        cl->netchan.message.clear( );
     }
 }
 
@@ -305,28 +305,28 @@ void session::read_fail ()
 //------------------------------------------------------------------------------
 void session::write_info (int client, network::message *message)
 {
-    message->WriteByte( svc_info );
-    message->WriteByte( client );
-    message->WriteByte( svs.clients[client].active );
-    message->WriteString( svs.clients[client].name );
+    message->write_byte( svc_info );
+    message->write_byte( client );
+    message->write_byte( svs.clients[client].active );
+    message->write_string( svs.clients[client].name );
 
     //  write extra shit
 
-    message->WriteByte( _clients[client].upgrades );
-    message->WriteByte( _clients[client].armor_mod * 10 );
-    message->WriteByte( _clients[client].damage_mod * 10 );
-    message->WriteByte( _clients[client].refire_mod * 10 );
-    message->WriteByte( _clients[client].speed_mod * 10 );
+    message->write_byte( _clients[client].upgrades );
+    message->write_byte( _clients[client].armor_mod * 10 );
+    message->write_byte( _clients[client].damage_mod * 10 );
+    message->write_byte( _clients[client].refire_mod * 10 );
+    message->write_byte( _clients[client].speed_mod * 10 );
 
-    message->WriteByte( _players[client]->_color.r * 255 );
-    message->WriteByte( _players[client]->_color.g * 255 );
-    message->WriteByte( _players[client]->_color.b * 255 );
+    message->write_byte( _players[client]->_color.r * 255 );
+    message->write_byte( _players[client]->_color.g * 255 );
+    message->write_byte( _players[client]->_color.b * 255 );
 
     // also write score
 
-    message->WriteByte( svc_score );
-    message->WriteByte( client );
-    message->WriteByte( _score[client] );
+    message->write_byte( svc_score );
+    message->write_byte( client );
+    message->write_byte( _score[client] );
 }
 
 //------------------------------------------------------------------------------
@@ -336,32 +336,32 @@ void session::read_info ()
     int     active;
     char    *string;
 
-    client = _netmsg.ReadByte( );
-    active = _netmsg.ReadByte( );
+    client = _netmsg.read_byte( );
+    active = _netmsg.read_byte( );
 
     svs.clients[client].active = ( active == 1 );
     
-    string = _netmsg.ReadString( );
+    string = _netmsg.read_string( );
     strncpy( svs.clients[client].name, string, SHORT_STRING );
 
-    _clients[client].upgrades = _netmsg.ReadByte( );
-    _clients[client].armor_mod = _netmsg.ReadByte( ) / 10.0f;
-    _clients[client].damage_mod = _netmsg.ReadByte( ) / 10.0f;
-    _clients[client].refire_mod = _netmsg.ReadByte( ) / 10.0f;
-    _clients[client].speed_mod = _netmsg.ReadByte( ) / 10.0f;
+    _clients[client].upgrades = _netmsg.read_byte( );
+    _clients[client].armor_mod = _netmsg.read_byte( ) / 10.0f;
+    _clients[client].damage_mod = _netmsg.read_byte( ) / 10.0f;
+    _clients[client].refire_mod = _netmsg.read_byte( ) / 10.0f;
+    _clients[client].speed_mod = _netmsg.read_byte( ) / 10.0f;
 
-    _players[client]->_color.r = _netmsg.ReadByte( ) / 255.0f;
-    _players[client]->_color.g = _netmsg.ReadByte( ) / 255.0f;
-    _players[client]->_color.b = _netmsg.ReadByte( ) / 255.0f;
+    _players[client]->_color.r = _netmsg.read_byte( ) / 255.0f;
+    _players[client]->_color.g = _netmsg.read_byte( ) / 255.0f;
+    _players[client]->_color.b = _netmsg.read_byte( ) / 255.0f;
 
     if ( _multiserver || _dedicated )
     {
         network::message    netmsg;
         byte        msgbuf[MAX_MSGLEN];
 
-        netmsg.Init( msgbuf, MAX_MSGLEN );
+        netmsg.init( msgbuf, MAX_MSGLEN );
         write_info( client, &netmsg );
-        broadcast( netmsg.nCurSize, netmsg.pData );
+        broadcast( netmsg.bytes_written, netmsg.data );
     }
 }
 

@@ -25,57 +25,57 @@ Name    :   initialization / utility functions
 ===========================================================
 */
 
-void message::Init (byte *pData, int nMaxSize)
+void message::init (byte *pData, int nMaxSize)
 {
     memset( this, 0, sizeof(network::message) );
-    this->pData = pData;
-    this->nMaxSize = nMaxSize;
+    this->data = pData;
+    this->size = nMaxSize;
 
-    this->nRemaining = nMaxSize;
-    this->nCurSize = 0;
+    this->bytes_remaining = nMaxSize;
+    this->bytes_written = 0;
 }
 
-void message::Clear ()
+void message::clear ()
 {
-    memset( pData, 0, nCurSize );
-    nCurSize = 0;
-    nRemaining = nMaxSize;
-    bOverflowed = false;
+    memset( data, 0, bytes_written );
+    bytes_written = 0;
+    bytes_remaining = size;
+    overflowed = false;
 }
 
-void *message::Alloc (int nSize)
+void *message::alloc (int nSize)
 {
     void    *ret;
 
-    if (nCurSize + nSize > nMaxSize)
+    if (bytes_written + nSize > size)
     {
-        bOverflowed = true;
+        overflowed = true;
         return NULL;
     }
 
-    ret = (void *)(pData + nCurSize);
-    nCurSize += nSize;
-    nRemaining -= nSize;
+    ret = (void *)(data + bytes_written);
+    bytes_written += nSize;
+    bytes_remaining -= nSize;
 
     return ret;
 }
 
-void message::Write (void const* pData, int nSize)
+void message::write (void const* pData, int nSize)
 {
-    void    *buf = Alloc( nSize );
+    void    *buf = alloc( nSize );
 
     if ( buf )
         memcpy( buf, pData, nSize );
 }
 
-int message::Read (void *pOut, int nSize)
+int message::read (void *pOut, int nSize)
 {
-    if ( nReadCount + nSize > nMaxSize )
+    if ( bytes_read + nSize > size )
         return -1;
 
-    memcpy( pOut, (void *)(pData+nReadCount), nSize );
+    memcpy( pOut, (void *)(data+bytes_read), nSize );
 
-    nReadCount += nSize;
+    bytes_read += nSize;
 
     return 0;
 }
@@ -88,17 +88,17 @@ Name    :   writing functions
 ===========================================================
 */
 
-void message::WriteByte (int b)
+void message::write_byte (int b)
 {
-    byte    *buf = (byte *)Alloc( 1 );
+    byte    *buf = (byte *)alloc( 1 );
 
     if ( buf )
         buf[0] = b & 0xff;
 }
 
-void message::WriteShort (int s)
+void message::write_short (int s)
 {
-    byte    *buf = (byte *)Alloc( 2 );
+    byte    *buf = (byte *)alloc( 2 );
 
     if ( buf )
     {
@@ -107,9 +107,9 @@ void message::WriteShort (int s)
     }
 }
 
-void message::WriteLong (int l)
+void message::write_long (int l)
 {
-    byte    *buf = (byte *)Alloc( 4 );
+    byte    *buf = (byte *)alloc( 4 );
 
     if ( buf )
     {
@@ -120,7 +120,7 @@ void message::WriteLong (int l)
     }
 }
 
-void message::WriteFloat (float f)
+void message::write_float (float f)
 {
     union
     {
@@ -131,34 +131,34 @@ void message::WriteFloat (float f)
     dat.f = f;
     dat.l = LITTLE_LONG( dat.l );
 
-    Write( &dat.l, 4 );
+    write( &dat.l, 4 );
 }
 
-void message::WriteChar (int b)
+void message::write_char (int b)
 {
-    char    *buf = (char *)Alloc( 1 );
+    char    *buf = (char *)alloc( 1 );
 
     if ( buf )
         buf[0] = b & 0xff;
 }
 
-void message::WriteString (char const* sz)
+void message::write_string (char const* sz)
 {
     if ( sz )
-        Write( sz, strlen(sz)+1 );
+        write( sz, strlen(sz)+1 );
     else
-        Write( "", 1 );
+        write( "", 1 );
 }
 
-void message::WriteAngle (float f)
+void message::write_angle (float f)
 {
-    WriteShort( ANGLE2SHORT(f) );
+    write_short( ANGLE2SHORT(f) );
 }
 
-void message::WriteVector (vec2 v)
+void message::write_vector (vec2 v)
 {
-    WriteFloat( v.x );
-    WriteFloat( v.y );
+    write_float( v.x );
+    write_float( v.y );
 }
 
 /*
@@ -169,58 +169,58 @@ Name    :   reading functions
 ===========================================================
 */
 
-void message::Begin ()
+void message::begin ()
 {
-    nReadCount = 0;
+    bytes_read = 0;
 }
 
-int message::ReadByte ()
+int message::read_byte ()
 {
     int b;
 
-    if (nReadCount + 1 > nCurSize)
+    if (bytes_read + 1 > bytes_written)
         b = -1;
     else
-        b = (byte )pData[nReadCount];
+        b = (byte )data[bytes_read];
 
-    nReadCount++;
+    bytes_read++;
 
     return b;
 }
 
-int message::ReadShort ()
+int message::read_short ()
 {
     int s;
 
-    if (nReadCount + 2 > nCurSize)
+    if (bytes_read + 2 > bytes_written)
         s = -1;
     else
-        s = (short )pData[nReadCount]
-        + (pData[nReadCount+1]<<8);
+        s = (short )data[bytes_read]
+        + (data[bytes_read+1]<<8);
 
-    nReadCount += 2;
+    bytes_read += 2;
 
     return s;
 }
 
-int message::ReadLong ()
+int message::read_long ()
 {
     int l;
 
-    if (nReadCount + 4 > nCurSize)
+    if (bytes_read + 4 > bytes_written)
         l = -1;
     else
-        l = (int )pData[nReadCount]
-        + (pData[nReadCount+1]<<8)
-        + (pData[nReadCount+2]<<16)
-        + (pData[nReadCount+3]<<24);
+        l = (int )data[bytes_read]
+        + (data[bytes_read+1]<<8)
+        + (data[bytes_read+2]<<16)
+        + (data[bytes_read+3]<<24);
 
-    nReadCount += 4;
+    bytes_read += 4;
 
     return l;
 }
 
-float message::ReadFloat ()
+float message::read_float ()
 {
     union
     {
@@ -229,46 +229,46 @@ float message::ReadFloat ()
         int     l;
     } dat;
 
-    if (nReadCount + 4 > nCurSize)
+    if (bytes_read + 4 > bytes_written)
         dat.l = -1;
     else
     {
-        dat.b[0] = pData[nReadCount + 0];
-        dat.b[1] = pData[nReadCount + 1];
-        dat.b[2] = pData[nReadCount + 2];
-        dat.b[3] = pData[nReadCount + 3];
+        dat.b[0] = data[bytes_read + 0];
+        dat.b[1] = data[bytes_read + 1];
+        dat.b[2] = data[bytes_read + 2];
+        dat.b[3] = data[bytes_read + 3];
     }
 
-    nReadCount += 4;
+    bytes_read += 4;
 
     dat.l = LITTLE_LONG( dat.l );
 
     return dat.f;
 }
 
-int message::ReadChar ()
+int message::read_char ()
 {
     int b;
 
-    if (nReadCount + 1 > nCurSize)
+    if (bytes_read + 1 > bytes_written)
         b = -1;
     else
-        b = (char )pData[nReadCount];
+        b = (char )data[bytes_read];
 
-    nReadCount++;
+    bytes_read++;
 
     return b;
 }
 
 
-char *message::ReadString ()
+char *message::read_string ()
 {
     static char string[MAX_STRING];
     int         i,c;
 
     for (i=0 ; i<MAX_STRING-1 ; i++)
     {
-        c = ReadByte( );
+        c = read_byte( );
         if ( c == -1 || c == 0 )
             break;
         string[i] = c;
@@ -279,14 +279,14 @@ char *message::ReadString ()
 }
 
 
-char *message::ReadLine ()
+char *message::read_line ()
 {
     static char string[MAX_STRING];
     int         i,c;
 
     for (i=0 ; i<MAX_STRING-1 ; i++)
     {
-        c = ReadByte( );
+        c = read_byte( );
         if ( c == -1 || c == 0 || c == '\n')
             break;
         string[i] = c;
@@ -296,24 +296,24 @@ char *message::ReadLine ()
     return string;
 }
 
-float message::ReadAngle ()
+float message::read_angle ()
 {
     int     out;
 
-    out = ReadShort( );
+    out = read_short( );
 
     return ( SHORT2ANGLE(out) );
 }
 
-vec2 message::ReadVector ()
+vec2 message::read_vector ()
 {
     float   outx, outy;
 
-    if (nReadCount + 8 > nCurSize)
+    if (bytes_read + 8 > bytes_written)
         return vec2(0,0);
 
-    outx = ReadFloat( );
-    outy = ReadFloat( );
+    outx = read_float( );
+    outy = read_float( );
 
     return vec2( outx, outy );
 }
