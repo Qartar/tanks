@@ -164,12 +164,12 @@ int session::init (char *cmdline)
 
     // sound indices are shared over the network so sounds
     // need to be registed in the same order on all clients
-    pSound->Register("ASSETS\\SOUND\\TANK_MOVE.wav");
-    pSound->Register("ASSETS\\SOUND\\TANK_IDLE.wav");
-    pSound->Register("ASSETS\\SOUND\\TANK_FIRE.wav");
-    pSound->Register("ASSETS\\SOUND\\TANK_EXPLODE.wav");
-    pSound->Register("ASSETS\\SOUND\\BULLET_EXPLODE.wav");
-    pSound->Register("ASSETS\\SOUND\\TURRET_MOVE.wav");
+    pSound->Register("assets/sound/tank_move.wav");
+    pSound->Register("assets/sound/tank_idle.wav");
+    pSound->Register("assets/sound/tank_fire.wav");
+    pSound->Register("assets/sound/tank_explode.wav");
+    pSound->Register("assets/sound/bullet_explode.wav");
+    pSound->Register("assets/sound/turret_move.wav");
 
     write_message( "Welcome to Tanks! Press F1 for help." );
 

@@ -41,11 +41,11 @@ tank::tank ()
         }
     }
 
-    _sound_idle = pSound->Register("ASSETS\\SOUND\\TANK_IDLE.wav");
-    _sound_move = pSound->Register("ASSETS\\SOUND\\TANK_MOVE.wav");
-    _sound_turret_move = pSound->Register("ASSETS\\SOUND\\TURRET_MOVE.wav");
-    _sound_fire = pSound->Register("ASSETS\\SOUND\\TANK_FIRE.wav");
-    _sound_explode = pSound->Register("ASSETS\\SOUND\\TANK_EXPLODE.wav");
+    _sound_idle = pSound->Register("assets/sound/tank_idle.wav");
+    _sound_move = pSound->Register("assets/sound/tank_move.wav");
+    _sound_turret_move = pSound->Register("assets/sound/turret_move.wav");
+    _sound_fire = pSound->Register("assets/sound/tank_fire.wav");
+    _sound_explode = pSound->Register("assets/sound/tank_explode.wav");
 }
 
 //------------------------------------------------------------------------------
@@ -360,7 +360,7 @@ projectile::projectile(tank* owner, float damage)
     , _damage(damage)
 {
     _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
-    _sound_explode = pSound->Register("ASSETS\\SOUND\\BULLET_EXPLODE.wav");
+    _sound_explode = pSound->Register("assets/sound/bullet_explode.wav");
 }
 
 //------------------------------------------------------------------------------
