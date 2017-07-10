@@ -120,13 +120,13 @@ Purpose :   Renders the world to the screen
 ===========================================================
 */
 
-void world::draw() const
+void world::draw(render::system* renderer) const
 {
     for (auto& obj : _objects) {
-        obj->draw();
+        obj->draw(renderer);
     }
 
-    draw_particles();
+    draw_particles(renderer);
 }
 
 /*

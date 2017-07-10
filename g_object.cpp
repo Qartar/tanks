@@ -31,7 +31,7 @@ void object::touch(object* /*other*/, physics::contact const* /*contact*/)
 }
 
 //------------------------------------------------------------------------------
-void object::draw() const
+void object::draw(render::system* /*renderer*/) const
 {
     if (_model) {
         _model->draw(get_position(), get_rotation(), _color);

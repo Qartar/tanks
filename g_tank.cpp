@@ -66,7 +66,7 @@ tank::~tank()
 }
 
 //------------------------------------------------------------------------------
-void tank::draw() const
+void tank::draw(render::system* renderer) const
 {
     float lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
     float reload = clamp(((g_Game->_frametime - _fire_time) / 150.f) * _client->refire_mod,0.0f,20.0f);
@@ -104,10 +104,10 @@ void tank::draw() const
 
     // status bars
 
-    g_Render->draw_box(vec2(20,2), pos + vec2(0,24), vec4(0.5,0.5,0.5,1));
-    g_Render->draw_box(vec2(reload,2), pos + vec2(0,24), color_reload);
-    g_Render->draw_box(vec2(20,2), pos + vec2(0,22), vec4(0.5,0.5,0.5,1));
-    g_Render->draw_box(vec2(health,2), pos + vec2(0,22), color_health);
+    renderer->draw_box(vec2(20,2), pos + vec2(0,24), vec4(0.5,0.5,0.5,1));
+    renderer->draw_box(vec2(reload,2), pos + vec2(0,24), color_reload);
+    renderer->draw_box(vec2(20,2), pos + vec2(0,22), vec4(0.5,0.5,0.5,1));
+    renderer->draw_box(vec2(health,2), pos + vec2(0,22), color_health);
 
     // actual body
 
@@ -436,7 +436,7 @@ void projectile::touch(object *other, physics::contact const* contact)
 }
 
 //------------------------------------------------------------------------------
-void projectile::draw() const
+void projectile::draw(render::system* renderer) const
 {
     float   lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
     vec2    p1, p2;
@@ -444,7 +444,7 @@ void projectile::draw() const
     p1 = get_position( lerp );
     p2 = get_position( lerp + 0.4f );
 
-    g_Render->draw_line(p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0));
+    renderer->draw_line(p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0));
 }
 
 } // namespace game

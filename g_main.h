@@ -225,6 +225,8 @@ private:
     menu::window _menu;
     game::world _world;
 
+    render::system* _renderer;
+
     render::image const* _menu_image;
 
     void get_cursor();
@@ -324,4 +326,3 @@ private:
 } // namespace game
 
 extern game::session* g_Game;
-extern render::system* g_Render;

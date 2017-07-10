@@ -30,7 +30,6 @@ extern cvar_t   *net_serverName;    //  server name
 // global object
 vMain   *pMain;
 game::session* g_Game;
-render::system* g_Render;
 
 void find_server(bool connect);
 
@@ -57,9 +56,9 @@ Purpose :   Initialization
 
 int session::init (char *cmdline)
 {
-    g_Render = g_Application->window()->renderer();
+    _renderer = g_Application->window()->renderer();
 
-    _menu_image = g_Render->load_image(MAKEINTRESOURCE(IDB_BITMAP1));
+    _menu_image = _renderer->load_image(MAKEINTRESOURCE(IDB_BITMAP1));
 
     g_upgrade_frac      = pVariable->Get( "g_upgradeFrac", "0.50", "float", CVAR_ARCHIVE|CVAR_SERVER, "upgrade fraction" );
     g_upgrade_penalty   = pVariable->Get( "g_upgradePenalty", "0.20", "float", CVAR_ARCHIVE|CVAR_SERVER, "upgrade penalty" );
@@ -267,7 +266,7 @@ void session::update_screen()
 {
     static bool show_cursor = true;
 
-    g_Render->begin_frame();
+    _renderer->begin_frame();
 
     //  set view center
     int world_width, world_height;
@@ -305,13 +304,13 @@ void session::update_screen()
     } else if ( center_y > world_height - ( view_height / 2 ) ) {
         center_y = world_height - ( view_height / 2 );
     }
-    g_Render->set_view_origin(vec2(center_x - view_width / 2, center_y - view_height / 2));
+    _renderer->set_view_origin(vec2(center_x - view_width / 2, center_y - view_height / 2));
 
     // draw world
     if (_game_active)
-        _world.draw( );
+        _world.draw(_renderer);
 
-    g_Render->set_view_origin(vec2(0,0));
+    _renderer->set_view_origin(vec2(0,0));
 
     // draw menu
     if (_menu_active)
@@ -324,9 +323,9 @@ void session::update_screen()
 
         get_cursor( );
 
-        g_Render->draw_image(_menu_image, vec2( 0, 0 ), vec2( 640, 480 ), vec4( 1, 1, 1, 1 ) );
+        _renderer->draw_image(_menu_image, vec2( 0, 0 ), vec2( 640, 480 ), vec4( 1, 1, 1, 1 ) );
 
-        _menu.draw( _cursor );
+        _menu.draw(_renderer, _cursor);
     }
     else if ( show_cursor )
     {
@@ -338,7 +337,7 @@ void session::update_screen()
 
     draw_messages( );
 
-    g_Render->end_frame();
+    _renderer->end_frame();
 }
 
 /*
@@ -793,8 +792,8 @@ void session::draw_score ()
 
     if ( _client_say )
     {
-        g_Render->draw_string("say:", vec2(width/4,height-16), menu::colors[7]);
-        g_Render->draw_string(_clientsay, vec2(width/4+32,height-16), menu::colors[7]);
+        _renderer->draw_string("say:", vec2(width/4,height-16), menu::colors[7]);
+        _renderer->draw_string(_clientsay, vec2(width/4+32,height-16), menu::colors[7]);
     }
 
     if ( _menu_active )
@@ -815,14 +814,14 @@ void session::draw_score ()
         int num = _clients[cls.number].upgrades;
 
         if ( num > 1 )
-            g_Render->draw_string(va( "you have %i upgrades waiting...", num ), vec2(8,12), menu::colors[7]);
+            _renderer->draw_string(va( "you have %i upgrades waiting...", num ), vec2(8,12), menu::colors[7]);
         else
-            g_Render->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu::colors[7]);
-        g_Render->draw_string("for help with upgrades press F9", vec2(8,24), menu::colors[7]);
+            _renderer->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu::colors[7]);
+        _renderer->draw_string("for help with upgrades press F9", vec2(8,24), menu::colors[7]);
     }
 
-    g_Render->draw_box(vec2(96,8+12*count), vec2(width-32-22,32+4+6*count), menu::colors[4]);
-    g_Render->draw_box(vec2(96,8+12*count-2), vec2(width-32-22,32+4+6*count), menu::colors[5]);
+    _renderer->draw_box(vec2(96,8+12*count), vec2(width-32-22,32+4+6*count), menu::colors[4]);
+    _renderer->draw_box(vec2(96,8+12*count-2), vec2(width-32-22,32+4+6*count), menu::colors[5]);
 
     memset( sort, -1, sizeof(sort) );
     for ( i=0 ; i<MAX_PLAYERS ; i++ ) {
@@ -859,11 +858,11 @@ void session::draw_score ()
         else if ( i >= 2 )
             break;
 
-        g_Render->draw_box(vec2(7,7), vec2(width-96, 32+11+12*n),
+        _renderer->draw_box(vec2(7,7), vec2(width-96, 32+11+12*n),
             vec4(_players[sort[i]]->_color.r, _players[sort[i]]->_color.g, _players[sort[i]]->_color.b, 1));
 
-        g_Render->draw_string(svs.clients[ sort[ i ] ].name, vec2(width-96+4, 32+14+12*n), menu::colors[7]);
-        g_Render->draw_string(va(": %i", _score[ sort[ i ] ]), vec2(width-96+64+4,32+14+12*n), menu::colors[7]);
+        _renderer->draw_string(svs.clients[ sort[ i ] ].name, vec2(width-96+4, 32+14+12*n), menu::colors[7]);
+        _renderer->draw_string(va(": %i", _score[ sort[ i ] ]), vec2(width-96+64+4,32+14+12*n), menu::colors[7]);
 
         n++;
     }
@@ -872,7 +871,7 @@ void session::draw_score ()
     {
         int     nTime = ceil((_restart_time - _frametime)/1000.0f);
 
-        g_Render->draw_string(va("Restart in... %i", nTime), vec2(width/2-48,16+13), menu::colors[7]);
+        _renderer->draw_string(va("Restart in... %i", nTime), vec2(width/2-48,16+13), menu::colors[7]);
     }
 }
 
@@ -1109,7 +1108,7 @@ void session::draw_messages ()
         {
             alpha = (_messages[i].time+12000 > time ? 1.0f : (_messages[i].time+15000 - time)/3000.0f );
 
-            g_Render->draw_string(_messages[i].string, vec2(8,ypos), vec4(1,1,1,alpha));
+            _renderer->draw_string(_messages[i].string, vec2(8,ypos), vec4(1,1,1,alpha));
 
             ypos -= 12;
         }

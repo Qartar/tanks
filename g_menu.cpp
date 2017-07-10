@@ -126,16 +126,16 @@ Purpose :   Draws the menu to the screen
 ===========================================================
 */
 
-void window::draw(vec2 cursor_pos) const
+void window::draw(render::system* renderer, vec2 cursor_pos) const
 {
     // draw buttons
     for (auto const& button : _buttons) {
-        button->draw(cursor_pos);
+        button->draw(renderer, cursor_pos);
     }
 
     // draw submenu
     if (_active_menu) {
-        _active_menu->draw(cursor_pos);
+        _active_menu->draw(renderer, cursor_pos);
     }
 }
 

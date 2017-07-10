@@ -31,6 +31,10 @@ namespace physics {
 struct contact;
 }
 
+namespace render {
+class system;
+}
+
 namespace game {
 
 class tank;
@@ -62,7 +66,7 @@ public:
 
     std::size_t spawn_id() const { return _spawn_id; }
 
-    virtual void draw() const;
+    virtual void draw(render::system* renderer) const;
     virtual void touch(object *other, physics::contact const* contact);
     virtual void think();
 
@@ -129,7 +133,7 @@ class projectile : public object
 public:
     projectile(tank* owner, float damage);
 
-    virtual void draw() const override;
+    virtual void draw(render::system* renderer) const override;
     virtual void touch(object *other, physics::contact const* contact) override;
 
     static physics::circle_shape _shape;
@@ -148,7 +152,7 @@ public:
     tank();
     ~tank();
 
-    virtual void draw() const override;
+    virtual void draw(render::system* renderer) const override;
     virtual void touch(object *other, physics::contact const* contact) override;
     virtual void think() override;
 
@@ -216,7 +220,7 @@ public:
     void clear_particles();
 
     void run_frame ();
-    void draw() const;
+    void draw(render::system* renderer) const;
 
     template<typename T, typename... Args>
     T* spawn(Args&& ...args);
@@ -255,7 +259,7 @@ private:
     render::particle* add_particle();
     void free_particle (render::particle* particle) const;
 
-    void draw_particles() const;
+    void draw_particles(render::system* renderer) const;
 
     vec2        _mins;
     vec2        _maxs;

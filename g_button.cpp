@@ -46,7 +46,7 @@ bool button::click(vec2 cursor_pos, bool down)
     return false;
 }
 
-void button::draw(vec2 cursor_pos) const
+void button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     bool over = _rectangle.contains(cursor_pos);
 
@@ -54,28 +54,28 @@ void button::draw(vec2 cursor_pos) const
     int button_color = _down ? 3 : 5;
     int text_color = button_color + 2;
 
-    draw_rectangle(_rectangle, menu::colors[button_color], menu::colors[border_color]);
-    draw_text(_rectangle, _text, menu::colors[text_color]);
+    draw_rectangle(renderer, _rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(renderer, _rectangle, _text, menu::colors[text_color]);
 }
 
 //------------------------------------------------------------------------------
-void button::draw_rectangle(menu::rectangle const& rect, vec4 color) const
+void button::draw_rectangle(render::system* renderer, menu::rectangle const& rect, vec4 color) const
 {
-    g_Render->draw_box(rect.size(), rect.center(), color);
+    renderer->draw_box(rect.size(), rect.center(), color);
 }
 
 //------------------------------------------------------------------------------
-void button::draw_rectangle(menu::rectangle const& rect, vec4 color, vec4 border_color) const
+void button::draw_rectangle(render::system* renderer, menu::rectangle const& rect, vec4 color, vec4 border_color) const
 {
-    g_Render->draw_box(rect.size(), rect.center(), border_color);
-    g_Render->draw_box(rect.size() - vec2(2, 2), rect.center(), color);
+    renderer->draw_box(rect.size(), rect.center(), border_color);
+    renderer->draw_box(rect.size() - vec2(2, 2), rect.center(), color);
 }
 
 //------------------------------------------------------------------------------
-void button::draw_text(menu::rectangle const& rect, std::string const& text, vec4 color, int flags, float margin) const
+void button::draw_text(render::system* renderer, menu::rectangle const& rect, std::string const& text, vec4 color, int flags, float margin) const
 {
     vec2 position = rect.center();
-    vec2 size = g_Render->string_size(text.c_str());
+    vec2 size = renderer->string_size(text.c_str());
 
     if (flags & halign_left) {
         position.x -= rect.size().x * 0.5f - margin;
@@ -96,7 +96,7 @@ void button::draw_text(menu::rectangle const& rect, std::string const& text, vec
     position.x = std::floor(position.x + 0.5f);
     position.y = std::floor(position.y + 0.5f);
 
-    g_Render->draw_string(text.c_str(), position, color);
+    renderer->draw_string(text.c_str(), position, color);
 }
 
 /*
@@ -130,7 +130,7 @@ bool conditional_button::click(vec2 cursor_pos, bool down)
     return button::click(cursor_pos, down);
 }
 
-void conditional_button::draw(vec2 cursor_pos) const
+void conditional_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     bool over = _rectangle.contains(cursor_pos);
 
@@ -144,8 +144,8 @@ void conditional_button::draw(vec2 cursor_pos) const
         text_color = 3;
     }
 
-    draw_rectangle(_rectangle, menu::colors[button_color], menu::colors[border_color]);
-    draw_text(_rectangle, _text, menu::colors[text_color]);
+    draw_rectangle(renderer, _rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(renderer, _rectangle, _text, menu::colors[text_color]);
 }
 
 /*
@@ -171,7 +171,7 @@ submenu_button::submenu_button(char const* text, vec2 position, vec2 size, menu:
     , _active(false)
 {}
 
-void submenu_button::draw(vec2 cursor_pos) const
+void submenu_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     bool over = _rectangle.contains(cursor_pos);
 
@@ -185,8 +185,8 @@ void submenu_button::draw(vec2 cursor_pos) const
         text_color = 3;
     }
 
-    draw_rectangle(_rectangle, menu::colors[button_color], menu::colors[border_color]);
-    draw_text(_rectangle, _text, menu::colors[text_color]);
+    draw_rectangle(renderer, _rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(renderer, _rectangle, _text, menu::colors[text_color]);
 }
 
 /*
@@ -234,7 +234,7 @@ bool client_button::click(vec2 cursor_pos, bool down)
     return false;
 }
 
-void client_button::draw(vec2 cursor_pos) const
+void client_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     bool text_over = _text_rectangle.contains(cursor_pos);
     bool over = !text_over && _rectangle.contains(cursor_pos);
@@ -246,11 +246,11 @@ void client_button::draw(vec2 cursor_pos) const
     int button_color = _down ? 3 : 5;
     int text_color = button_color + 2;
 
-    draw_rectangle(_rectangle, menu::colors[button_color], menu::colors[border_color]);
-    draw_text(_rectangle, _text, menu::colors[text_color], valign_top, 8.0f);
+    draw_rectangle(renderer, _rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(renderer, _rectangle, _text, menu::colors[text_color], valign_top, 8.0f);
 
-    draw_rectangle(_text_rectangle, menu::colors[text_button_color], menu::colors[text_border_color]);
-    draw_text(_text_rectangle, g_Game->cls.name, menu::colors[7], valign_bottom|halign_left);
+    draw_rectangle(renderer, _text_rectangle, menu::colors[text_button_color], menu::colors[text_border_color]);
+    draw_text(renderer, _text_rectangle, g_Game->cls.name, menu::colors[7], valign_bottom|halign_left);
 
     tank_body_model.draw(_rectangle.center(), 0, *_color_ptr);
     tank_turret_model.draw(_rectangle.center(), 0, *_color_ptr);
@@ -293,16 +293,16 @@ bool server_button::click(vec2 cursor_pos, bool down)
     return false;
 }
 
-void server_button::draw(vec2 cursor_pos) const
+void server_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
-    draw_rectangle(_rectangle, menu::colors[3], menu::colors[4]);
-    draw_rectangle(_text_rectangle, menu::colors[0], menu::colors[2]);
+    draw_rectangle(renderer, _rectangle, menu::colors[3], menu::colors[4]);
+    draw_rectangle(renderer, _text_rectangle, menu::colors[0], menu::colors[2]);
 
     // join button
 
     if (_name_ptr && _name_ptr[0]) {
-        draw_text(_text_rectangle, _name_ptr, menu::colors[7], halign_left);
-        draw_text(_text_rectangle, va("%i", (int)(*_ping_ptr)), menu::colors[7], halign_right);
+        draw_text(renderer, _text_rectangle, _name_ptr, menu::colors[7], halign_left);
+        draw_text(renderer, _text_rectangle, va("%i", (int)(*_ping_ptr)), menu::colors[7], halign_right);
 
         bool over = _join_rectangle.contains(cursor_pos);
 
@@ -310,11 +310,11 @@ void server_button::draw(vec2 cursor_pos) const
         int button_color = _down ? 3 : 5;
         int text_color = 7;
 
-        draw_rectangle(_join_rectangle, menu::colors[button_color], menu::colors[border_color]);
-        draw_text(_join_rectangle, "Join", menu::colors[text_color]);
+        draw_rectangle(renderer, _join_rectangle, menu::colors[button_color], menu::colors[border_color]);
+        draw_text(renderer, _join_rectangle, "Join", menu::colors[text_color]);
     } else {
-        draw_rectangle(_join_rectangle, menu::colors[4], menu::colors[2]);
-        draw_text(_join_rectangle, "Join", menu::colors[2]);
+        draw_rectangle(renderer, _join_rectangle, menu::colors[4], menu::colors[2]);
+        draw_text(renderer, _join_rectangle, "Join", menu::colors[2]);
     }
 }
 
@@ -360,13 +360,13 @@ bool host_button::click(vec2 cursor_pos, bool down)
     return false;
 }
 
-void host_button::draw(vec2 cursor_pos) const
+void host_button::draw(render::system* renderer, vec2 cursor_pos) const
 {
     int text_button_color = g_Game->_server_button_down ? 5 : 3;
 
-    draw_rectangle(_rectangle, menu::colors[3], menu::colors[4]);
-    draw_rectangle(_text_rectangle, menu::colors[text_button_color]);
-    draw_text(_text_rectangle, g_Game->svs.name, menu::colors[7], halign_left);
+    draw_rectangle(renderer, _rectangle, menu::colors[3], menu::colors[4]);
+    draw_rectangle(renderer, _text_rectangle, menu::colors[text_button_color]);
+    draw_text(renderer, _text_rectangle, g_Game->svs.name, menu::colors[7], halign_left);
 
     bool over = _create_rectangle.contains(cursor_pos);
 
@@ -374,8 +374,8 @@ void host_button::draw(vec2 cursor_pos) const
     int button_color = _down ? 3 : 5;
     int text_color = 7;
 
-    draw_rectangle(_create_rectangle, menu::colors[button_color], menu::colors[border_color]);
-    draw_text(_create_rectangle, "Create", menu::colors[text_color]);
+    draw_rectangle(renderer, _create_rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(renderer, _create_rectangle, "Create", menu::colors[text_color]);
 }
 
 } // namespace menu

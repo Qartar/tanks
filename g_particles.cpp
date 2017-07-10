@@ -29,7 +29,7 @@ void world::free_particle (render::particle *p) const
 }
 
 //------------------------------------------------------------------------------
-void world::draw_particles () const
+void world::draw_particles(render::system* renderer) const
 {
     float time = 1e-3f * g_Game->_frametime;
 
@@ -41,7 +41,7 @@ void world::draw_particles () const
         }
     }
 
-    g_Render->draw_particles(
+    renderer->draw_particles(
         time,
         _particles.data(),
         _particles.size());
