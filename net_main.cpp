@@ -430,7 +430,7 @@ Purpose :   sends a connectionless packet
 ===========================================================
 */
 
-int manager::print (network::socket socket, network::address to, char *szMessage)
+int manager::print (network::socket socket, network::address to, char *string)
 {
     byte        msgbuf[MAX_MSGLEN];
     network::message    msg;
@@ -438,7 +438,7 @@ int manager::print (network::socket socket, network::address to, char *szMessage
     msg.init( msgbuf, MAX_MSGLEN );
 
     msg.write_long( -1 );    //  connectionless
-    msg.write( szMessage, strlen( szMessage ) );
+    msg.write( string, strlen( string ) );
 
     return send( socket, msg.bytes_written, msgbuf, to );
 }
@@ -453,13 +453,13 @@ Purpose :   sends a packet across the network
 ===========================================================
 */
 
-int manager::send (network::socket socket, int nLength, void *pData, network::address to)
+int manager::send (network::socket socket, int length, void *data, network::address to)
 {
     sockaddr    address;
     int     net_socket;
 
     if ( to.type == network::address_type::loopback )
-        return send_loopback( socket, nLength, pData, to );
+        return send_loopback( socket, length, data, to );
 
     if ( to.type == network::address_type::broadcast )
         net_socket = _ip_sockets[socket];
@@ -475,7 +475,7 @@ int manager::send (network::socket socket, int nLength, void *pData, network::ad
 
     address_to_sockaddr( &to, &address );
 
-    if ( (sendto( net_socket, (char *)pData, nLength, 0, &address, sizeof(address) )) == -1 )
+    if ( (sendto( net_socket, (char *)data, length, 0, &address, sizeof(address) )) == -1 )
     {
         int err = WSAGetLastError();
 
@@ -501,7 +501,7 @@ Purpose :   gets any packets queued
 ===========================================================
 */
 
-int manager::get (network::socket socket, network::address *pFrom, network::message *pMessage)
+int manager::get (network::socket socket, network::address *remote_address, network::message *message)
 {
     int     protocol;
     sockaddr    from;
@@ -509,7 +509,7 @@ int manager::get (network::socket socket, network::address *pFrom, network::mess
     int     net_socket;
     int     ret;
 
-    if ( get_loopback( socket, pFrom, pMessage ) )
+    if ( get_loopback( socket, remote_address, message ) )
         return true;
 
     for ( protocol = 0 ; protocol < 2 ; protocol++ )
@@ -523,9 +523,9 @@ int manager::get (network::socket socket, network::address *pFrom, network::mess
             continue;
 
         fromlen = sizeof( from );
-        ret = recvfrom( net_socket, (char *)pMessage->data, pMessage->size, 0, &from, &fromlen );
+        ret = recvfrom( net_socket, (char *)message->data, message->size, 0, &from, &fromlen );
 
-        sockaddr_to_address( &from, pFrom );
+        sockaddr_to_address( &from, remote_address );
 
         if ( ret == -1 )
         {
@@ -539,10 +539,10 @@ int manager::get (network::socket socket, network::address *pFrom, network::mess
             continue;
         }
 
-        if ( ret == pMessage->size )
+        if ( ret == message->size )
             continue;
 
-        pMessage->bytes_written = ret;
+        message->bytes_written = ret;
         return true;
     }
 
@@ -559,7 +559,7 @@ Purpose :   sends a packet to loopback
 ===========================================================
 */
 
-int manager::send_loopback (network::socket socket, int nLength, void *pData, network::address to)
+int manager::send_loopback (network::socket socket, int length, void *data, network::address to)
 {
     int     i;
     loopback_t  *loop;
@@ -569,8 +569,8 @@ int manager::send_loopback (network::socket socket, int nLength, void *pData, ne
     i = loop->send & (MAX_LOOPBACK-1);
     loop->send++;
 
-    memcpy (loop->msgs[i].data, pData, nLength);
-    loop->msgs[i].size = nLength;
+    memcpy (loop->msgs[i].data, data, length);
+    loop->msgs[i].size = length;
 
     return ERROR_NONE;
 }
@@ -585,7 +585,7 @@ Purpose :   gets a packet from loopback
 ===========================================================
 */
 
-int manager::get_loopback (network::socket socket, network::address *pFrom, network::message *pMessage)
+int manager::get_loopback (network::socket socket, network::address *remote_address, network::message *message)
 {
     int     i;
     loopback_t  *loop;
@@ -601,11 +601,11 @@ int manager::get_loopback (network::socket socket, network::address *pFrom, netw
     i = loop->get & (MAX_LOOPBACK-1);
     loop->get++;
 
-    memcpy (pMessage->data, loop->msgs[i].data, loop->msgs[i].size);
-    pMessage->bytes_written = loop->msgs[i].size;
+    memcpy (message->data, loop->msgs[i].data, loop->msgs[i].size);
+    message->bytes_written = loop->msgs[i].size;
 
-    memset( pFrom, 0, sizeof(network::address) );
-    pFrom->type = network::address_type::loopback;
+    memset( remote_address, 0, sizeof(network::address) );
+    remote_address->type = network::address_type::loopback;
 
     return true;
 }

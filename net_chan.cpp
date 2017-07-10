@@ -66,7 +66,7 @@ Purpose :   transmits a data to a remote destination
 ===========================================================
 */
 
-int channel::transmit (int nLength, byte *pData)
+int channel::transmit (int length, byte *data)
 {
     static  byte    netmsgbuf[MAX_MSGLEN];
     network::message        netmsg;
@@ -81,7 +81,7 @@ int channel::transmit (int nLength, byte *pData)
 
     // copy the rest over
 
-    netmsg.write( pData, nLength );
+    netmsg.write( data, length );
 
     // send it off
 
@@ -100,15 +100,15 @@ Purpose :   processes a received packet
 ===========================================================
 */
 
-int channel::process (network::message *pMessage)
+int channel::process (network::message *message)
 {
     int netport;
 
-    pMessage->begin( );
+    message->begin( );
 
-    pMessage->read_long( );  // trash
+    message->read_long( );  // trash
     if (socket == network::socket::server)
-        netport = pMessage->read_short( );
+        netport = message->read_short( );
 
     last_received = g_Application->get_time( );
 

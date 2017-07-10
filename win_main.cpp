@@ -122,8 +122,8 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
 
     // NETWORKING OMGWTFLOL
 
-    pNet = &m_Network;
-    m_Network.init( );
+    pNet = &_network;
+    _network.init( );
 
     vVariable::Create( );
     
@@ -163,7 +163,7 @@ int cWinApp::Shutdown ()
 
     vVariable::Destroy( );
 
-    m_Network.shutdown( );
+    _network.shutdown( );
 
 #ifdef DEBUG_MEM    
     _CrtDumpMemoryLeaks();

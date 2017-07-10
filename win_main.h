@@ -69,7 +69,7 @@ private:
     void        m_KeyEvent (int Param, bool Down);
     void        m_MouseEvent (int mstate);
 
-    network::manager    m_Network;
+    network::manager _network;
 };
 
 extern cWinApp *g_Application;

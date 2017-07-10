@@ -25,13 +25,13 @@ Name    :   initialization / utility functions
 ===========================================================
 */
 
-void message::init (byte *pData, int nMaxSize)
+void message::init (byte *buffer, int buffer_size)
 {
     memset( this, 0, sizeof(network::message) );
-    this->data = pData;
-    this->size = nMaxSize;
+    this->data = buffer;
+    this->size = buffer_size;
 
-    this->bytes_remaining = nMaxSize;
+    this->bytes_remaining = buffer_size;
     this->bytes_written = 0;
 }
 
@@ -43,39 +43,39 @@ void message::clear ()
     overflowed = false;
 }
 
-void *message::alloc (int nSize)
+void *message::alloc (int length)
 {
     void    *ret;
 
-    if (bytes_written + nSize > size)
+    if (bytes_written + length > size)
     {
         overflowed = true;
         return NULL;
     }
 
     ret = (void *)(data + bytes_written);
-    bytes_written += nSize;
-    bytes_remaining -= nSize;
+    bytes_written += length;
+    bytes_remaining -= length;
 
     return ret;
 }
 
-void message::write (void const* pData, int nSize)
+void message::write (void const* buffer, int length)
 {
-    void    *buf = alloc( nSize );
+    void    *buf = alloc( length );
 
     if ( buf )
-        memcpy( buf, pData, nSize );
+        memcpy( buf, buffer, length );
 }
 
-int message::read (void *pOut, int nSize)
+int message::read (void *buffer, int length)
 {
-    if ( bytes_read + nSize > size )
+    if ( bytes_read + length > size )
         return -1;
 
-    memcpy( pOut, (void *)(data+bytes_read), nSize );
+    memcpy( buffer, (void *)(data+bytes_read), length );
 
-    bytes_read += nSize;
+    bytes_read += length;
 
     return 0;
 }
