@@ -204,8 +204,6 @@ public:
 
     bool _extended_armor;
     bool _random_spawn;
-    bool _auto_restart;
-    bool _manual_restart;
 
     float _restart_time;
 

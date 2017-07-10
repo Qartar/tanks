@@ -166,8 +166,6 @@ void tank::collide(tank* other, physics::contact const* contact)
     {
         g_Game->add_score(_player_index, 1);
         other->_dead_time = g_Game->_frametime;
-        if (g_Game->_auto_restart && !g_Game->_multiplayer)
-            g_Game->_restart_time = g_Game->_frametime + RESTART_TIME;
 
         g_Game->write_message( va("%s got a little too cozy with %s.", other->player_name(), player_name() ) );
     }
@@ -185,7 +183,7 @@ void tank::think()
 
     _old_turret_rotation = _turret_rotation;
 
-    if ( (_damage >= 1.0f) && g_Game->_multiserver && (_dead_time+RESTART_TIME+HACK_TIME <= g_Game->_frametime) )
+    if ( (_damage >= 1.0f) && (_dead_time+RESTART_TIME+HACK_TIME <= g_Game->_frametime) )
     {
         // respawn
         vec2 spawn_buffer = vec2(1,1) * SPAWN_BUFFER;
@@ -476,8 +474,6 @@ void projectile::touch(object *other, physics::contact const* contact)
         if (other_tank->_damage >= 1.0f) {
             g_Game->add_score( owner_tank->_player_index, 1 );
             other_tank->_dead_time = g_Game->_frametime;
-            if (g_Game->_auto_restart && !g_Game->_multiplayer)
-                g_Game->_restart_time = g_Game->_frametime + RESTART_TIME;
 
             int r = rand()%3;
             switch (r) {

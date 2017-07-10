@@ -97,8 +97,6 @@ int session::init (char *cmdline)
 
     _extended_armor = true;
     _random_spawn = true;
-    _auto_restart = true;
-    _manual_restart = false;
 
     _restart_time = 0;
 
@@ -752,7 +750,6 @@ int session::key_event(unsigned char key, bool down)
         broadcast( 2, msg );
         
         _restart_time = _frametime + 5000.0f;
-        _manual_restart = true;
         return true;
     }
 
@@ -932,8 +929,6 @@ void session::new_game()
     _restart_time = 0.0f;
     _world.clear_particles( );
 
-    _manual_restart = false;
-
     if ( _multiplayer && !_multiserver ) {
         return;
     }
@@ -953,7 +948,7 @@ void session::new_game()
     //  reset scores
     //
 
-    if ( _multiserver && _manual_restart )
+    if ( _multiserver )
     {
         netmsg_t    netmsg;
         byte        buf[MAX_MSGLEN];
@@ -979,9 +974,7 @@ void session::new_game()
         _clients[i].speed_mod = 1.0f;
         _clients[i].upgrades = 0;
 
-        if ( _manual_restart ) {
-            _score[ i ] = 0;
-        }
+        _score[ i ] = 0;
 
         if ( !_multiserver && i > 1 )
             break;
@@ -1001,7 +994,6 @@ void session::new_game()
 void session::restart()
 {
     _restart_time = 0.0f;
-    _manual_restart = false;
 
     if ( _multiplayer && !_multiserver ) {
         return;
