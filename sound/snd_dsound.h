@@ -8,8 +8,8 @@ Date    :   04/04/2006
 #include <windows.h>
 #include <dsound.h>
 
-#include "../cm_sound.h"
-#include "../cm_variable.h"
+#include "cm_sound.h"
+#include "cm_variable.h"
 
 /*=========================================================
 =========================================================*/

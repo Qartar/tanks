@@ -18,3 +18,5 @@ add_library(sound STATIC
     snd_wav_resource.cpp
     snd_wav_resource.h
 )
+
+target_link_libraries(sound PUBLIC shared)

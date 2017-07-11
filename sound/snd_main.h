@@ -8,10 +8,10 @@ Date    :   04/01/2006
 #define NOMINMAX
 #include <windows.h>
 
-#include "../shared.h"
+#include "shared.h"
 
-#include "../cm_sound.h"
-#include "../cm_variable.h"
+#include "cm_sound.h"
+#include "cm_variable.h"
 
 #include "snd_device.h"
 #include "snd_files.h"
