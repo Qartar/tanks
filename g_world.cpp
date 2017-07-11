@@ -199,7 +199,7 @@ void world::move_object(game::object *object)
 void world::add_sound(int sound_index)
 {
     g_Game->write_sound(sound_index);
-    pSound->playSound(sound_index, vec3(0,0,0), 1.0f, 0.0f);
+    pSound->play(sound_index, vec3(0,0,0), 1.0f, 0.0f);
 }
 
 //------------------------------------------------------------------------------

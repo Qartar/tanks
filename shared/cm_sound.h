@@ -12,42 +12,48 @@ typedef struct HWND__ *HWND;
 #define MAX_SOUNDS      256
 #define MAX_CHANNELS    64
 
-typedef class vSoundChannel
+////////////////////////////////////////////////////////////////////////////////
+namespace sound {
+
+//------------------------------------------------------------------------------
+class channel
 {
 public:
-    virtual bool    isPlaying () = 0;
-    virtual bool    isLooping () = 0;
+    virtual bool playing() = 0;
+    virtual bool looping() = 0;
 
-    virtual int     playSound (int nSound) = 0;
-    virtual int     playLoop (int nSound) = 0;
+    virtual int play(int sound_index) = 0;
+    virtual int loop(int sound_index) = 0;
+    virtual void stop() = 0;
 
-    virtual void    stopSound () = 0;   // stops loop also
-
-    virtual void    setOrigin (vec3 vOrigin) = 0;
-    virtual void    setVolume (float flVolume) = 0;
-    virtual void    setFrequency (float flFreq) = 0;
-    virtual void    setAttenuation (float flAttn) = 0;
-} sndchan_t;
-
-class vSound : public vObject
-{
-public:
-    static void     Create ();
-    static void     Destroy ();
-
-    virtual void    onCreate (HWND hWnd) = 0;
-    virtual void    onDestroy () = 0;
-
-    virtual void    Update () = 0;
-
-    virtual void    setListener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp) = 0;
-
-    virtual void    playSound (int nIndex, vec3 vOrigin, float flVolume, float flAttenuation) = 0;
-
-    virtual sndchan_t   *allocChan () = 0;
-    virtual void        freeChan (sndchan_t *pChan) = 0;
-
-    virtual int     Register (char *szFilename) = 0;
+    virtual void set_origin(vec3 origin) = 0;
+    virtual void set_volume(float volume) = 0;
+    virtual void set_frequency(float frequency) = 0;
+    virtual void set_attenuation(float attenuation) = 0;
 };
 
-extern vSound   *pSound;
+//------------------------------------------------------------------------------
+class system
+{
+public:
+    static void create ();
+    static void destroy ();
+
+    virtual void on_create(HWND hWnd) = 0;
+    virtual void on_destroy() = 0;
+
+    virtual void update() = 0;
+
+    virtual void set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up) = 0;
+
+    virtual void play(int sound_index, vec3 origin, float volume, float attenuation) = 0;
+
+    virtual sound::channel* allocate_channel() = 0;
+    virtual void free_channel(sound::channel *channel) = 0;
+
+    virtual int load_sound (char *filename) = 0;
+};
+
+} // namespace sound
+
+extern sound::system* pSound;

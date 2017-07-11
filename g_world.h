@@ -179,7 +179,7 @@ public:
 
     game::usercmd _usercmd;
 
-    std::array<sndchan_t*,3> _channels;
+    std::array<sound::channel*,3> _channels;
     game_client_t* _client;
 
 protected:

@@ -128,7 +128,7 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
     vVariable::Create( );
     
     // create sound class
-    vSound::Create( );
+    sound::system::create();
 
     // init opengl
     _window.create();
@@ -159,7 +159,7 @@ int cWinApp::Shutdown ()
     _game.shutdown( );
 
     // shutdown sound
-    vSound::Destroy( );
+    sound::system::destroy();
 
     vVariable::Destroy( );
 
@@ -229,7 +229,7 @@ LRESULT cWinApp::m_WndProc (HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         if ( !(command = strstr( g_Application->InitString(), "sound=" )) || ( atoi(command+6) > 0 ))
-            pSound->onCreate( hWnd );
+            pSound->on_create( hWnd );
         return DefWindowProc( hWnd, nCmd, wParam, lParam );
 
     case WM_CLOSE:

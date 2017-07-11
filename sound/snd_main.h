@@ -64,24 +64,24 @@ typedef struct paintbuffer_s
 /*=========================================================
 =========================================================*/
 
-class cSoundChannel : public vSoundChannel
+class cSoundChannel : public sound::channel
 {
 public:
     cSoundChannel () { m_flFrequency = m_flVolume = 1.0f; }
 
-    virtual bool        isPlaying () { return m_bPlaying; }
-    virtual bool        isLooping () { return m_bLooping; }
+    virtual bool        playing () { return m_bPlaying; }
+    virtual bool        looping () { return m_bLooping; }
 
-    virtual int         playSound (int nSound, bool bLooping);
-    virtual int         playSound (int nSound);
-    virtual int         playLoop (int nSound);
+    virtual int         play (int nSound, bool bLooping);
+    virtual int         play (int nSound);
+    virtual int         loop (int nSound);
 
-    virtual void        stopSound ();
+    virtual void        stop ();
 
-    virtual void        setOrigin (vec3 vOrigin) { m_vOrigin = vOrigin; }
-    virtual void        setVolume (float flVolume) { m_flVolume = flVolume; }
-    virtual void        setFrequency (float flFreq) { m_flFrequency = flFreq; }
-    virtual void        setAttenuation (float flAttn) { m_flAttenuation = flAttn; }
+    virtual void        set_origin (vec3 vOrigin) { m_vOrigin = vOrigin; }
+    virtual void        set_volume (float flVolume) { m_flVolume = flVolume; }
+    virtual void        set_frequency (float flFreq) { m_flFrequency = flFreq; }
+    virtual void        set_attenuation (float flAttn) { m_flAttenuation = flAttn; }
 
     void        setReserved (bool b) { m_bReserved = b; }
     bool        isReserved () { return m_bReserved; }
@@ -111,7 +111,7 @@ private:
 /*=========================================================
 =========================================================*/
 
-class cSound : public vSound
+class cSound : public sound::system
 {
 public:
     cSound () { m_Chain.pNext = m_Chain.pPrev = &m_Chain; Init( ); }
@@ -120,17 +120,17 @@ public:
     int     Init ();
     int     Shutdown ();
 
-    virtual void    onCreate (HWND hWnd);
-    virtual void    onDestroy ();
+    virtual void    on_create (HWND hWnd);
+    virtual void    on_destroy ();
 
-    virtual void    Update ();
+    virtual void    update ();
 
-    virtual void    setListener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp);
+    virtual void    set_listener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp);
 
-    virtual void    playSound (int nIndex, vec3 vOrigin, float flVolume, float flAttenuation);
+    virtual void    play (int nIndex, vec3 vOrigin, float flVolume, float flAttenuation);
 
-    virtual sndchan_t   *allocChan () { return m_allocChan( true ); }
-    virtual void        freeChan (sndchan_t *pChan);
+    virtual sound::channel   *allocate_channel () { return m_allocChan( true ); }
+    virtual void        free_channel (sound::channel *pChan);
 
     //  memory
 
@@ -139,7 +139,7 @@ public:
 
     //  registration
 
-    int             Register (char *szFilename);
+    int             load_sound (char *szFilename);
     cSoundSource    *getSound (int nSound) { if (m_Sounds[nSound]) return m_Sounds[nSound]->pSource; return NULL; }
 
     //  mixing
@@ -189,7 +189,7 @@ private:
     //  channels
     //
 
-    sndchan_t       *m_allocChan (bool bReserve);
+    sound::channel       *m_allocChan (bool bReserve);
 
     void            m_mixChannels (paintbuffer_t *pBuffer, int nSamples);
     cSoundChannel   m_Channels[MAX_CHANNELS];

@@ -37,15 +37,15 @@ tank::tank ()
 
     for (auto& chan : _channels) {
         if (chan == nullptr) {
-            chan = pSound->allocChan();
+            chan = pSound->allocate_channel();
         }
     }
 
-    _sound_idle = pSound->Register("assets/sound/tank_idle.wav");
-    _sound_move = pSound->Register("assets/sound/tank_move.wav");
-    _sound_turret_move = pSound->Register("assets/sound/turret_move.wav");
-    _sound_fire = pSound->Register("assets/sound/tank_fire.wav");
-    _sound_explode = pSound->Register("assets/sound/tank_explode.wav");
+    _sound_idle = pSound->load_sound("assets/sound/tank_idle.wav");
+    _sound_move = pSound->load_sound("assets/sound/tank_move.wav");
+    _sound_turret_move = pSound->load_sound("assets/sound/turret_move.wav");
+    _sound_fire = pSound->load_sound("assets/sound/tank_fire.wav");
+    _sound_explode = pSound->load_sound("assets/sound/tank_explode.wav");
 }
 
 //------------------------------------------------------------------------------
@@ -53,8 +53,8 @@ tank::~tank()
 {
     for (auto& chan : _channels) {
         if (chan) {
-            chan->stopSound();
-            pSound->freeChan(chan);
+            chan->stop();
+            pSound->free_channel(chan);
         }
     }
 }
@@ -299,43 +299,43 @@ void tank::update_sound()
     // engine noise
     if (_channels[0]) {
         if (_damage < 1.0f) {
-            if (!_channels[0]->isPlaying()) {
-                _channels[0]->playLoop(_sound_idle);
+            if (!_channels[0]->playing()) {
+                _channels[0]->loop(_sound_idle);
             }
-            _channels[0]->setVolume(1.0f);
-            _channels[0]->setAttenuation(0.0f);
-            _channels[0]->setFrequency(1.0f);
+            _channels[0]->set_volume(1.0f);
+            _channels[0]->set_attenuation(0.0f);
+            _channels[0]->set_frequency(1.0f);
         }
-        else if (_channels[0]->isPlaying()) {
-            _channels[0]->stopSound();
+        else if (_channels[0]->playing()) {
+            _channels[0]->stop();
         }
     }
 
     // tread noise
     if (_channels[1]) {
         if (get_linear_velocity().lengthsq() > 1.0f || fabs(get_angular_velocity()) > deg2rad(1.0f)) {
-            if (!_channels[1]->isPlaying()) {
-                _channels[1]->playLoop(_sound_move);
+            if (!_channels[1]->playing()) {
+                _channels[1]->loop(_sound_move);
             }
-            _channels[1]->setVolume(1.0f);
-            _channels[1]->setAttenuation(0.0f);
+            _channels[1]->set_volume(1.0f);
+            _channels[1]->set_attenuation(0.0f);
         }
-        else if (_channels[1]->isPlaying()) {
-            _channels[1]->stopSound();
+        else if (_channels[1]->playing()) {
+            _channels[1]->stop();
         }
     }
 
     // turret noise
     if (_channels[2]) {
         if (fabs(get_angular_velocity() - _turret_velocity) > deg2rad(1.0f)) {
-            if (!_channels[2]->isPlaying()) {
-                _channels[2]->playLoop(_sound_turret_move);
+            if (!_channels[2]->playing()) {
+                _channels[2]->loop(_sound_turret_move);
             }
-            _channels[2]->setVolume(1.0f);
-            _channels[2]->setAttenuation(0.0f);
+            _channels[2]->set_volume(1.0f);
+            _channels[2]->set_attenuation(0.0f);
         }
-        else if (_channels[2]->isPlaying()) {
-            _channels[2]->stopSound( );
+        else if (_channels[2]->playing()) {
+            _channels[2]->stop( );
         }
     }
 }
@@ -360,7 +360,7 @@ projectile::projectile(tank* owner, float damage)
     , _damage(damage)
 {
     _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
-    _sound_explode = pSound->Register("assets/sound/bullet_explode.wav");
+    _sound_explode = pSound->load_sound("assets/sound/bullet_explode.wav");
 }
 
 //------------------------------------------------------------------------------

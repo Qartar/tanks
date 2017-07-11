@@ -164,12 +164,12 @@ int session::init (char *cmdline)
 
     // sound indices are shared over the network so sounds
     // need to be registed in the same order on all clients
-    pSound->Register("assets/sound/tank_move.wav");
-    pSound->Register("assets/sound/tank_idle.wav");
-    pSound->Register("assets/sound/tank_fire.wav");
-    pSound->Register("assets/sound/tank_explode.wav");
-    pSound->Register("assets/sound/bullet_explode.wav");
-    pSound->Register("assets/sound/turret_move.wav");
+    pSound->load_sound("assets/sound/tank_move.wav");
+    pSound->load_sound("assets/sound/tank_idle.wav");
+    pSound->load_sound("assets/sound/tank_fire.wav");
+    pSound->load_sound("assets/sound/tank_explode.wav");
+    pSound->load_sound("assets/sound/bullet_explode.wav");
+    pSound->load_sound("assets/sound/turret_move.wav");
 
     write_message( "Welcome to Tanks! Press F1 for help." );
 
@@ -218,7 +218,7 @@ int session::run_frame(float milliseconds)
 
     // update sound
 
-    pSound->Update( );
+    pSound->update( );
 
     if ( _restart_time && (_frametime > _restart_time) && !_menu_active ) {
         restart();

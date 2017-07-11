@@ -7,7 +7,18 @@ Date    :   04/01/2006
 
 cSound  *gSound;
 
-DEF_CREATE_DESTROY(Sound);
+sound::system* pSound = nullptr;
+
+void sound::system::create()
+{
+    pSound = new cSound;
+}
+
+void sound::system::destroy()
+{
+    delete pSound;
+    pSound = nullptr;
+}
 
 /*=========================================================
 =========================================================*/
@@ -34,7 +45,7 @@ int cSound::Init ()
     for ( int i=0 ; i<MAX_CHANNELS ; i++ )
     {
         m_Channels[i].setReserved( false );
-        m_Channels[i].stopSound( );
+        m_Channels[i].stop( );
     }
 
     if ( !snd_disable->getBool( ) )
@@ -66,7 +77,7 @@ int cSound::Shutdown ()
 /*=========================================================
 =========================================================*/
 
-void cSound::onCreate (HWND hWnd)
+void cSound::on_create (HWND hWnd)
 {
     if ( snd_disable->getBool( ) )
         return;
@@ -74,7 +85,7 @@ void cSound::onCreate (HWND hWnd)
     pAudioDevice = cAudioDevice::Create( hWnd );
 }
 
-void cSound::onDestroy ()
+void cSound::on_destroy ()
 {
     // clear sound chain
     while ( m_Chain.pNext != &m_Chain )
@@ -93,7 +104,7 @@ void cSound::onDestroy ()
     }
 
     for ( int i=0 ; i<MAX_CHANNELS ; i++ )
-        freeChan( m_Channels + i );
+        free_channel( m_Channels + i );
 
     cAudioDevice::Destroy( pAudioDevice );
     pAudioDevice = NULL;
@@ -102,7 +113,7 @@ void cSound::onDestroy ()
 /*=========================================================
 =========================================================*/
 
-void cSound::Update ()
+void cSound::update ()
 {
     paintbuffer_t   *pBuffer;
     int             nBytes;
@@ -169,7 +180,7 @@ paintbuffer_t *cSound::getPaintBuffer (int nBytes)
 /*=========================================================
 =========================================================*/
 
-void cSound::setListener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp)
+void cSound::set_listener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp)
 {
     this->vOrigin = vOrigin;
     this->vForward = vForward;
@@ -286,7 +297,7 @@ void cSound::Delete (snd_link_t *pLink)
 /*=========================================================
 =========================================================*/
 
-int cSound::Register (char *szFilename)
+int cSound::load_sound (char *szFilename)
 {
     snd_link_t  *pLink;
 
@@ -303,17 +314,17 @@ int cSound::Register (char *szFilename)
 /*=========================================================
 =========================================================*/
 
-void cSound::playSound (int nIndex, vec3 vOrigin, float flVolume, float flAttenuation)
+void cSound::play (int nIndex, vec3 vOrigin, float flVolume, float flAttenuation)
 {
-    sndchan_t   *pChannel = m_allocChan( false );
+    sound::channel   *pChannel = m_allocChan( false );
 
     if ( pChannel )
     {
-        pChannel->setVolume( flVolume );
-        pChannel->setOrigin( vOrigin );
-        pChannel->setFrequency( 1.0f );
-        pChannel->setAttenuation( flAttenuation );
+        pChannel->set_volume( flVolume );
+        pChannel->set_origin( vOrigin );
+        pChannel->set_frequency( 1.0f );
+        pChannel->set_attenuation( flAttenuation );
         
-        pChannel->playSound( nIndex );
+        pChannel->play( nIndex );
     }
 }

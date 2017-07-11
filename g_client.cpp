@@ -227,7 +227,7 @@ void session::client_send ()
 void session::read_sound ()
 {
     int sound_index = _netmsg.read_long();
-    pSound->playSound(sound_index, vec3(0,0,0), 1.0f, 0.0f);
+    pSound->play(sound_index, vec3(0,0,0), 1.0f, 0.0f);
 }
 
 //------------------------------------------------------------------------------

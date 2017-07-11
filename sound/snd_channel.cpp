@@ -8,7 +8,7 @@ Date    :   04/02/2006
 /*=========================================================
 =========================================================*/
 
-sndchan_t *cSound::m_allocChan (bool bReserve)
+sound::channel *cSound::m_allocChan (bool bReserve)
 {
     int         i;
 
@@ -17,7 +17,7 @@ sndchan_t *cSound::m_allocChan (bool bReserve)
 
     for ( i=0 ; i<MAX_CHANNELS ; i++ )
     {
-        if ( m_Channels[i].isPlaying() )
+        if ( m_Channels[i].playing() )
             continue;
 
         if ( m_Channels[i].isReserved() )
@@ -25,16 +25,16 @@ sndchan_t *cSound::m_allocChan (bool bReserve)
 
         if ( bReserve )
             m_Channels[i].setReserved( true );
-        return (sndchan_t *)&m_Channels[i];
+        return (sound::channel *)&m_Channels[i];
     }
     return NULL;
 }
 
-void cSound::freeChan (sndchan_t *pChan)
+void cSound::free_channel (sound::channel *pChan)
 {
     cSoundChannel   *pChannel = (cSoundChannel *)pChan;
 
-    pChannel->stopSound( );
+    pChannel->stop( );
     pChannel->setReserved( false );
 }
 
@@ -43,14 +43,14 @@ void cSound::m_mixChannels (paintbuffer_t *pBuffer, int nSamples)
     int         i;
 
     for ( i=0 ; i<MAX_CHANNELS ; i++ )
-        if ( m_Channels[i].isPlaying( ) )
+        if ( m_Channels[i].playing( ) )
             m_Channels[i].mixChannel( pBuffer, nSamples );
 }
 
 /*=========================================================
 =========================================================*/
 
-int cSoundChannel::playSound (int nSound, bool bLooping)
+int cSoundChannel::play (int nSound, bool bLooping)
 {
     if ( nSound < 0 )
         return ERROR_FAIL;
@@ -70,17 +70,17 @@ int cSoundChannel::playSound (int nSound, bool bLooping)
     return ERROR_NONE;
 }
 
-int cSoundChannel::playSound (int nSound)
+int cSoundChannel::play (int nSound)
 {
-    return playSound( nSound, false );
+    return play( nSound, false );
 }
 
-int cSoundChannel::playLoop (int nSound)
+int cSoundChannel::loop (int nSound)
 {
-    return playSound( nSound, true );
+    return play( nSound, true );
 }
 
-void cSoundChannel::stopSound ()
+void cSoundChannel::stop ()
 {
     m_bPlaying = false;
     m_bLooping = false;
