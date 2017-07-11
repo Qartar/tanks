@@ -13,7 +13,7 @@ Date    :   10/14/2016
 class cSoundWaveResource : public cSoundWaveCache
 {
 public:
-    virtual int     Load (char *szFilename);
+    virtual int     Load (char const *szFilename);
 
 protected:
     HANDLE m_hResource;

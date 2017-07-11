@@ -102,7 +102,7 @@ int manager::config (bool multiplayer)
 }
 
 //------------------------------------------------------------------------------
-char *manager::WSAErrorString (int code)
+char const* manager::WSAErrorString (int code)
 {
     if ( !code )
         code = WSAGetLastError ();
@@ -231,7 +231,7 @@ int manager::ipx_socket (int port)
 }
 
 //------------------------------------------------------------------------------
-char *manager::address_to_string (network::address a)
+char const* manager::address_to_string (network::address a)
 {
     static char szString[LONG_STRING];
 
@@ -252,7 +252,7 @@ char *manager::address_to_string (network::address a)
     sscanf (copy, "%x", &val);  \
     ((struct sockaddr_ipx *)sock)->dest = val
 
-bool manager::string_to_sockaddr (char *addr, sockaddr *sock)
+bool manager::string_to_sockaddr (char const *addr, sockaddr *sock)
 {
     struct hostent  *h;
     char    *colon;
@@ -311,7 +311,7 @@ bool manager::string_to_sockaddr (char *addr, sockaddr *sock)
 #undef DO
 
 //------------------------------------------------------------------------------
-bool manager::string_to_address (char *addr, network::address *net)
+bool manager::string_to_address (char const *addr, network::address *net)
 {
     sockaddr    sadr;
     
@@ -382,7 +382,7 @@ void manager::sockaddr_to_address (sockaddr *sock, network::address *net)
 }
 
 //------------------------------------------------------------------------------
-int manager::print (network::socket socket, network::address to, char *string)
+int manager::print (network::socket socket, network::address to, char const *string)
 {
     byte        msgbuf[MAX_MSGLEN];
     network::message    msg;
@@ -396,7 +396,7 @@ int manager::print (network::socket socket, network::address to, char *string)
 }
 
 //------------------------------------------------------------------------------
-int manager::send (network::socket socket, int length, void *data, network::address to)
+int manager::send (network::socket socket, int length, void const *data, network::address to)
 {
     sockaddr    address;
     int     net_socket;
@@ -418,7 +418,7 @@ int manager::send (network::socket socket, int length, void *data, network::addr
 
     address_to_sockaddr( &to, &address );
 
-    if ( (sendto( net_socket, (char *)data, length, 0, &address, sizeof(address) )) == -1 )
+    if ( (sendto( net_socket, (char const*)data, length, 0, &address, sizeof(address) )) == -1 )
     {
         int err = WSAGetLastError();
 
@@ -484,7 +484,7 @@ int manager::get (network::socket socket, network::address *remote_address, netw
 }
 
 //------------------------------------------------------------------------------
-int manager::send_loopback (network::socket socket, int length, void *data, network::address to)
+int manager::send_loopback (network::socket socket, int length, void const *data, network::address to)
 {
     int     i;
     loopback_t  *loop;

@@ -30,10 +30,10 @@ public:
     unsigned int    argc() { return m_argc; }
     char        *argv(unsigned int argc) { if (argc >= m_argc) return "\0"; return m_argv[argc];    }
 
-    int parse (char *string)
+    int parse (char const *string)
     {
-        char    *cursor;            // current cursor position
-        char    *argptr;            // begining of most recent arg
+        char const *cursor;         // current cursor position
+        char const *argptr;         // begining of most recent arg
         char    seqchar;            // char that separates an arg
 
         unsigned int    i;
@@ -74,9 +74,9 @@ public:
         return ERROR_NONE;
     }
 
-    char *getline (char *in, char *out, int maxlen)
+    char const *getline (char const *in, char *out, int maxlen)
     {
-        char *cursor = in;
+        char const *cursor = in;
         int         length;
 
         do
@@ -210,7 +210,7 @@ class textbuf_c
 {
 public:
     void    Init (char *pBuffer, int nMaxSize) { m_pBuffer = pBuffer ; m_nMaxSize = nMaxSize ; m_nCursorRead = m_nCursorWrite = 0 ; }
-    void    Write (char *szIn)
+    void    Write (char const *szIn)
     {
         bool    bLessThan;
 

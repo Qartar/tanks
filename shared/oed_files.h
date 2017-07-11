@@ -28,8 +28,8 @@ private:
     private:
         filerror_c () {}
     public:
-        filerror_c (char *message, bool fatal) : errorobj_c(message,fatal) { strcpy( m_type, "file i/o" ); }
-        filerror_c (char *message, int code, bool fatal) : errorobj_c(message,code,fatal) { strcpy( m_type, "file i/o" ); }
+        filerror_c (char const *message, bool fatal) : errorobj_c(message,fatal) { strcpy( m_type, "file i/o" ); }
+        filerror_c (char const *message, int code, bool fatal) : errorobj_c(message,code,fatal) { strcpy( m_type, "file i/o" ); }
     };
 
 public:
@@ -40,7 +40,7 @@ public:
     //  load    -   loads a file into a buffer
     //
 
-    int     load (void **data, char *filename, int *length = NULL)
+    int     load (void **data, char const *filename, int *length = NULL)
     {
         FILE            *file;
         byte            *buffer;
@@ -76,7 +76,7 @@ public:
     //  open    -   opens a file with given attributes
     //
 
-    int open (FILE **file, char *filename, char *attribs)
+    int open (FILE **file, char const *filename, char const *attribs)
     {
         FILE    *temp;
 
@@ -99,7 +99,7 @@ public:
         return end;
     }
 
-    unsigned int    length (char *filename)
+    unsigned int    length (char const *filename)
     {
         FILE    *f;
         unsigned int len = m_open( filename, "rb", &f );
@@ -120,17 +120,17 @@ public:
         return ERROR_NONE;
     }
 
-    int mkdir (char *dir)
+    int mkdir (char const *dir)
     {
         return _mkdir( dir );
     }
 
-    int _remove (char *file)
+    int _remove (char const *file)
     {
         return remove( file );
     }
 private:
-    unsigned int    m_open (char *filename, char *attribs, FILE **file)
+    unsigned int    m_open (char const *filename, char const *attribs, FILE **file)
     {
         if ( m_num_paths )
         {
@@ -171,8 +171,8 @@ private:
 
     void m_make_paths ()
     {
-        void    *path_file;
-        char    *path_cursor;
+        void *path_file;
+        char const *path_cursor;
         char    path_line[MAX_STRING];
 
         textutils_c text;
@@ -185,7 +185,7 @@ private:
         if ( !path_file )
             return;
 
-        path_cursor = (char *)path_file;
+        path_cursor = (char const *)path_file;
         while ( path_cursor && *path_cursor && m_num_paths < m_max_paths )
         {
             path_cursor = text.getline( path_cursor, path_line, MAX_STRING );
@@ -210,7 +210,7 @@ private:
         unload( path_file );
     }
 
-    FILE *m_open_paths (char *file, char *attribs)
+    FILE *m_open_paths (char const *file, char const *attribs)
     {
         char    file_lwr[LONG_STRING];
         char    path_file[LONG_STRING];
@@ -271,12 +271,12 @@ extern filectrl_c   *s_filectrl_c;
 
 namespace file
 {
-    inline int      load (void **data, char *filename, int *length = NULL ) { return s_filectrl_c->load(data,filename,length); }
-    inline int      open (FILE **file, char *filename, char *attribs)   { return s_filectrl_c->open(file,filename,attribs); }
+    inline int      load (void **data, char const *filename, int *length = NULL ) { return s_filectrl_c->load(data,filename,length); }
+    inline int      open (FILE **file, char const *filename, char const *attribs) { return s_filectrl_c->open(file,filename,attribs); }
     inline unsigned int length (FILE *file)                             { return s_filectrl_c->length(file); }
-    inline unsigned int length (char *filename)                         { return s_filectrl_c->length(filename); }
+    inline unsigned int length (char const *filename)                   { return s_filectrl_c->length(filename); }
     inline int      close (FILE *file)                                  { return s_filectrl_c->close(file); }
     inline int      unload (void *data)                                 { return s_filectrl_c->unload(data); }
-    inline int      remove (char *file)                                 { return s_filectrl_c->_remove(file); }
-    inline int      mkdir (char *dir)                                   { return s_filectrl_c->mkdir(dir); }
+    inline int      remove (char const *file)                           { return s_filectrl_c->_remove(file); }
+    inline int      mkdir (char const *dir)                             { return s_filectrl_c->mkdir(dir); }
 }

@@ -12,7 +12,7 @@ Date    :   04/07/2006
 /*=========================================================
 =========================================================*/
 
-cSoundSource *cSoundSource::createSound (char *szFilename)
+cSoundSource *cSoundSource::createSound (char const *szFilename)
 {
     int         len = strlen(szFilename);
     int         filelen;

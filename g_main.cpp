@@ -38,7 +38,7 @@ session::session()
 }
 
 //------------------------------------------------------------------------------
-int session::init (char *cmdline)
+int session::init (char const *cmdline)
 {
     _renderer = g_Application->window()->renderer();
 

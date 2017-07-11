@@ -20,7 +20,7 @@ static const struct { int iResource; char const* szResource; } resources[] =
     { IDR_WAVE6, "assets/sound/turret_move.wav" },
 };
 
-int cSoundWaveResource::Load (char *szFilename)
+int cSoundWaveResource::Load (char const *szFilename)
 {
     for ( int i = 0; i < _countof(resources); i++ ) {
         if ( strcmp(szFilename, resources[i].szResource) == 0 ) {

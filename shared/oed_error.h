@@ -33,8 +33,8 @@ protected:
     bool    m_fatal;
 
 public:
-    errorobj_c (char *msg, bool fatal) { strcpy( m_message, msg ); strcpy( m_type, "generic" ); m_code = ERROR_FAIL; m_fatal = fatal; }
-    errorobj_c (char *msg, int code, bool fatal) { strcpy( m_message, msg ); strcpy( m_type, "generic" ); m_code = code; m_fatal = fatal; }
+    errorobj_c (char const *msg, bool fatal) { strcpy( m_message, msg ); strcpy( m_type, "generic" ); m_code = ERROR_FAIL; m_fatal = fatal; }
+    errorobj_c (char const *msg, int code, bool fatal) { strcpy( m_message, msg ); strcpy( m_type, "generic" ); m_code = code; m_fatal = fatal; }
 
     char    *message () { return m_message; }
     char    *type () { return m_type; }

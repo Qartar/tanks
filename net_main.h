@@ -125,18 +125,18 @@ public:
 
     int config(bool multiplayer);
 
-    int print(network::socket socket, network::address to, char *szMessage);
+    int print(network::socket socket, network::address to, char const *szMessage);
 
     int get(network::socket socket, network::address *pFrom, network::message *pMessage);
 
-    bool string_to_address(char *addr, network::address *net);
-    char* address_to_string(network::address a);
+    bool string_to_address(char const *addr, network::address *net);
+    char const* address_to_string(network::address a);
 
 private:
-    int send(network::socket socket, int nLength, void *pData, network::address to);
+    int send(network::socket socket, int nLength, void const *pData, network::address to);
 
     int get_loopback(network::socket socket, network::address *pFrom, network::message *pMessage);
-    int send_loopback(network::socket socket, int nLength, void *pData, network::address to);
+    int send_loopback(network::socket socket, int nLength, void const *pData, network::address to);
 
     loopback_t  _loopbacks[NUM_SOCKETS];
 
@@ -146,7 +146,7 @@ private:
 
     WSADATA _wsadata;
 
-    char* WSAErrorString (int code = 0);
+    char const* WSAErrorString (int code = 0);
 
     int _ip_sockets[NUM_SOCKETS];
     int _ipx_sockets[NUM_SOCKETS];
@@ -159,7 +159,7 @@ private:
 
     void address_to_sockaddr(network::address *net, sockaddr *sock);
     void sockaddr_to_address(sockaddr *sock, network::address *net);
-    bool string_to_sockaddr(char *addr, sockaddr *sock);
+    bool string_to_sockaddr(char const *addr, sockaddr *sock);
 };
 
 } // namespace network

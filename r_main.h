@@ -85,7 +85,7 @@ public:
     render::font const* load_font(char const* szName, int nSize);
 
     //  Image Interface (r_image.cpp)
-    render::image const* load_image(const char *name);
+    render::image const* load_image(char const* name);
     void draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color);
 
     // Drawing Functions (r_draw.cpp)

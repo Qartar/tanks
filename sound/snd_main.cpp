@@ -211,7 +211,7 @@ void cSound::free (void *ptr)
 /*=========================================================
 =========================================================*/
 
-snd_link_t *cSound::Create (char *szFilename)
+snd_link_t *cSound::Create (char const *szFilename)
 {
     int         i, len = strlen(szFilename);
     snd_link_t      *pLink, *next;
@@ -262,7 +262,7 @@ snd_link_t *cSound::Create (char *szFilename)
 /*=========================================================
 =========================================================*/
 
-snd_link_t *cSound::Find (char *szFilename)
+snd_link_t *cSound::Find (char const *szFilename)
 {
     snd_link_t  *pLink;
     int         cmp;
@@ -297,7 +297,7 @@ void cSound::Delete (snd_link_t *pLink)
 /*=========================================================
 =========================================================*/
 
-int cSound::load_sound (char *szFilename)
+int cSound::load_sound (char const *szFilename)
 {
     snd_link_t  *pLink;
 

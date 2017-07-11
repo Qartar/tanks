@@ -12,7 +12,7 @@ Date    :   04/07/2006
 #define RIFF_ID     MAKEID('R','I','F','F')
 #define WAVE_ID     MAKEID('W','A','V','E')
 
-riffChunk_c::riffChunk_c (char *szFilename)
+riffChunk_c::riffChunk_c (char const *szFilename)
 {
     int     name;
 

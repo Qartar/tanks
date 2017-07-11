@@ -39,7 +39,7 @@ public:
     int     Init (HINSTANCE hInstance, LPSTR szCmdLine);
     int     Shutdown ();
 
-    void    Error (char *szTitle, char *szMessage);
+    void    Error (char const *szTitle, char const *szMessage);
     void    Quit (int nExitCode);
 
     char    *ClipboardData ();

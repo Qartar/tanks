@@ -41,8 +41,8 @@ private:
     private:
         memerror_c () {}
     public:
-        memerror_c (char *message, bool fatal) : errorobj_c(message,fatal) { strcpy( m_type, "memory" ); }
-        memerror_c (char *message, int code, bool fatal) : errorobj_c(message,code,fatal) { strcpy( m_type, "memory" ); }
+        memerror_c (char const *message, bool fatal) : errorobj_c(message,fatal) { strcpy( m_type, "memory" ); }
+        memerror_c (char const *message, int code, bool fatal) : errorobj_c(message,code,fatal) { strcpy( m_type, "memory" ); }
     };
 
     mem_link_s  mem_head;

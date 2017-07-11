@@ -92,7 +92,7 @@ TEXT FORMATTING
 ===========================================================
 */
 
-static char *va (char *szMessage, ...)
+static char *va (char const *szMessage, ...)
 {
     static char     szStrings[16][MAX_STRING];
     static byte     iNextString;
@@ -109,7 +109,7 @@ static char *va (char *szMessage, ...)
     return Ret;
 }
 
-static void fmt (char *szDest, char *szMessage, ...)
+static void fmt (char *szDest, char const *szMessage, ...)
 {
     va_list     apList;
 

@@ -185,7 +185,7 @@ Purpose :   outputs an error using a message box
 ===========================================================
 */
 
-void cWinApp::Error (char *szTitle, char *szMessage)
+void cWinApp::Error (char const *szTitle, char const *szMessage)
 {
     MessageBox( NULL, szMessage, szTitle, MB_OK );
 

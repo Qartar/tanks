@@ -15,7 +15,7 @@ class cSoundWaveCache : public cSoundWaveSource
 public:
     virtual int             getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping);
 
-    virtual int     Load (char *szFilename);
+    virtual int     Load (char const *szFilename);
     virtual void    Unload ();
 
 protected:

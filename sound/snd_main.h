@@ -139,7 +139,7 @@ public:
 
     //  registration
 
-    int             load_sound (char *szFilename);
+    int             load_sound (char const *szFilename);
     cSoundSource    *getSound (int nSound) { if (m_Sounds[nSound]) return m_Sounds[nSound]->pSource; return NULL; }
 
     //  mixing
@@ -181,8 +181,8 @@ private:
     snd_link_t  m_Chain;
     snd_link_t  *m_Sounds[MAX_SOUNDS];
 
-    snd_link_t      *Create (char *szFilename);
-    snd_link_t      *Find (char *szFilename);
+    snd_link_t      *Create (char const *szFilename);
+    snd_link_t      *Find (char const *szFilename);
     void            Delete (snd_link_t *pLink);
 
     //

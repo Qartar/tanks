@@ -19,7 +19,7 @@ Date    :   04/07/2006
 typedef class riffChunk_c : public vObject
 {
 public:
-    riffChunk_c (char *szFilename);
+    riffChunk_c (char const *szFilename);
     riffChunk_c (byte* pChunkData, int nChunkSize);
     riffChunk_c (riffChunk_c &Outer);
 
@@ -62,7 +62,7 @@ public:
     virtual char            *getFilename () { return m_szFilename; }
     virtual float           getLoopPosition (float flPosition);
 
-    virtual int     Load (char *szFilename) = 0;
+    virtual int     Load (char const *szFilename) = 0;
     virtual void    Unload () = 0;
 
 protected:

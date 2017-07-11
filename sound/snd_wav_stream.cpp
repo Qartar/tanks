@@ -9,7 +9,7 @@ Date    :   04/07/2006
 /*=========================================================
 =========================================================*/
 
-int cSoundWaveStream::Load (char *szFilename)
+int cSoundWaveStream::Load (char const *szFilename)
 {
     m_reader = new riffChunk_c( szFilename );
 

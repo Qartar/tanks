@@ -117,8 +117,10 @@ int cVariable::Load ()
 {
     char szPath[LONG_STRING];
 
-    char    *fileData, *fileCursor, getLine[MAX_STRING];
-    int     nLength;
+    char *fileData;
+    char const *fileCursor;
+    char getLine[MAX_STRING];
+    int nLength;
 
     textutils_c text;
 

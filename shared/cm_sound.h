@@ -51,7 +51,7 @@ public:
     virtual sound::channel* allocate_channel() = 0;
     virtual void free_channel(sound::channel *channel) = 0;
 
-    virtual int load_sound (char *filename) = 0;
+    virtual int load_sound (char const* filename) = 0;
 };
 
 } // namespace sound

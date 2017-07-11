@@ -167,7 +167,7 @@ public:
     session();
     ~session() {}
 
-    int init (char *cmdline);
+    int init (char const *cmdline);
     int shutdown ();
 
     void init_client();
