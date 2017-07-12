@@ -6,13 +6,6 @@
 
 #include "resource.h"
 
-#define STATIC_SIZE
-
-#ifndef STATIC_SIZE
-config::value  *vid_width;
-config::value  *vid_height;
-#endif //!STATIC_SIZE
-
 namespace {
 
 // additional opengl bindings
@@ -66,22 +59,12 @@ void window::create()
     char* command;
     bool fullscreen = DEFAULT_FS;
 
-#ifndef STATIC_SIZE
-    vid_width   = pConfig->get( "vid_width", "640", "int", config::archive, "width of display" );
-    vid_height  = pConfig->get( "vid_height", "480", "int", config::archive, "height of display" );
-#endif //!STATIC_SIZE
-
     if ( (command = strstr( g_Application->InitString(), "fullscreen" )) )
         fullscreen = ( atoi(command+11) > 0 );
 
     create(
-#ifndef STATIC_SIZE
-        vid_width->getInt( ),
-        vid_height->getInt( ),
-#else
         DEFAULT_W,
         DEFAULT_H,
-#endif //!STATIC_SIZE
         DEFAULT_X,
         DEFAULT_Y,
         fullscreen );

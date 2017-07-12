@@ -4,12 +4,6 @@
 #include "local.h"
 #pragma hdrstop
 
-extern config::scalar g_upgrade_frac;
-extern config::scalar g_upgrade_penalty;
-extern config::scalar g_upgrade_min;
-
-config::string net_serverName("net_serverName", "Tanks! Server", config::archive, "local server name"); //  name of local server
-
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
@@ -45,7 +39,7 @@ void session::start_server ()
     _menu_active = false;
 
     svs.active = true;
-    net_serverName = svs.name;
+    _net_server_name = svs.name;
 
     _netchan.setup( network::socket::server, _netfrom );    // remote doesn't matter
 }
@@ -329,31 +323,31 @@ void session::read_upgrade (int index)
         _clients[_netclient].upgrades--;
         if ( index == 0 )
         {
-            _clients[_netclient].damage_mod += UPGRADE_FRAC;
-            _clients[_netclient].refire_mod -= UPGRADE_PENALTY;
-            if ( _clients[_netclient].refire_mod < UPGRADE_MIN )
-                _clients[_netclient].refire_mod = UPGRADE_MIN;
+            _clients[_netclient].damage_mod += _upgrade_frac;
+            _clients[_netclient].refire_mod -= _upgrade_penalty;
+            if ( _clients[_netclient].refire_mod < _upgrade_min )
+                _clients[_netclient].refire_mod = _upgrade_min;
         }
         else if ( index == 1 )
         {
-            _clients[_netclient].armor_mod += UPGRADE_FRAC;
-            _clients[_netclient].speed_mod -= UPGRADE_PENALTY;
-            if ( _clients[_netclient].speed_mod < UPGRADE_MIN )
-                _clients[_netclient].speed_mod = UPGRADE_MIN;
+            _clients[_netclient].armor_mod += _upgrade_frac;
+            _clients[_netclient].speed_mod -= _upgrade_penalty;
+            if ( _clients[_netclient].speed_mod < _upgrade_min )
+                _clients[_netclient].speed_mod = _upgrade_min;
         }
         else if ( index == 2 )
         {
-            _clients[_netclient].refire_mod += UPGRADE_FRAC;
-            _clients[_netclient].damage_mod -= UPGRADE_PENALTY;
-            if ( _clients[_netclient].damage_mod < UPGRADE_MIN )
-                _clients[_netclient].damage_mod = UPGRADE_MIN;
+            _clients[_netclient].refire_mod += _upgrade_frac;
+            _clients[_netclient].damage_mod -= _upgrade_penalty;
+            if ( _clients[_netclient].damage_mod < _upgrade_min )
+                _clients[_netclient].damage_mod = _upgrade_min;
         }
         else if ( index == 3 )
         {
-            _clients[_netclient].speed_mod += UPGRADE_FRAC;
-            _clients[_netclient].armor_mod -= UPGRADE_PENALTY;
-            if ( _clients[_netclient].armor_mod < UPGRADE_MIN )
-                _clients[_netclient].armor_mod = UPGRADE_MIN;
+            _clients[_netclient].speed_mod += _upgrade_frac;
+            _clients[_netclient].armor_mod -= _upgrade_penalty;
+            if ( _clients[_netclient].armor_mod < _upgrade_min )
+                _clients[_netclient].armor_mod = _upgrade_min;
         }
 
         write_message( va( "\\c%02x%02x%02x%s\\cx has upgraded their %s!",

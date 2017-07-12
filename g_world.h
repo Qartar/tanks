@@ -204,6 +204,8 @@ public:
         : _spawn_id(0)
         , _border_material{0,0}
         , _border_shapes{{vec2(0,0)}, {vec2(0,0)}}
+        , _arena_width("g_arenaWidth", 640, config::archive|config::server|config::reset, "arena width")
+        , _arena_height("g_arenaHeight", 480, config::archive|config::server|config::reset, "arena height")
     {}
     ~world () {}
 
@@ -241,6 +243,9 @@ private:
     std::size_t _spawn_id;
 
     void move_object(object* object);
+
+    config::integer _arena_width;
+    config::integer _arena_height;
 
     //
     // particle system

@@ -19,10 +19,6 @@ class system;
 
 #define PROTOCOL_VERSION    3
 
-#define UPGRADE_FRAC    g_upgrade_frac
-#define UPGRADE_PENALTY g_upgrade_penalty
-#define UPGRADE_MIN     g_upgrade_min
-
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
@@ -218,6 +214,17 @@ private:
     render::system* _renderer;
 
     render::image const* _menu_image;
+
+    config::scalar _upgrade_frac;
+    config::scalar _upgrade_penalty;
+    config::scalar _upgrade_min;
+    config::boolean _upgrades;
+
+    config::string _net_master;
+    config::string _net_server_name;
+
+    config::string _cl_name;
+    config::string _cl_color;
 
     void get_cursor();
     vec2 _cursor;

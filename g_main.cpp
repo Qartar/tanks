@@ -7,17 +7,6 @@
 #include "keys.h"
 #include "resource.h"
 
-config::scalar g_upgrade_frac("g_upgradeFrac", 0.5f, config::archive|config::server, "upgrade fraction");
-config::scalar g_upgrade_penalty("g_upgradePenalty", 0.2f, config::archive|config::server, "upgrade penalty");
-config::scalar g_upgrade_min("g_upgradeMin", 0.2f, config::archive|config::server, "minimum upgrade fraction");
-config::boolean g_upgrades("g_upgrades", true, config::archive|config::server, "enable upgrades");
-
-config::integer g_arenaWidth("g_arenaWidth", 640, config::archive|config::server|config::reset, "arena width");
-config::integer g_arenaHeight("g_arenaHeight", 480, config::archive|config::server|config::reset, "arena height");
-
-extern config::string net_master;        //  master server
-extern config::string net_serverName;    //  server name
-
 // global object
 vMain   *pMain;
 game::session* g_Game;
@@ -32,6 +21,14 @@ session::session()
     : _players{0}
     , _client_button_down(false)
     , _server_button_down(false)
+    , _upgrade_frac("g_upgradeFrac", 0.5f, config::archive|config::server, "upgrade fraction")
+    , _upgrade_penalty("g_upgradePenalty", 0.2f, config::archive|config::server, "upgrade penalty")
+    , _upgrade_min("g_upgradeMin", 0.2f, config::archive|config::server, "minimum upgrade fraction")
+    , _upgrades("g_upgrades", true, config::archive|config::server, "enable upgrades")
+    , _net_master("net_master", "oedhead.no-ip.org", config::archive, "master server hostname")
+    , _net_server_name("net_serverName", "Tanks! Server", config::archive, "local server name")
+    , _cl_name("ui_name", "", config::archive, "user info: name")
+    , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
 {
     g_Game = this;
     pMain = this;
@@ -82,7 +79,7 @@ int session::init (char const *cmdline)
     memset( _clientsay, 0, LONG_STRING );
 
     svs.max_clients = MAX_PLAYERS;
-    strcpy( svs.name, net_serverName );
+    strcpy( svs.name, _net_server_name );
 
     cls.number = 0;
 
@@ -688,7 +685,7 @@ void session::add_score(int player_index, int score)
 
     if ( _multiplayer ) {
         if ( _score[player_index] % 10 == 0 ) {
-            if ( g_upgrades ) {
+            if ( _upgrades ) {
                 _clients[player_index].upgrades++;
             }
         }
