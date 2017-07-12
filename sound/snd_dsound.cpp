@@ -15,6 +15,9 @@ HRESULT (WINAPI *pDirectSoundCreate)(GUID *, LPDIRECTSOUND8 *, IUnknown *);
 =========================================================*/
 
 cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
+    : snd_primary("snd_primary", false, config::archive, "use primary sound buffer")
+    , snd_dsfocus("snd_dsfocus", true, config::archive, "")
+    , snd_frequency("snd_frequency", 22050, config::archive, "sound playback speed")
 {
     HRESULT         hResult;
 
@@ -23,12 +26,6 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
     pDirectSound = NULL;
     pSoundBuffer = NULL;
     hDirectSound = NULL;
-
-    snd_primary =pVariable->Get( "snd_primary" );
-    snd_frequency = pVariable->Get( "snd_frequency" );
-
-    // direct sound specific
-    snd_dsfocus = pVariable->Get( "snd_dsfocus", "false", "bool", CVAR_ARCHIVE, "allows sound to play while minimized (DirectSound only)" );
 
     m_hWnd = hWnd;
 
@@ -131,7 +128,7 @@ int cDirectSoundDevice::CreateBuffers ()
     wfx.wFormatTag = WAVE_FORMAT_PCM;
     wfx.nChannels = 2;
     wfx.wBitsPerSample = 16;
-    wfx.nSamplesPerSec = clamp( snd_frequency->getInt( ), 11025, 44100 );
+    wfx.nSamplesPerSec = clamp<int>( snd_frequency, 11025, 44100 );
     wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
     wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
     wfx.cbSize = 0;
@@ -161,7 +158,7 @@ int cDirectSoundDevice::CreateBuffers ()
     else
         pMain->message( "failed" );
 
-    if ( !primary_set || !snd_primary->getBool( ) )
+    if ( !primary_set || !snd_primary )
     {
         m_BufferFormat = wfx;
 
@@ -171,7 +168,7 @@ int cDirectSoundDevice::CreateBuffers ()
         dsbd.dwBufferBytes = DEFAULT_BUFFER_SIZE;
         dsbd.lpwfxFormat = &m_BufferFormat;
 
-        if ( snd_dsfocus->getBool( ) )
+        if ( snd_dsfocus )
             dsbd.dwFlags |= DSBCAPS_STICKYFOCUS;
 
         pMain->message( "...creating secondary buffer: " );

@@ -7,16 +7,16 @@
 #include "keys.h"
 #include "resource.h"
 
-cvar_t  *g_upgrade_frac = NULL;
-cvar_t  *g_upgrade_penalty = NULL;
-cvar_t  *g_upgrade_min = NULL;
-cvar_t  *g_upgrades = NULL;
+config::scalar g_upgrade_frac("g_upgradeFrac", 0.5f, config::archive|config::server, "upgrade fraction");
+config::scalar g_upgrade_penalty("g_upgradePenalty", 0.2f, config::archive|config::server, "upgrade penalty");
+config::scalar g_upgrade_min("g_upgradeMin", 0.2f, config::archive|config::server, "minimum upgrade fraction");
+config::boolean g_upgrades("g_upgrades", true, config::archive|config::server, "enable upgrades");
 
-cvar_t  *g_arenaWidth = NULL;
-cvar_t  *g_arenaHeight = NULL;
+config::integer g_arenaWidth("g_arenaWidth", 640, config::archive|config::server|config::reset, "arena width");
+config::integer g_arenaHeight("g_arenaHeight", 480, config::archive|config::server|config::reset, "arena height");
 
-extern cvar_t   *net_master;        //  master server
-extern cvar_t   *net_serverName;    //  server name
+extern config::string net_master;        //  master server
+extern config::string net_serverName;    //  server name
 
 // global object
 vMain   *pMain;
@@ -40,20 +40,10 @@ session::session()
 //------------------------------------------------------------------------------
 int session::init (char const *cmdline)
 {
+    _config = g_Application->config();
     _renderer = g_Application->window()->renderer();
 
     _menu_image = _renderer->load_image(MAKEINTRESOURCE(IDB_BITMAP1));
-
-    g_upgrade_frac      = pVariable->Get( "g_upgradeFrac", "0.50", "float", CVAR_ARCHIVE|CVAR_SERVER, "upgrade fraction" );
-    g_upgrade_penalty   = pVariable->Get( "g_upgradePenalty", "0.20", "float", CVAR_ARCHIVE|CVAR_SERVER, "upgrade penalty" );
-    g_upgrade_min       = pVariable->Get( "g_upgradeMin", "0.20", "float", CVAR_ARCHIVE|CVAR_SERVER, "minimum upgrade fraction" );
-    g_upgrades          = pVariable->Get( "g_upgrades", "true", "bool", CVAR_ARCHIVE|CVAR_SERVER, "enables upgrades" );
-
-    g_arenaWidth        = pVariable->Get( "g_arenaWidth", "640", "int", CVAR_ARCHIVE|CVAR_SERVER|CVAR_RESET, "arena width" );
-    g_arenaHeight       = pVariable->Get( "g_arenaHeight", "480", "int", CVAR_ARCHIVE|CVAR_SERVER|CVAR_RESET, "arena height" );
-
-    net_master          = pVariable->Get( "net_master", "oedhead.no-ip.org", "string", CVAR_ARCHIVE, "master server hostname" );
-    net_serverName      = pVariable->Get( "net_serverName", "Tanks! Server", "string", CVAR_ARCHIVE, "local server name" );
 
     _frametime = 0.0f;
     _framenum = 0;
@@ -92,7 +82,7 @@ int session::init (char const *cmdline)
     memset( _clientsay, 0, LONG_STRING );
 
     svs.max_clients = MAX_PLAYERS;
-    strcpy( svs.name, net_serverName->getString( ) );
+    strcpy( svs.name, net_serverName );
 
     cls.number = 0;
 
@@ -462,7 +452,8 @@ int session::key_event(unsigned char key, bool down)
                         if ( strlen( command ) > 4 ) {
                             char    cmdbuf[ 256 ];
                             char    *arg;
-                            cvar_t  *cvar;
+
+                            config::variable_base* variable;
 
                             strncpy( cmdbuf, command + 4, 256 );
 
@@ -476,12 +467,12 @@ int session::key_event(unsigned char key, bool down)
 
                             if ( !*arg ) {
                                 write_message_client( "usage: set [variable] [value]" );
-                            } else if ( (cvar = pVariable->Get( cmdbuf )) != 0 ) {
-                                cvar->setString( arg );
-                                if ( cvar->getFlags( ) & CVAR_SERVER ) {
-                                    write_message( va("\'%s\' set to \'%s\'", cvar->getName( ), cvar->getString( ) ) );
+                            } else if ( (variable = _config->find(cmdbuf)) ) {
+                                _config->set(cmdbuf, arg);
+                                if (variable->flags() & config::flags::server) {
+                                    write_message(va("\'%s\' set to \'%s\'", variable->name(), variable->value().c_str()));
                                 } else {
-                                    write_message_client( va("\'%s\' set to \'%s\'", cvar->getName( ), cvar->getString( ) ) );
+                                    write_message_client(va("\'%s\' set to \'%s\'", variable->name(), variable->value().c_str()));
                                 }
                             } else {
                                 write_message_client( va("unrecognized variable: %s", cmdbuf ) );
@@ -697,7 +688,7 @@ void session::add_score(int player_index, int score)
 
     if ( _multiplayer ) {
         if ( _score[player_index] % 10 == 0 ) {
-            if ( g_upgrades->getBool( ) ) {
+            if ( g_upgrades ) {
                 _clients[player_index].upgrades++;
             }
         }

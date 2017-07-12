@@ -55,7 +55,7 @@ void cSoundSource::destroySound (cSoundSource *pSound)
 
 void cSoundWaveSource::parseChunk (riffChunk_t &chunk)
 {
-    switch ( chunk.getName( ) )
+    switch ( chunk.name( ) )
     {
     case CHUNK_FMT:
         parseFormat( chunk );

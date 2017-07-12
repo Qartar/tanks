@@ -4,11 +4,11 @@
 #include "local.h"
 #pragma hdrstop
 
-extern cvar_t   *g_upgrade_frac;
-extern cvar_t   *g_upgrade_penalty;
-extern cvar_t   *g_upgrade_min;
+extern config::scalar g_upgrade_frac;
+extern config::scalar g_upgrade_penalty;
+extern config::scalar g_upgrade_min;
 
-cvar_t          *net_serverName;        //  name of local server
+config::string net_serverName("net_serverName", "Tanks! Server", config::archive, "local server name"); //  name of local server
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
@@ -45,7 +45,7 @@ void session::start_server ()
     _menu_active = false;
 
     svs.active = true;
-    net_serverName->setString( svs.name );
+    net_serverName = svs.name;
 
     _netchan.setup( network::socket::server, _netfrom );    // remote doesn't matter
 }

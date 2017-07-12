@@ -9,8 +9,8 @@
 #define STATIC_SIZE
 
 #ifndef STATIC_SIZE
-cvar_t  *vid_width;
-cvar_t  *vid_height;
+config::value  *vid_width;
+config::value  *vid_height;
 #endif //!STATIC_SIZE
 
 namespace {
@@ -67,8 +67,8 @@ void window::create()
     bool fullscreen = DEFAULT_FS;
 
 #ifndef STATIC_SIZE
-    vid_width   = pVariable->Get( "vid_width", "640", "int", CVAR_ARCHIVE, "width of display" );
-    vid_height  = pVariable->Get( "vid_height", "480", "int", CVAR_ARCHIVE, "height of display" );
+    vid_width   = pConfig->get( "vid_width", "640", "int", config::archive, "width of display" );
+    vid_height  = pConfig->get( "vid_height", "480", "int", config::archive, "height of display" );
 #endif //!STATIC_SIZE
 
     if ( (command = strstr( g_Application->InitString(), "fullscreen" )) )

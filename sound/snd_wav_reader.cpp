@@ -170,7 +170,7 @@ int riffChunk_c::setPos (int pos)
 /*=========================================================
 =========================================================*/
 
-unsigned int riffChunk_c::getName ()
+unsigned int riffChunk_c::name ()
 {
     return m_chunkName;
 }

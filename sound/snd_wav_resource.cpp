@@ -39,7 +39,7 @@ int cSoundWaveResource::Load (char const *szFilename)
     {
         riffChunk_t reader = riffChunk_t( (byte *)m_lpvData, dwSize );
 
-        while ( reader.getName( ) )
+        while ( reader.name( ) )
         {
             parseChunk( reader );
             reader.chunkNext( );

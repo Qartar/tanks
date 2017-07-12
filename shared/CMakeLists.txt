@@ -1,7 +1,7 @@
 add_library(shared STATIC
+    cm_config.cpp
+    cm_config.h
     cm_sound.h
-    cm_variable.cpp
-    cm_variable.h
     oed_error.h
     oed_files.h
     oed_mem.h

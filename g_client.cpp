@@ -4,10 +4,10 @@
 #include "local.h"
 #pragma hdrstop
 
-cvar_t          *net_master;            //  master server ip/hostname
+config::string net_master("net_master", "oedhead.no-ip.org", config::archive, "master server hostname");
 
-cvar_t  *cl_name = NULL;
-cvar_t  *cl_color = NULL;
+config::string cl_name("ui_name", "", config::archive, "user info: name");
+config::string cl_color("ui_color", "255 0 0", config::archive, "user info: color");
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
@@ -25,15 +25,12 @@ void session::init_client()
     _client_button_down = 0;
     _client_say = 0;
 
-    cl_name = pVariable->Get( "ui_name", "", "string", CVAR_ARCHIVE, "user info: name" );
-    cl_color = pVariable->Get( "ui_color", "255 0 0", "string", CVAR_ARCHIVE, "user info: color" );
-
-    if ( strlen( cl_name->getString( )) )
-        strcpy( cls.name, cl_name->getString( ) );
+    if ( strlen(cl_name) )
+        strcpy( cls.name, cl_name );
     else
         GetUserNameA( cls.name, (LPDWORD )&length );
 
-    text.parse( cl_color->getString( ) );
+    text.parse( cl_color );
     cls.color.r = (float )atoi(text.argv(0)) / 255.0f;
     cls.color.g = (float )atoi(text.argv(1)) / 255.0f;
     cls.color.b = (float )atoi(text.argv(2)) / 255.0f;
@@ -55,8 +52,8 @@ void session::init_client()
 //------------------------------------------------------------------------------
 void session::shutdown_client()
 {
-    cl_name->setString( cls.name );
-    cl_color->setString( va("%i %i %i", (int )(cls.color.r*255), (int )(cls.color.g*255), (int )(cls.color.b*255) ) );
+    cl_name = cls.name;
+    cl_color = va("%i %i %i", (int )(cls.color.r*255), (int )(cls.color.g*255), (int )(cls.color.b*255) );
 }
 
 //------------------------------------------------------------------------------
@@ -260,7 +257,7 @@ void session::info_ask ()
     _have_server = false;
 
     //  ping master server
-    pNet->string_to_address( net_master->getString( ), &addr );
+    pNet->string_to_address( net_master, &addr );
     addr.type = network::address_type::ip;
     addr.port = BIG_SHORT( PORT_SERVER );
     pNet->print( network::socket::client, addr, "info" );

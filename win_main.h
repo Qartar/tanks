@@ -49,6 +49,7 @@ public:
     float       get_time () { QueryPerformanceCounter( &m_timerCounter ) ; return ( (float)(m_timerCounter.QuadPart - m_timerBase.QuadPart) / (float)(m_timerFrequency.QuadPart) * 1000.0f ) ; }
 
     HINSTANCE   get_hInstance () { return m_hInstance; }
+    config::system* config() { return &_config; }
     render::window* window() { return &_window; }
 
 private:
@@ -70,6 +71,8 @@ private:
     void        m_MouseEvent (int mstate);
 
     network::manager _network;
+
+    config::system _config;
 };
 
 extern cWinApp *g_Application;

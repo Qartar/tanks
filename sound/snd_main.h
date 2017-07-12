@@ -10,8 +10,8 @@ Date    :   04/01/2006
 
 #include "shared.h"
 
+#include "cm_config.h"
 #include "cm_sound.h"
-#include "cm_variable.h"
 
 #include "snd_device.h"
 #include "snd_files.h"
@@ -114,7 +114,7 @@ private:
 class cSound : public sound::system
 {
 public:
-    cSound () { m_Chain.pNext = m_Chain.pPrev = &m_Chain; Init( ); }
+    cSound ();
     ~cSound () { Shutdown( ); }
 
     int     Init ();
@@ -152,11 +152,11 @@ public:
     vec3    vOrigin, vForward, vRight, vUp;
 
 private:
-    cvar_t  *snd_disable;
-    cvar_t  *snd_volume;
-    cvar_t  *snd_frequency;
-    cvar_t  *snd_mixahead;
-    cvar_t  *snd_primary;
+    config::boolean snd_disable;
+    config::scalar snd_volume;
+    config::integer snd_frequency;
+    config::scalar snd_mixahead;
+    config::boolean snd_primary;
 
     bool        m_bInitialized;
 

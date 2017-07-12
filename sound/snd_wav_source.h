@@ -26,7 +26,7 @@ public:
     void        chunkClose ();
     bool        chunkNext ();
 
-    unsigned int    getName ();
+    unsigned int    name ();
     int             getSize ();
 
     int             getPos ();

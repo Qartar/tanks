@@ -125,8 +125,8 @@ int cWinApp::Init (HINSTANCE hInstance, LPSTR szCmdLine)
     pNet = &_network;
     _network.init( );
 
-    vVariable::Create( );
-    
+    _config.init();
+
     // create sound class
     sound::system::create();
 
@@ -161,7 +161,7 @@ int cWinApp::Shutdown ()
     // shutdown sound
     sound::system::destroy();
 
-    vVariable::Destroy( );
+    _config.shutdown();
 
     _network.shutdown( );
 

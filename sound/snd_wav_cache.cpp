@@ -13,7 +13,7 @@ int cSoundWaveCache::Load (char const *szFilename)
 {
     riffChunk_t *pReader = new riffChunk_t( szFilename );
 
-    while ( pReader->getName( ) )
+    while ( pReader->name( ) )
     {
         parseChunk( *pReader );
         pReader->chunkNext( );

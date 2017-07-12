@@ -9,8 +9,8 @@
 
 #include <algorithm>
 
-extern cvar_t   *g_arenaWidth;
-extern cvar_t   *g_arenaHeight;
+extern config::integer g_arenaWidth;
+extern config::integer g_arenaHeight;
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
@@ -42,10 +42,10 @@ void world::shutdown()
 void world::reset()
 {
     _mins = vec2(0,0);
-    _maxs = vec2(g_arenaWidth->getInt(), g_arenaHeight->getInt());
+    _maxs = vec2(g_arenaWidth, g_arenaHeight);
 
-    _border_shapes[0] = physics::box_shape(vec2(_border_thickness + g_arenaWidth->getInt(), _border_thickness));
-    _border_shapes[1] = physics::box_shape(vec2(_border_thickness, _border_thickness + g_arenaHeight->getInt()));
+    _border_shapes[0] = physics::box_shape(vec2(_border_thickness + g_arenaWidth, _border_thickness));
+    _border_shapes[1] = physics::box_shape(vec2(_border_thickness, _border_thickness + g_arenaHeight));
 
     _objects.clear();
     _pending.clear();
@@ -56,7 +56,7 @@ void world::reset()
     // Initialize border objects
     {
         vec2 mins = vec2(-_border_thickness / 2, -_border_thickness / 2);
-        vec2 maxs = vec2(g_arenaWidth->getInt(), g_arenaHeight->getInt()) - mins;
+        vec2 maxs = vec2(g_arenaWidth, g_arenaHeight) - mins;
 
         vec2 positions[] = {
             {(mins.x+maxs.x)/2,mins.y}, // bottom

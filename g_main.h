@@ -19,9 +19,9 @@ class system;
 
 #define PROTOCOL_VERSION    3
 
-#define UPGRADE_FRAC    g_upgrade_frac->getFloat()
-#define UPGRADE_PENALTY g_upgrade_penalty->getFloat()
-#define UPGRADE_MIN     g_upgrade_min->getFloat()
+#define UPGRADE_FRAC    g_upgrade_frac
+#define UPGRADE_PENALTY g_upgrade_penalty
+#define UPGRADE_MIN     g_upgrade_min
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
@@ -212,6 +212,8 @@ public:
 private:
     menu::window _menu;
     game::world _world;
+
+    config::system* _config;
 
     render::system* _renderer;
 

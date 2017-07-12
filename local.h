@@ -17,8 +17,8 @@ Purpose :   General top-down include file
 #include "r_particle.h"
 #include "r_model.h"
 //  common headers
+#include "cm_config.h"
 #include "cm_sound.h"
-#include "cm_variable.h"
 //  network headers
 #include "net_main.h"
 //  game headers

@@ -23,15 +23,19 @@ void sound::system::destroy()
 /*=========================================================
 =========================================================*/
 
+cSound::cSound()
+    : snd_disable("snd_disable", false, config::archive, "disables sound playback")
+    , snd_volume("snd_volume", 0.5f, config::archive, "sound volume")
+    , snd_frequency("snd_frequency", 22050, config::archive, "sound playback speed")
+    , snd_mixahead("snd_mixahead", 0.1f, config::archive, "sound mix ahead time, in seconds")
+    , snd_primary("snd_primary", false, config::archive, "use primary sound buffer")
+{
+    m_Chain.pNext = m_Chain.pPrev = &m_Chain; Init( );
+}
+
 int cSound::Init ()
 {
     gSound = this;
-
-    snd_disable = pVariable->Get( "snd_disable", "false", "bool", CVAR_ARCHIVE, "disables sound playback" );
-    snd_volume =pVariable->Get( "snd_volume", "0.5", "float", CVAR_ARCHIVE, "sound volume" );
-    snd_frequency = pVariable->Get( "snd_frequency", "22050", "int", CVAR_ARCHIVE, "sound playback speed" );
-    snd_mixahead = pVariable->Get( "snd_mixahead", "0.1", "float", CVAR_ARCHIVE, "sound mix ahead time, in seconds" );
-    snd_primary = pVariable->Get( "snd_primary", "false", "bool", CVAR_ARCHIVE, "use primary sound buffer" );
 
     m_bInitialized = false;
 
@@ -48,7 +52,7 @@ int cSound::Init ()
         m_Channels[i].stop( );
     }
 
-    if ( !snd_disable->getBool( ) )
+    if ( !snd_disable )
     {
         SYSTEM_INFO sysinfo;
 
@@ -79,7 +83,7 @@ int cSound::Shutdown ()
 
 void cSound::on_create (HWND hWnd)
 {
-    if ( snd_disable->getBool( ) )
+    if ( snd_disable )
         return;
 
     pAudioDevice = cAudioDevice::Create( hWnd );
@@ -125,12 +129,12 @@ void cSound::update ()
 
     info = pAudioDevice->getBufferInfo( );
 
-    nSamples = snd_mixahead->getFloat( ) * info.frequency;
+    nSamples = snd_mixahead * info.frequency;
     pBuffer = getPaintBuffer( nSamples * info.channels * PAINTBUFFER_BYTES );
 
     pBuffer->nFrequency = info.frequency;
     pBuffer->nChannels = info.channels;
-    pBuffer->nVolume = snd_volume->getFloat( ) * 255;
+    pBuffer->nVolume = snd_volume * 255;
 
     nWritten = info.write - info.read;
     if ( nWritten < 0 )

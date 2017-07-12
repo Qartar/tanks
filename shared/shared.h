@@ -12,6 +12,8 @@ Date    :   10/16/2004
 
 #pragma once
 
+#include <cstddef>
+
 #define WIN32_LEAN_AND_MEAN     // exclude rarely used Windows crap
 
 #define APP_CLASSNAME       "Tanks!"
@@ -76,4 +78,10 @@ static cVec2 rot (cVec2 v, float rad)
 {
     return cVec2( v.x*cos(rad) - v.y*sin(rad),
                   v.y*cos(rad) + v.x*sin(rad) );
+}
+
+//------------------------------------------------------------------------------
+template<typename T, std::size_t Sz> constexpr std::size_t countof(T const (&)[Sz])
+{
+    return Sz;
 }
