@@ -17,7 +17,7 @@ class system;
 
 #define MAX_PLAYERS 16
 
-#define PROTOCOL_VERSION    3
+#define PROTOCOL_VERSION    4
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
@@ -25,8 +25,6 @@ namespace game {
 //------------------------------------------------------------------------------
 typedef struct game_client_s
 {
-    vec3    color;
-
     float   damage_mod;
     float   armor_mod;
     float   refire_mod;
@@ -112,7 +110,8 @@ typedef struct client_s
 
     network::channel   netchan;
 
-    char        name[SHORT_STRING];
+    char name[SHORT_STRING];
+    vec3 color;
 } client_t;
 
 //------------------------------------------------------------------------------
@@ -233,6 +232,8 @@ private:
 
     int _score[MAX_PLAYERS];
     void draw_score ();
+
+    friend game::tank;
 
     game::tank* _players[MAX_PLAYERS];
     void spawn_player(int num);

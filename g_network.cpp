@@ -310,6 +310,10 @@ void session::write_info (int client, network::message *message)
     message->write_byte( svs.clients[client].active );
     message->write_string( svs.clients[client].name );
 
+    message->write_byte( svs.clients[client].color.x * 255 );
+    message->write_byte( svs.clients[client].color.y * 255 );
+    message->write_byte( svs.clients[client].color.z * 255 );
+
     //  write extra shit
 
     message->write_byte( _clients[client].upgrades );
@@ -317,10 +321,6 @@ void session::write_info (int client, network::message *message)
     message->write_byte( _clients[client].damage_mod * 10 );
     message->write_byte( _clients[client].refire_mod * 10 );
     message->write_byte( _clients[client].speed_mod * 10 );
-
-    message->write_byte( _players[client]->_color.r * 255 );
-    message->write_byte( _players[client]->_color.g * 255 );
-    message->write_byte( _players[client]->_color.b * 255 );
 
     // also write score
 
@@ -344,15 +344,19 @@ void session::read_info ()
     string = _netmsg.read_string( );
     strncpy( svs.clients[client].name, string, SHORT_STRING );
 
+    svs.clients[client].color.x = _netmsg.read_byte( ) / 255.0f;
+    svs.clients[client].color.y = _netmsg.read_byte( ) / 255.0f;
+    svs.clients[client].color.z = _netmsg.read_byte( ) / 255.0f;
+
+    if (_players[client]) {
+        _players[client]->_color = svs.clients[client].color;
+    }
+
     _clients[client].upgrades = _netmsg.read_byte( );
     _clients[client].armor_mod = _netmsg.read_byte( ) / 10.0f;
     _clients[client].damage_mod = _netmsg.read_byte( ) / 10.0f;
     _clients[client].refire_mod = _netmsg.read_byte( ) / 10.0f;
     _clients[client].speed_mod = _netmsg.read_byte( ) / 10.0f;
-
-    _players[client]->_color.r = _netmsg.read_byte( ) / 255.0f;
-    _players[client]->_color.g = _netmsg.read_byte( ) / 255.0f;
-    _players[client]->_color.b = _netmsg.read_byte( ) / 255.0f;
 
     if ( _multiserver || _dedicated )
     {

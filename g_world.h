@@ -64,6 +64,9 @@ public:
     virtual void touch(object *other, physics::contact const* contact);
     virtual void think();
 
+    virtual void read_snapshot(network::message& message);
+    virtual void write_snapshot(network::message& message) const;
+
     //! Get frame-interpolated position
     virtual vec2 get_position(float lerp) const;
 
@@ -130,6 +133,11 @@ public:
     virtual void draw(render::system* renderer) const override;
     virtual void touch(object *other, physics::contact const* contact) override;
 
+    virtual void read_snapshot(network::message& message) override;
+    virtual void write_snapshot(network::message& message) const override;
+
+    float damage() const { return _damage; }
+
     static physics::circle_shape _shape;
     static physics::material _material;
 
@@ -149,6 +157,9 @@ public:
     virtual void draw(render::system* renderer) const override;
     virtual void touch(object *other, physics::contact const* contact) override;
     virtual void think() override;
+
+    virtual void read_snapshot(network::message& message) override;
+    virtual void write_snapshot(network::message& message) const override;
 
     //! Get frame-interpolated turret rotation
     float get_turret_rotation(float lerp) const;
@@ -218,8 +229,13 @@ public:
     void run_frame ();
     void draw(render::system* renderer) const;
 
+    void read_snapshot(network::message& message);
+    void write_snapshot(network::message& message) const;
+
     template<typename T, typename... Args>
     T* spawn(Args&& ...args);
+
+    game::object* find_object(std::size_t spawn_id) const;
 
     void remove(object* object);
 
@@ -228,6 +244,7 @@ public:
 
     vec2 mins() const { return _mins; }
     vec2 maxs() const { return _maxs; }
+    int framenum() const { return _framenum; }
 
 private:
     //! Active objects in the world
@@ -243,6 +260,8 @@ private:
     std::size_t _spawn_id;
 
     void move_object(object* object);
+
+    game::object* spawn_snapshot(std::size_t spawn_id, object_type type);
 
     config::integer _arena_width;
     config::integer _arena_height;
@@ -262,6 +281,11 @@ private:
 
     vec2        _mins;
     vec2        _maxs;
+
+    int _framenum;
+
+    byte _message_buffer[MAX_MSGLEN];
+    network::message _message;
 
     physics::material _border_material;
     physics::box_shape _border_shapes[2];

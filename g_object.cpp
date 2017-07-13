@@ -14,6 +14,7 @@ physics::circle_shape object::_default_shape(0.5f);
 object::object(object_type type, object* owner)
     : _world(nullptr)
     , _model(nullptr)
+    , _color(1,1,1,1)
     , _type(type)
     , _owner(owner)
     , _rigid_body(&_default_shape, &_default_material, _default_mass)
@@ -34,6 +35,16 @@ void object::draw(render::system* /*renderer*/) const
 
 //------------------------------------------------------------------------------
 void object::think()
+{
+}
+
+//------------------------------------------------------------------------------
+void object::read_snapshot(network::message& /*message*/)
+{
+}
+
+//------------------------------------------------------------------------------
+void object::write_snapshot(network::message& /*message*/) const
 {
 }
 

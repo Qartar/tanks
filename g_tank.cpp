@@ -35,6 +35,9 @@ tank::tank ()
 {
     _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
 
+    _model = &tank_body_model;
+    _turret_model = &tank_turret_model;
+
     for (auto& chan : _channels) {
         if (chan == nullptr) {
             chan = pSound->allocate_channel();
@@ -273,6 +276,47 @@ void tank::think()
 }
 
 //------------------------------------------------------------------------------
+void tank::read_snapshot(network::message& message)
+{
+    _old_position = get_position();
+    _old_rotation = get_rotation();
+    _old_turret_rotation = get_turret_rotation();
+
+    _client = g_Game->_clients + message.read_byte();
+    g_Game->_players[_client - g_Game->_clients] = this;
+    _color.r = message.read_float();
+    _color.g = message.read_float();
+    _color.b = message.read_float();
+    set_position(message.read_vector());
+    set_linear_velocity(message.read_vector());
+    set_rotation(message.read_float());
+    set_angular_velocity(message.read_float());
+    _turret_rotation = message.read_float();
+    _turret_velocity = message.read_float();
+    _damage = message.read_float();
+    _fire_time = message.read_float();
+
+    update_sound();
+}
+
+//------------------------------------------------------------------------------
+void tank::write_snapshot(network::message& message) const
+{
+    message.write_byte(_client - g_Game->_clients);
+    message.write_float(_color.r);
+    message.write_float(_color.g);
+    message.write_float(_color.b);
+    message.write_vector(get_position());
+    message.write_vector(get_linear_velocity());
+    message.write_float(get_rotation());
+    message.write_float(get_angular_velocity());
+    message.write_float(_turret_rotation);
+    message.write_float(_turret_velocity);
+    message.write_float(_damage);
+    message.write_float(_fire_time);
+}
+
+//------------------------------------------------------------------------------
 float tank::get_turret_rotation(float lerp) const
 {
     return _old_turret_rotation + (_turret_rotation - _old_turret_rotation) * lerp;
@@ -432,6 +476,26 @@ void projectile::draw(render::system* renderer) const
     p2 = get_position( lerp + 0.4f );
 
     renderer->draw_line(p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0));
+}
+
+//------------------------------------------------------------------------------
+void projectile::read_snapshot(network::message& message)
+{
+    _old_position = get_position();
+
+    _owner = _world->find_object(message.read_long());
+    _damage = message.read_float();
+    set_position(message.read_vector());
+    set_linear_velocity(message.read_vector());
+}
+
+//------------------------------------------------------------------------------
+void projectile::write_snapshot(network::message& message) const
+{
+    message.write_long(_owner->spawn_id());
+    message.write_float(_damage);
+    message.write_vector(get_position());
+    message.write_vector(get_linear_velocity());
 }
 
 } // namespace game

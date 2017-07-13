@@ -86,9 +86,6 @@ void session::write_frame ()
     network::message    message;
     static byte messagebuf[MAX_MSGLEN];
 
-    int             i;
-    client_t        *cl;
-
     // HACK: update local players color here
     if ( svs.clients[0].local )
         _players[0]->_color = cls.color;
@@ -96,38 +93,7 @@ void session::write_frame ()
     message.init( messagebuf, MAX_MSGLEN );
     message.clear( );
 
-    message.write_byte( svc_frame );
-    message.write_long( _framenum );
-    for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
-    {
-        if ( !cl->active )
-            continue;
-
-        message.write_byte( 1 );
-        message.write_byte( i );
-
-        message.write_vector( _players[i]->get_position() );
-        message.write_vector( _players[i]->get_linear_velocity() );
-        message.write_float( _players[i]->get_rotation() );
-        message.write_float( _players[i]->get_angular_velocity() );
-        message.write_float( _players[i]->_turret_rotation );
-        message.write_float( _players[i]->_turret_velocity );
-
-        message.write_float( _players[i]->_damage );
-        message.write_float( _players[i]->_fire_time );
-
-        //if ( m_Players[i].m_Bullet.bInGame )
-        //{
-        //    message.WriteByte( 1 );
-
-        //    message.WriteVector( m_Players[i].m_Bullet.get_position() );
-        //    message.WriteVector( m_Players[i].m_Bullet.get_linear_velocity() );
-        //}
-        //else
-        //    message.WriteByte( 0 );
-    }
-
-    message.write_byte( 0 );
+    _world.write_snapshot(message);
 
     broadcast( message.bytes_written, messagebuf );
 }

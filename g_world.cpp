@@ -40,6 +40,7 @@ void world::reset()
 {
     _mins = vec2(0,0);
     _maxs = vec2(_arena_width, _arena_height);
+    _framenum = 0;
 
     _border_shapes[0] = physics::box_shape(vec2(_border_thickness + _arena_width, _border_thickness));
     _border_shapes[1] = physics::box_shape(vec2(_border_thickness, _border_thickness + _arena_height));
@@ -96,6 +97,10 @@ void world::draw(render::system* renderer) const
 //------------------------------------------------------------------------------
 void world::run_frame()
 {
+    _message.init(_message_buffer, countof(_message_buffer));
+
+    ++_framenum;
+
     for (auto& obj : _objects) {
         obj->think();
     }
@@ -115,6 +120,119 @@ void world::run_frame()
         _objects.push_back(std::move(obj));
     }
     _pending.clear();
+}
+
+//------------------------------------------------------------------------------
+void world::read_snapshot(network::message& message)
+{
+    for (auto& obj : _pending) {
+        _objects.push_back(std::move(obj));
+    }
+    _pending.clear();
+
+    _framenum = message.read_long();
+
+    // read active objects
+    for (std::size_t ii = 0; ; ++ii) {
+        std::size_t spawn_id = message.read_long();
+
+        if (!spawn_id) {
+            for (; ii < _objects.size(); ++ii) {
+                remove(_objects[ii].get());
+            }
+            break;
+        }
+
+        auto type = static_cast<object_type>(message.read_byte());
+
+        while (ii < _objects.size() && _objects[ii]->_spawn_id < spawn_id) {
+            remove(_objects[ii++].get());
+        }
+
+        if (ii >= _objects.size()) {
+            game::object* obj = spawn_snapshot(spawn_id, type);
+            obj->read_snapshot(message);
+            obj->set_position(obj->get_position(), true);
+        } else /*if (ii < _objects.size())*/ {
+            assert(_objects[ii]->_spawn_id == spawn_id);
+            _objects[ii]->read_snapshot(message);
+        }
+    }
+
+    for (auto obj : _removed) {
+        _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
+            return it.get() == obj;
+        }));
+    }
+    _removed.clear();
+
+    for (auto& obj : _pending) {
+        _objects.push_back(std::move(obj));
+    }
+    _pending.clear();
+}
+
+//------------------------------------------------------------------------------
+void world::write_snapshot(network::message& message) const
+{
+    message.write_byte(svc_frame);
+    message.write_long(_framenum);
+
+    // write active objects
+    for (auto const& obj : _objects) {
+        message.write_long(obj->_spawn_id);
+        message.write_byte(static_cast<int>(obj->_type));
+        obj->write_snapshot(message);
+    }
+
+    message.write_long(0);
+}
+
+//------------------------------------------------------------------------------
+game::object* world::spawn_snapshot(std::size_t spawn_id, object_type type)
+{
+    switch (type) {
+        case object_type::tank: {
+            auto tank = spawn<game::tank>();
+            tank->_spawn_id = _spawn_id = spawn_id;
+            return tank;
+        }
+
+        case object_type::projectile: {
+            auto proj = spawn<game::projectile>(nullptr, 1.0f);
+            proj->_spawn_id = _spawn_id = spawn_id;
+            return proj;
+        }
+
+        case object_type::obstacle: {
+            auto obj = spawn<game::object>(object_type::object);
+            obj->_spawn_id = _spawn_id = spawn_id;
+            return obj;
+        }
+        case object_type::object:
+        default:
+            return nullptr;
+    }
+}
+
+//------------------------------------------------------------------------------
+game::object* world::find_object(std::size_t spawn_id) const
+{
+    // search in active objects
+    for (auto& obj : _objects) {
+        if (obj->_spawn_id == spawn_id) {
+            return obj.get();
+        }
+    }
+
+    // look in pending objects
+    for (auto& obj : _pending) {
+        if (obj->_spawn_id == spawn_id) {
+            return obj.get();
+        }
+    }
+
+    return nullptr;
 }
 
 //------------------------------------------------------------------------------

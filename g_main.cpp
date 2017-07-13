@@ -233,7 +233,7 @@ void session::update_screen()
     view_width   = DEFAULT_W;
     view_height  = DEFAULT_H;
 
-    if ( _multiplayer && svs.clients[ cls.number ].active ) {
+    if ( _multiplayer && _players[ cls.number ] ) {
         float lerp = (_frametime - (_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
 
         center_x = _players[ cls.number ]->get_position( lerp ).x;
@@ -778,7 +778,7 @@ void session::draw_score ()
     {
         if ( _multiplayer )
         {
-            if ( !svs.clients[ sort[ i ] ].active )
+            if ( !_players[ sort[ i ] ] )
                 continue;
         }
         else if ( i >= 2 )
@@ -873,6 +873,9 @@ void session::new_game()
 
     for ( int i=0 ; i<MAX_PLAYERS ; i++ )
     {
+        fmt( svs.clients[i].name, "Player %i", i+1 );
+        svs.clients[i].color = player_colors[i];
+
         _clients[i].armor_mod = 1.0f;
         _clients[i].damage_mod = 1.0f;
         _clients[i].refire_mod = 1.0f;
@@ -934,7 +937,7 @@ void session::spawn_player(int num)
 
     _players[num]->_model = &tank_body_model;
     _players[num]->_turret_model = &tank_turret_model;
-    _players[num]->_color = player_colors[num];
+    _players[num]->_color = svs.clients[num].color;
     _players[num]->_player_index = num;
     _players[num]->_client = _clients + num;
 
@@ -946,14 +949,11 @@ void session::spawn_player(int num)
 
     _score[num] = 0;
 
-    _clients[num].color = player_colors[num];
     _clients[num].armor_mod = 1.0f;
     _clients[num].damage_mod = 1.0f;
     _clients[num].refire_mod = 1.0f;
     _clients[num].speed_mod = 1.0f;
     _clients[num].upgrades = 0;
-
-    fmt( svs.clients[num].name, "Player %i", num+1 );
 }
 
 //------------------------------------------------------------------------------

@@ -75,79 +75,9 @@ void session::stop_client ()
 //------------------------------------------------------------------------------
 void session::get_frame ()
 {
-    int             i;
-    int             readbyte;
-    int             framenum;
-
-    _world.reset( );
-
-    framenum = _netmsg.read_long( );
-
-    if ( framenum < cls.last_frame )
-        return;
-
-    cls.last_frame = framenum;
-    _framenum = framenum;
-
-    //
-    // allow some leeway for arriving packets, if they exceed it
-    // clamp the time so that the velocity lerping doesn't goof up
-    //
-
-    _frametime = (float )_framenum * FRAMEMSEC;
-
-    i = 0;
-    while ( true )
-    {
-        readbyte = _netmsg.read_byte( );
-        if ( !readbyte )
-            break;
-
-        i = _netmsg.read_byte( );
-
-        _players[i]->_old_position = _players[i]->get_position();
-        _players[i]->_old_rotation = _players[i]->get_rotation();
-        _players[i]->_old_turret_rotation  = _players[i]->_turret_rotation;
-
-        _players[i]->set_position(_netmsg.read_vector());
-        _players[i]->set_linear_velocity(_netmsg.read_vector());
-        _players[i]->set_rotation(_netmsg.read_float());
-        _players[i]->set_angular_velocity(_netmsg.read_float());
-        _players[i]->_turret_rotation = _netmsg.read_float( );
-        _players[i]->_turret_velocity = _netmsg.read_float( );
-
-        _players[i]->_damage = _netmsg.read_float( );
-        _players[i]->_fire_time = _netmsg.read_float( );
-
-        //m_World.AddObject( &m_Players[i] );
-
-        // this is normally run on cTank::Think but is this 
-        // not called on clients and must be called here
-        _players[i]->update_sound( );
-
-
-        //readbyte = m_netmsg.ReadByte( );
-
-        //if ( readbyte )
-        //{
-        //    if ( m_Players[i].m_Bullet.bInGame ) {
-        //        m_Players[i].m_Bullet.oldPos = m_Players[i].m_Bullet.get_position();
-        //    } else {
-        //        m_Players[i].m_Bullet.oldPos = m_Players[i].oldPos;
-        //    }
-
-        //    m_Players[i].m_Bullet.set_position(m_netmsg.ReadVector());
-        //    m_Players[i].m_Bullet.set_linear_velocity(m_netmsg.ReadVector());
-
-        //    m_World.AddObject( &m_Players[i].m_Bullet );
-
-        //    m_Players[i].m_Bullet.bInGame = true;
-        //} else {
-        //    m_Players[i].m_Bullet.bInGame = false;
-        //}
-    }
-
-    return;
+    _world.read_snapshot(_netmsg);
+    _framenum = _world.framenum();
+    _frametime = (_framenum - 1) * FRAMEMSEC;
 }
 
 //------------------------------------------------------------------------------
@@ -188,10 +118,6 @@ void session::connect_ack ()
     _menu_active = false;      // so you're totally screwed
     _game_active = true;       // if you ever want to know
 
-    _players[cls.number]->_color.r = cls.color.r;
-    _players[cls.number]->_color.g = cls.color.g;
-    _players[cls.number]->_color.b = cls.color.b;
-
     _clients[cls.number].upgrades = 0;
     _clients[cls.number].damage_mod = 1.0f;
     _clients[cls.number].armor_mod = 1.0f;
@@ -200,6 +126,10 @@ void session::connect_ack ()
 
     svs.clients[cls.number].active = true;
     strcpy( svs.clients[cls.number].name, cls.name );
+
+    svs.clients[cls.number].color.x = cls.color.r;
+    svs.clients[cls.number].color.y = cls.color.g;
+    svs.clients[cls.number].color.z = cls.color.b;
 
     write_info( cls.number, &_netchan.message );
 }
