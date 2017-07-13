@@ -14,7 +14,7 @@ void session::get_packets ()
     client_t    *cl;
     int         i;
 
-    float       time = g_Application->get_time( );
+    float       time = g_Application->time();
 
     if ( _multiserver )
         socket = network::socket::server;

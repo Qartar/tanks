@@ -393,16 +393,12 @@ int session::key_event(unsigned char key, bool down)
             if ( !down )
                 return true;
 
-            if ( ctrl && key == 'v' )
-            {
-                char    *clipboard = g_Application->ClipboardData( );
+            if ( ctrl && key == 'v' ) {
+                std::string s = g_Application->clipboard();
 
-                if ( clipboard )
-                {
-                    strcat( _clientsay, clipboard );
+                if (s.length()) {
+                    strcat(_clientsay, s.c_str());
                     _clientsay[strlen(_clientsay)] = 0;
-
-                    free( clipboard );
                 }
                 return true;
             }
@@ -549,7 +545,7 @@ int session::key_event(unsigned char key, bool down)
     }
     else if ( key == K_PGDN && down )
     {
-        float   time = g_Application->get_time( );
+        float   time = g_Application->time();
 
         for ( int i=0 ; i<MAX_MESSAGES ; i++ )
             _messages[i].time = time;
@@ -1006,7 +1002,7 @@ void session::write_message (char const* message, bool broadcast)
 
     memset( _messages[_num_messages].string, 0, MAX_STRING );
     strcpy( _messages[_num_messages].string, message );
-    _messages[_num_messages].time = g_Application->get_time( );
+    _messages[_num_messages].time = g_Application->time();
 
     _num_messages = (_num_messages+1)%MAX_MESSAGES;
 }
@@ -1018,7 +1014,7 @@ void session::draw_messages ()
     int         ypos;
     float       alpha;
 
-    float       time = g_Application->get_time( );
+    float       time = g_Application->time();
 
     ypos = DEFAULT_H - 36;
 

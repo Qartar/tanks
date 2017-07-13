@@ -84,7 +84,7 @@ HBITMAP image::load_resource(char const* name) const
     UINT flags = LR_CREATEDIBSECTION;
 
     return (HBITMAP )LoadImageA(
-        g_Application->get_hInstance(), // hinst
+        g_Application->hinstance(),     // hinst
         name,                           // name
         IMAGE_BITMAP,                   // type
         0,                              // cx

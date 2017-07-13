@@ -1,78 +1,57 @@
-/*
-===============================================================================
-
-Name    :   win_main.h
-
-Purpose :   Windows API Interface
-
-Date    :   10/15/2004
-
-===============================================================================
-*/
+// win_main.h
+//
 
 #pragma once
 
-/*
-===========================================================
+#ifndef WINAPI
+#define WINAPI __stdcall
+#endif
 
-Name    :   cWinApp
-
-Purpose :   this is THE windows class winmain calls cWinApp::Main
-            and everything is handled from within the class, wndproc
-            is a static function for compatability issues.
-
-            see win_main.cpp for explanation on member functions
-
-===========================================================
-*/
-
-class manager;
-
-class cWinApp
+//------------------------------------------------------------------------------
+class application
 {
 public:
-    cWinApp (HINSTANCE hInstance);
-    ~cWinApp () {}
+    application(HINSTANCE hInstance);
 
-    int     Main (LPSTR szCmdLine, int nCmdShow);
+    int main(LPSTR szCmdLine, int nCmdShow);
 
-    int     Init (HINSTANCE hInstance, LPSTR szCmdLine);
-    int     Shutdown ();
+    void error(char const *title, char const *message);
 
-    void    Error (char const *szTitle, char const *szMessage);
-    void    Quit (int nExitCode);
+    void quit(int exit_code);
 
-    char    *ClipboardData ();
-    char    *InitString() { return m_szInitString; }
+    std::string clipboard() const;
+    char const* init_string() { return _init_string; }
 
-    // get_time : returns time in milliseconds
-    float       get_time () { QueryPerformanceCounter( &m_timerCounter ) ; return ( (float)(m_timerCounter.QuadPart - m_timerBase.QuadPart) / (float)(m_timerFrequency.QuadPart) * 1000.0f ) ; }
+    float time() const;
 
-    HINSTANCE   get_hInstance () { return m_hInstance; }
+    HINSTANCE hinstance() { return _hinstance; }
     config::system* config() { return &_config; }
     render::window* window() { return &_window; }
 
-private:
-    HINSTANCE   m_hInstance;
-    int         m_nExitCode;
+protected:
+    HINSTANCE _hinstance;
+    int _exit_code;
+
+    int _mouse_state;
+
+    char const* _init_string;
+
+    LARGE_INTEGER _timer_frequency;
+    LARGE_INTEGER _timer_base;
 
     render::window _window;
     game::session _game;
-
-    char        *m_szInitString;
-
-    LARGE_INTEGER   m_timerFrequency;
-    LARGE_INTEGER   m_timerCounter;
-    LARGE_INTEGER   m_timerBase;
-
-    static LRESULT m_WndProc (HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam);  // ATL SUCKS
-
-    void        m_KeyEvent (int Param, bool Down);
-    void        m_MouseEvent (int mstate);
-
     network::manager _network;
-
     config::system _config;
+
+protected:
+    int init(HINSTANCE hInstance, LPSTR szCmdLine);
+    int shutdown();
+
+    void key_event(int param, bool down);
+    void mouse_event(int mouse_state);
+
+    static LRESULT WINAPI wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam);
 };
 
-extern cWinApp *g_Application;
+extern application *g_Application;

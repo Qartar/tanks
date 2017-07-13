@@ -34,8 +34,8 @@ int channel::setup (network::socket socket, network::address remote, int netport
     this->message.init( this->messagebuf, MAX_MSGLEN );
     this->message.allow_overflow = true;
 
-    this->last_sent = g_Application->get_time( );
-    this->last_received = g_Application->get_time( );
+    this->last_sent = g_Application->time();
+    this->last_received = g_Application->time();
 
     return ERROR_NONE;
 }
@@ -60,7 +60,7 @@ int channel::transmit (int length, byte *data)
 
     // send it off
 
-    last_sent = g_Application->get_time( );
+    last_sent = g_Application->time();
 
     return pNet->send( socket, netmsg.bytes_written, netmsgbuf, address );
 }
@@ -76,7 +76,7 @@ int channel::process (network::message *message)
     if (socket == network::socket::server)
         netport = message->read_short( );
 
-    last_received = g_Application->get_time( );
+    last_received = g_Application->time();
 
     return ERROR_NONE;
 }

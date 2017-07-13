@@ -15,11 +15,11 @@ namespace game {
 //------------------------------------------------------------------------------
 void world::init()
 {
-    char    *command;
+    char const* command;
 
     clear_particles();
 
-    if ( (command = strstr( g_Application->InitString(), "particles=" )) ) {
+    if ( (command = strstr( g_Application->init_string(), "particles=" )) ) {
         _use_particles = ( atoi(command+10) > 0 );
     } else {
         _use_particles = true;

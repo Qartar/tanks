@@ -27,7 +27,7 @@ void window::init ()
     add_button<button>("Quit", vec2(576,32), vec2(96,32), [](){
         g_Game->stop_client();
         g_Game->stop_server();
-        g_Application->Quit(0);
+        g_Application->quit(0);
     });
 
     // local
