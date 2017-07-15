@@ -301,7 +301,7 @@ void cSound::Delete (snd_link_t *pLink)
 /*=========================================================
 =========================================================*/
 
-int cSound::load_sound (char const *szFilename)
+sound::asset cSound::load_sound (char const *szFilename)
 {
     snd_link_t  *pLink;
 
@@ -311,14 +311,14 @@ int cSound::load_sound (char const *szFilename)
         pLink = Create( szFilename );
 
     if ( pLink )
-        return pLink->nNumber;
-    return -1;
+        return static_cast<sound::asset>(pLink->nNumber + 1);
+    return sound::asset::invalid;
 }
 
 /*=========================================================
 =========================================================*/
 
-void cSound::play (int nIndex, vec3 vOrigin, float flVolume, float flAttenuation)
+void cSound::play (sound::asset asset, vec3 vOrigin, float flVolume, float flAttenuation)
 {
     sound::channel   *pChannel = m_allocChan( false );
 
@@ -329,6 +329,6 @@ void cSound::play (int nIndex, vec3 vOrigin, float flVolume, float flAttenuation
         pChannel->set_frequency( 1.0f );
         pChannel->set_attenuation( flAttenuation );
         
-        pChannel->play( nIndex );
+        pChannel->play( asset );
     }
 }

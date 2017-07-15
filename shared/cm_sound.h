@@ -15,6 +15,11 @@ typedef struct HWND__ *HWND;
 ////////////////////////////////////////////////////////////////////////////////
 namespace sound {
 
+enum class asset
+{
+    invalid = 0
+};
+
 //------------------------------------------------------------------------------
 class channel
 {
@@ -22,8 +27,8 @@ public:
     virtual bool playing() = 0;
     virtual bool looping() = 0;
 
-    virtual int play(int sound_index) = 0;
-    virtual int loop(int sound_index) = 0;
+    virtual int play(sound::asset asset) = 0;
+    virtual int loop(sound::asset asset) = 0;
     virtual void stop() = 0;
 
     virtual void set_origin(vec3 origin) = 0;
@@ -46,12 +51,12 @@ public:
 
     virtual void set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up) = 0;
 
-    virtual void play(int sound_index, vec3 origin, float volume, float attenuation) = 0;
+    virtual void play(sound::asset asset, vec3 origin, float volume, float attenuation) = 0;
 
     virtual sound::channel* allocate_channel() = 0;
     virtual void free_channel(sound::channel *channel) = 0;
 
-    virtual int load_sound (char const* filename) = 0;
+    virtual sound::asset load_sound (char const* filename) = 0;
 };
 
 } // namespace sound

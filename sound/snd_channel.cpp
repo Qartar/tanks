@@ -50,16 +50,16 @@ void cSound::m_mixChannels (paintbuffer_t *pBuffer, int nSamples)
 /*=========================================================
 =========================================================*/
 
-int cSoundChannel::play (int nSound, bool bLooping)
+int cSoundChannel::play (sound::asset asset, bool bLooping)
 {
-    if ( nSound < 0 )
+    if ( asset == sound::asset::invalid )
         return ERROR_FAIL;
 
-    m_pSound = gSound->getSound( nSound );
+    m_pSound = gSound->getSound( static_cast<int>(asset) - 1 );
 
     if ( !m_pSound )
     {
-        pMain->message( "could not play sound %i: does not exist\n", nSound );
+        pMain->message( "could not play sound %i: does not exist\n", static_cast<int>(asset) - 1 );
         return ERROR_FAIL;
     }
 
@@ -70,14 +70,14 @@ int cSoundChannel::play (int nSound, bool bLooping)
     return ERROR_NONE;
 }
 
-int cSoundChannel::play (int nSound)
+int cSoundChannel::play (sound::asset asset)
 {
-    return play( nSound, false );
+    return play( asset, false );
 }
 
-int cSoundChannel::loop (int nSound)
+int cSoundChannel::loop (sound::asset asset)
 {
-    return play( nSound, true );
+    return play( asset, true );
 }
 
 void cSoundChannel::stop ()

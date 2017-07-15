@@ -311,10 +311,10 @@ void world::move_object(game::object *object)
 }
 
 //------------------------------------------------------------------------------
-void world::add_sound(int sound_index)
+void world::add_sound(sound::asset sound_asset)
 {
-    g_Game->write_sound(sound_index);
-    pSound->play(sound_index, vec3(0,0,0), 1.0f, 0.0f);
+    g_Game->write_sound(static_cast<int>(sound_asset));
+    pSound->play(sound_asset, vec3(0,0,0), 1.0f, 0.0f);
 }
 
 //------------------------------------------------------------------------------

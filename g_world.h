@@ -144,7 +144,7 @@ public:
 protected:
     float _damage;
 
-    int _sound_explode;
+    sound::asset _sound_explode;
 };
 
 //------------------------------------------------------------------------------
@@ -200,11 +200,11 @@ protected:
     static physics::material _material;
     static physics::box_shape _shape;
 
-    int _sound_idle;
-    int _sound_move;
-    int _sound_turret_move;
-    int _sound_fire;
-    int _sound_explode;
+    sound::asset _sound_idle;
+    sound::asset _sound_move;
+    sound::asset _sound_turret_move;
+    sound::asset _sound_fire;
+    sound::asset _sound_explode;
 };
 
 //------------------------------------------------------------------------------
@@ -239,7 +239,7 @@ public:
 
     void remove(object* object);
 
-    void add_sound(int sound_index);
+    void add_sound(sound::asset sound_asset);
     void add_effect(effect_type type, vec2 position, vec2 direction = vec2(0,0), float strength = 1);
 
     vec2 mins() const { return _mins; }

@@ -72,9 +72,9 @@ public:
     virtual bool        playing () { return m_bPlaying; }
     virtual bool        looping () { return m_bLooping; }
 
-    virtual int         play (int nSound, bool bLooping);
-    virtual int         play (int nSound);
-    virtual int         loop (int nSound);
+    virtual int         play (sound::asset asset, bool bLooping);
+    virtual int         play (sound::asset asset);
+    virtual int         loop (sound::asset asset);
 
     virtual void        stop ();
 
@@ -127,7 +127,7 @@ public:
 
     virtual void    set_listener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp);
 
-    virtual void    play (int nIndex, vec3 vOrigin, float flVolume, float flAttenuation);
+    virtual void    play (sound::asset asset, vec3 vOrigin, float flVolume, float flAttenuation);
 
     virtual sound::channel   *allocate_channel () { return m_allocChan( true ); }
     virtual void        free_channel (sound::channel *pChan);
@@ -139,7 +139,7 @@ public:
 
     //  registration
 
-    int             load_sound (char const *szFilename);
+    sound::asset    load_sound (char const *szFilename);
     cSoundSource    *getSound (int nSound) { if (m_Sounds[nSound]) return m_Sounds[nSound]->pSource; return NULL; }
 
     //  mixing
