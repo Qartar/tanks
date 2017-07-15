@@ -1,6 +1,9 @@
 // net_main.cpp
 //
 
+#include "precompiled.h"
+#pragma hdrstop
+
 #include "net_main.h"
 
 network::manager    *pNet;  // extern

@@ -1,7 +1,7 @@
 // r_model.cpp
 //
 
-#include "local.h"
+#include "precompiled.h"
 #pragma hdrstop
 
 render::model tank_body_model({

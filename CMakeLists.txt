@@ -10,7 +10,7 @@ add_subdirectory(shared)
 add_subdirectory(sound)
 add_subdirectory(physics)
 
-add_executable(tanks WIN32
+set(tanks-sources
     g_button.cpp
     g_client.cpp
     g_main.cpp
@@ -27,7 +27,6 @@ add_executable(tanks WIN32
     g_world.cpp
     g_world.h
     keys.h
-    local.h
     net_chan.cpp
     net_main.cpp
     net_main.h
@@ -48,6 +47,13 @@ add_executable(tanks WIN32
     win_main.h
 )
 
+add_executable(tanks WIN32
+    ${tanks-sources}
+
+    precompiled.cpp
+    precompiled.h
+)
+
 target_link_libraries(tanks
     # project libraries
     shared
@@ -58,5 +64,9 @@ target_link_libraries(tanks
     opengl32
     Pathcch
 )
+
+# Set up precompiled header
+set_source_files_properties(precompiled.cpp PROPERTIES COMPILE_FLAGS /Ycprecompiled.h)
+set_source_files_properties(${tanks-sources} PROPERTIES COMPILE_FLAGS /Yuprecompiled.h)
 
 set_target_properties(tanks PROPERTIES OUTPUT_NAME "Tanks!")

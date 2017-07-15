@@ -1,7 +1,7 @@
 // r_window.cpp
 //
 
-#include "local.h"
+#include "precompiled.h"
 #pragma hdrstop
 
 #include "resource.h"

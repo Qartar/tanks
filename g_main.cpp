@@ -1,7 +1,7 @@
 // g_main.cpp
 //
 
-#include "local.h"
+#include "precompiled.h"
 #pragma hdrstop
 
 #include "keys.h"

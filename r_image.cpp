@@ -1,7 +1,7 @@
 //  r_image.cpp
 //
 
-#include "local.h"
+#include "precompiled.h"
 #pragma hdrstop
 
 #ifndef GL_VERSION_1_2

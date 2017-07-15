@@ -1,6 +1,9 @@
 // net_msg.cpp
 //
 
+#include "precompiled.h"
+#pragma hdrstop
+
 #include "net_main.h"
 
 #define ANGLE2SHORT(x)  ((int)((x)*(32768.0/360)))

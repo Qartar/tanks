@@ -1,7 +1,7 @@
 // g_tank.cpp
 //
 
-#include "local.h"
+#include "precompiled.h"
 #pragma hdrstop
 
 #include "p_collide.h"
