@@ -126,10 +126,7 @@ void session::connect_ack ()
 
     svs.clients[cls.number].active = true;
     strcpy( svs.clients[cls.number].name, cls.name );
-
-    svs.clients[cls.number].color.x = cls.color.r;
-    svs.clients[cls.number].color.y = cls.color.g;
-    svs.clients[cls.number].color.z = cls.color.b;
+    svs.clients[cls.number].color = cls.color;
 
     write_info( cls.number, &_netchan.message );
 }

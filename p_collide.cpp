@@ -13,7 +13,7 @@ namespace physics {
 collide::collide(rigid_body const* body_a, rigid_body const* body_b)
     : _body{body_a, body_b}
 {
-    vec3 position, direction = body_b->get_position() - body_a->get_position();
+    vec3 position, direction = vec3(body_b->get_position() - body_a->get_position());
     float distance = minimum_distance(position, direction);
 
     // Calculate the relative velocity of the bodies at the contact point
@@ -36,13 +36,13 @@ collide::collide(rigid_body const* body_a, rigid_body const* body_b)
         float inverse_reduced_mass = _body[0]->get_inverse_mass()
                                    + _body[1]->get_inverse_mass();
 
-        vec3 ra = position - _body[0]->get_position();
-        vec3 rb = position - _body[1]->get_position();
+        vec3 ra = position - vec3(_body[0]->get_position());
+        vec3 rb = position - vec3(_body[1]->get_position());
 
         // Change in normal velocity per change in momentum along normal
         float gx = inverse_reduced_mass
-                 + _body[0]->get_inverse_inertia() * ra.cross(direction).lengthsq()
-                 + _body[1]->get_inverse_inertia() * rb.cross(direction).lengthsq();
+                 + _body[0]->get_inverse_inertia() * ra.cross(direction).length_sqr()
+                 + _body[1]->get_inverse_inertia() * rb.cross(direction).length_sqr();
 
         // Change in tangent velocity per change in momentum along normal
         float gy = _body[0]->get_inverse_inertia() * ra.cross(direction).cross(ra).dot(-tangent)
@@ -54,8 +54,8 @@ collide::collide(rigid_body const* body_a, rigid_body const* body_b)
 
         // Change in tangent velocity per change in momentum along tangent
         float hy = inverse_reduced_mass
-                 + _body[0]->get_inverse_inertia() * ra.cross(-tangent).lengthsq()
-                 + _body[1]->get_inverse_inertia() * rb.cross(-tangent).lengthsq();
+                 + _body[0]->get_inverse_inertia() * ra.cross(-tangent).length_sqr()
+                 + _body[1]->get_inverse_inertia() * rb.cross(-tangent).length_sqr();
 
         float dvx = -(1.0f + restitution) * relative_velocity.dot(direction);
         float dvy = -relative_velocity.dot(-tangent);
@@ -117,7 +117,7 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
         vec3 n = (simplex[1].d - simplex[0].d).cross(candidate.d - simplex[1].d);
 
         // Check if the candidate point is any closer to the minimum
-        if (n.lengthsq() < epsilon || num_iterations > max_iterations) {
+        if (n.length_sqr() < epsilon || num_iterations > max_iterations) {
             point = nearest_point(simplex[0], simplex[1]);
             float length = direction.length();
             direction /= length;
@@ -133,7 +133,7 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
         vec3 d0 = nearest_difference(simplex[0], candidate);
         vec3 d1 = nearest_difference(simplex[1], candidate);
 
-        if (d0.lengthsq() < d1.lengthsq()) {
+        if (d0.length_sqr() < d1.length_sqr()) {
             simplex[1] = candidate;
             direction = -d0;
         } else {
@@ -165,7 +165,7 @@ vec3 collide::body_supporting_vertex(rigid_body const* body, vec3 direction) con
 vec3 collide::nearest_difference(support_vertex a, support_vertex b) const
 {
     vec3 v = b.d - a.d;
-    float t = -a.d.dot(v) / v.lengthsq();
+    float t = -a.d.dot(v) / v.length_sqr();
 
     if (t > 1.0f) {
         return b.d;
@@ -180,7 +180,7 @@ vec3 collide::nearest_difference(support_vertex a, support_vertex b) const
 vec3 collide::nearest_point(support_vertex a, support_vertex b) const
 {
     vec3 v = b.d - a.d;
-    float t = -a.d.dot(v) / v.lengthsq();
+    float t = -a.d.dot(v) / v.length_sqr();
 
     if (t > 1.0f) {
         return b.a;
@@ -236,7 +236,7 @@ float collide::penetration_distance(support_vertex a, support_vertex b, support_
         // Check for termination
         float edge_distance = vertices[edge_index].d.dot(direction);
         float point_distance = candidate.d.dot(direction);
-        float delta_sqr = (point_distance - edge_distance) * (point_distance - edge_distance) / direction.lengthsq();
+        float delta_sqr = (point_distance - edge_distance) * (point_distance - edge_distance) / direction.length_sqr();
         if (delta_sqr < epsilon || vertices.size() == max_vertices) {
             point = nearest_point(vertices[edge_index], vertices[edge_index-1]);
             float length = direction.length();
@@ -259,7 +259,7 @@ int collide::nearest_edge_index(vec3 normal, std::vector<support_vertex> const& 
         vec3 edge_normal = normal.cross(vertices[ii-1].d - vertices[ii].d);
         float dot_product = edge_normal.dot(vertices[ii].d);
 
-        float dist_sqr = dot_product * dot_product / edge_normal.lengthsq();
+        float dist_sqr = dot_product * dot_product / edge_normal.length_sqr();
 
         if (dist_sqr < min_dist_sqr) {
             min_dist_sqr = dist_sqr;

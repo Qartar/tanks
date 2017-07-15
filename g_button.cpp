@@ -38,20 +38,20 @@ void button::draw(render::system* renderer, vec2 cursor_pos) const
 }
 
 //------------------------------------------------------------------------------
-void button::draw_rectangle(render::system* renderer, menu::rectangle const& rect, vec4 color) const
+void button::draw_rectangle(render::system* renderer, menu::rectangle const& rect, color4 color) const
 {
     renderer->draw_box(rect.size(), rect.center(), color);
 }
 
 //------------------------------------------------------------------------------
-void button::draw_rectangle(render::system* renderer, menu::rectangle const& rect, vec4 color, vec4 border_color) const
+void button::draw_rectangle(render::system* renderer, menu::rectangle const& rect, color4 color, color4 border_color) const
 {
     renderer->draw_box(rect.size(), rect.center(), border_color);
     renderer->draw_box(rect.size() - vec2(2, 2), rect.center(), color);
 }
 
 //------------------------------------------------------------------------------
-void button::draw_text(render::system* renderer, menu::rectangle const& rect, std::string const& text, vec4 color, int flags, float margin) const
+void button::draw_text(render::system* renderer, menu::rectangle const& rect, std::string const& text, color4 color, int flags, float margin) const
 {
     vec2 position = rect.center();
     vec2 size = renderer->string_size(text.c_str());
@@ -143,7 +143,7 @@ void submenu_button::draw(render::system* renderer, vec2 cursor_pos) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-client_button::client_button(char const* text, vec2 position, vec2 size, vec4 *color_ptr)
+client_button::client_button(char const* text, vec2 position, vec2 size, color3* color_ptr)
     : button(text, position, size)
     , _text_rectangle(position + vec2(0, size.y / 2.0f - 12.0f), vec2(size.x - 16.0f, 14.0f))
     , _color_ptr(color_ptr)
@@ -170,7 +170,7 @@ bool client_button::click(vec2 cursor_pos, bool down)
         _down = true;
     } else if (!down) {
         if (_down && over) {
-            _color_index = (_color_index+1)%NUM_PLAYER_COLORS;
+            _color_index = (_color_index+1) % game::num_player_colors;
             *_color_ptr = game::player_colors[_color_index];
         }
         _down = false;
@@ -198,8 +198,8 @@ void client_button::draw(render::system* renderer, vec2 cursor_pos) const
     draw_rectangle(renderer, _text_rectangle, menu::colors[text_button_color], menu::colors[text_border_color]);
     draw_text(renderer, _text_rectangle, g_Game->cls.name, menu::colors[7], valign_bottom|halign_left);
 
-    tank_body_model.draw(_rectangle.center(), 0, *_color_ptr);
-    tank_turret_model.draw(_rectangle.center(), 0, *_color_ptr);
+    tank_body_model.draw(_rectangle.center(), 0, color4(*_color_ptr));
+    tank_turret_model.draw(_rectangle.center(), 0, color4(*_color_ptr));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

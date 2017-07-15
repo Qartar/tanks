@@ -36,29 +36,29 @@ typedef struct game_client_s
 } game_client_t;
 
 //------------------------------------------------------------------------------
-static vec4 player_colors[] = {
-    vec4(   1.000f, 0.000f, 0.000f, 1),     // 0: red
-    vec4(   0.000f, 0.000f, 1.000f, 1),     // 1: blue
-    vec4(   0.000f, 1.000f, 0.000f, 1),     // 2: green
-    vec4(   1.000f, 1.000f, 0.000f, 1),     // 3: yellow
-    vec4(   1.000f, 0.500f, 0.000f, 1),     // 4: orange
-    vec4(   1.000f, 0.500f, 1.000f, 1),     // 5: pink
-    vec4(   0.000f, 1.000f, 1.000f, 1),     // 6: cyan
-    vec4(   1.000f, 1.000f, 1.000f, 1),     // 7: white
-    vec4(   0.500f, 0.000f, 1.000f, 1),     // 8: purple
-    vec4(   0.750f, 0.750f, 0.500f, 1),     // 9: tan
-    vec4(   0.625f, 0.000f, 0.000f, 1),     // 10: dark red
-    vec4(   0.000f, 0.000f, 0.625f, 1),     // 11: dark blue
-    vec4(   0.000f, 0.625f, 0.000f, 1),     // 12: dark green
-    vec4(   0.250f, 0.375f, 0.000f, 1),     // 13: dark yellow-green
-    vec4(   0.750f, 0.125f, 0.012f, 1),     // 14: crimson
-    vec4(   0.000f, 0.500f, 1.000f, 1),     // 15: light blue
-    vec4(   0.000f, 0.500f, 0.500f, 1),     // 16: teal
-    vec4(   0.375f, 0.375f, 0.375f, 1),     // 17: gray
-    vec4(   0.200f, 0.000f, 0.500f, 1),     // 18: dark purple
-    vec4(   0.375f, 0.250f, 0.125f, 1),     // 19: brown
+constexpr color3 player_colors[] = {
+    { 1.000f, 0.000f, 0.000f },     // 0: red
+    { 0.000f, 0.000f, 1.000f },     // 1: blue
+    { 0.000f, 1.000f, 0.000f },     // 2: green
+    { 1.000f, 1.000f, 0.000f },     // 3: yellow
+    { 1.000f, 0.500f, 0.000f },     // 4: orange
+    { 1.000f, 0.500f, 1.000f },     // 5: pink
+    { 0.000f, 1.000f, 1.000f },     // 6: cyan
+    { 1.000f, 1.000f, 1.000f },     // 7: white
+    { 0.500f, 0.000f, 1.000f },     // 8: purple
+    { 0.750f, 0.750f, 0.500f },     // 9: tan
+    { 0.625f, 0.000f, 0.000f },     // 10: dark red
+    { 0.000f, 0.000f, 0.625f },     // 11: dark blue
+    { 0.000f, 0.625f, 0.000f },     // 12: dark green
+    { 0.250f, 0.375f, 0.000f },     // 13: dark yellow-green
+    { 0.750f, 0.125f, 0.012f },     // 14: crimson
+    { 0.000f, 0.500f, 1.000f },     // 15: light blue
+    { 0.000f, 0.500f, 0.500f },     // 16: teal
+    { 0.375f, 0.375f, 0.375f },     // 17: gray
+    { 0.200f, 0.000f, 0.500f },     // 18: dark purple
+    { 0.375f, 0.250f, 0.125f },     // 19: brown
 };
-#define NUM_PLAYER_COLORS   20
+constexpr std::size_t num_player_colors = countof(player_colors);
 
 //------------------------------------------------------------------------------
 typedef enum netops_e
@@ -111,7 +111,7 @@ typedef struct client_s
     network::channel   netchan;
 
     char name[SHORT_STRING];
-    vec3 color;
+    color3 color;
 } client_t;
 
 //------------------------------------------------------------------------------
@@ -144,7 +144,7 @@ typedef struct remote_server_s
 //------------------------------------------------------------------------------
 typedef struct client_state_s
 {
-    vec4    color;
+    color3  color;
     char    name[SHORT_STRING];
     int     number;
 

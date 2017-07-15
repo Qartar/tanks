@@ -241,7 +241,7 @@ void world::move_object(game::object *object)
     object->_old_position = object->get_position();
     object->_old_rotation = object->get_rotation();
 
-    if (object->get_linear_velocity().lengthsq() < 1e-12f
+    if (object->get_linear_velocity().length_sqr() < 1e-12f
             && std::abs(object->get_angular_velocity()) < 1e-6f) {
         return;
     }
@@ -341,8 +341,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->size = 2.0f + frand()*4.0f;
                 p->size_velocity = 2.0 + frand()*2.0f;
 
-                p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
-                p->color_velocity = vec4(0,0,0,-p->color.a / (1+frand()*1.0f));
+                p->color = color4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color_velocity = color4(0,0,0,-p->color.a / (1+frand()*1.0f));
 
                 p->drag = 2.5f + frand() * 1.5f;
             }
@@ -364,8 +364,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->color = vec4(1,0.5+frand()*0.5,0,strength*(0.5f+frand()));
-                p->color_velocity = vec4(0,-1.0f,0,-2.0f - frand());
+                p->color = color4(1,0.5+frand()*0.5,0,strength*(0.5f+frand()));
+                p->color_velocity = color4(0,-1.0f,0,-2.0f - frand());
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
                 p->drag = 0.5f + frand() * 0.5f;
@@ -390,8 +390,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->size = 4.0f + frand()*8.0f;
                 p->size_velocity = 2.0;
 
-                p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
-                p->color_velocity = vec4(0,0,0,-p->color.a / (2+frand()*1.5f));
+                p->color = color4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color_velocity = color4(0,0,0,-p->color.a / (2+frand()*1.5f));
 
                 p->drag = 0.5f + frand() * 2.0f;
             }
@@ -410,8 +410,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             p->position = position;
             p->velocity = direction * 48.0f * scale;
 
-            p->color = vec4(1.0f,1.0f,0.5f,0.5f);
-            p->color_velocity = -p->color * vec4(0,1,3,3);
+            p->color = color4(1.0f,1.0f,0.5f,0.5f);
+            p->color_velocity = -p->color * color4(0,1,3,3);
             p->size = 12.0 * scale;
             p->size_velocity = 192.0f * scale;
             p->flags = render::particle::invert;
@@ -436,8 +436,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->size = (4.0f + frand()*8.0f) * scale;
                 p->size_velocity = 2.0 * strength;
 
-                p->color = vec4(0.5,0.5,0.5,0.1+frand()*0.1f);
-                p->color_velocity = vec4(0,0,0,-p->color.a / (2+frand()*1.5f));
+                p->color = color4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color_velocity = color4(0,0,0,-p->color.a / (2+frand()*1.5f));
 
                 p->drag = (3.0f + frand() * 1.0f) * scale;
             }
@@ -459,8 +459,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity = vec2(cos(r),sin(r))*d;
                 p->velocity += direction * d * 0.5f;
 
-                p->color = vec4(1.0f,frand(),0.0f,0.1f);
-                p->color_velocity = vec4(0,0,0,-p->color.a/(0.5+frand()*frand()*2.5f));
+                p->color = color4(1.0f,frand(),0.0f,0.1f);
+                p->color_velocity = color4(0,0,0,-p->color.a/(0.5+frand()*frand()*2.5f));
                 p->size = (8.0 + frand()*16.0f) * scale;
                 p->size_velocity = 1.0f * strength;
 
@@ -484,8 +484,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->color = vec4(1,0.5+frand()*0.5,0,1);
-                p->color_velocity = vec4(0,0,0,-1.5f-frand());
+                p->color = color4(1,0.5+frand()*0.5,0,1);
+                p->color_velocity = color4(0,0,0,-1.5f-frand());
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
                 p->drag = 0.5f + frand() * 0.5f;

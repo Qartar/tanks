@@ -105,7 +105,7 @@ bool font::compare(char const* name, int size) const
 }
 
 //------------------------------------------------------------------------------
-void font::draw(char const* string, vec2 position, vec4 color) const
+void font::draw(char const* string, vec2 position, color4 color) const
 {
     // activate font if it isn't already
     if (_active_font != _handle) {

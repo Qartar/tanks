@@ -79,8 +79,8 @@ void tank::draw(render::system* renderer) const
     float   angle = get_rotation( lerp );
     float   tangle = get_turret_rotation( lerp );
 
-    vec4    color_health;
-    vec4    color_reload;
+    color4 color_health;
+    color4 color_reload;
 
     color_health.r = ( health < 10.0f ? 1.0f : (10.0f - (health - 10.0f)) / 10.0f );
     color_health.g = ( health > 10.0f ? 1.0f : (health / 10.0f) );
@@ -94,16 +94,16 @@ void tank::draw(render::system* renderer) const
 
     if (_damage >= 1.0f)
     {
-        _model->draw(pos, angle, vec4(0.3f,0.3f,0.3f,1));
-        _turret_model->draw(pos, tangle, vec4(0.3f,0.3f,0.3f,1));
+        _model->draw(pos, angle, color4(0.3f,0.3f,0.3f,1));
+        _turret_model->draw(pos, tangle, color4(0.3f,0.3f,0.3f,1));
         return;
     }
 
     // status bars
 
-    renderer->draw_box(vec2(20,2), pos + vec2(0,24), vec4(0.5,0.5,0.5,1));
+    renderer->draw_box(vec2(20,2), pos + vec2(0,24), color4(0.5,0.5,0.5,1));
     renderer->draw_box(vec2(reload,2), pos + vec2(0,24), color_reload);
-    renderer->draw_box(vec2(20,2), pos + vec2(0,22), vec4(0.5,0.5,0.5,1));
+    renderer->draw_box(vec2(20,2), pos + vec2(0,22), color4(0.5,0.5,0.5,1));
     renderer->draw_box(vec2(health,2), pos + vec2(0,22), color_health);
 
     // actual body
@@ -143,7 +143,7 @@ void tank::collide(tank* other, physics::contact const* contact)
     float base_damage = std::max<float>(0, contact->impulse.dot(contact->normal) - 10.0f) / 2.0f * FRAMETIME;
 
     vec2 direction = (contact->point - other->get_position()).normalize();
-    vec2 forward = rot(vec2(1,0), other->get_rotation());
+    vec2 forward = rotate(vec2(1,0), other->get_rotation());
     float impact_angle = direction.dot(forward);
 
     if (!g_Game->_extended_armor && !g_Game->_multiplayer) {
@@ -194,10 +194,10 @@ void tank::think()
         _damage = 0.0f;
     }
 
-    vec2 forward = rot(vec2(1,0), get_rotation());
+    vec2 forward = rotate(vec2(1,0), get_rotation());
     float speed = forward.dot(get_linear_velocity());
 
-    vec2 track_velocity = rot(vec2(_track_speed,0), get_rotation());
+    vec2 track_velocity = rotate(vec2(_track_speed,0), get_rotation());
     vec2 delta_velocity = track_velocity - get_linear_velocity();
     vec2 friction_impulse = delta_velocity * _rigid_body.get_mass() * _rigid_body.get_material()->sliding_friction() * FRAMETIME;
 
@@ -207,7 +207,7 @@ void tank::think()
     {
         vec2 vVel = vec2(speed * 0.98 * (1-FRAMETIME),0);
 
-        set_linear_velocity(rot(vVel,get_rotation()));
+        set_linear_velocity(rotate(vVel,get_rotation()));
         set_angular_velocity(get_angular_velocity() * 0.9f);
         _turret_velocity *= 0.9f;
 
@@ -244,8 +244,8 @@ void tank::think()
 
         _world->add_effect(
             effect_type::smoke,
-            get_position() + rot(effect_origin,_turret_rotation),
-            rot(effect_origin,_turret_rotation) * power * power * power * 2,
+            get_position() + rotate(effect_origin,_turret_rotation),
+            rotate(effect_origin,_turret_rotation) * power * power * power * 2,
             power * power * 4 );
     }
     else if ((_fire_time + 3000/_client->refire_mod) < g_Game->_frametime) // can fire
@@ -257,16 +257,16 @@ void tank::think()
 
             _world->add_effect(
                 effect_type::smoke,
-                get_position() + rot(effect_origin,_turret_rotation),
-                rot(effect_origin,_turret_rotation) * 16,
+                get_position() + rotate(effect_origin,_turret_rotation),
+                rotate(effect_origin,_turret_rotation) * 16,
                 64 );
 
             _fire_time = g_Game->_frametime;
 
             projectile* bullet = _world->spawn<projectile>(this, _client->damage_mod);
 
-            bullet->set_position(get_position() + rot(effect_origin,_turret_rotation), true);
-            bullet->set_linear_velocity(rot(vec2(1,0),_turret_rotation) * 20 * 96);
+            bullet->set_position(get_position() + rotate(effect_origin,_turret_rotation), true);
+            bullet->set_linear_velocity(rotate(vec2(1,0),_turret_rotation) * 20 * 96);
 
             _world->add_sound(_sound_fire);
         }
@@ -357,7 +357,7 @@ void tank::update_sound()
 
     // tread noise
     if (_channels[1]) {
-        if (get_linear_velocity().lengthsq() > 1.0f || fabs(get_angular_velocity()) > deg2rad(1.0f)) {
+        if (get_linear_velocity().length_sqr() > 1.0f || fabs(get_angular_velocity()) > deg2rad(1.0f)) {
             if (!_channels[1]->playing()) {
                 _channels[1]->loop(_sound_move);
             }
@@ -431,7 +431,7 @@ void projectile::touch(object *other, physics::contact const* contact)
 
         impact_normal = contact ? -contact->normal
                                 : -get_linear_velocity().normalize();
-        forward = rot(vec2(1,0), other->get_rotation());
+        forward = rotate(vec2(1,0), other->get_rotation());
         impact_angle = impact_normal.dot(forward);
 
         damage = owner_tank->_client->damage_mod / other_tank->_client->armor_mod;
@@ -475,7 +475,7 @@ void projectile::draw(render::system* renderer) const
     p1 = get_position( lerp );
     p2 = get_position( lerp + 0.4f );
 
-    renderer->draw_line(p2, p1, vec4(1,0.5,0,1), vec4(1,0.5,0,0));
+    renderer->draw_line(p2, p1, color4(1,0.5,0,1), color4(1,0.5,0,0));
 }
 
 //------------------------------------------------------------------------------

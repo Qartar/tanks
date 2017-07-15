@@ -88,7 +88,7 @@ void session::write_frame ()
 
     // HACK: update local players color here
     if ( svs.clients[0].local )
-        _players[0]->_color = cls.color;
+        _players[0]->_color = color4(cls.color);
 
     message.init( messagebuf, MAX_MSGLEN );
     message.clear( );

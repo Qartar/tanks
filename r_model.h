@@ -25,7 +25,7 @@ public:
         : model(rects, Size)
     {}
 
-    void draw(vec2 position, float rotation, vec4 color) const;
+    void draw(vec2 position, float rotation, color4 color) const;
 
 protected:
     std::vector<rect> _list;

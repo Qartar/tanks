@@ -276,7 +276,7 @@ void session::update_screen()
 
         get_cursor( );
 
-        _renderer->draw_image(_menu_image, vec2( 0, 0 ), vec2( 640, 480 ), vec4( 1, 1, 1, 1 ) );
+        _renderer->draw_image(_menu_image, vec2( 0, 0 ), vec2( 640, 480 ), color4( 1, 1, 1, 1 ) );
 
         _menu.draw(_renderer, _cursor);
     }
@@ -785,7 +785,7 @@ void session::draw_score ()
             break;
 
         _renderer->draw_box(vec2(7,7), vec2(width-96, 32+11+12*n),
-            vec4(_players[sort[i]]->_color.r, _players[sort[i]]->_color.g, _players[sort[i]]->_color.b, 1));
+            color4(_players[sort[i]]->_color.r, _players[sort[i]]->_color.g, _players[sort[i]]->_color.b, 1));
 
         _renderer->draw_string(svs.clients[ sort[ i ] ].name, vec2(width-96+4, 32+14+12*n), menu::colors[7]);
         _renderer->draw_string(va(": %i", _score[ sort[ i ] ]), vec2(width-96+64+4,32+14+12*n), menu::colors[7]);
@@ -937,7 +937,7 @@ void session::spawn_player(int num)
 
     _players[num]->_model = &tank_body_model;
     _players[num]->_turret_model = &tank_turret_model;
-    _players[num]->_color = svs.clients[num].color;
+    _players[num]->_color = color4(svs.clients[num].color);
     _players[num]->_player_index = num;
     _players[num]->_client = _clients + num;
 
@@ -1027,7 +1027,7 @@ void session::draw_messages ()
         {
             alpha = (_messages[i].time+12000 > time ? 1.0f : (_messages[i].time+15000 - time)/3000.0f );
 
-            _renderer->draw_string(_messages[i].string, vec2(8,ypos), vec4(1,1,1,alpha));
+            _renderer->draw_string(_messages[i].string, vec2(8,ypos), color4(1,1,1,alpha));
 
             ypos -= 12;
         }

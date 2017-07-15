@@ -89,7 +89,7 @@ public:
     void apply_impulse(vec2 impulse, vec2 position) { _rigid_body.apply_impulse(impulse, position); }
 
     render::model const* _model;
-    vec4 _color;
+    color4 _color;
 
     vec2 _old_position;
     float _old_rotation;

@@ -310,9 +310,9 @@ void session::write_info (int client, network::message *message)
     message->write_byte( svs.clients[client].active );
     message->write_string( svs.clients[client].name );
 
-    message->write_byte( svs.clients[client].color.x * 255 );
-    message->write_byte( svs.clients[client].color.y * 255 );
-    message->write_byte( svs.clients[client].color.z * 255 );
+    message->write_byte( svs.clients[client].color.r * 255 );
+    message->write_byte( svs.clients[client].color.g * 255 );
+    message->write_byte( svs.clients[client].color.b * 255 );
 
     //  write extra shit
 
@@ -344,12 +344,12 @@ void session::read_info ()
     string = _netmsg.read_string( );
     strncpy( svs.clients[client].name, string, SHORT_STRING );
 
-    svs.clients[client].color.x = _netmsg.read_byte( ) / 255.0f;
-    svs.clients[client].color.y = _netmsg.read_byte( ) / 255.0f;
-    svs.clients[client].color.z = _netmsg.read_byte( ) / 255.0f;
+    svs.clients[client].color.r = _netmsg.read_byte( ) / 255.0f;
+    svs.clients[client].color.g = _netmsg.read_byte( ) / 255.0f;
+    svs.clients[client].color.b = _netmsg.read_byte( ) / 255.0f;
 
     if (_players[client]) {
-        _players[client]->_color = svs.clients[client].color;
+        _players[client]->_color = color4(svs.clients[client].color);
     }
 
     _clients[client].upgrades = _netmsg.read_byte( );

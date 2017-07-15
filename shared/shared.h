@@ -74,12 +74,6 @@ void v##x::Create () {                  \
 void v##x::Destroy () {                 \
     ((c##x *)p##x)->~c##x(); delete p##x; p##x = NULL; }        
 
-static cVec2 rot (cVec2 v, float rad)
-{
-    return cVec2( v.x*cos(rad) - v.y*sin(rad),
-                  v.y*cos(rad) + v.x*sin(rad) );
-}
-
 //------------------------------------------------------------------------------
 template<typename T, std::size_t Sz> constexpr std::size_t countof(T const (&)[Sz])
 {

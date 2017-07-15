@@ -18,17 +18,17 @@ namespace menu {
 class window;
 
 //------------------------------------------------------------------------------
-const vec4 colors[] =
+constexpr color4 colors[] =
 {
-    vec4(0.000,0.000,0.000,1),
-    vec4(0.125,0.125,0.125,1),
-    vec4(0.250,0.250,0.250,1),
-    vec4(0.375,0.375,0.375,1),
-    vec4(0.500,0.500,0.500,1),
-    vec4(0.625,0.625,0.625,1),
-    vec4(0.750,0.750,0.750,1),
-    vec4(0.875,0.875,0.875,1),
-    vec4(1.000,1.000,1.000,1),
+    {0.000,0.000,0.000,1},
+    {0.125,0.125,0.125,1},
+    {0.250,0.250,0.250,1},
+    {0.375,0.375,0.375,1},
+    {0.500,0.500,0.500,1},
+    {0.625,0.625,0.625,1},
+    {0.750,0.750,0.750,1},
+    {0.875,0.875,0.875,1},
+    {1.000,1.000,1.000,1},
 };
 
 //------------------------------------------------------------------------------
@@ -112,9 +112,9 @@ protected:
         valign_bottom   = BIT(3),
     };
 
-    void draw_rectangle(render::system* renderer, menu::rectangle const& rect, vec4 color) const;
-    void draw_rectangle(render::system* renderer, menu::rectangle const& rect, vec4 color, vec4 border_color) const;
-    void draw_text(render::system* renderer, menu::rectangle const& rect, std::string const& text, vec4 color, int flags = align_default, float margin = 4.0f) const;
+    void draw_rectangle(render::system* renderer, menu::rectangle const& rect, color4 color) const;
+    void draw_rectangle(render::system* renderer, menu::rectangle const& rect, color4 color, color4 border_color) const;
+    void draw_text(render::system* renderer, menu::rectangle const& rect, std::string const& text, color4 color, int flags = align_default, float margin = 4.0f) const;
 };
 
 //------------------------------------------------------------------------------
@@ -168,13 +168,13 @@ protected:
 class client_button : public button
 {
 public:
-    client_button(char const* text, vec2 position, vec2 size, vec4 *pColor);
+    client_button(char const* text, vec2 position, vec2 size, color3* color_ptr);
 
     virtual bool click(vec2 cursor_pos, bool down) override;
     virtual void draw(render::system* renderer, vec2 cursor_pos) const override;
 
 protected:
-    vec4* _color_ptr;
+    color3* _color_ptr;
     int _color_index;
 
     bool _text_down;

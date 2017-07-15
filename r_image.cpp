@@ -19,7 +19,7 @@ render::image const* system::load_image(const char *name)
 }
 
 //------------------------------------------------------------------------------
-void system::draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color)
+void system::draw_image(render::image const* img, vec2 org, vec2 sz, color4 color)
 {
     if (img == nullptr) {
         return;
@@ -28,7 +28,7 @@ void system::draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, img->texnum());
 
-    glColor4fv(color.v);
+    glColor4fv(color);
 
     glBegin(GL_TRIANGLE_STRIP);
         glTexCoord2f(0.0f, 0.0f);

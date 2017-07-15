@@ -21,7 +21,7 @@ public:
     ~font();
 
     bool compare(char const* name, int size) const;
-    void draw(char const* string, vec2 position, vec4 color) const;
+    void draw(char const* string, vec2 position, color4 color) const;
     vec2 size(char const* string) const;
 
 private:
@@ -86,15 +86,15 @@ public:
 
     //  Image Interface (r_image.cpp)
     render::image const* load_image(char const* name);
-    void draw_image(render::image const* img, vec2 org, vec2 sz, vec4 color);
+    void draw_image(render::image const* img, vec2 org, vec2 sz, color4 color);
 
     // Drawing Functions (r_draw.cpp)
 
-    void draw_string(char const* string, vec2 position, vec4 color);
+    void draw_string(char const* string, vec2 position, color4 color);
     vec2 string_size(char const* string) const;
 
-    void draw_line(vec2 start, vec2 end, vec4 start_color, vec4 end_color);
-    void draw_box(vec2 size, vec2 position, vec4 color);
+    void draw_line(vec2 start, vec2 end, color4 start_color, color4 end_color);
+    void draw_box(vec2 size, vec2 position, color4 color);
     void draw_particles(float time, render::particle const* particles, std::size_t num_particles);
 
     void set_view_origin(vec2 position) {

@@ -12,7 +12,7 @@ Modified:   11/03/2006
 
 #pragma once
 
-#include <math.h>   // sqrt
+#include <cmath>   // sqrt
 
 #define ROLL    0
 #define PITCH   1
@@ -26,326 +26,276 @@ CLASS DEFINITIONS
 ===========================================================
 */
 
-class cVec2;
-class cVec3;
-class cVec4;
-class cRay2;
-class cLine2;
-class cMat3;
-class cMat4;
+class vec2;
+class vec3;
+class vec4;
+class mat3;
+class mat4;
 
-//
-// class definitions for vectors
-//
+////////////////////////////////////////////////////////////////////////////////
+// vector types
 
-class cVec2
+//------------------------------------------------------------------------------
+class vec2
 {
 public:
-    union
-    {
-        float   v[2];
-        struct
-        {
-            float   x;
-            float   y;
-        };
-    };
+    float   x;
+    float   y;
 
 // constructors
-    inline          cVec2   () = default;
-    __forceinline   cVec2   (float X, float Y)  {   x = X   ;   y = Y   ;   }
 
-    __forceinline   cVec2   &operator=  (const cVec2 &V) {x=V.x;y=V.y;return *this;}
-    __forceinline   cVec2   operator-   (void)           const {return cVec2(-x,-y);}
-    __forceinline   bool    operator==  (const cVec2 &V) const {return(x==V.x && y==V.y);}
-    __forceinline   bool    operator!=  (const cVec2 &V) const {return(!(*this==V));}
-    __forceinline   float   operator[]  (unsigned int n) const {return v[n];}
-    __forceinline   operator float*     ()                     {return v;}
-    __forceinline   operator const float*   ()           const {return v;}
+    vec2() = default;
+    constexpr vec2(float X, float Y) : x(X), y(Y) {}
+    explicit constexpr vec2(float S) : x(S), y(S) {}
 
-// vector operators
-    __forceinline   cVec2   operator+ (const cVec2 &V) const { return cVec2(   x+V.x   ,   y+V.y   );  }
-    __forceinline   cVec2   operator- (const cVec2 &V) const { return cVec2(   x-V.x   ,   y-V.y   );  }
-    __forceinline   cVec2   operator* (const cVec2 &V) const { return cVec2(   x*V.x   ,   y*V.y   );  }
-    __forceinline   cVec2   operator/ (const cVec2 &V) const { return cVec2(   x/V.x   ,   y/V.y   );  }
+    vec2& operator=(const vec2 &V) {x=V.x; y=V.y; return *this;}
+    bool operator==(const vec2 &V) const { return x == V.x && y == V.y; }
+    bool operator!=(const vec2 &V) const { return x != V.x || y != V.y; }
+    float operator[](std::size_t idx) const { return (&x)[idx]; }
+    float& operator[](std::size_t idx) { return (&x)[idx]; }
+    operator float*() { return &x; }
+    operator float const*() const { return &x; }
 
-// implicit operators
-    __forceinline   cVec2   &operator+=(const cVec2 &V) {   x+=V.x  ;   y+=V.y  ;   return*this;    }
-    __forceinline   cVec2   &operator-=(const cVec2 &V) {   x-=V.x  ;   y-=V.y  ;   return*this;    }
-    __forceinline   cVec2   &operator*=(const cVec2 &V) {   x*=V.x  ;   y*=V.y  ;   return*this;    }
-    __forceinline   cVec2   &operator/=(const cVec2 &V) {   x/=V.x  ;   y/=V.y  ;   return*this;    }
+// algebraic vector operations
 
-// linear operators
-    __forceinline   cVec2   operator* (float L) const { return cVec2(   x*L ,   y*L );  }
-    __forceinline   cVec2   operator/ (float L) const { return cVec2(   x/L ,   y/L );  }
+    vec2 operator-() const {return vec2(-x, -y);}
+    vec2 operator+(vec2 const& V) const { return vec2(x+V.x, y+V.y); }
+    vec2 operator-(vec2 const& V) const { return vec2(x-V.x, y-V.y); }
+    vec2 operator*(vec2 const& V) const { return vec2(x*V.x, y*V.y); }
+    vec2 operator/(vec2 const& V) const { return vec2(x/V.x, y/V.y); }
+    vec2 operator*(float S) const { return vec2(x*S, y*S); }
+    vec2 operator/(float S) const { return vec2(x/S, y/S); }
 
-//  linear implicit
-    __forceinline   cVec2   &operator*=(float L)    {   x*=L    ;   y*=L    ;   return*this;    }
-    __forceinline   cVec2   &operator/=(float L)    {   x/=L    ;   y/=L    ;   return*this;    }
+// algebraic vector assignment operations
+
+    vec2& operator+=(vec2 const& V) { x+=V.x; y+=V.y; return *this; }
+    vec2& operator-=(vec2 const& V) { x-=V.x; y-=V.y; return *this; }
+    vec2& operator*=(vec2 const& V) { x*=V.x; y*=V.y; return *this; }
+    vec2& operator/=(vec2 const& V) { x/=V.x; y/=V.y; return *this; }
+    vec2& operator*=(float S) { x*=S; y*=S; return *this; }
+    vec2& operator/=(float S) { x/=S; y/=S; return *this; }
 
 // utility functions
-    __forceinline   float   length()    const {   return(sqrtf(x*x+y*y));  }
-    __forceinline   float   lengthsq()  const {   return(x*x+y*y);        }
-    __forceinline   cVec2   &normalize()      {   (*this/=length());return*this;}
-    __forceinline   void    clear()           {   x=0.0f  ;   y=0.0f  ;   }
 
-    __forceinline   float   dot     (const cVec2 &V) const {   return(x*V.x+y*V.y);    }
-    __forceinline   cVec2   cross   (float V)        const {   return cVec2(y*V,-x*V); }
+    float length() const { return std::sqrt(length_sqr()); }
+    float length_sqr() const { return x*x + y*y; }
+    vec2& normalize() { *this /= length(); return *this; }
+    float normalize_length() { float len = length(); *this /= len; return len; }
+    void clear() { x=0.0f; y=0.0f; }
+
+    float dot(const vec2 &V) const { return x*V.x + y*V.y; }
+    vec2 cross(float V) const { return vec2(y*V, -x*V); }
 };
 
-class cVec3
+//------------------------------------------------------------------------------
+class vec3
 {
 public:
-    union
-    {
-        float   v[3];
-        struct
-        {
-            float   x;
-            float   y;
-            float   z;
-        };
-    };
+    float   x;
+    float   y;
+    float   z;
 
 // constructors
-    inline          cVec3   () = default;
-    __forceinline   cVec3   (float X, float Y, float Z) {x=X;y=Y;z=Z;}
-    __forceinline   cVec3   (cVec2& V, float Z = 0) {x=V.x;y=V.y;z=Z;}
-    __forceinline   cVec3   (cVec4 &V) { *this = *(cVec3 *)(&V); }
 
-    __forceinline   cVec3   &operator=  (const cVec3 &V) {x=V.x;y=V.y;z=V.z;return *this;}
-    __forceinline   cVec3   operator-   (void)           const {return cVec3(-x,-y,-z);}
-    __forceinline   bool    operator==  (const cVec3 &V) const {return(x==V.x && y==V.y && z==V.z);}
-    __forceinline   bool    operator!=  (const cVec3 &V) const {return(!(*this==V));}
-    __forceinline   float   operator[]  (unsigned int n) const {return v[n];}
-    __forceinline   operator float*     ()                     {return v;}
-    __forceinline   operator const float*   ()           const {return v;}
+    vec3() = default;
+    constexpr vec3(float X, float Y, float Z) : x(X), y(Y), z(Z) {}
+    constexpr explicit vec3(float S) : x(S), y(S), z(S) {}
+    constexpr explicit vec3(vec2 const& V, float Z = 0) :x(V.x), y(V.y), z(Z) {}
 
-// vector operations
-    __forceinline   cVec3   operator+   (const cVec3 &V) const {return cVec3(x+V.x,y+V.y,z+V.z);}
-    __forceinline   cVec3   operator-   (const cVec3 &V) const {return cVec3(x-V.x,y-V.y,z-V.z);}
-    __forceinline   cVec3   operator*   (const cVec3 &V) const {return cVec3(x*V.x,y*V.y,z*V.z);}
-    __forceinline   cVec3   operator/   (const cVec3 &V) const {return cVec3(x/V.x,y/V.y,z/V.z);}
+    vec3& operator=(const vec3 &V) {x=V.x; y=V.y; z=V.z; return *this; }
+    bool operator==(const vec3 &V) const {return x == V.x && y == V.y && z == V.z; }
+    bool operator!=(const vec3 &V) const {return x != V.x || y != V.y || z != V.z; }
+    float operator[](std::size_t idx) const { return (&x)[idx]; }
+    float& operator[](std::size_t idx) { return (&x)[idx]; }
+    operator float*() { return &x; }
+    operator float const*() const { return &x; }
 
-// implicit operations
-    __forceinline   cVec3   &operator+= (const cVec3 &V)    {x+=V.x;y+=V.y;z+=V.z;return*this;}
-    __forceinline   cVec3   &operator-= (const cVec3 &V)    {x-=V.x;y-=V.y;z-=V.z;return*this;}
-    __forceinline   cVec3   &operator*= (const cVec3 &V)    {x*=V.x;y*=V.y;z*=V.z;return*this;}
-    __forceinline   cVec3   &operator/= (const cVec3 &V)    {x/=V.x;y/=V.y;z/=V.z;return*this;}
+// algebraic vector operations
 
-// linear operations
-    __forceinline   cVec3   operator*   (float L) const {return cVec3(x*L,y*L,z*L);}
-    __forceinline   cVec3   operator/   (float L) const {return cVec3(x/L,y/L,z/L);}
+    vec3 operator-() const { return vec3(-x, -y, -z); }
+    vec3 operator+(vec3 const& V) const { return vec3(x+V.x, y+V.y, z+V.z); }
+    vec3 operator-(vec3 const& V) const { return vec3(x-V.x, y-V.y, z-V.z); }
+    vec3 operator*(vec3 const& V) const { return vec3(x*V.x, y*V.y, z*V.z); }
+    vec3 operator/(vec3 const& V) const { return vec3(x/V.x, y/V.y, z/V.z); }
+    vec3 operator*(float S) const { return vec3(x*S, y*S, z*S); }
+    vec3 operator/(float S) const { return vec3(x/S, y/S, z/S); }
 
-// linear implicit
-    __forceinline   cVec3   &operator*= (float L)   {x*=L;y*=L;z*=L;return*this;}
-    __forceinline   cVec3   &operator/= (float L)   {x/=L;y/=L;z/=L;return*this;}
+// algebraic vector assignment operations
+
+    vec3& operator+=(vec3 const& V) { x+=V.x; y+=V.y; z+=V.z; return *this; }
+    vec3& operator-=(vec3 const& V) { x-=V.x; y-=V.y; z-=V.z; return *this; }
+    vec3& operator*=(vec3 const& V) { x*=V.x; y*=V.y; z*=V.z; return *this; }
+    vec3& operator/=(vec3 const& V) { x/=V.x; y/=V.y; z/=V.z; return *this; }
+    vec3& operator*=(float S) { x*=S; y*=S; z*=S; return *this; }
+    vec3& operator/=(float S) { x/=S; y/=S; z/=S; return *this; }
 
 // utility functions
-    __forceinline   float   length      () const {return sqrtf(x*x+y*y+z*z);}
-    __forceinline   float   lengthsq    () const {return (x*x+y*y+z*z);}
-    __forceinline   cVec3   &normalize  ()       {(*this/=length());return*this;}
-    __forceinline   void    clear       ()       {x=0.0f;y=0.0f;z=0.0f;}
 
-    __forceinline   float   dot         (const cVec3 &V) const {return (x*V.x+y*V.y+z*V.z);}
-    __forceinline   cVec3   cross       (const cVec3 &V) const {return cVec3(  y*V.z - z*V.y,  z*V.x - x*V.z,  x*V.y - y*V.x );    }
+    float length() const {return std::sqrt(length_sqr()); }
+    float length_sqr() const {return x*x + y*y + z*z; }
+    vec3& normalize() { *this/=length(); return *this; }
+    float normalize_length() { float len = length(); *this /= len; return len; }
+    void clear() { x=0.0f; y=0.0f; z=0.0f; }
 
-    __forceinline   cVec2   to_vec2     () const {return cVec2(x,y);}
+    float dot(vec3 const& V) const { return x*V.x + y*V.y + z*V.z;}
+    vec3 cross(vec3 const& V) const { return vec3( y*V.z - z*V.y, z*V.x - x*V.z, x*V.y - y*V.x ); }
+
+    vec2 to_vec2() const { return vec2(x, y); }
 };
 
-class cVec4
+//------------------------------------------------------------------------------
+class vec4
 {
 public:
-    union
-    {
-        float   v[4];
-        struct
-        {   // 3d homogenous coordinates
-            float   x;
-            float   y;
-            float   z;
-            float   w;
-        };
-        struct
-        {
-            float   r;
-            float   g;
-            float   b;
-            float   a;
-        };
-    };
+    float   x;
+    float   y;
+    float   z;
+    float   w;
 
 // constructors
-    inline          cVec4   () = default;
-    __forceinline   cVec4   (float X, float Y, float Z) : x(X), y(Y), z(Z), w(1) {}
-    __forceinline   cVec4   (float X, float Y, float Z, float W) : x(X), y(Y), z(Z), w(W) {}
-    __forceinline   cVec4   (cVec3 &V) { v[0] = V.v[0] ; v[1] = V.v[1] ; v[2] = V.v[2] ; v[3] = 1.0f; }
 
-    __forceinline   cVec4   &operator=  (const cVec4 &V) {x=V.x;y=V.y;z=V.z;w=V.w;return *this;}
-    __forceinline   cVec4   operator-   (void)           const {return cVec4(-x,-y,-z,-w);}
-    __forceinline   bool    operator==  (const cVec4 &V) const {return(x==V.x && y==V.y && z==V.z && w==V.w);}
-    __forceinline   bool    operator!=  (const cVec4 &V) const {return(!(*this==V));}
-    __forceinline   float   operator[]  (unsigned int n) const {return v[n];}
-    __forceinline   operator float*     ()                     {return v;}
-    __forceinline   operator const float*   ()           const {return v;}
+    vec4() = default;
+    constexpr vec4(float X, float Y, float Z, float W = 1) : x(X), y(Y), z(Z), w(W) {}
+    constexpr explicit vec4(float S) : x(S), y(S), z(S), w(S) {}
+    constexpr explicit vec4(vec3 &V, float W = 1) : x(V.x), y(V.y), z(V.z), w(W) {}
 
-// vector operations
-    __forceinline   cVec4   operator+   (const cVec4 &V) const {return cVec4(x+V.x,y+V.y,z+V.z,w+V.w);}
-    __forceinline   cVec4   operator-   (const cVec4 &V) const {return cVec4(x-V.x,y-V.y,z-V.z,w-V.w);}
-    __forceinline   cVec4   operator*   (const cVec4 &V) const {return cVec4(x*V.x,y*V.y,z*V.z,w*V.w);}
-    __forceinline   cVec4   operator/   (const cVec4 &V) const {return cVec4(x/V.x,y/V.y,z/V.z,w/V.w);}
+    vec4& operator=(const vec4 &V) { x=V.x; y=V.y; z=V.z; w=V.w; return *this; }
+    bool operator==(const vec4 &V) const { return x==V.x && y==V.y && z==V.z && w==V.w; }
+    bool operator!=(const vec4 &V) const { return x!=V.x || y!=V.y || z!=V.z || w!=V.w; }
+    float operator[](std::size_t idx) const { return (&x)[idx]; }
+    float& operator[](std::size_t idx) { return (&x)[idx]; }
+    operator float*() { return &x; }
+    operator float const*() const { return &x; }
 
-// implicit operations
-    __forceinline   cVec4   &operator+= (const cVec4 &V)       {x+=V.x;y+=V.y;z+=V.z;w+=V.w;return*this;}
-    __forceinline   cVec4   &operator-= (const cVec4 &V)       {x-=V.x;y-=V.y;z-=V.z;w-=V.w;return*this;}
-    __forceinline   cVec4   &operator*= (const cVec4 &V)       {x*=V.x;y*=V.y;z*=V.z;w*=V.w;return*this;}
-    __forceinline   cVec4   &operator/= (const cVec4 &V)       {x/=V.x;y/=V.y;z/=V.z;w/=V.w;return*this;}
+// algebraic vector operations
 
-// linear operations
-    __forceinline   cVec4   operator*   (float L) const {return cVec4(x*L,y*L,z*L,w*L);}
-    __forceinline   cVec4   operator/   (float L) const {return cVec4(x/L,y/L,z/L,w/L);}
+    vec4 operator-() const { return vec4(-x, -y, -z, -w); }
+    vec4 operator+(vec4 const& V) const { return vec4(x+V.x, y+V.y, z+V.z, w+V.w); }
+    vec4 operator-(vec4 const& V) const { return vec4(x-V.x, y-V.y, z-V.z, w-V.w); }
+    vec4 operator*(vec4 const& V) const { return vec4(x*V.x, y*V.y, z*V.z, w*V.w); }
+    vec4 operator/(vec4 const& V) const { return vec4(x/V.x, y/V.y, z/V.z, w/V.w); }
+    vec4 operator*(float S) const { return vec4(x*S, y*S, z*S, w*S); }
+    vec4 operator/(float S) const { return vec4(x/S, y/S, z/S, w/S); }
 
-// linear implicit
-    __forceinline   cVec4   &operator*= (float L)   {x*=L;y*=L;z*=L;w*=L;return*this;}
-    __forceinline   cVec4   &operator/= (float L)   {x/=L;y/=L;z/=L;w/=L;return*this;}
+// algebraic vector assignment operations
+
+    vec4& operator+=(vec4 const& V) { x+=V.x; y+=V.y; z+=V.z; w+=V.w; return *this; }
+    vec4& operator-=(vec4 const& V) { x-=V.x; y-=V.y; z-=V.z; w-=V.w; return *this; }
+    vec4& operator*=(vec4 const& V) { x*=V.x; y*=V.y; z*=V.z; w*=V.w; return *this; }
+    vec4& operator/=(vec4 const& V) { x/=V.x; y/=V.y; z/=V.z; w/=V.w; return *this; }
+    vec4& operator*=(float S) { x*=S; y*=S; z*=S; w*=S; return *this; }
+    vec4& operator/=(float S) { x/=S; y/=S; z/=S; w/=S; return *this; }
 
 // utility functions
-    __forceinline   float   length      () const {return sqrtf(x*x+y*y+z*z+w*w);}
-    __forceinline   float   lengthsq    () const {return (x*x+y*y+z*z+w*w);}
-    __forceinline   cVec4   &normalize  ()       {(*this/=length());return*this;}
-    __forceinline   void    clear       ()       {x=0.0f;y=0.0f;z=0.0f;w=0.0f;}
 
-    __forceinline   float   dot         (const cVec4 &V) const {return (x*V.x+y*V.y+z*V.z+w*V.w);}
-    __forceinline   cVec4   cross       (const cVec4 &V) const {return cVec4(  y*V.z - z*V.y,  z*V.x - x*V.z,  x*V.y - y*V.x, 0.0f );  }
+    float length() const { return std::sqrt(length_sqr()); }
+    float length_sqr() const { return x*x + y*y + z*z + w*w; }
+    vec4& normalize() { *this/=length(); return *this; }
+    float normalize_length() { float len = length(); *this /= len; return len; }
+    void clear() { x=0.0f; y=0.0f; z=0.0f; w=0.0f; }
+
+    float dot(vec4 const& V) const { return x*V.x + y*V.y + z*V.z + w*V.w; }
+    vec4 cross(vec4 const& V) const { return vec4(y*V.z - z*V.y, z*V.x - x*V.z, x*V.y - y*V.x, 0.0f); }
+
+    vec3 to_vec3() const { return vec3(x, y, z); }
 };
 
-//
-//  lines, rays and segments
-//
+////////////////////////////////////////////////////////////////////////////////
+// color types
 
-class cRay2
+//------------------------------------------------------------------------------
+class color3
 {
 public:
-    cVec2   a;
-    cVec2   b;
+    float   r;
+    float   g;
+    float   b;
 
-    inline  cRay2   () { a=cVec2(0,0);b=cVec2(0,0); }
-    inline  cRay2   (cVec2 A, cVec2 B) : a(A), b(B) {}
+// constructors
 
-    __forceinline   void    set (cVec2 A, cVec2 B) { a = A; b = B; }
-    bool    intersect (const cRay2 &R, cVec2 *P = 0)    {
-        float   ua, ub, d;
+    color3() = default;
+    constexpr color3(float R, float G, float B) : r(R), g(G), b(B) {}
+    constexpr explicit color3(vec3 const& V) : r(V.x), g(V.y), b(V.z) {}
 
-        d = (R.b.y - R.a.y)*(b.x - a.x) - (R.b.x - R.a.x)*(b.y - a.y);
+    color3& operator=(const color3 &C) {r=C.r; g=C.g; b=C.b; return *this; }
+    bool operator==(const color3 &C) const {return r == C.r && g == C.g && b == C.b; }
+    bool operator!=(const color3 &C) const {return r != C.r || g != C.g || b != C.b; }
+    float operator[](std::size_t idx) const { return (&r)[idx]; }
+    float& operator[](std::size_t idx) { return (&r)[idx]; }
+    operator float*() { return &r; }
+    operator float const*() const { return &r; }
 
-        if ( d == 0 ) { return false; } // parallel
+// algebraic vector operations
 
-        ua = ((R.b.x - R.a.x)*(a.y - R.a.y) - (R.b.y - R.a.y)*(a.x - R.a.x)) / d;
-        ub = ((b.x - a.x)*(a.y - R.a.y) - (b.y - a.y)*(a.x - R.a.x)) / d;
+    color3 operator-() const { return color3(-r, -g, -b); }
+    color3 operator+(color3 const& C) const { return color3(r+C.r, g+C.g, b+C.b); }
+    color3 operator-(color3 const& C) const { return color3(r-C.r, g-C.g, b-C.b); }
+    color3 operator*(color3 const& C) const { return color3(r*C.r, g*C.g, b*C.b); }
+    color3 operator/(color3 const& C) const { return color3(r/C.r, g/C.g, b/C.b); }
+    color3 operator*(float S) const { return color3(r*S, g*S, b*S); }
+    color3 operator/(float S) const { return color3(r/S, g/S, b/S); }
 
-        if ( ua < 0 || ub < 0 )
-            return false;
+// algebraic vector assignment operations
 
-        if ( P )
-        {
-            P->x = a.x + ua*(b.x - a.x);
-            P->y = a.y + ua*(b.y - a.y);
-        }
+    color3& operator+=(color3 const& C) { r+=C.r; g+=C.g; b+=C.b; return *this; }
+    color3& operator-=(color3 const& C) { r-=C.r; g-=C.g; b-=C.b; return *this; }
+    color3& operator*=(color3 const& C) { r*=C.r; g*=C.g; b*=C.b; return *this; }
+    color3& operator/=(color3 const& C) { r/=C.r; g/=C.g; b/=C.b; return *this; }
+    color3& operator*=(float S) { r*=S; g*=S; b*=S; return *this; }
+    color3& operator/=(float S) { r/=S; g/=S; b/=S; return *this; }
 
-        return true;
-    }
+// utility functions
+
+    void clear() { r=0.0f; g=0.0f; b=0.0f; }
 };
 
-class cLine2
+//------------------------------------------------------------------------------
+class color4
 {
 public:
-    cVec2   a;
-    cVec2   b;
+    float   r;
+    float   g;
+    float   b;
+    float   a;
 
-    bool    is_segment;
+// constructors
 
-    inline  cLine2  ()  { a=cVec2(0,0);b=cVec2(0,0); is_segment = false; }
-    inline  cLine2  (cVec2 A, cVec2 B, bool S = false) : a(A), b(B), is_segment(S) {}
+    color4() = default;
+    constexpr color4(float X, float Y, float Z, float W = 1) : r(X), g(Y), b(Z), a(W) {}
+    constexpr explicit color4(color3 const& C, float A = 1) : r(C.r), g(C.g), b(C.b), a(A) {}
+    constexpr explicit color4(vec4 const& V) : r(V.x), g(V.y), b(V.z), a(V.w) {}
 
-    __forceinline   void    set (cVec2 A, cVec2 B, bool S = false) { a = A; b = B; is_segment = S; }
+    color4& operator=(const color4 &C) { r=C.r; g=C.g; b=C.b; a=C.a; return *this; }
+    bool operator==(const color4 &C) const { return r==C.r && g==C.g && b==C.b && a==C.a; }
+    bool operator!=(const color4 &C) const { return r!=C.r || g!=C.g || b!=C.b || a!=C.a; }
+    float operator[](std::size_t idx) const { return (&r)[idx]; }
+    float& operator[](std::size_t idx) { return (&r)[idx]; }
+    operator float*() { return &r; }
+    operator float const*() const { return &r; }
 
-    bool    intersect   (const cLine2 &L, cVec2 *P = 0) {
-        float   ua, ub, d;
+// algebraic vector operations
 
-        d = (L.b.y - L.a.y)*(b.x - a.x) - (L.b.x - L.a.x)*(b.y - a.y);
+    color4 operator-() const { return color4(-r, -g, -b, -a); }
+    color4 operator+(color4 const& C) const { return color4(r+C.r, g+C.g, b+C.b, a+C.a); }
+    color4 operator-(color4 const& C) const { return color4(r-C.r, g-C.g, b-C.b, a-C.a); }
+    color4 operator*(color4 const& C) const { return color4(r*C.r, g*C.g, b*C.b, a*C.a); }
+    color4 operator/(color4 const& C) const { return color4(r/C.r, g/C.g, b/C.b, a/C.a); }
+    color4 operator*(float S) const { return color4(r*S, g*S, b*S, a*S); }
+    color4 operator/(float S) const { return color4(r/S, g/S, b/S, a/S); }
 
-        if ( d == 0 ) { return false; } // parallel
+// algebraic vector assignment operations
 
-        ua = ((L.b.x - L.a.x)*(a.y - L.a.y) - (L.b.y - L.a.y)*(a.x - L.a.x)) / d;
+    color4& operator+=(color4 const& C) { r+=C.r; g+=C.g; b+=C.b; a+=C.a; return *this; }
+    color4& operator-=(color4 const& C) { r-=C.r; g-=C.g; b-=C.b; a-=C.a; return *this; }
+    color4& operator*=(color4 const& C) { r*=C.r; g*=C.g; b*=C.b; a*=C.a; return *this; }
+    color4& operator/=(color4 const& C) { r/=C.r; g/=C.g; b/=C.b; a/=C.a; return *this; }
+    color4& operator*=(float S) { r*=S; g*=S; b*=S; a*=S; return *this; }
+    color4& operator/=(float S) { r/=S; g/=S; b/=S; a/=S; return *this; }
 
-        if ( is_segment && ( ua < 0 || ua > 1 ) )
-            return false;
+// utility functions
 
-        if ( L.is_segment )
-        {
-            ub = ((b.x - a.x)*(a.y - L.a.y) - (b.y - a.y)*(a.x - L.a.x)) / d;
-
-            if ( ub < 0 || ub > 1 )
-                return false;
-        }
-
-        if ( P )
-        {
-            P->x = a.x + ua*(b.x - a.x);
-            P->y = a.y + ua*(b.y - a.y);
-        }
-
-        return true;
-    }
-
-    bool    intersect   (const cRay2 &R, cVec2 *P = 0)  {
-        float   ua, ub, d;
-
-        d = (R.b.y - R.a.y)*(b.x - a.x) - (R.b.x - R.a.x)*(b.y - a.y);
-
-        if ( d == 0 ) { return false; } // parallel
-
-        ua = ((R.b.x - R.a.x)*(a.y - R.a.y) - (R.b.y - R.a.y)*(a.x - R.a.x)) / d;
-        ub = ((b.x - a.x)*(a.y - R.a.y) - (b.y - a.y)*(a.x - R.a.x)) / d;
-
-        if ( is_segment && ( ua < 0 || ua > 1 ) )
-            return false;
-
-        if ( ub < 0 )
-            return false;
-
-        if ( P )
-        {
-            P->x = a.x + ua*(b.x - a.x);
-            P->y = a.y + ua*(b.y - a.y);
-        }
-
-        return true;
-    }
-};
-
-class cLine3
-{
-public:
-    cVec3   a;
-    cVec3   b;
-
-    bool    is_segment;
-
-    inline  cLine3 () { a=cVec3(0,0,0);b=cVec3(0,0,0); is_segment = false; }
-    inline  cLine3 (cVec3 A, cVec3 B, bool S = false) : a(A), b(B), is_segment(S) {}
-};
-
-class cLine4
-{
-public:
-    cVec4   a;
-    cVec4   b;
-
-    bool    is_segment;
-
-    inline  cLine4 () { a=cVec4(0,0,0,1);b=cVec4(0,0,0,1); is_segment = false; }
-    inline  cLine4 (cVec4 A, cVec4 B, bool S = false) : a(A), b(B), is_segment(S) {}
+    void clear() { r=0.0f; g=0.0f; b=0.0f; a=0.0f; }
+    color3 to_color3() const { return color3(r, g, b); }
 };
 
 //
@@ -356,7 +306,21 @@ public:
 #define M_PI    3.14159265358979323846
 #endif
 
-class cMat3
+//------------------------------------------------------------------------------
+inline vec2 rotate(vec2 v, float rad)
+{
+    float cosa = std::cos(rad);
+    float sina = std::sin(rad);
+
+    return vec2(v.x * cosa - v.y * sina,
+                v.x * sina + v.y * cosa);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// matrix types
+
+//------------------------------------------------------------------------------
+class mat3
 {
 public:
     union
@@ -371,8 +335,8 @@ public:
     };
 
 // constructors
-    inline  cMat3   ()  { identity(); }
-    inline  cMat3   (   float in11, float in12, float in13,
+    inline  mat3   ()  { identity(); }
+    inline  mat3   (   float in11, float in12, float in13,
                         float in21, float in22, float in23,
                         float in31, float in32, float in33  )
     {   _11 = in11 ; _12 = in12 ; _13 = in13 ;
@@ -402,17 +366,18 @@ public:
         _31=0;          ;   _32=0;          ;   _33=0   ; }
 
 //  multiplication functions
-    inline cVec2 mult (cVec2 in) { return ( cVec2(
-        _11*in.v[0] + _12*in.v[1] + _13,
-        _21*in.v[0] + _22*in.v[1] + _23) ); }
+    inline vec2 mult (vec2 in) { return ( vec2(
+        _11*in[0] + _12*in[1] + _13,
+        _21*in[0] + _22*in[1] + _23) ); }
 
-    inline cVec3 mult (cVec3 in) { return ( cVec3(
-        _11*in.v[0] + _12*in.v[1] + _13*in.v[2],
-        _21*in.v[0] + _22*in.v[1] + _23*in.v[2],
-        _31*in.v[0] + _32*in.v[1] + _33*in.v[2]) ); }
+    inline vec3 mult (vec3 in) { return ( vec3(
+        _11*in[0] + _12*in[1] + _13*in[2],
+        _21*in[0] + _22*in[1] + _23*in[2],
+        _31*in[0] + _32*in[1] + _33*in[2]) ); }
 };
 
-class cMat4
+//------------------------------------------------------------------------------
+class mat4
 {
 public:
     union
@@ -428,8 +393,8 @@ public:
     };
 
 // constructors
-    inline cMat4 () { identity(); }
-    inline cMat4 (  float in11, float in12, float in13, float in14, 
+    inline mat4 () { identity(); }
+    inline mat4 (  float in11, float in12, float in13, float in14, 
                     float in21, float in22, float in23, float in24, 
                     float in31, float in32, float in33, float in34, 
                     float in41, float in42, float in43, float in44) 
@@ -446,14 +411,14 @@ public:
         _41=0   ;   _42=0   ; _43=0 ;   _44=1   ;   }
 
 // translation
-    inline void translate (cVec4 t) {
+    inline void translate (vec4 const& t) {
         _11=1   ;   _12=0   ; _13=0 ;   _14=t.x ;
         _21=0   ;   _22=1   ; _23=0 ;   _24=t.y ;
         _31=0   ;   _32=0   ; _33=1 ;   _34=t.z ;
         _41=0   ;   _42=0   ; _43=0 ;   _44=1   ;   }
 
 // scale
-    inline void scale (cVec4 s) {
+    inline void scale (vec4 const& s) {
         _11=s.x ;   _12=0   ; _13=0     ;   _14=0   ;
         _21=0   ;   _22=s.y ; _23=0     ;   _24=0   ;
         _31=0   ;   _32=0   ; _33=s.z   ;   _34=0   ;
@@ -485,41 +450,41 @@ public:
         } }
 
 // point around arbitrary rotation
-    inline cVec3 rotate (cVec3 &rot, cVec3 &pt) {
-        cVec3 rad = rot*(float)(M_PI/180.0f);
-        return cVec3(
-            cMat4(  1,           0,           0,           0,
+    inline vec3 rotate (vec3 &rot, vec3 &pt) {
+        vec3 rad = rot*(float)(M_PI/180.0f);
+        return (
+            mat4(   1,           0,           0,           0,
                     0,           cosf(rad.x),-sinf(rad.x), 0,
                     0,           sinf(rad.x), cosf(rad.x), 0,
                     0,           0,           0,           1 ) *
 
-            cMat4(  cosf(rad.y), 0,           sinf(rad.y), 0,
+            mat4(  cosf(rad.y), 0,           sinf(rad.y), 0,
                     0,           1,           0,           0,
                    -sinf(rad.y), 0,           cosf(rad.y), 0,
                     0,           0,           0,           1 ) *
 
-            cMat4(  cosf(rad.z),-sinf(rad.z), 0,           0,
+            mat4(  cosf(rad.z),-sinf(rad.z), 0,           0,
                     sinf(rad.z), cosf(rad.z), 0,           0,
                     0,           0,           1,           0,
                     0,           0,           0,           1 ) *
 
-            cVec4(  pt.x,        pt.y,        pt.z,       1 ) ); }
+            vec4(  pt.x,        pt.y,        pt.z,       1 ) ).to_vec3(); }
 
 // set arbitrary rotation matrix
-    inline void rotate (cVec3 &rot) {
-        cVec3 rad = rot*(float)(M_PI/180.0f);
+    inline void rotate (vec3 &rot) {
+        vec3 rad = rot*(float)(M_PI/180.0f);
         *this = (
-            cMat4(  1,          0,           0,           0,
+            mat4(  1,          0,           0,           0,
                     0,          cosf(rad.x),-sinf(rad.x), 0,
                     0,          sinf(rad.x), cosf(rad.x), 0,
                     0,          0,           0,           1 ) *
 
-            cMat4(  cosf(rad.y), 0,          sinf(rad.y), 0,
+            mat4(  cosf(rad.y), 0,          sinf(rad.y), 0,
                     0,           1,          0,           0,
                    -sinf(rad.y), 0,          cosf(rad.y), 0,
                     0,           0,          0,           1 ) *
 
-            cMat4(  cosf(rad.z),-sinf(rad.z), 0,          0,
+            mat4(  cosf(rad.z),-sinf(rad.z), 0,          0,
                     sinf(rad.z), cosf(rad.z), 0,          0,
                     0,           0,           1,          0,
                     0,           0,           0,          1 ) ); }
@@ -527,24 +492,25 @@ public:
 
 
 // multiply
-    inline cMat4 operator * (cMat4 &M) {
-        return cMat4(   m[0][0]*M.m[0][0]+m[0][1]*M.m[1][0]+m[0][2]*M.m[2][0]+m[0][3]*M.m[3][0],    m[0][0]*M.m[0][1]+m[0][1]*M.m[1][1]+m[0][2]*M.m[2][1]+m[0][3]*M.m[3][1],    m[0][0]*M.m[0][2]+m[0][1]*M.m[1][2]+m[0][2]*M.m[2][2]+m[0][3]*M.m[3][2],    m[0][0]*M.m[0][3]+m[0][1]*M.m[1][3]+m[0][2]*M.m[2][3]+m[0][3]*M.m[3][3],
+    inline mat4 operator * (mat4 &M) {
+        return mat4(   m[0][0]*M.m[0][0]+m[0][1]*M.m[1][0]+m[0][2]*M.m[2][0]+m[0][3]*M.m[3][0],    m[0][0]*M.m[0][1]+m[0][1]*M.m[1][1]+m[0][2]*M.m[2][1]+m[0][3]*M.m[3][1],    m[0][0]*M.m[0][2]+m[0][1]*M.m[1][2]+m[0][2]*M.m[2][2]+m[0][3]*M.m[3][2],    m[0][0]*M.m[0][3]+m[0][1]*M.m[1][3]+m[0][2]*M.m[2][3]+m[0][3]*M.m[3][3],
                         m[1][0]*M.m[0][0]+m[1][1]*M.m[1][0]+m[1][2]*M.m[2][0]+m[1][3]*M.m[3][0],    m[1][0]*M.m[0][1]+m[1][1]*M.m[1][1]+m[1][2]*M.m[2][1]+m[1][3]*M.m[3][1],    m[1][0]*M.m[0][2]+m[1][1]*M.m[1][2]+m[1][2]*M.m[2][2]+m[1][3]*M.m[3][2],    m[1][0]*M.m[0][3]+m[1][1]*M.m[1][3]+m[1][2]*M.m[2][3]+m[1][3]*M.m[3][3],
                         m[2][0]*M.m[0][0]+m[2][1]*M.m[1][0]+m[2][2]*M.m[2][0]+m[2][3]*M.m[3][0],    m[2][0]*M.m[0][1]+m[2][1]*M.m[1][1]+m[2][2]*M.m[2][1]+m[2][3]*M.m[3][1],    m[2][0]*M.m[0][2]+m[2][1]*M.m[1][2]+m[2][2]*M.m[2][2]+m[2][3]*M.m[3][2],    m[2][0]*M.m[0][3]+m[2][1]*M.m[1][3]+m[2][2]*M.m[2][3]+m[2][3]*M.m[3][3],
                         m[3][0]*M.m[0][0]+m[3][1]*M.m[1][0]+m[3][2]*M.m[2][0]+m[3][3]*M.m[3][0],    m[3][0]*M.m[0][1]+m[3][1]*M.m[1][1]+m[3][2]*M.m[2][1]+m[3][3]*M.m[3][1],    m[3][0]*M.m[0][2]+m[3][1]*M.m[1][2]+m[3][2]*M.m[2][2]+m[3][3]*M.m[3][2],    m[3][0]*M.m[0][3]+m[3][1]*M.m[1][3]+m[3][2]*M.m[2][3]+m[3][3]*M.m[3][3] ); }
 
-    inline cMat4 &operator *= (cMat4 &M) {
+    inline mat4 &operator *= (mat4 &M) {
         _11 = m[0][0]*M.m[0][0]+m[0][1]*M.m[1][0]+m[0][2]*M.m[2][0]+m[0][3]*M.m[3][0]   ;   _12 = m[0][0]*M.m[0][1]+m[0][1]*M.m[1][1]+m[0][2]*M.m[2][1]+m[0][3]*M.m[3][1]   ;   _13 = m[0][0]*M.m[0][2]+m[0][1]*M.m[1][2]+m[0][2]*M.m[2][2]+m[0][3]*M.m[3][2]   ;   _14 = m[0][0]*M.m[0][3]+m[0][1]*M.m[1][3]+m[0][2]*M.m[2][3]+m[0][3]*M.m[3][3]   ;
         _21 = m[1][0]*M.m[0][0]+m[1][1]*M.m[1][0]+m[1][2]*M.m[2][0]+m[1][3]*M.m[3][0]   ;   _22 = m[1][0]*M.m[0][1]+m[1][1]*M.m[1][1]+m[1][2]*M.m[2][1]+m[1][3]*M.m[3][1]   ;   _23 = m[1][0]*M.m[0][2]+m[1][1]*M.m[1][2]+m[1][2]*M.m[2][2]+m[1][3]*M.m[3][2]   ;   _24 = m[1][0]*M.m[0][3]+m[1][1]*M.m[1][3]+m[1][2]*M.m[2][3]+m[1][3]*M.m[3][3]   ;
         _31 = m[2][0]*M.m[0][0]+m[2][1]*M.m[1][0]+m[2][2]*M.m[2][0]+m[2][3]*M.m[3][0]   ;   _32 = m[2][0]*M.m[0][1]+m[2][1]*M.m[1][1]+m[2][2]*M.m[2][1]+m[2][3]*M.m[3][1]   ;   _33 = m[2][0]*M.m[0][2]+m[2][1]*M.m[1][2]+m[2][2]*M.m[2][2]+m[2][3]*M.m[3][2]   ;   _34 = m[2][0]*M.m[0][3]+m[2][1]*M.m[1][3]+m[2][2]*M.m[2][3]+m[2][3]*M.m[3][3]   ;
         _41 = m[3][0]*M.m[0][0]+m[3][1]*M.m[1][0]+m[3][2]*M.m[2][0]+m[3][3]*M.m[3][0]   ;   _42 = m[3][0]*M.m[0][1]+m[3][1]*M.m[1][1]+m[3][2]*M.m[2][1]+m[3][3]*M.m[3][1]   ;   _43 = m[3][0]*M.m[0][2]+m[3][1]*M.m[1][2]+m[3][2]*M.m[2][2]+m[3][3]*M.m[3][2]   ;   _44 = m[3][0]*M.m[0][3]+m[3][1]*M.m[1][3]+m[3][2]*M.m[2][3]+m[3][3]*M.m[3][3]   ;   }
 
 // multiply vector
-    inline cVec4 operator * (cVec4 &V) {
-        return cVec4(   V.v[0]*m[0][0]+V.v[1]*m[0][1]+V.v[2]*m[0][2]+V.v[3]*m[0][3],
-                        V.v[0]*m[1][0]+V.v[1]*m[1][1]+V.v[2]*m[1][2]+V.v[3]*m[1][3],
-                        V.v[0]*m[2][0]+V.v[1]*m[2][1]+V.v[2]*m[2][2]+V.v[3]*m[2][3],
-                        V.v[0]*m[3][0]+V.v[1]*m[3][1]+V.v[2]*m[3][2]+V.v[3]*m[3][3] );  }
+    inline vec4 operator*(vec4 const& V) {
+        return vec4(m[0][0]*V[0] + m[0][1]*V[1] + m[0][2]*V[2] + m[0][3]*V[3],
+                    m[1][0]*V[0] + m[1][1]*V[1] + m[1][2]*V[2] + m[1][3]*V[3],
+                    m[2][0]*V[0] + m[2][1]*V[1] + m[2][2]*V[2] + m[2][3]*V[3],
+                    m[3][0]*V[0] + m[3][1]*V[1] + m[3][2]*V[2] + m[3][3]*V[3]);
+    }
 };
 
 /*
@@ -555,28 +521,15 @@ TYPE DEFINITIONS
 =============================
 */
 
-// floating point vector types
-using vec4 = cVec4;                 //  v[4] / x y z w / r g b a
-using vec3 = cVec3;                 //  v[3] / x y z
-using vec2 = cVec2;                 //  v[2] / x y
-
-// floating point matrix types
-using mat4 = cMat4;                 //  m[4][4]
-using mat3 = cMat3;                 //  m[3][3]
-
 typedef unsigned char byte;
 
 //
 // unit types
 //
 
-const vec4 vec4_unit = cVec4(1,1,1,1);
-const vec3 vec3_unit = cVec3(1,1,1);
-const vec2 vec2_unit = cVec2(1,1);
+constexpr vec2 vec2_zero = vec2(0,0);
+constexpr vec3 vec3_zero = vec3(0,0,0);
+constexpr vec4 vec4_zero = vec4(0,0,0,0);
 
-const vec4 vec4_null = cVec4(0,0,0,0);
-const vec3 vec3_null = cVec3(0,0,0);
-const vec2 vec2_null = cVec2(0,0);
-
-const mat4 mat4_unit = cMat4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
-const mat3 mat3_unit = cMat3(1,0,0,0,1,0,0,0,1);
+const mat3 mat3_identity = mat3(1,0,0,0,1,0,0,0,1);
+const mat4 mat4_identity = mat4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);

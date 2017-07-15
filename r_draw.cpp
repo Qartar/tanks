@@ -8,7 +8,7 @@
 namespace render {
 
 //------------------------------------------------------------------------------
-void system::draw_string(char const* string, vec2 position, vec4 color)
+void system::draw_string(char const* string, vec2 position, color4 color)
 {
     _fonts[0]->draw(string, position, color);
 }
@@ -20,11 +20,11 @@ vec2 system::string_size(char const* string) const
 }
 
 //------------------------------------------------------------------------------
-void system::draw_box(vec2 size, vec2 position, vec4 color)
+void system::draw_box(vec2 size, vec2 position, color4 color)
 {
     float   xl, xh, yl, yh;
 
-    glColor4fv(color.v);
+    glColor4fv(color);
 
     xl = position.x - size.x / 2;
     xh = position.x + size.x / 2;
@@ -49,13 +49,13 @@ void system::draw_particles(float time, render::particle const* particles, std::
         float vtime = p->drag ? tanhf(p->drag * ptime) / p->drag : ptime;
 
         float radius = p->size + p->size_velocity * ptime;
-        vec4 color = p->color + p->color_velocity * ptime;
+        color4 color = p->color + p->color_velocity * ptime;
         vec2 position = p->position
                       + p->velocity * vtime
                       + p->acceleration * 0.5f * vtime * vtime;
 
-        vec4 color_in = p->flags & render::particle::invert ? color * vec4(1,1,1,0.25f) : color;
-        vec4 color_out = p->flags & render::particle::invert ? color : color * vec4(1,1,1,0.25f);
+        color4 color_in = p->flags & render::particle::invert ? color * color4(1,1,1,0.25f) : color;
+        color4 color_out = p->flags & render::particle::invert ? color : color * color4(1,1,1,0.25f);
 
         glBegin(GL_TRIANGLE_FAN);
 
@@ -63,15 +63,15 @@ void system::draw_particles(float time, render::particle const* particles, std::
         int n = 1 + M_PI * sqrtf(radius - 0.25f);
         int k = std::max<int>(1, 360 / n);
 
-        glColor4fv(color_in.v);
-        glVertex2fv(position.v);
+        glColor4fv(color_in);
+        glVertex2fv(position);
 
         if (!(p->flags & render::particle::tail)) {
             // draw circle outline
-            glColor4fv(color_out.v);
+            glColor4fv(color_out);
             for (int ii = 0; ii < 360 ; ii += k) {
                 vec2 vertex = position + vec2(_costbl[ii], _sintbl[ii]) * radius;
-                glVertex2fv(vertex.v);
+                glVertex2fv(vertex);
             }
             glVertex2f(position.x + radius, position.y);
         } else {
@@ -93,24 +93,24 @@ void system::draw_particles(float time, render::particle const* particles, std::
             int n0 = std::max<int>(4, n);
             int k0 = std::min<int>(1, 360 / n0);
 
-            glColor4fv(color_in.v);
+            glColor4fv(color_in);
             for (int ii = 0; ii < 360; ii += k0) {
                 if (ii < 180) {
                     // draw forward-facing half-circle
                     vec2 vertex = position + (tangent * _costbl[ii] + normal * _sintbl[ii]) * radius;
-                    glVertex2fv(vertex.v);
+                    glVertex2fv(vertex);
                 } else {
                     // draw backward-facing elliptical tail
                     float alpha = -_sintbl[ii];
-                    vec4 vcolor = color_out * alpha + color_in * (1.0f - alpha);
+                    color4 vcolor = color_out * alpha + color_in * (1.0f - alpha);
                     vec2 vertex = position + tangent * _costbl[ii] * radius + normal * _sintbl[ii] * distance;
 
-                    glColor4fv(vcolor.v);
-                    glVertex2fv(vertex.v);
+                    glColor4fv(vcolor);
+                    glVertex2fv(vertex);
                 }
             }
 
-            glColor4fv(color_in.v);
+            glColor4fv(color_in);
             glVertex2f(position.x + tangent.x * radius, position.y + tangent.y * radius);
         }
 
@@ -119,13 +119,13 @@ void system::draw_particles(float time, render::particle const* particles, std::
 }
 
 //------------------------------------------------------------------------------
-void system::draw_line(vec2 start, vec2 end, vec4 start_color, vec4 end_color)
+void system::draw_line(vec2 start, vec2 end, color4 start_color, color4 end_color)
 {
     glBegin(GL_LINES);
-        glColor4fv(start_color.v);
-        glVertex2fv(start.v);
-        glColor4fv(start_color.v);
-        glVertex2fv(end.v);
+        glColor4fv(start_color);
+        glVertex2fv(start);
+        glColor4fv(start_color);
+        glVertex2fv(end);
     glEnd();
 }
 

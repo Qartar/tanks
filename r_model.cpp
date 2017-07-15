@@ -38,18 +38,18 @@ model::model(model::rect const* rects, std::size_t num_rects)
         vec2 maxs = r.center + r.size * 0.5f;
 
         for (int ii = 0; ii < 2; ++ii) {
-            if (_mins.v[ii] > mins.v[ii]) {
-                _mins.v[ii] = mins.v[ii];
+            if (_mins[ii] > mins[ii]) {
+                _mins[ii] = mins[ii];
             }
-            if (_maxs.v[ii] < maxs.v[ii]) {
-                _maxs.v[ii] = maxs.v[ii];
+            if (_maxs[ii] < maxs[ii]) {
+                _maxs[ii] = maxs[ii];
             }
         }
     }
 }
 
 //------------------------------------------------------------------------------
-void model::draw(vec2 position, float rotation, vec4 color) const
+void model::draw(vec2 position, float rotation, color4 color) const
 {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -62,7 +62,7 @@ void model::draw(vec2 position, float rotation, vec4 color) const
     for (auto const& rect : _list) {
         vec2 rmin = rect.center - rect.size * 0.5f;
         vec2 rmax = rect.center + rect.size * 0.5f;
-        vec4 rcolor = color * rect.gamma;
+        color4 rcolor = color * rect.gamma;
 
         glColor4f(rcolor.r, rcolor.g, rcolor.b, 1.0f);
         glVertex2f(rmin.x, rmin.y);
