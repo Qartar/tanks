@@ -13,14 +13,14 @@ add_subdirectory(physics)
 set(tanks-sources
     g_button.cpp
     g_client.cpp
-    g_main.cpp
-    g_main.h
     g_menu.cpp
     g_menu.h
     g_network.cpp
     g_object.cpp
     g_particles.cpp
     g_server.cpp
+    g_session.cpp
+    g_session.h
     g_tank.cpp
     g_usercmd.cpp
     g_usercmd.h

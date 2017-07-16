@@ -1,4 +1,4 @@
-// g_main.cpp
+// g_session.cpp
 //
 
 #include "precompiled.h"

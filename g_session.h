@@ -1,4 +1,4 @@
-// g_main.h
+// g_session.h
 //
 
 #pragma once

@@ -17,7 +17,7 @@
 //  game headers
 #include "g_world.h"
 #include "g_menu.h"
-#include "g_main.h"
+#include "g_session.h"
 //  rendering headers
 #include "r_main.h"
 #include "r_window.h"
