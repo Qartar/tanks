@@ -119,8 +119,7 @@ typedef struct server_state_s
 
     char        name[SHORT_STRING];
 
-    client_t    clients[MAX_PLAYERS];
-    int         max_clients;
+    std::array<client_t, MAX_PLAYERS> clients;
 } server_state_t;
 
 //
@@ -248,6 +247,7 @@ public:
 
 public:
     void start_server();
+    void start_server_local();
     void stop_server();
 
     void stop_client();
@@ -268,48 +268,45 @@ public:
 
 private:
     void get_packets ();
-    void get_frame ();
+    void get_frame(network::message& message);
     void write_frame ();
     void send_packets ();
 
     void broadcast (int len, byte *data);
     void broadcast_print (char const* message);
 
-    void connectionless (network::socket socket);
-    void packet (network::socket socket);
+    void server_connectionless(network::address const& remote, network::message& message);
+    void client_connectionless(network::address const& remote, network::message& message);
 
-    void connect_ack ();
+    void server_packet(network::message& message, int client);
+    void client_packet(network::message& message);
 
-    void client_connect ();
-    void client_disconnect (int nClient);
-    void client_command ();
+    void connect_ack(char const* message_string);
 
-    void read_upgrade (int index);
-    void write_upgrade (int upgrade);
+    void client_connect(network::address const& remote, char const* message_string);
+    void client_connect(network::address const& remote, char const* message_string, int client);
+    void client_disconnect(int client);
+    void client_command(network::message& message, int client);
 
-    void read_sound ();
-    void read_effect ();
+    void read_upgrade(int client, int upgrade);
+    void write_upgrade(int upgrade);
+
+    void read_sound(network::message& message);
+    void read_effect(network::message& message);
 
     void client_send ();
 
-    void info_send ();
-    void info_get ();
+    void info_send(network::address const& remote);
+    void info_get(network::address const& remote, char const* message_string);
 
-    void read_info ();
-    void write_info (int client, network::message *message);
+    void read_info(network::message& message);
+    void write_info(network::message& message, int client);
 
-    void read_fail ();
+    void read_fail(char const* message_string);
 
     network::address _netserver;
 
     network::channel _netchan;
-    network::address _netfrom;
-
-    byte _netmsgbuf[MAX_MSGLEN];
-    network::message _netmsg;
-
-    int _netclient;
-    char* _netstring;
 
     char _clientsay[LONG_STRING];
 };

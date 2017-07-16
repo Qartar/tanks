@@ -35,7 +35,7 @@ void window::init ()
     _submenus[0]->add_button<button>("New Round", vec2(48,80), vec2(64,32), [](){
         g_Game->stop_server();
         g_Game->stop_client();
-        g_Game->new_game();
+        g_Game->start_server_local();
     });
 
     _submenus[0]->add_button<button>("Reset", vec2(48,128), vec2(64,32), [](){

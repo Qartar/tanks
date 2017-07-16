@@ -11,213 +11,86 @@ namespace game {
 void session::get_packets ()
 {
     network::socket   socket;
-    client_t    *cl;
-    int         i;
 
-    float       time = g_Application->time();
+    byte message_buf[MAX_MSGLEN];
+    network::message message;
+
+    message.init(message_buf, MAX_MSGLEN);
 
     if ( _multiserver )
         socket = network::socket::server;
     else
         socket = network::socket::client;
 
-    while ( pNet->get( socket, &_netfrom, &_netmsg ) )
-    {
-        if ( *(int *)_netmsg.data == -1 )
-        {
-            connectionless( socket );
+    network::address remote;
+
+    while (pNet->get(socket, &remote, &message)) {
+        if (*(int *)message.data == -1) {
+            if (socket == network::socket::server) {
+                server_connectionless(remote, message);
+            } else {
+                client_connectionless(remote, message);
+            }
             continue;
         }
 
-        if ( socket == network::socket::server )
-        {
+        if (socket == network::socket::server) {
             int     netport;
 
-            _netmsg.begin( );
-            _netmsg.read_long( );   // trash
-            netport = _netmsg.read_short( );
+            message.begin();
+            message.read_long();
+            netport = message.read_short();
 
-            for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
-            {
-                if ( cl->local )
+            for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
+                if (svs.clients[ii].local)
                     continue;
-                if ( !cl->active )
+                if (!svs.clients[ii].active)
                     continue;
-                if ( cl->netchan.address != _netfrom )
+                if (svs.clients[ii].netchan.address != remote)
                     continue;
-                if ( cl->netchan.netport != netport )
+                if (svs.clients[ii].netchan.netport != netport)
                     continue;
 
                 // found him
-                _netclient = i;
+                svs.clients[ii].netchan.process(&message);
+                server_packet(message, ii);
                 break;
             }
-
-            if ( i == MAX_PLAYERS )
-                continue;   // bad client
-
-            cl->netchan.process( &_netmsg );
-        }
-        else
-        {
-            if ( _netfrom != _netserver )
+        } else {
+            if (remote != _netserver) {
                 break;  // not from our server
-
-            _netchan.process( &_netmsg );
+            }
+            _netchan.process(&message);
+            client_packet(message);
         }
-
-        packet( socket );
     }
 
     //
     // check for timeouts
     //
 
-    if ( _multiserver )
-    {
-        for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
-        {
-            if ( cl->local )
+    float time = g_Application->time();
+
+    if (_multiserver) {
+        for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
+            if (svs.clients[ii].local || !svs.clients[ii].active) {
                 continue;
+            }
 
-            if ( !cl->active )
-                continue;
+            if (svs.clients[ii].netchan.last_received + 10000 < time) {
+                svs.clients[ii].netchan.message.write_byte(svc_disconnect);
+                svs.clients[ii].netchan.transmit(
+                    svs.clients[ii].netchan.message.bytes_written,
+                    svs.clients[ii].netchan.messagebuf);
 
-            if ( cl->netchan.last_received + 10000 < time )
-            {
-                cl->netchan.message.write_byte( svc_disconnect );
-                cl->netchan.transmit( cl->netchan.message.bytes_written, cl->netchan.messagebuf );
-
-                write_message( va("%s timed out.", cl->name ) );
-                client_disconnect( i );
+                write_message(va("%s timed out.", svs.clients[ii].name));
+                client_disconnect(ii);
             }
         }
-    }
-    else if ( _multiplayer_active )
-    {
-        if ( _netchan.last_received + 10000 < time )
-        {
-            write_message( "Server timed out." );
-            stop_client( );
-        }
-    }
-}
-
-//------------------------------------------------------------------------------
-void session::connectionless (network::socket socket)
-{
-    static char* cmd; 
-
-    _netmsg.begin( );
-    _netmsg.read_long( );
-
-    cmd = _netstring = _netmsg.read_string( );
-
-    if ( socket == network::socket::server )
-    {
-        if ( (strstr( cmd, "info" ) ) )
-            info_send( );
-        else if ( (strstr( cmd, "connect" ) ) )
-            client_connect( );
-    }
-    else if ( socket == network::socket::client )
-    {
-        if ( (strstr( cmd, "info" ) ) )
-            info_get( );
-        else if ( (strstr( cmd, "connect" ) ) )
-            connect_ack( );
-        else if ( (strstr( cmd, "fail" ) ) )
-            read_fail( );
-    }
-}
-
-//------------------------------------------------------------------------------
-void session::packet (network::socket socket)
-{
-    int     net_cmd;
-    char    *string;
-    int     net_read;
-
-    while ( true )
-    {
-        if ( _netmsg.bytes_read > _netmsg.bytes_written )
-            break;
-
-        net_cmd = _netmsg.read_byte( );
-
-        if ( net_cmd == -1 )
-            return;
-
-        if ( socket == network::socket::server )
-        {
-            switch ( net_cmd )
-            {
-            case clc_command:
-                client_command( );
-                break;
-
-            case clc_disconnect:
-                write_message( va("%s disconnected.", svs.clients[_netclient].name ) );
-                client_disconnect( _netclient );
-                break;
-
-            case clc_say:
-                string = _netmsg.read_string( );
-                write_message( va( "\\c%02x%02x%02x%s\\cx: %s",
-                    (int )(svs.clients[_netclient].color.r * 255),
-                    (int )(svs.clients[_netclient].color.g * 255),
-                    (int )(svs.clients[_netclient].color.b * 255),
-                    svs.clients[_netclient].name, string ) ); 
-                break;
-
-            case clc_upgrade:
-                net_read = _netmsg.read_byte( );
-                read_upgrade( net_read );
-                break;
-
-            case svc_info:
-                read_info( );
-                break;
-
-            default:
-                return;
-            }
-        }
-        else if ( socket == network::socket::client )
-        {
-            switch ( net_cmd )
-            {
-            case svc_disconnect:
-                _multiplayer_active = false;
-                write_message( "Disconnected from server." );
-                stop_client( );
-                break;
-            case svc_message:
-                string = _netmsg.read_string( );
-                write_message( string );
-                break;
-            case svc_score:
-                net_read = _netmsg.read_byte( );
-                _score[net_read] = _netmsg.read_byte( );
-                break;
-            case svc_info:
-                read_info( );
-                break;
-            case svc_frame:
-                get_frame( );
-                break;
-            case svc_effect:
-                read_effect( );
-                break;
-            case svc_sound:
-                read_sound( );
-                break;
-            case svc_restart:
-                _restart_time = _frametime + _netmsg.read_byte( ) * 1000; //   time is in msec?
-                break;
-            default:
-                return;
-            }
+    } else if (_multiplayer_active) {
+        if (_netchan.last_received + 10000 < time) {
+            write_message("Server timed out.");
+            stop_client();
         }
     }
 }
@@ -225,17 +98,10 @@ void session::packet (network::socket socket)
 //------------------------------------------------------------------------------
 void session::broadcast (int len, byte *data)
 {
-    int             i;
-    client_t        *cl;
-
-    for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
-    {
-        if ( cl->local )
-            continue;
-        if ( !cl->active )
-            continue;
-
-        cl->netchan.message.write( data, len );
+    for (auto& cl : svs.clients) {
+        if (!cl.local && cl.active) {
+            cl.netchan.message.write(data, len);
+        }
     }
 }
 
@@ -256,117 +122,104 @@ void session::broadcast_print (char const* message)
 //------------------------------------------------------------------------------
 void session::send_packets ()
 {
-    int         i;
-    client_t    *cl;
-
-    if ( !_multiplayer_active )
+    if (!_multiplayer_active) {
         return;
-
-    if ( _multiserver )
-        goto server;
-
-    client_send( );    // write move commands
-
-    if ( _netchan.message.bytes_written )
-    {
-        _netchan.transmit( _netchan.message.bytes_written, _netchan.messagebuf );
-        _netchan.message.clear( );
     }
 
-    return;
+    if (_multiserver) {
+        for (auto& cl : svs.clients) {
+            if (cl.local || !cl.active || !cl.netchan.message.bytes_written) {
+                continue;
+            }
 
-server:
-    for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
-    {
-        if ( cl->local )
-            continue;   // local
+            cl.netchan.transmit(cl.netchan.message.bytes_written, cl.netchan.messagebuf);
+            cl.netchan.message.clear();
+        }
+    } else {
+        client_send();
 
-        if ( !cl->active )
-            continue;
-
-        if ( !cl->netchan.message.bytes_written )
-            continue;
-
-        cl->netchan.transmit( cl->netchan.message.bytes_written, cl->netchan.messagebuf );
-        cl->netchan.message.clear( );
+        if (_netchan.message.bytes_written) {
+            _netchan.transmit(_netchan.message.bytes_written, _netchan.messagebuf);
+            _netchan.message.clear();
+        }
     }
 }
 
 //------------------------------------------------------------------------------
-void session::read_fail ()
+void session::read_fail(char const* message_string)
 {
     textutils_c text;
 
-    text.parse( _netstring );
+    text.parse(message_string);
 
-    write_message( va( "Failed to connect: %s", text.argv(1) ) );
+    write_message(va("Failed to connect: %s", text.argv(1)));
 }
 
 //------------------------------------------------------------------------------
-void session::write_info (int client, network::message *message)
+void session::write_info(network::message& message, int client)
 {
-    message->write_byte( svc_info );
-    message->write_byte( client );
-    message->write_byte( svs.clients[client].active );
-    message->write_string( svs.clients[client].name );
+    message.write_byte( svc_info );
+    message.write_byte( client );
+    message.write_byte( svs.clients[client].active );
+    message.write_string( svs.clients[client].name );
 
-    message->write_byte( svs.clients[client].color.r * 255 );
-    message->write_byte( svs.clients[client].color.g * 255 );
-    message->write_byte( svs.clients[client].color.b * 255 );
+    message.write_byte( svs.clients[client].color.r * 255 );
+    message.write_byte( svs.clients[client].color.g * 255 );
+    message.write_byte( svs.clients[client].color.b * 255 );
 
     //  write extra shit
 
-    message->write_byte( _clients[client].upgrades );
-    message->write_byte( _clients[client].armor_mod * 10 );
-    message->write_byte( _clients[client].damage_mod * 10 );
-    message->write_byte( _clients[client].refire_mod * 10 );
-    message->write_byte( _clients[client].speed_mod * 10 );
+    message.write_byte( _clients[client].upgrades );
+    message.write_byte( _clients[client].armor_mod * 10 );
+    message.write_byte( _clients[client].damage_mod * 10 );
+    message.write_byte( _clients[client].refire_mod * 10 );
+    message.write_byte( _clients[client].speed_mod * 10 );
 
     // also write score
 
-    message->write_byte( svc_score );
-    message->write_byte( client );
-    message->write_byte( _score[client] );
+    message.write_byte( svc_score );
+    message.write_byte( client );
+    message.write_byte( _score[client] );
 }
 
 //------------------------------------------------------------------------------
-void session::read_info ()
+void session::read_info(network::message& message)
 {
     int     client;
     int     active;
     char    *string;
 
-    client = _netmsg.read_byte( );
-    active = _netmsg.read_byte( );
+    client = message.read_byte( );
+    active = message.read_byte( );
 
     svs.clients[client].active = ( active == 1 );
-    
-    string = _netmsg.read_string( );
+
+    string = message.read_string( );
     strncpy( svs.clients[client].name, string, SHORT_STRING );
 
-    svs.clients[client].color.r = _netmsg.read_byte( ) / 255.0f;
-    svs.clients[client].color.g = _netmsg.read_byte( ) / 255.0f;
-    svs.clients[client].color.b = _netmsg.read_byte( ) / 255.0f;
+    svs.clients[client].color.r = message.read_byte( ) / 255.0f;
+    svs.clients[client].color.g = message.read_byte( ) / 255.0f;
+    svs.clients[client].color.b = message.read_byte( ) / 255.0f;
 
     game::tank* player = _world.player(client);
     if (player) {
         player->_color = color4(svs.clients[client].color);
     }
 
-    _clients[client].upgrades = _netmsg.read_byte( );
-    _clients[client].armor_mod = _netmsg.read_byte( ) / 10.0f;
-    _clients[client].damage_mod = _netmsg.read_byte( ) / 10.0f;
-    _clients[client].refire_mod = _netmsg.read_byte( ) / 10.0f;
-    _clients[client].speed_mod = _netmsg.read_byte( ) / 10.0f;
+    _clients[client].upgrades = message.read_byte( );
+    _clients[client].armor_mod = message.read_byte( ) / 10.0f;
+    _clients[client].damage_mod = message.read_byte( ) / 10.0f;
+    _clients[client].refire_mod = message.read_byte( ) / 10.0f;
+    _clients[client].speed_mod = message.read_byte( ) / 10.0f;
 
-    if ( _multiserver || _dedicated )
-    {
+    // relay info to other clients
+    if (_multiserver || _dedicated) {
         network::message    netmsg;
         byte        msgbuf[MAX_MSGLEN];
 
-        netmsg.init( msgbuf, MAX_MSGLEN );
-        write_info( client, &netmsg );
-        broadcast( netmsg.bytes_written, netmsg.data );
+        netmsg.init(msgbuf, MAX_MSGLEN);
+        write_info(netmsg, client);
+        broadcast(netmsg.bytes_written, netmsg.data);
     }
 }
 

@@ -20,9 +20,9 @@ enum socket { client, server, NUM_SOCKETS };
 class address
 {
 public:
-    bool operator==(network::address &other);
-    bool operator!=(network::address &other) { return !(*this == other); }
-    bool is_local() { return (type == network::address_type::loopback); }
+    bool operator==(network::address const& other) const;
+    bool operator!=(network::address const& other) const { return !(*this == other); }
+    bool is_local() const { return (type == network::address_type::loopback); }
 
     address_type type;
 

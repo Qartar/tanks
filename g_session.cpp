@@ -76,10 +76,9 @@ int session::init (char const *cmdline)
 
     svs.active = false;
 
-    memset( svs.clients, 0, sizeof(client_t)*MAX_PLAYERS );
+    memset( svs.clients.data(), 0, sizeof(client_t)*MAX_PLAYERS );
     memset( _clientsay, 0, LONG_STRING );
 
-    svs.max_clients = MAX_PLAYERS;
     strcpy( svs.name, _net_server_name );
 
     cls.number = 0;
@@ -110,9 +109,6 @@ int session::init (char const *cmdline)
     _world.init( );
 
     _netchan.init( );
-
-    _netmsg.init( _netmsgbuf, MAX_MSGLEN );
-    _netmsg.clear( );
 
     pNet->config( true );
 
@@ -690,22 +686,13 @@ void session::add_score(int player_index, int score)
         }
     }
 
-    if ( _multiserver )
-    {
+    if (_multiserver) {
         network::message    netmsg;
         byte        buf[MAX_MSGLEN];
 
-        byte    msg[3];
-
-        msg[0] = svc_score;
-        msg[1] = player_index;
-        msg[2] = _score[player_index];
-
-        broadcast( 3, msg );
-
-        netmsg.init( buf, MAX_MSGLEN );
-        write_info( player_index, &netmsg );
-        broadcast( netmsg.bytes_written, netmsg.data );
+        netmsg.init(buf, MAX_MSGLEN);
+        write_info(netmsg, player_index);
+        broadcast(netmsg.bytes_written, netmsg.data);
     }
 }
 
@@ -757,7 +744,7 @@ void session::draw_score ()
     });
 
     for ( i=0,n=0 ; i<MAX_PLAYERS ; i++ ) {
-        if (!_world.player(i)) {
+        if (!svs.clients[sort[i]].active) {
             continue;
         }
 
@@ -841,9 +828,6 @@ void session::new_game()
 
     for ( int i=0 ; i<MAX_PLAYERS ; i++ )
     {
-        fmt( svs.clients[i].name, "Player %i", i+1 );
-        svs.clients[i].color = player_colors[i];
-
         _clients[i].armor_mod = 1.0f;
         _clients[i].damage_mod = 1.0f;
         _clients[i].refire_mod = 1.0f;

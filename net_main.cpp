@@ -12,29 +12,25 @@ network::manager    *pNet;  // extern
 namespace network {
 
 //------------------------------------------------------------------------------
-bool address::operator == (network::address &other)
+bool address::operator==(network::address const& other) const
 {
-    if ( type != other.type )
-        return false;
-
-    if ( type == network::address_type::loopback )
-        return true;
-
-    if ( type == network::address_type::ip )
-    {
-        if ( memcmp( ip, other.ip, 4 ) == 0 )
-            return true;
+    if (type != other.type) {
         return false;
     }
 
-    if ( type == network::address_type::ipx )
-    {
-        if ( memcmp( ipx, other.ipx, 10 ) == 0 )
+    switch (type) {
+        case network::address_type::loopback:
             return true;
-        return false;
-    }
 
-    return false;
+        case network::address_type::ip:
+            return memcmp(ip, other.ip, 4) == 0 && port == other.port;
+
+        case network::address_type::ipx:
+            return memcmp(ipx, other.ipx, 10) == 0 && port == other.port;
+
+        default:
+            return false;
+    }
 }
 
 //------------------------------------------------------------------------------

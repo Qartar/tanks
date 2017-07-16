@@ -70,12 +70,73 @@ void session::stop_client ()
     _menu_active = true;
 }
 
-#define CLAMP_TIME  10.0f
+//------------------------------------------------------------------------------
+void session::client_connectionless(network::address const& remote, network::message& message)
+{
+    message.begin();
+    message.read_long();
+
+    char const* message_string = message.read_string();
+
+    if (strstr(message_string, "info")) {
+        info_get(remote, message_string);
+    } else if (strstr(message_string, "connect")) {
+        connect_ack(message_string);
+    } else if (strstr(message_string, "fail")) {
+        read_fail(message_string);
+    }
+}
 
 //------------------------------------------------------------------------------
-void session::get_frame ()
+void session::client_packet(network::message& message)
 {
-    _world.read_snapshot(_netmsg);
+    while (message.bytes_read < message.bytes_written) {
+        switch (message.read_byte()) {
+            case svc_disconnect:
+                write_message( "Disconnected from server." );
+                stop_client();
+                break;
+
+            case svc_message:
+                write_message(message.read_string());
+                break;
+
+            case svc_score: {
+                int client = message.read_byte();
+                int score = message.read_byte();
+                _score[client] = score;
+                break;
+            }
+            case svc_info:
+                read_info(message);
+                break;
+
+            case svc_frame:
+                get_frame(message);
+                break;
+
+            case svc_effect:
+                read_effect(message);
+                break;
+
+            case svc_sound:
+                read_sound(message);
+                break;
+
+            case svc_restart:
+                _restart_time = _frametime + message.read_byte() * 1000;
+                break;
+
+            default:
+                return;
+        }
+    }
+}
+
+//------------------------------------------------------------------------------
+void session::get_frame(network::message& message)
+{
+    _world.read_snapshot(message);
     _framenum = _world.framenum();
     _frametime = (_framenum - 1) * FRAMEMSEC;
 }
@@ -99,13 +160,11 @@ void session::connect_to_server (int index)
 }
 
 //------------------------------------------------------------------------------
-void session::connect_ack ()
+void session::connect_ack(char const* message_string)
 {
-    char    tempbuf[32];
-
     // server has ack'd our connect
 
-    sscanf( _netstring, "%s %i", tempbuf, &cls.number );
+    sscanf(message_string, "connect %i", &cls.number);
 
     _netchan.setup( network::socket::client, _netserver );
 
@@ -128,7 +187,7 @@ void session::connect_ack ()
     strcpy( svs.clients[cls.number].name, cls.name );
     svs.clients[cls.number].color = cls.color;
 
-    write_info( cls.number, &_netchan.message );
+    write_info(_netchan.message, cls.number);
 }
 
 //------------------------------------------------------------------------------
@@ -143,19 +202,19 @@ void session::client_send ()
 }
 
 //------------------------------------------------------------------------------
-void session::read_sound ()
+void session::read_sound(network::message& message)
 {
-    int asset = _netmsg.read_long();
+    int asset = message.read_long();
     pSound->play(static_cast<sound::asset>(asset), vec3(0,0,0), 1.0f, 0.0f);
 }
 
 //------------------------------------------------------------------------------
-void session::read_effect ()
+void session::read_effect(network::message& message)
 {
-    int type = _netmsg.read_byte();
-    vec2 pos = _netmsg.read_vector();
-    vec2 vel = _netmsg.read_vector();
-    float strength = _netmsg.read_float();
+    int type = message.read_byte();
+    vec2 pos = message.read_vector();
+    vec2 vel = message.read_vector();
+    float strength = message.read_float();
 
     _world.add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
 }
@@ -192,31 +251,27 @@ void session::info_ask ()
 }
 
 //------------------------------------------------------------------------------
-void session::info_get ()
+void session::info_get(network::address const& remote, char const* message_string)
 {
-    int         i;
-
-    for ( i=0 ; i<MAX_SERVERS ; i++ )
-    {
+    for (int ii=0; ii < MAX_SERVERS; ++ii) {
         // already exists and active, abort
-        if ( cls.servers[i].address == _netfrom && cls.servers[i].active )
+        if ( cls.servers[ii].address == remote && cls.servers[ii].active )
             return;
 
         // slot taken, try next
-        if ( cls.servers[i].active )
+        if ( cls.servers[ii].active )
             continue;
 
-        cls.servers[i].address = _netfrom;
-        cls.servers[i].ping = _frametime - cls.ping_time;
+        cls.servers[ii].address = remote;
+        cls.servers[ii].ping = _frametime - cls.ping_time;
 
-        strcpy( cls.servers[i].name, _netstring + 5 );
+        strcpy(cls.servers[ii].name, message_string + 5);
 
-        cls.servers[i].active = true;
+        cls.servers[ii].active = true;
 
         // old server code
-        if ( !_have_server )
-        {
-            _netserver = _netfrom;
+        if (!_have_server) {
+            _netserver = remote;
             _have_server = true;
         }
 
@@ -225,17 +280,14 @@ void session::info_get ()
 }
 
 //------------------------------------------------------------------------------
-void session::write_upgrade (int upgrade)
+void session::write_upgrade(int upgrade)
 {
-    if ( _multiserver )
-    {
-        _netclient = 0;
-        read_upgrade( upgrade );
-        return;
+    if (_multiserver) {
+        read_upgrade(0, upgrade);
+    } else {
+        _netchan.message.write_byte(clc_upgrade);
+        _netchan.message.write_byte(upgrade);
     }
-
-    _netchan.message.write_byte( clc_upgrade );
-    _netchan.message.write_byte( upgrade );
 }
 
 } // namespace game
