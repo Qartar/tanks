@@ -15,8 +15,6 @@ class system;
 
 #define SPAWN_BUFFER    32
 
-#define MAX_PLAYERS 16
-
 #define PROTOCOL_VERSION    4
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -202,8 +200,6 @@ public:
 
     static int find_server_by_name(void *lpvoid);
 
-    game::tank* player( int index ) { return _players[ index ]; }
-
 private:
     menu::window _menu;
     game::world _world;
@@ -233,9 +229,6 @@ private:
     int _score[MAX_PLAYERS];
     void draw_score ();
 
-    friend game::tank;
-
-    game::tank* _players[MAX_PLAYERS];
     void spawn_player(int num);
     void respawn_player(int num);
 

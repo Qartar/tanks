@@ -7,6 +7,8 @@
 #include "keys.h"
 #include "resource.h"
 
+#include <numeric>
+
 // global object
 vMain   *pMain;
 game::session* g_Game;
@@ -18,8 +20,7 @@ namespace game {
 
 //------------------------------------------------------------------------------
 session::session()
-    : _players{0}
-    , _client_button_down(false)
+    : _client_button_down(false)
     , _server_button_down(false)
     , _upgrade_frac("g_upgradeFrac", 0.5f, config::archive|config::server, "upgrade fraction")
     , _upgrade_penalty("g_upgradePenalty", 0.2f, config::archive|config::server, "upgrade penalty")
@@ -233,11 +234,12 @@ void session::update_screen()
     view_width   = DEFAULT_W;
     view_height  = DEFAULT_H;
 
-    if ( _multiplayer && _players[ cls.number ] ) {
+    game::tank* player = _world.player(cls.number);
+    if ( _multiplayer && player ) {
         float lerp = (_frametime - (_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
 
-        center_x = _players[ cls.number ]->get_position( lerp ).x;
-        center_y = _players[ cls.number ]->get_position( lerp ).y;
+        center_x = player->get_position( lerp ).x;
+        center_y = player->get_position( lerp ).y;
     } else {
         center_x = world_width / 2;
         center_y = world_height / 2;
@@ -556,8 +558,9 @@ int session::key_event(unsigned char key, bool down)
     if ( ! _dedicated )
     {
         for (int ii = 0; ii < MAX_PLAYERS; ++ii) {
-            if (_players[ii] && _clients[ii].input.key_event(key, down)) {
-                _players[ii]->update_usercmd(_clients[ii].input.generate());
+            game::tank* player = _world.player(ii);
+            if (player && _clients[ii].input.key_event(key, down)) {
+                player->update_usercmd(_clients[ii].input.generate());
             }
         }
     }
@@ -711,8 +714,6 @@ void session::draw_score ()
 {
     int i, n, count;
 
-    int sort[ MAX_PLAYERS ];
-
     int width = DEFAULT_W;
     int height = DEFAULT_H;
 
@@ -749,44 +750,18 @@ void session::draw_score ()
     _renderer->draw_box(vec2(96,8+12*count), vec2(width-32-22,32+4+6*count), menu::colors[4]);
     _renderer->draw_box(vec2(96,8+12*count-2), vec2(width-32-22,32+4+6*count), menu::colors[5]);
 
-    memset( sort, -1, sizeof(sort) );
-    for ( i=0 ; i<MAX_PLAYERS ; i++ ) {
+    std::array<int, MAX_PLAYERS> sort;
+    std::iota(sort.begin(), sort.end(), 0);
+    std::sort(sort.begin(), sort.end(), [this](auto lhs, auto rhs) {
+        return _score[lhs] > _score[rhs];
+    });
 
-        if ( _multiplayer ) {
-            if ( !svs.clients[ i ].active ) {
-                continue;
-            }
-        } else if ( i >= 2 ) {
-            break;
+    for ( i=0,n=0 ; i<MAX_PLAYERS ; i++ ) {
+        if (!_world.player(i)) {
+            continue;
         }
 
-        for( n=MAX_PLAYERS-1 ; n>0 ; n-- ) {
-
-            if ( sort[ n-1 ] < 0 ) {
-                continue;
-            }
-            sort[ n ] = sort[ n-1 ];
-            if ( _score[ sort[ n ] ] >= _score[ i ] ) {
-                break;
-            }
-        }
-        sort[ n ] = i;
-    }
-
-
-    for ( i=0,n=0 ; i<MAX_PLAYERS ; i++ )
-    {
-        if ( _multiplayer )
-        {
-            if ( !_players[ sort[ i ] ] )
-                continue;
-        }
-        else if ( i >= 2 )
-            break;
-
-        _renderer->draw_box(vec2(7,7), vec2(width-96, 32+11+12*n),
-            color4(_players[sort[i]]->_color.r, _players[sort[i]]->_color.g, _players[sort[i]]->_color.b, 1));
-
+        _renderer->draw_box(vec2(7,7), vec2(width-96, 32+11+12*n), color4(svs.clients[sort[i]].color));
         _renderer->draw_string(svs.clients[ sort[ i ] ].name, vec2(width-96+4, 32+14+12*n), menu::colors[7]);
         _renderer->draw_string(va(": %i", _score[ sort[ i ] ]), vec2(width-96+64+4,32+14+12*n), menu::colors[7]);
 
@@ -813,8 +788,6 @@ void session::reset()
         _clients[i].refire_mod = 1.0f;
         _clients[i].speed_mod = 1.0f;
         _clients[i].upgrades = 0;
-
-        _players[i] = nullptr;
     }
 
     _game_active = false;
@@ -841,11 +814,6 @@ void session::new_game()
     //
     //  reset world
     //
-
-    for ( int i=0 ; i<MAX_PLAYERS ; i++ )
-    {
-        _players[i] = nullptr;
-    }
 
     _world.reset( );
 
@@ -889,8 +857,7 @@ void session::new_game()
         else if ( _multiserver && !svs.clients[i].active )
             continue;
 
-        if ( !_restart_time || !_players[i] || _players[i]->_damage >= 1.0f)
-        {
+        if (!_restart_time || !_world.player(i)) {
             spawn_player(i);
         }
     }
@@ -908,17 +875,14 @@ void session::restart()
         return;
     }
 
-    for (int ii = 0; ii < MAX_PLAYERS; ++ii)
-    {
-        if ( !_multiserver && ii > 1 )
+    for (int ii = 0; ii < MAX_PLAYERS; ++ii) {
+        if (!_multiserver && ii > 1) {
             break;
-        else if ( _multiserver && !svs.clients[ii].active )
+        } else if (_multiserver && !svs.clients[ii].active) {
             continue;
+        }
 
-        if (_players[ii]->_damage >= 1.0f)
-            respawn_player(ii);
-        else
-            _players[ii]->_damage = 0.0f;
+        respawn_player(ii);
     }
 
     _game_active = true;
@@ -932,14 +896,10 @@ void session::spawn_player(int num)
     //  initialize tank object
     //
 
-    assert(_players[num] == nullptr);
-    _players[num] = _world.spawn<game::tank>();
-
-    _players[num]->_model = &tank_body_model;
-    _players[num]->_turret_model = &tank_turret_model;
-    _players[num]->_color = color4(svs.clients[num].color);
-    _players[num]->_player_index = num;
-    _players[num]->_client = _clients + num;
+    assert(_world.player(num) == nullptr);
+    game::tank* player = _world.spawn_player(num);
+    player->_color = color4(svs.clients[num].color);
+    player->_client = _clients + num;
 
     respawn_player(num);
 
@@ -962,23 +922,20 @@ void session::respawn_player(int num)
     int width = _world.maxs().x - _world.mins().x - SPAWN_BUFFER * 2;
     int height = _world.maxs().y - _world.mins().y - SPAWN_BUFFER * 2;
 
-    assert(_players[num] != nullptr);
+    assert(_world.player(num) != nullptr);
+    game::tank* player = _world.player(num);
 
-    _players[num]->set_position(vec2(width*frand()+SPAWN_BUFFER,height*frand()+SPAWN_BUFFER));
-    _players[num]->set_rotation(frand()*2.0f*M_PI);
-    _players[num]->_turret_rotation = _players[num]->get_rotation();
+    player->set_position(vec2(width*frand()+SPAWN_BUFFER,height*frand()+SPAWN_BUFFER), true);
+    player->set_rotation(frand()*2.0f*M_PI, true);
+    player->set_turret_rotation(player->get_rotation(), true);
 
-    _players[num]->_old_position = _players[num]->get_position();
-    _players[num]->_old_rotation = _players[num]->get_rotation();
-    _players[num]->_old_turret_rotation = _players[num]->_turret_rotation;
+    player->set_linear_velocity(vec2(0,0));
+    player->set_angular_velocity(0.0f);
+    player->set_turret_velocity(0.0f);
+    player->_track_speed = 0.0f;
 
-    _players[num]->set_linear_velocity(vec2(0,0));
-    _players[num]->set_angular_velocity(0.0f);
-    _players[num]->_turret_velocity = 0.0f;
-    _players[num]->_track_speed = 0.0f;
-
-    _players[num]->_damage = 0.0f;
-    _players[num]->_fire_time = 0.0f;
+    player->_damage = 0.0f;
+    player->_fire_time = 0.0f;
 }
 
 //------------------------------------------------------------------------------

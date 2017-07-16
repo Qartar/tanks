@@ -25,16 +25,16 @@ void window::init ()
     add_button<submenu_button>("Game Options", vec2(448,32), vec2(96,32), this, _submenus[2].get());
 
     add_button<button>("Quit", vec2(576,32), vec2(96,32), [](){
-        g_Game->stop_client();
         g_Game->stop_server();
+        g_Game->stop_client();
         g_Application->quit(0);
     });
 
     // local
 
     _submenus[0]->add_button<button>("New Round", vec2(48,80), vec2(64,32), [](){
-        g_Game->stop_client();
         g_Game->stop_server();
+        g_Game->stop_client();
         g_Game->new_game();
     });
 

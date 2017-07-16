@@ -29,6 +29,8 @@ cSound::cSound()
     , snd_frequency("snd_frequency", 22050, config::archive, "sound playback speed")
     , snd_mixahead("snd_mixahead", 0.1f, config::archive, "sound mix ahead time, in seconds")
     , snd_primary("snd_primary", false, config::archive, "use primary sound buffer")
+    , m_bInitialized(false)
+    , pAudioDevice(nullptr)
 {
     m_Chain.pNext = m_Chain.pPrev = &m_Chain; Init( );
 }

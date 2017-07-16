@@ -25,9 +25,10 @@ void session::start_server ()
         svs.clients[0].active = true;
         svs.clients[0].local = true;
 
-        spawn_player(0);
-
         strncpy( svs.clients[0].name, cls.name, SHORT_STRING );
+        svs.clients[0].color = cls.color;
+
+        spawn_player(0);
     }
     else
     {
@@ -61,8 +62,6 @@ void session::stop_server ()
 
     for ( i=0,cl=svs.clients ; i<MAX_PLAYERS ; i++,cl++ )
     {
-        _players[ i ] = nullptr;
-
         if ( cl->local )
             continue;
         if ( !cl->active )
@@ -85,10 +84,6 @@ void session::write_frame ()
 {
     network::message    message;
     static byte messagebuf[MAX_MSGLEN];
-
-    // HACK: update local players color here
-    if ( svs.clients[0].local )
-        _players[0]->_color = color4(cls.color);
 
     message.init( messagebuf, MAX_MSGLEN );
     message.clear( );
@@ -191,8 +186,7 @@ void session::client_disconnect (int nClient)
     if ( !svs.clients[nClient].active )
         return;
 
-    _world.remove( _players[nClient] );
-    _players[nClient] = nullptr;
+    _world.remove_player(nClient);
     svs.clients[nClient].active = false;
 
     write_info( nClient, &message );
@@ -208,8 +202,9 @@ void session::client_command ()
     cmd.look = _netmsg.read_vector();
     cmd.action = static_cast<decltype(cmd.action)>(_netmsg.read_byte());
 
-    if (_players[_netclient]) {
-        _players[_netclient]->update_usercmd(cmd);
+    game::tank* player = _world.player(_netclient);
+    if (player) {
+        player->update_usercmd(cmd);
     }
 }
 
@@ -317,9 +312,9 @@ void session::read_upgrade (int index)
         }
 
         write_message( va( "\\c%02x%02x%02x%s\\cx has upgraded their %s!",
-            (int )(_players[_netclient]->_color.r * 255),
-            (int )(_players[_netclient]->_color.g * 255),
-            (int )(_players[_netclient]->_color.b * 255),
+            (int )(svs.clients[_netclient].color.r * 255),
+            (int )(svs.clients[_netclient].color.g * 255),
+            (int )(svs.clients[_netclient].color.b * 255),
             svs.clients[_netclient].name, sz_upgrades[index] ) ); 
 
         netmsg.init( msgbuf, MAX_MSGLEN );

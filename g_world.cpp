@@ -49,6 +49,10 @@ void world::reset()
     _pending.clear();
     _removed.clear();
 
+    for (int ii = 0; ii < MAX_PLAYERS; ++ii) {
+        _players[ii] = nullptr;
+    }
+
     _spawn_id = 0;
 
     // Initialize border objects
@@ -213,6 +217,23 @@ game::object* world::spawn_snapshot(std::size_t spawn_id, object_type type)
         default:
             return nullptr;
     }
+}
+
+//------------------------------------------------------------------------------
+game::tank* world::spawn_player(int player_index)
+{
+    assert(_players[player_index] == nullptr);
+    _players[player_index] = spawn<game::tank>();
+    _players[player_index]->_player_index = player_index;
+    return _players[player_index];
+}
+
+//------------------------------------------------------------------------------
+void world::remove_player(int player_index)
+{
+    assert(_players[player_index]);
+    remove(_players[player_index]);
+    _players[player_index] = nullptr;
 }
 
 //------------------------------------------------------------------------------

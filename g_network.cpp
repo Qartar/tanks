@@ -164,9 +164,9 @@ void session::packet (network::socket socket)
             case clc_say:
                 string = _netmsg.read_string( );
                 write_message( va( "\\c%02x%02x%02x%s\\cx: %s",
-                    (int )(_players[_netclient]->_color.r * 255),
-                    (int )(_players[_netclient]->_color.g * 255),
-                    (int )(_players[_netclient]->_color.b * 255),
+                    (int )(svs.clients[_netclient].color.r * 255),
+                    (int )(svs.clients[_netclient].color.g * 255),
+                    (int )(svs.clients[_netclient].color.b * 255),
                     svs.clients[_netclient].name, string ) ); 
                 break;
 
@@ -348,8 +348,9 @@ void session::read_info ()
     svs.clients[client].color.g = _netmsg.read_byte( ) / 255.0f;
     svs.clients[client].color.b = _netmsg.read_byte( ) / 255.0f;
 
-    if (_players[client]) {
-        _players[client]->_color = color4(svs.clients[client].color);
+    game::tank* player = _world.player(client);
+    if (player) {
+        player->_color = color4(svs.clients[client].color);
     }
 
     _clients[client].upgrades = _netmsg.read_byte( );

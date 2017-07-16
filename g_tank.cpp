@@ -18,7 +18,7 @@ physics::box_shape tank::_shape(vec2(24, 16));
 #define DAMAGE_FULL     1.0f
 
 //------------------------------------------------------------------------------
-tank::tank ()
+tank::tank()
     : object(object_type::tank)
     , _turret_model(nullptr)
     , _turret_rotation(0)
@@ -282,8 +282,9 @@ void tank::read_snapshot(network::message& message)
     _old_rotation = get_rotation();
     _old_turret_rotation = get_turret_rotation();
 
-    _client = g_Game->_clients + message.read_byte();
-    g_Game->_players[_client - g_Game->_clients] = this;
+    _player_index = message.read_byte();
+    _client = g_Game->_clients + _player_index;
+    _world->_players[_player_index] = this;
     _color.r = message.read_float();
     _color.g = message.read_float();
     _color.b = message.read_float();
@@ -302,7 +303,7 @@ void tank::read_snapshot(network::message& message)
 //------------------------------------------------------------------------------
 void tank::write_snapshot(network::message& message) const
 {
-    message.write_byte(_client - g_Game->_clients);
+    message.write_byte(_player_index);
     message.write_float(_color.r);
     message.write_float(_color.g);
     message.write_float(_color.b);
