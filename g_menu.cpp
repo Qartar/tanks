@@ -100,28 +100,49 @@ bool window::activate(submenu_button* button, menu::window* submenu)
 }
 
 //------------------------------------------------------------------------------
-void window::draw(render::system* renderer, vec2 cursor_pos) const
+void window::draw(render::system* renderer) const
 {
     // draw buttons
     for (auto const& button : _buttons) {
-        button->draw(renderer, cursor_pos);
+        button->draw(renderer);
     }
 
     // draw submenu
     if (_active_menu) {
-        _active_menu->draw(renderer, cursor_pos);
+        _active_menu->draw(renderer);
     }
 }
 
 //------------------------------------------------------------------------------
-void window::click(vec2 cursor_pos, bool down)
+bool window::key_event(int key, bool down)
 {
+    if (_active_menu && _active_menu->key_event(key, down)) {
+        return true;
+    }
+
     for (auto& button : _buttons) {
-        button->click(cursor_pos, down);
+        if (button->key_event(key, down)) {
+            return true;
+        }
     }
-    if (_active_menu) {
-        _active_menu->click(cursor_pos, down);
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool window::cursor_event(vec2 position)
+{
+    if (_active_menu && _active_menu->cursor_event(position)) {
+        return true;
     }
+
+    for (auto& button : _buttons) {
+        if (button->cursor_event(position)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 } // namespace menu

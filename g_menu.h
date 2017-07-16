@@ -77,6 +77,7 @@ public:
         : _text(text)
         , _rectangle(center, size)
         , _down(false)
+        , _over(false)
     {}
 
     template<typename Tfunc>
@@ -88,14 +89,18 @@ public:
 
     virtual ~button() {}
 
-    virtual bool click(vec2 cursor_pos, bool down);
-    virtual void draw(render::system* renderer, vec2 cursor_pos) const;
+    virtual bool key_event(int key, bool down);
+    virtual bool cursor_event(vec2 position);
+
+    virtual void draw(render::system* renderer) const;
 
 protected:
     std::string _text;
     menu::rectangle _rectangle;
     std::function<void()> _func;
+
     bool _down;
+    bool _over;
 
 protected:
     enum text_flags {
@@ -123,8 +128,9 @@ class server_button : public button
 public:
     server_button(vec2 position, vec2 size, char const* name_ptr, float const* ping_ptr, std::function<void()>&& op_click);
 
-    virtual bool click(vec2 cursor_pos, bool down) override;
-    virtual void draw(render::system* renderer, vec2 cursor_pos) const override;
+    virtual bool key_event(int key, bool down) override;
+
+    virtual void draw(render::system* renderer) const override;
 
 protected:
     char const* _name_ptr;
@@ -140,12 +146,17 @@ class host_button : public button
 public:
     host_button(vec2 position, vec2 size, std::function<void()>&& op_click);
 
-    virtual bool click(vec2 cursor_pos, bool down) override;
-    virtual void draw(render::system* renderer, vec2 cursor_pos) const override;
+    virtual bool key_event(int key, bool down) override;
+    virtual bool cursor_event(vec2 position) override;
+
+    virtual void draw(render::system* renderer) const override;
 
 protected:
     menu::rectangle _create_rectangle;
     menu::rectangle _text_rectangle;
+
+    bool _create_over;
+    bool _text_over;
 
     bool _create_down;
     bool _text_down;
@@ -157,8 +168,9 @@ class conditional_button : public button
 public:
     conditional_button(char const* text, vec2 position, vec2 size, bool *condition_ptr, std::function<void()>&& op_click);
 
-    virtual bool click(vec2 cursor_pos, bool down) override;
-    virtual void draw(render::system* renderer, vec2 cursor_pos) const override;
+    virtual bool key_event(int key, bool down) override;
+
+    virtual void draw(render::system* renderer) const override;
 
 protected:
     bool* _condition_ptr;
@@ -170,14 +182,17 @@ class client_button : public button
 public:
     client_button(char const* text, vec2 position, vec2 size, color3* color_ptr);
 
-    virtual bool click(vec2 cursor_pos, bool down) override;
-    virtual void draw(render::system* renderer, vec2 cursor_pos) const override;
+    virtual bool key_event(int key, bool down) override;
+    virtual bool cursor_event(vec2 position) override;
+
+    virtual void draw(render::system* renderer) const override;
 
 protected:
     color3* _color_ptr;
     int _color_index;
 
     bool _text_down;
+    bool _text_over;
 
     menu::rectangle _text_rectangle;
 };
@@ -188,7 +203,7 @@ class submenu_button : public button
 public:
     submenu_button (char const* text, vec2 position, vec2 size, menu::window *pParent, menu::window *pMenu);
 
-    virtual void draw(render::system* renderer, vec2 cursor_pos) const override;
+    virtual void draw(render::system* renderer) const override;
 
     void deactivate() { _active = false; }
 
@@ -213,8 +228,10 @@ public:
     template<typename T, typename... Args>
     void add_button(Args&& ...args);
 
-    virtual void draw(render::system* renderer, vec2 cursor_pos) const;
-    virtual void click(vec2 cursor_pos, bool down);
+    virtual bool key_event(int key, bool down);
+    virtual bool cursor_event(vec2 position);
+
+    virtual void draw(render::system* renderer) const;
 
     bool activate(submenu_button* button, menu::window* submenu);
 

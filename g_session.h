@@ -169,7 +169,8 @@ public:
 
     int run_frame(float milliseconds);
 
-    int key_event(unsigned char key, bool down);
+    void key_event(unsigned char key, bool down);
+    void cursor_event(vec2 position);
 
     void reset();
     void new_game();
@@ -220,7 +221,6 @@ private:
     config::string _cl_name;
     config::string _cl_color;
 
-    void get_cursor();
     vec2 _cursor;
 
     void update_screen();

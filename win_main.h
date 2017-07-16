@@ -49,7 +49,7 @@ protected:
     int shutdown();
 
     void key_event(int param, bool down);
-    void mouse_event(int mouse_state);
+    void mouse_event(int mouse_state, vec2 position);
 
     static LRESULT WINAPI wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam);
 };

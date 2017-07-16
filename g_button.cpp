@@ -4,32 +4,39 @@
 #include "precompiled.h"
 #pragma hdrstop
 
+#include "keys.h"
+
 ////////////////////////////////////////////////////////////////////////////////
 namespace menu {
 
 //------------------------------------------------------------------------------
-bool button::click(vec2 cursor_pos, bool down)
+bool button::key_event(int key, bool down)
 {
-    bool over = _rectangle.contains(cursor_pos);
-
-    if (over && down) {
-        _down = true;
-    } else if (!down) {
-        if (_down && over && _func) {
-            _func();
+    if (key == K_MOUSE1) {
+        if (_over && down) {
+            _down = true;
+            return true;
+        } else if (!down) {
+            if (_down && _over && _func) {
+                _func();
+            }
+            _down = false;
         }
-        _down = false;
     }
-
     return false;
 }
 
 //------------------------------------------------------------------------------
-void button::draw(render::system* renderer, vec2 cursor_pos) const
+bool button::cursor_event(vec2 position)
 {
-    bool over = _rectangle.contains(cursor_pos);
+    _over = _rectangle.contains(position);
+    return false;
+}
 
-    int border_color = over ? 6 : 4;
+//------------------------------------------------------------------------------
+void button::draw(render::system* renderer) const
+{
+    int border_color = _over ? 6 : 4;
     int button_color = _down ? 3 : 5;
     int text_color = button_color + 2;
 
@@ -85,22 +92,20 @@ conditional_button::conditional_button(char const* text, vec2 position, vec2 siz
 {}
 
 //------------------------------------------------------------------------------
-bool conditional_button::click(vec2 cursor_pos, bool down)
+bool conditional_button::key_event(int key, bool down)
 {
     if (_condition_ptr && !*_condition_ptr) {
         _down = false;
         return false;
     }
 
-    return button::click(cursor_pos, down);
+    return button::key_event(key, down);
 }
 
 //------------------------------------------------------------------------------
-void conditional_button::draw(render::system* renderer, vec2 cursor_pos) const
+void conditional_button::draw(render::system* renderer) const
 {
-    bool over = _rectangle.contains(cursor_pos);
-
-    int border_color = over ? 6 : 4;
+    int border_color = _over ? 6 : 4;
     int button_color = _down ? 3 : 5;
     int text_color = button_color + 2;
 
@@ -124,11 +129,9 @@ submenu_button::submenu_button(char const* text, vec2 position, vec2 size, menu:
 {}
 
 //------------------------------------------------------------------------------
-void submenu_button::draw(render::system* renderer, vec2 cursor_pos) const
+void submenu_button::draw(render::system* renderer) const
 {
-    bool over = _rectangle.contains(cursor_pos);
-
-    int border_color = over ? 6 : 4;
+    int border_color = _over ? 6 : 4;
     int button_color = (_down || _active) ? 3 : 5;
     int text_color = button_color + 2;
 
@@ -152,43 +155,49 @@ client_button::client_button(char const* text, vec2 position, vec2 size, color3*
 {}
 
 //------------------------------------------------------------------------------
-bool client_button::click(vec2 cursor_pos, bool down)
+bool client_button::key_event(int key, bool down)
 {
-    bool text_over = _text_rectangle.contains(cursor_pos);
-    bool over = !text_over && _rectangle.contains(cursor_pos);
-
-    if (text_over && down) {
-        _text_down = true;
-    } else if (!down) {
-        if (_text_down && text_over) {
-            g_Game->_client_button_down ^= 1;
+    if (key == K_MOUSE1) {
+        if (_text_over && down) {
+            _text_down = true;
+            return true;
+        } else if (!down) {
+            if (_text_down && _text_over) {
+                g_Game->_client_button_down ^= 1;
+            }
+            _text_down = false;
         }
-        _text_down = false;
-    }
 
-    if (over && down) {
-        _down = true;
-    } else if (!down) {
-        if (_down && over) {
-            _color_index = (_color_index+1) % game::num_player_colors;
-            *_color_ptr = game::player_colors[_color_index];
+        if (_over && down) {
+            _down = true;
+            return true;
+        } else if (!down) {
+            if (_down && _over) {
+                _color_index = (_color_index+1) % game::num_player_colors;
+                *_color_ptr = game::player_colors[_color_index];
+            }
+            _down = false;
         }
-        _down = false;
     }
 
     return false;
 }
 
 //------------------------------------------------------------------------------
-void client_button::draw(render::system* renderer, vec2 cursor_pos) const
+bool client_button::cursor_event(vec2 position)
 {
-    bool text_over = _text_rectangle.contains(cursor_pos);
-    bool over = !text_over && _rectangle.contains(cursor_pos);
+    _text_over = _text_rectangle.contains(position);
+    _over = !_text_over && _rectangle.contains(position);
+    return false;
+}
 
-    int text_border_color = (g_Game->_client_button_down || text_over) ? 6 : 4;
+//------------------------------------------------------------------------------
+void client_button::draw(render::system* renderer) const
+{
+    int text_border_color = (g_Game->_client_button_down || _text_over) ? 6 : 4;
     int text_button_color = (g_Game->_client_button_down || _text_down) ? 3 : 5;
 
-    int border_color = over ? 6 : 4;
+    int border_color = _over ? 6 : 4;
     int button_color = _down ? 3 : 5;
     int text_color = button_color + 2;
 
@@ -212,29 +221,30 @@ server_button::server_button(vec2 position, vec2 size, char const* name_ptr, flo
 {}
 
 //------------------------------------------------------------------------------
-bool server_button::click(vec2 cursor_pos, bool down)
+bool server_button::key_event(int key, bool down)
 {
-    bool over = _join_rectangle.contains(cursor_pos);
-
-    if (!_name_ptr || !_name_ptr[0]) {
-        _down = false;
-        return false;
-    }
-
-    if (over && down) {
-        _down = true;
-    } else if (!down) {
-        if (_down && over) {
-            _func();
+    if (key == K_MOUSE1) {
+        if (!_name_ptr || !_name_ptr[0]) {
+            _down = false;
+            return false;
         }
-        _down = false;
+
+        if (_over && down) {
+            _down = true;
+            return true;
+        } else if (!down) {
+            if (_down && _over) {
+                _func();
+            }
+            _down = false;
+        }
     }
 
     return false;
 }
 
 //------------------------------------------------------------------------------
-void server_button::draw(render::system* renderer, vec2 cursor_pos) const
+void server_button::draw(render::system* renderer) const
 {
     draw_rectangle(renderer, _rectangle, menu::colors[3], menu::colors[4]);
     draw_rectangle(renderer, _text_rectangle, menu::colors[0], menu::colors[2]);
@@ -245,9 +255,7 @@ void server_button::draw(render::system* renderer, vec2 cursor_pos) const
         draw_text(renderer, _text_rectangle, _name_ptr, menu::colors[7], halign_left);
         draw_text(renderer, _text_rectangle, va("%i", (int)(*_ping_ptr)), menu::colors[7], halign_right);
 
-        bool over = _join_rectangle.contains(cursor_pos);
-
-        int border_color = over ? 6 : 4;
+        int border_color = _over ? 6 : 4;
         int button_color = _down ? 3 : 5;
         int text_color = 7;
 
@@ -266,37 +274,48 @@ host_button::host_button(vec2 position, vec2 size, std::function<void()>&& op_cl
     , _text_rectangle(position - vec2(17, 0), size - vec2(38, 4))
     , _create_down(false)
     , _text_down(false)
+    , _create_over(false)
+    , _text_over(false)
 {}
 
 //------------------------------------------------------------------------------
-bool host_button::click(vec2 cursor_pos, bool down)
+bool host_button::key_event(int key, bool down)
 {
-    bool text_over = _text_rectangle.contains(cursor_pos);
-    bool create_over = _create_rectangle.contains(cursor_pos);
-
-    if (create_over && down) {
-        _create_down = true;
-    } else if (!down) {
-        if (_create_down && create_over) {
-            _func();
+    if (key == K_MOUSE1) {
+        if (_create_over && down) {
+            _create_down = true;
+            return true;
+        } else if (!down) {
+            if (_create_down && _create_over) {
+                _func();
+            }
+            _create_down = false;
         }
-        _create_down = false;
-    }
 
-    if (text_over && down) {
-        _text_down = true;
-    } else if (!down) {
-        if (_text_down && text_over) {
-            g_Game->_server_button_down ^= 1;
+        if (_text_over && down) {
+            _text_down = true;
+            return true;
+        } else if (!down) {
+            if (_text_down && _text_over) {
+                g_Game->_server_button_down ^= 1;
+            }
+            _text_down = false;
         }
-        _text_down = false;
     }
 
     return false;
 }
 
 //------------------------------------------------------------------------------
-void host_button::draw(render::system* renderer, vec2 cursor_pos) const
+bool host_button::cursor_event(vec2 position)
+{
+    _text_over = _text_rectangle.contains(position);
+    _create_over = _create_rectangle.contains(position);
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void host_button::draw(render::system* renderer) const
 {
     int text_button_color = g_Game->_server_button_down ? 5 : 3;
 
@@ -304,9 +323,7 @@ void host_button::draw(render::system* renderer, vec2 cursor_pos) const
     draw_rectangle(renderer, _text_rectangle, menu::colors[text_button_color]);
     draw_text(renderer, _text_rectangle, g_Game->svs.name, menu::colors[7], halign_left);
 
-    bool over = _create_rectangle.contains(cursor_pos);
-
-    int border_color = over ? 6 : 4;
+    int border_color = _create_over ? 6 : 4;
     int button_color = _down ? 3 : 5;
     int text_color = 7;
 

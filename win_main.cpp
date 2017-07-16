@@ -169,7 +169,7 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
     case WM_MOUSEMOVE:
-        g_Application->mouse_event ( wParam );
+        g_Application->mouse_event(wParam, vec2((int16_t)LOWORD(lParam), (int16_t)HIWORD(lParam)));
         break;
 
     case WM_KEYDOWN:
@@ -265,7 +265,7 @@ void application::key_event(int param, bool down)
 }
 
 //------------------------------------------------------------------------------
-void application::mouse_event(int mouse_state)
+void application::mouse_event(int mouse_state, vec2 position)
 {
     for (int ii = 0; ii < 3; ++ii) {
         if ((mouse_state & (1<<ii)) && !(_mouse_state & (1<<ii))) {
@@ -278,6 +278,7 @@ void application::mouse_event(int mouse_state)
     }
 
     _mouse_state = mouse_state;
+    _game.cursor_event(position);
 }
 
 //------------------------------------------------------------------------------

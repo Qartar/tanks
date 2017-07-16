@@ -272,11 +272,9 @@ void session::update_screen()
             show_cursor = true;
         }
 
-        get_cursor( );
-
         _renderer->draw_image(_menu_image, vec2( 0, 0 ), vec2( 640, 480 ), color4( 1, 1, 1, 1 ) );
 
-        _menu.draw(_renderer, _cursor);
+        _menu.draw(_renderer);
     }
     else if ( show_cursor )
     {
@@ -292,33 +290,17 @@ void session::update_screen()
 }
 
 //------------------------------------------------------------------------------
-void session::get_cursor ()
-{
-    vec2 position = g_Application->window()->position();
-    vec2 size = g_Application->window()->size();
-
-    POINT pt; GetCursorPos(&pt);
-
-    // copy to member value
-
-    _cursor.x = (pt.x - position.x) * DEFAULT_W / size.x;
-    _cursor.y = (pt.y - position.y) * DEFAULT_H / size.y;
-}
-
-//------------------------------------------------------------------------------
-int session::key_event(unsigned char key, bool down)
+void session::key_event(unsigned char key, bool down)
 {
     static bool shift = false;
     static bool ctrl = false;
 
     // mouse commands
 
-    if (key == K_MOUSE1)
-    {
-        get_cursor( );
-        _menu.click( _cursor, down );
-
-        return true;
+    if (_menu_active) {
+        if (_menu.key_event(key, down)) {
+            return;
+        }
     }
 
     if (key == K_SHIFT)
@@ -331,7 +313,7 @@ int session::key_event(unsigned char key, bool down)
         if ( _menu_active )
         {
             if ( !down )
-                return true;
+                return;
 
             if ( shift )
                 key = _shift_keys[key];
@@ -341,16 +323,16 @@ int session::key_event(unsigned char key, bool down)
             else if ( key == K_ENTER )
                 _client_button_down = false;
             else if ( key <= K_SPACE )
-                return true;
+                return;
             else if ( key > K_BACKSPACE )
-                return true;
+                return;
             else if ( strlen(cls.name) < 13 )
             {
                 cls.name[strlen(cls.name)+1] = 0;
                 cls.name[strlen(cls.name)] = key;
             }
 
-            return true;
+            return;
         }
         else
             _client_button_down = false;
@@ -360,7 +342,7 @@ int session::key_event(unsigned char key, bool down)
         if ( _menu_active )
         {
             if ( !down )
-                return true;
+                return;
 
             if ( shift )
                 key = _shift_keys[key];
@@ -370,16 +352,16 @@ int session::key_event(unsigned char key, bool down)
             else if ( key == K_ENTER )
                 _server_button_down = false;
             else if ( key < K_SPACE )
-                return true;
+                return;
             else if ( key > K_BACKSPACE )
-                return true;
+                return;
             else if ( strlen(svs.name) < 32 )
             {
                 svs.name[strlen(svs.name)+1] = 0;
                 svs.name[strlen(svs.name)] = key;
             }
 
-            return true;
+            return;
         }
         else
             _server_button_down = false;
@@ -389,7 +371,7 @@ int session::key_event(unsigned char key, bool down)
         if ( true )
         {
             if ( !down )
-                return true;
+                return;
 
             if ( ctrl && key == 'v' ) {
                 std::string s = g_Application->clipboard();
@@ -398,7 +380,7 @@ int session::key_event(unsigned char key, bool down)
                     strcat(_clientsay, s.c_str());
                     _clientsay[strlen(_clientsay)] = 0;
                 }
-                return true;
+                return;
             }
 
             if ( shift )
@@ -409,7 +391,7 @@ int session::key_event(unsigned char key, bool down)
             else if ( key == K_ENTER && strlen(_clientsay) )
             {
                 if ( !_clientsay[0] )
-                    return true;
+                    return;
 
                 if ( _clientsay[0] == '/' )
                 {
@@ -516,16 +498,16 @@ int session::key_event(unsigned char key, bool down)
                 _client_say = false;
             }
             else if ( key < K_SPACE )
-                return true;
+                return;
             else if ( key > K_BACKSPACE )
-                return true;
+                return;
             else if ( strlen(_clientsay) < LONG_STRING )
             {
                 _clientsay[strlen(_clientsay)+1] = 0;
                 _clientsay[strlen(_clientsay)] = key;
             }
 
-            return true;
+            return;
         }
         else
             _client_say = false;
@@ -533,13 +515,13 @@ int session::key_event(unsigned char key, bool down)
     else if ( key == K_ENTER && down )
     {
         _client_say = true;
-        return true;
+        return;
     }
     else if ( key == '/' && down )
     {
         _client_say = true;
         _clientsay[0] = '/';
-        return true;
+        return;
     }
     else if ( key == K_PGDN && down )
     {
@@ -641,18 +623,18 @@ int session::key_event(unsigned char key, bool down)
     }
 
     if ( ! down )
-        return false;
+        return;
 
     // menu commands
 
     if (key == K_ESCAPE)
     {
         if ( ! _game_active )
-            return false;
+            return;
 
         _menu_active ^= 1;
 
-        return true;
+        return;
     }
 
     if (key == K_F2)
@@ -665,10 +647,20 @@ int session::key_event(unsigned char key, bool down)
         broadcast( 2, msg );
         
         _restart_time = _frametime + 5000.0f;
-        return true;
+        return;
     }
+}
 
-    return false;
+//------------------------------------------------------------------------------
+void session::cursor_event(vec2 position)
+{
+    vec2 size = g_Application->window()->size();
+    _cursor.x = position.x * 640 / size.x;
+    _cursor.y = position.y * 480 / size.y;
+
+    if (_menu_active) {
+        _menu.cursor_event(_cursor);
+    }
 }
 
 //------------------------------------------------------------------------------
