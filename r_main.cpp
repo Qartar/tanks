@@ -10,7 +10,10 @@ namespace render {
 //------------------------------------------------------------------------------
 int system::init()
 {
-    set_view_origin(vec2(0,0));
+    _view.size = vec2(_window->framebuffer_size());
+    _view.origin = _view.size * 0.5f;
+
+    set_default_state();
 
     _fonts.push_back(std::make_unique<render::font>("Tahoma", 12));
 
@@ -43,7 +46,14 @@ void system::end_frame()
 }
 
 //------------------------------------------------------------------------------
-void system::_set_default_state()
+void system::set_view(render::view const& view)
+{
+    _view = view;
+    set_default_state();
+}
+
+//------------------------------------------------------------------------------
+void system::set_default_state()
 {
     glDisable(GL_TEXTURE_2D);
 
@@ -69,17 +79,20 @@ void system::_set_default_state()
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glViewport(0, 0, DEFAULT_W, DEFAULT_H);
+    glViewport(
+        _view.x,
+        _view.y,
+        _view.width ? _view.width : _window->framebuffer_size().x,
+        _view.height ? _view.height : _window->framebuffer_size().y
+    );
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    glOrtho(0, DEFAULT_W, DEFAULT_H, 0, -99999, 99999);
+    vec2 view_min = _view.origin - _view.size * 0.5f;
+    vec2 view_max = _view.origin + _view.size * 0.5f;
 
-    glTranslatef(
-        -_view_origin.x,
-        -_view_origin.y,
-        0 );
+    glOrtho(view_min.x, view_max.x, view_max.y, view_min.y, -99999, 99999);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();

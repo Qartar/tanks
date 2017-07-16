@@ -65,11 +65,24 @@ protected:
 };
 
 //------------------------------------------------------------------------------
+struct view
+{
+    vec2 origin; //!< center
+    vec2 size;
+
+    int x; //!< viewport left
+    int y; //!< viewport top
+    int width; //!< viewport width
+    int height; //!< viewport height
+};
+
+//------------------------------------------------------------------------------
 class system
 {
 public:
     system(render::window* window)
         : _window(window)
+        , _view{}
     {}
 
     int init();
@@ -78,7 +91,8 @@ public:
     void begin_frame();
     void end_frame();
 
-    void resize() { _set_default_state(); }
+    void resize() { set_default_state(); }
+    render::window const* window() const { return _window; }
 
     // Font Interface (r_font.cpp)
 
@@ -86,7 +100,7 @@ public:
 
     //  Image Interface (r_image.cpp)
     render::image const* load_image(char const* name);
-    void draw_image(render::image const* img, vec2 org, vec2 sz, color4 color);
+    void draw_image(render::image const* img, vec2 org, vec2 sz, color4 color = color4(1,1,1,1));
 
     // Drawing Functions (r_draw.cpp)
 
@@ -97,10 +111,7 @@ public:
     void draw_box(vec2 size, vec2 position, color4 color);
     void draw_particles(float time, render::particle const* particles, std::size_t num_particles);
 
-    void set_view_origin(vec2 position) {
-        _view_origin = position;
-        _set_default_state();
-    }
+    void set_view(render::view const& view);
 
 private:
 
@@ -114,9 +125,9 @@ private:
 
     render::window* _window;
 
-    void _set_default_state();
+    void set_default_state();
 
-    vec2 _view_origin;
+    render::view _view;
 
     float _costbl[360];
     float _sintbl[360];

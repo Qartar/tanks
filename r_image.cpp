@@ -127,6 +127,9 @@ bool image::upload(HBITMAP bitmap)
         return false;
     }
 
+    _width = bm.bmWidth;
+    _height = bm.bmHeight;
+
     glGenTextures(1, &_texnum);
     glBindTexture(GL_TEXTURE_2D, _texnum);
 

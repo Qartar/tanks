@@ -6,6 +6,8 @@
 
 #include "resource.h"
 
+#include <ShellScalingApi.h>
+
 namespace {
 
 // additional opengl bindings
@@ -58,6 +60,7 @@ window::window(HINSTANCE hInstance, WNDPROC WndProc)
     , _hdc(nullptr)
     , _hrc(nullptr)
     , _renderer(this)
+    , _current_dpi(USER_DEFAULT_SCREEN_DPI)
 {
     _fbo       = 0;
     _rbo[0]    = 0;
@@ -91,8 +94,8 @@ void window::end_frame ()
     glDrawBuffer(GL_BACK);
 
     glBlitFramebuffer(
-        0, 0, DEFAULT_W, DEFAULT_H,
-        0, 0, _size.x, _size.y,
+        0, 0, _framebuffer_size.x, _framebuffer_size.y,
+        0, 0, _physical_size.x, _physical_size.y,
         GL_COLOR_BUFFER_BIT, GL_NEAREST
     );
 
@@ -116,21 +119,10 @@ window::~window()
 //------------------------------------------------------------------------------
 int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
 {
-    WNDCLASSA   wc;
-    RECT        rect;
-
-    int         style;
-
-    style = windowed_style;
-
-    rect.top = 0;
-    rect.left = 0;
-    rect.right = width;
-    rect.bottom = height;
-
-    AdjustWindowRect( &rect, style, FALSE );
+    SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
     // Setup struct for RegisterClass
+    WNDCLASSA   wc;
 
     wc.style            = 0;
     wc.lpfnWndProc      = _wndproc;
@@ -145,11 +137,15 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
 
     if (!RegisterClassA(&wc)) {
         g_Application->error( "Tanks! Error", "window::m_CreateWindow | RegisterClass failed\n" );
-
         return ERROR_FAIL;
     }
 
     // Create the Window
+
+    int style = windowed_style;
+
+    RECT rect = { 0, 0, width, height };
+    AdjustWindowRect(&rect, style, FALSE);
 
     _hwnd = CreateWindowExA(
         0,
@@ -164,16 +160,38 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
         _hinst,
         NULL);
 
+    // Adjust for DPI
+    {
+        int dpi = GetDpiForWindow(_hwnd);
+
+        rect.top = 0;
+        rect.left = 0;
+        rect.right = MulDiv(width, dpi, USER_DEFAULT_SCREEN_DPI);
+        rect.bottom = MulDiv(height, dpi, USER_DEFAULT_SCREEN_DPI);
+
+        AdjustWindowRectExForDpi(&rect, style, FALSE, 0, dpi);
+
+        _physical_size.x = rect.right;
+        _physical_size.y = rect.bottom;
+
+        SetWindowPos(
+            _hwnd,
+            NULL,
+            rect.left,
+            rect.top,
+            rect.right - rect.left,
+            rect.bottom - rect.top,
+            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    _logical_size.x = width;
+    _logical_size.y = height;
+
     if (fullscreen) {
         _active = true;
         _minimized = false;
         _fullscreen = true;
     } else {
-        _size.x = width;
-        _size.y = height;
-        _position.x = xpos - rect.left;
-        _position.y = ypos - rect.top;
-
         _active = true;
         _minimized = false;
         _fullscreen = false;
@@ -199,7 +217,7 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
     }
 
     // initialize framebuffer
-    if (create_framebuffer(width, height) != ERROR_NONE) {
+    if (create_framebuffer(_logical_size.x, _logical_size.y) != ERROR_NONE) {
         return ERROR_FAIL;
     }
 
@@ -287,7 +305,7 @@ int window::init_opengl()
 }
 
 //------------------------------------------------------------------------------
-int window::create_framebuffer(int, int)
+int window::create_framebuffer(int width, int height)
 {
     if (!_hrc) {
         return ERROR_FAIL;
@@ -303,12 +321,15 @@ int window::create_framebuffer(int, int)
     glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
     glBindRenderbuffer(GL_RENDERBUFFER, _rbo[0]);
-    glRenderbufferStorage( GL_RENDERBUFFER, GL_RGBA, DEFAULT_W, DEFAULT_H);
+    glRenderbufferStorage( GL_RENDERBUFFER, GL_RGBA, width, height);
     glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _rbo[0]);
 
     glBindRenderbuffer(GL_RENDERBUFFER, _rbo[1]);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, DEFAULT_W, DEFAULT_H);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _rbo[1]);
+
+    _framebuffer_size.x = width;
+    _framebuffer_size.y = height;
 
     return ERROR_NONE;
 }
@@ -351,31 +372,65 @@ void window::shutdown_opengl()
 //------------------------------------------------------------------------------
 LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
 {
-    switch ( nCmd )
-    {
-    case WM_ACTIVATE:
-        activate( (LOWORD(wParam) != WA_INACTIVE), ( HIWORD(wParam) > 0 ) );
-        break;
+    switch (nCmd) {
+        case WM_ACTIVATE:
+            activate( (LOWORD(wParam) != WA_INACTIVE), ( HIWORD(wParam) > 0 ) );
+            break;
 
-    case WM_SIZE:
-        _size.x = LOWORD(lParam);
-        _size.y = HIWORD(lParam);
-        _renderer.resize(); // uses params in WndParams
-        break;
+        case WM_SIZE:
+            _physical_size.x = LOWORD(lParam);
+            _physical_size.y = HIWORD(lParam);
+            _renderer.resize(); // uses params in WndParams
+            break;
 
-    case WM_MOVE:
-        _position.x = LOWORD(lParam);    // horizontal position 
-        _position.y = HIWORD(lParam);    // vertical position 
-        break;
+        case WM_MOVE:
+            _position.x = (short)LOWORD(lParam); // horizontal position
+            _position.y = (short)HIWORD(lParam); // vertical position
+            break;
 
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
 
-    default:
-        break;
+        case WM_DPICHANGED: {
+            resize_for_dpi(reinterpret_cast<RECT*>(lParam), _logical_size, HIWORD(wParam));
+            break;
+        }
+
+        default:
+            break;
     }
+
     return DefWindowProcA( _hwnd, nCmd, wParam, lParam );
+}
+
+//------------------------------------------------------------------------------
+void window::resize_for_dpi(RECT const* suggested, vec2i logical_size, int dpi)
+{
+    // By default Windows adjusts the window to preserve scale for the entire
+    // window including the non-client area. This causes the dimensions of the
+    // client area to change which we want to avoid.
+
+    RECT new_border = {0, 0, 0, 0};
+    RECT old_border = {0, 0, 0, 0};
+    AdjustWindowRectExForDpi(&new_border, windowed_style, FALSE, 0, dpi);
+    AdjustWindowRectExForDpi(&old_border, windowed_style, FALSE, 0, _current_dpi);
+
+    _physical_size.x = MulDiv(_logical_size.x, dpi, USER_DEFAULT_SCREEN_DPI);
+    _physical_size.y = MulDiv(_logical_size.y, dpi, USER_DEFAULT_SCREEN_DPI);
+
+    SetWindowPos(
+        _hwnd,
+        NULL,
+        suggested->left - old_border.left + new_border.left,
+        suggested->top,
+        _physical_size.x + new_border.right - new_border.left,
+        _physical_size.y + new_border.bottom - new_border.top,
+        SWP_NOZORDER | SWP_NOACTIVATE);
+
+    _current_dpi = dpi;
+
+    end_frame();
 }
 
 //------------------------------------------------------------------------------
@@ -390,9 +445,9 @@ bool window::toggle_fullscreen()
         // uses the fullscreen style and doesn't have the right dimensions
         {
             RECT rect, border = {}; GetWindowRect(_hwnd, &rect);
-            AdjustWindowRect(&border, windowed_style, FALSE);
-            _size.x = rect.right - rect.left - (border.right - border.left);
-            _size.y = rect.bottom - rect.top - (border.bottom - border.top);
+            AdjustWindowRectExForDpi(&border, windowed_style, FALSE, 0, GetDpiForWindow(_hwnd));
+            _physical_size.x = rect.right - rect.left - (border.right - border.left);
+            _physical_size.y = rect.bottom - rect.top - (border.bottom - border.top);
             _renderer.resize(); // uses params in WndParams
         }
     } else {

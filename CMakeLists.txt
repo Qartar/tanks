@@ -61,6 +61,7 @@ target_link_libraries(tanks
     sound
     physics
     # system libraries
+    Shcore
     ws2_32
     opengl32
     Pathcch

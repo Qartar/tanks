@@ -156,6 +156,10 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
 
     switch (nCmd)
     {
+    case WM_NCCREATE:
+        EnableNonClientDpiScaling(hWnd);
+        return DefWindowProc( hWnd, nCmd, wParam, lParam );
+
     case WM_CREATE:
         if ( !(command = strstr( g_Application->init_string(), "sound=" )) || ( atoi(command+6) > 0 ))
             pSound->on_create( hWnd );
@@ -204,13 +208,14 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
     case WM_MOVE:
     case WM_DESTROY:
+    case WM_DPICHANGED:
         return g_Application->_window.message( nCmd, wParam, lParam );
 
     default:
-        return DefWindowProc( hWnd, nCmd, wParam, lParam );
+        break;
     }
 
-    return 0;
+    return DefWindowProcA(hWnd, nCmd, wParam, lParam);
 }
 
 //------------------------------------------------------------------------------

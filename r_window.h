@@ -35,10 +35,11 @@ public:
     HDC hdc() const { return _hdc; }
 
     bool active() const { return _active; }
-    vec2 position() const { return _position; }
-    vec2 size() const { return _size; }
-    int width() const { return _size.x; }
-    int height() const { return _size.y; }
+    vec2i position() const { return _position; }
+    vec2i size() const { return _physical_size; }
+    vec2i framebuffer_size() const { return _framebuffer_size; }
+    int width() const { return _physical_size.x; }
+    int height() const { return _physical_size.y; }
 
     render::system* renderer() { return &_renderer; }
 
@@ -51,12 +52,16 @@ private:
     void shutdown_opengl();
 
     int activate(bool active, bool minimized);
+    void resize_for_dpi(RECT const* suggested, vec2i logical_size, int dpi);
+
+    int _current_dpi;
 
     bool _active;
     bool _minimized;
     bool _fullscreen;
-    vec2 _position;
-    vec2 _size;
+    vec2i _position;
+    vec2i _logical_size;
+    vec2i _physical_size;
 
     render::system _renderer;
 
@@ -70,6 +75,7 @@ private:
     // framebuffer objects
     GLuint _fbo;
     GLuint _rbo[2];
+    vec2i _framebuffer_size;
 };
 
 } // namespace render

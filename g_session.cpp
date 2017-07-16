@@ -228,50 +228,37 @@ void session::update_screen()
     _renderer->begin_frame();
 
     //  set view center
-    int world_width, world_height;
-    int view_width, view_height;
+    vec2 world_size = _world.maxs() - _world.mins();
 
-    float   center_x, center_y;
-
-    world_width  = _world.maxs().x - _world.mins().x;
-    world_height = _world.maxs().y - _world.mins().y;
-
-    view_width   = DEFAULT_W;
-    view_height  = DEFAULT_H;
+    render::view view{};
+    view.size = world_size;
 
     game::tank* player = _world.player(cls.number);
     if ( _multiplayer && player ) {
         float lerp = (_frametime - (_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
 
-        center_x = player->get_position( lerp ).x;
-        center_y = player->get_position( lerp ).y;
+        view.origin = player->get_position( lerp );
     } else {
-        center_x = world_width / 2;
-        center_y = world_height / 2;
+        view.origin = _world.mins() + world_size * 0.5f;
     }
 
-    if ( ( center_x < view_width / 2 ) && ( center_x > world_width - ( view_width / 2 )) ) {
-        center_x = world_width / 2;
-    } else if ( center_x < view_width / 2 ) {
-        center_x = view_width / 2;
-    } else if ( center_x > world_width - ( view_width / 2 ) ) {
-        center_x = world_width - ( view_width / 2 );
-    }
-    if ( ( center_y < view_height / 2 ) && ( center_y > world_height - ( view_height / 2 )) ) {
-        center_y = world_height / 2;
-    } else if ( center_y < view_height / 2 ) {
-        center_y = view_height / 2;
-    } else if ( center_y > world_height - ( view_height / 2 ) ) {
-        center_y = world_height - ( view_height / 2 );
-    }
-    _renderer->set_view_origin(vec2(center_x - view_width / 2, center_y - view_height / 2));
-    pSound->set_listener(vec3(center_x, center_y, view_width * M_SQRT2), vec3(0,0,-1), vec3(1,0,0), vec3(0,1,0));
+    vec2 view_mins = _world.mins() + view.size * 0.5f;
+    vec2 view_maxs = _world.maxs() - view.size * 0.5f;
+
+    view.origin.x = clamp(view.origin.x, view_mins.x, view_maxs.x);
+    view.origin.y = clamp(view.origin.y, view_mins.y, view_maxs.y);
+
+    pSound->set_listener(vec3(view.origin.x, view.origin.y, view.size.x * M_SQRT2), vec3(0,0,-1), vec3(1,0,0), vec3(0,1,0));
+
+    _renderer->set_view(view);
 
     // draw world
     if (_game_active)
         _world.draw(_renderer);
 
-    _renderer->set_view_origin(vec2(0,0));
+    view.size = vec2(640, 480);
+    view.origin = view.size * 0.5f;
+    _renderer->set_view(view);
 
     // draw menu
     if (_menu_active)
@@ -282,7 +269,10 @@ void session::update_screen()
             show_cursor = true;
         }
 
-        _renderer->draw_image(_menu_image, vec2( 0, 0 ), vec2( 640, 480 ), color4( 1, 1, 1, 1 ) );
+        float aspect = float(_menu_image->width()) / float(_menu_image->height());
+        vec2 size = vec2(view.size.y * aspect, view.size.y);
+
+        _renderer->draw_image(_menu_image, (view.size - size) * 0.5f, size);
 
         _menu.draw(_renderer);
     }
@@ -666,7 +656,7 @@ void session::key_event(unsigned char key, bool down)
 //------------------------------------------------------------------------------
 void session::cursor_event(vec2 position)
 {
-    vec2 size = g_Application->window()->size();
+    vec2 size(g_Application->window()->size());
     _cursor.x = position.x * 640 / size.x;
     _cursor.y = position.y * 480 / size.y;
 

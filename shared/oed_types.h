@@ -299,6 +299,60 @@ public:
     color3 to_color3() const { return color3(r, g, b); }
 };
 
+////////////////////////////////////////////////////////////////////////////////
+// integer vector types
+
+//------------------------------------------------------------------------------
+class vec2i
+{
+public:
+    int   x;
+    int   y;
+
+// constructors
+
+    vec2i() = default;
+    constexpr vec2i(int X, int Y) : x(X), y(Y) {}
+    explicit constexpr vec2i(int S) : x(S), y(S) {}
+
+    vec2i& operator=(const vec2i &V) {x=V.x; y=V.y; return *this;}
+    bool operator==(const vec2i &V) const { return x == V.x && y == V.y; }
+    bool operator!=(const vec2i &V) const { return x != V.x || y != V.y; }
+    int operator[](std::size_t idx) const { return (&x)[idx]; }
+    int& operator[](std::size_t idx) { return (&x)[idx]; }
+    operator int*() { return &x; }
+    operator int const*() const { return &x; }
+
+// algebraic vector operations
+
+    vec2i operator-() const {return vec2i(-x, -y);}
+    vec2i operator+(vec2i const& V) const { return vec2i(x+V.x, y+V.y); }
+    vec2i operator-(vec2i const& V) const { return vec2i(x-V.x, y-V.y); }
+    vec2i operator*(vec2i const& V) const { return vec2i(x*V.x, y*V.y); }
+    vec2i operator/(vec2i const& V) const { return vec2i(x/V.x, y/V.y); }
+    vec2i operator*(int S) const { return vec2i(x*S, y*S); }
+    vec2i operator/(int S) const { return vec2i(x/S, y/S); }
+
+// algebraic vector assignment operations
+
+    vec2i& operator+=(vec2i const& V) { x+=V.x; y+=V.y; return *this; }
+    vec2i& operator-=(vec2i const& V) { x-=V.x; y-=V.y; return *this; }
+    vec2i& operator*=(vec2i const& V) { x*=V.x; y*=V.y; return *this; }
+    vec2i& operator/=(vec2i const& V) { x/=V.x; y/=V.y; return *this; }
+    vec2i& operator*=(int S) { x*=S; y*=S; return *this; }
+    vec2i& operator/=(int S) { x/=S; y/=S; return *this; }
+
+// utility functions
+
+    double length() const { return std::sqrt(length_sqr()); }
+    int length_sqr() const { return x*x + y*y; }
+    void clear() { x=0; y=0; }
+
+    int dot(const vec2i &V) const { return x*V.x + y*V.y; }
+    vec2i cross(int V) const { return vec2i(y*V, -x*V); }
+    explicit operator vec2() const { return vec2((float)x, (float)y); }
+};
+
 //
 //  matrices
 //
