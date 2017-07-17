@@ -229,7 +229,6 @@ private:
     void draw_score ();
 
     void spawn_player(int num);
-    void respawn_player(int num);
 
     message_t _messages[MAX_MESSAGES];
     int _num_messages;

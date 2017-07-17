@@ -171,6 +171,8 @@ public:
     float get_turret_rotation() const { return _turret_rotation; }
     float get_turret_velocity() const { return _turret_velocity; }
 
+    void respawn();
+
     void update_usercmd(game::usercmd usercmd);
 
     void update_sound();

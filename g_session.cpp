@@ -858,7 +858,8 @@ void session::restart()
             continue;
         }
 
-        respawn_player(ii);
+        assert(_world.player(ii) != nullptr);
+        _world.player(ii)->respawn();
     }
 
     _game_active = true;
@@ -877,7 +878,7 @@ void session::spawn_player(int num)
     player->_color = color4(svs.clients[num].color);
     player->_client = _clients + num;
 
-    respawn_player(num);
+    player->respawn();
 
     //
     //  initialize stats
@@ -890,28 +891,6 @@ void session::spawn_player(int num)
     _clients[num].refire_mod = 1.0f;
     _clients[num].speed_mod = 1.0f;
     _clients[num].upgrades = 0;
-}
-
-//------------------------------------------------------------------------------
-void session::respawn_player(int num)
-{
-    int width = _world.maxs().x - _world.mins().x - SPAWN_BUFFER * 2;
-    int height = _world.maxs().y - _world.mins().y - SPAWN_BUFFER * 2;
-
-    assert(_world.player(num) != nullptr);
-    game::tank* player = _world.player(num);
-
-    player->set_position(vec2(width*frand()+SPAWN_BUFFER,height*frand()+SPAWN_BUFFER), true);
-    player->set_rotation(frand()*2.0f*M_PI, true);
-    player->set_turret_rotation(player->get_rotation(), true);
-
-    player->set_linear_velocity(vec2(0,0));
-    player->set_angular_velocity(0.0f);
-    player->set_turret_velocity(0.0f);
-    player->_track_speed = 0.0f;
-
-    player->_damage = 0.0f;
-    player->_fire_time = 0.0f;
 }
 
 //------------------------------------------------------------------------------

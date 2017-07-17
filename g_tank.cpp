@@ -170,28 +170,32 @@ void tank::collide(tank* other, physics::contact const* contact)
 #define HACK_TIME       1000.0f
 
 //------------------------------------------------------------------------------
+void tank::respawn()
+{
+    vec2 spawn_size = _world->maxs() - _world->mins() - vec2(SPAWN_BUFFER) * 2.0f;
+    vec2 spawn_pos = _world->mins() + vec2(frand(), frand()) * spawn_size + vec2(SPAWN_BUFFER);
+
+    _dead_time = 0.0f;
+
+    set_position(spawn_pos, true);
+    set_rotation(frand()*2.0f*M_PI, true);
+    set_turret_rotation(get_rotation(), true);
+
+    set_linear_velocity(vec2_zero);
+    set_angular_velocity(0.0f);
+    _turret_velocity = 0.0f;
+    _track_speed = 0.0f;
+
+    _damage = 0.0f;
+}
+
+//------------------------------------------------------------------------------
 void tank::think()
 {
     _old_turret_rotation = _turret_rotation;
 
-    if ( (_damage >= 1.0f) && (_dead_time+RESTART_TIME+HACK_TIME <= g_Game->_frametime) )
-    {
-        // respawn
-        vec2 spawn_buffer = vec2(1,1) * SPAWN_BUFFER;
-        vec2 spawn_size = _world->maxs() - _world->mins() - spawn_buffer * 2.0f;
-        vec2 spawn_pos = _world->mins() + vec2(frand(), frand()) * spawn_size + spawn_buffer;
-
-        _dead_time = 0.0f;
-
-        set_position(spawn_pos);
-        set_rotation(frand()*2.0f*M_PI);
-        _turret_rotation = get_rotation();
-
-        set_linear_velocity(vec2(0,0));
-        set_angular_velocity(0);
-        _turret_velocity = 0;
-
-        _damage = 0.0f;
+    if ((_damage >= 1.0f) && (_dead_time+RESTART_TIME+HACK_TIME <= g_Game->_frametime)) {
+        respawn();
     }
 
     vec2 forward = rotate(vec2(1,0), get_rotation());
