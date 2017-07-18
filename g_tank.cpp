@@ -351,7 +351,7 @@ void tank::update_sound()
             if (!_channels[0]->playing()) {
                 _channels[0]->loop(_sound_idle);
             }
-            _channels[0]->set_volume(1.0f);
+            _channels[0]->set_volume(0.5f);
             _channels[0]->set_attenuation(0.0f);
             _channels[0]->set_frequency(1.0f);
         }
@@ -366,7 +366,7 @@ void tank::update_sound()
             if (!_channels[1]->playing()) {
                 _channels[1]->loop(_sound_move);
             }
-            _channels[1]->set_volume(1.0f);
+            _channels[1]->set_volume(0.5f);
             _channels[1]->set_attenuation(0.0f);
         }
         else if (_channels[1]->playing()) {
@@ -380,7 +380,7 @@ void tank::update_sound()
             if (!_channels[2]->playing()) {
                 _channels[2]->loop(_sound_turret_move);
             }
-            _channels[2]->set_volume(1.0f);
+            _channels[2]->set_volume(0.3f);
             _channels[2]->set_attenuation(0.0f);
         }
         else if (_channels[2]->playing()) {
