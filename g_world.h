@@ -50,6 +50,11 @@ enum class effect_type
 {
     smoke,
     sparks,
+    blaster,
+    missile_trail,
+    cannon_impact,
+    missile_impact,
+    blaster_impact,
     explosion,
 };
 
@@ -58,7 +63,7 @@ class object
 {
 public:
     object(object_type type, object* owner = nullptr);
-    ~object() {}
+    virtual ~object() {}
 
     std::size_t spawn_id() const { return _spawn_id; }
 
@@ -127,13 +132,23 @@ public:
 };
 
 //------------------------------------------------------------------------------
+enum class weapon_type
+{
+    cannon,
+    missile,
+    blaster,
+};
+
+//------------------------------------------------------------------------------
 class projectile : public object
 {
 public:
-    projectile(tank* owner, float damage);
+    projectile(tank* owner, float damage, weapon_type type);
+    ~projectile();
 
     virtual void draw(render::system* renderer) const override;
     virtual void touch(object *other, physics::contact const* contact) override;
+    virtual void think() override;
 
     virtual void read_snapshot(network::message& message) override;
     virtual void write_snapshot(network::message& message) const override;
@@ -146,7 +161,18 @@ public:
 protected:
     float _damage;
 
-    sound::asset _sound_explode;
+    weapon_type _type;
+
+    sound::channel* _channel;
+
+    sound::asset _sound_cannon_impact;
+    sound::asset _sound_blaster_impact;
+    sound::asset _sound_missile_flight;
+
+protected:
+    void update_homing();
+    void update_effects();
+    void update_sound();
 };
 
 //------------------------------------------------------------------------------
@@ -200,15 +226,30 @@ public:
 protected:
     void collide(tank* other, physics::contact const* contact);
 
+    void launch_projectile();
+
+    void update_effects();
+
 protected:
     static physics::material _material;
     static physics::box_shape _shape;
 
+    weapon_type _weapon;
+
+    constexpr static float cannon_speed = 1920.0f;
+    constexpr static float missile_speed = 288.0f;
+    constexpr static float blaster_speed = 768.0f;
+
+    constexpr static float cannon_reload = 3000.0f;
+    constexpr static float missile_reload = 6000.0f;
+    constexpr static float blaster_reload = 300.0f;
+
     sound::asset _sound_idle;
     sound::asset _sound_move;
     sound::asset _sound_turret_move;
-    sound::asset _sound_fire;
     sound::asset _sound_explode;
+    sound::asset _sound_blaster_fire;
+    sound::asset _sound_cannon_fire;
 };
 
 //------------------------------------------------------------------------------
@@ -237,6 +278,8 @@ public:
     void read_snapshot(network::message& message);
     void write_snapshot(network::message& message) const;
 
+    std::vector<std::unique_ptr<object>> const& objects() { return _objects; }
+
     template<typename T, typename... Args>
     T* spawn(Args&& ...args);
 
@@ -249,6 +292,7 @@ public:
 
     void add_sound(sound::asset sound_asset);
     void add_effect(effect_type type, vec2 position, vec2 direction = vec2(0,0), float strength = 1);
+    void add_trail_effect(effect_type type, vec2 position, vec2 old_position, vec2 direction = vec2(0,0), float strength = 1);
 
     vec2 mins() const { return _mins; }
     vec2 maxs() const { return _maxs; }

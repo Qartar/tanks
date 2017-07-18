@@ -12,12 +12,15 @@ Date    :   10/14/2016
 
 static const struct { int iResource; char const* szResource; } resources[] =
 {
-    { IDR_WAVE1, "assets/sound/bullet_explode.wav" },
+    { IDR_WAVE1, "assets/sound/cannon_impact.wav" },
     { IDR_WAVE2, "assets/sound/tank_explode.wav" },
-    { IDR_WAVE3, "assets/sound/tank_fire.wav" },
+    { IDR_WAVE3, "assets/sound/cannon_fire.wav" },
     { IDR_WAVE4, "assets/sound/tank_idle.wav" },
     { IDR_WAVE5, "assets/sound/tank_move.wav" },
     { IDR_WAVE6, "assets/sound/turret_move.wav" },
+    { IDR_WAVE7, "assets/sound/blaster_fire.wav" },
+    { IDR_WAVE8, "assets/sound/blaster_impact.wav" },
+    { IDR_WAVE9, "assets/sound/missile_flight.wav" },
 };
 
 int cSoundWaveResource::Load (char const *szFilename)

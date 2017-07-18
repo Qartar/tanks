@@ -150,10 +150,13 @@ int session::init (char const *cmdline)
     // need to be registed in the same order on all clients
     pSound->load_sound("assets/sound/tank_move.wav");
     pSound->load_sound("assets/sound/tank_idle.wav");
-    pSound->load_sound("assets/sound/tank_fire.wav");
     pSound->load_sound("assets/sound/tank_explode.wav");
-    pSound->load_sound("assets/sound/bullet_explode.wav");
     pSound->load_sound("assets/sound/turret_move.wav");
+    pSound->load_sound("assets/sound/blaster_fire.wav");
+    pSound->load_sound("assets/sound/blaster_impact.wav");
+    pSound->load_sound("assets/sound/cannon_fire.wav");
+    pSound->load_sound("assets/sound/cannon_impact.wav");
+    pSound->load_sound("assets/sound/missile_flight.wav");
 
     write_message( "Welcome to Tanks! Press F1 for help." );
 

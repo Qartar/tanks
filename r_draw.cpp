@@ -46,6 +46,10 @@ void system::draw_particles(float time, render::particle const* particles, std::
     for (render::particle const*p = particles; p < end; ++p) {
         float ptime = time - p->time;
 
+        if (ptime < 0) {
+            continue;
+        }
+
         float vtime = p->drag ? tanhf(p->drag * ptime) / p->drag : ptime;
 
         float radius = p->size + p->size_velocity * ptime;
@@ -124,7 +128,7 @@ void system::draw_line(vec2 start, vec2 end, color4 start_color, color4 end_colo
     glBegin(GL_LINES);
         glColor4fv(start_color);
         glVertex2fv(start);
-        glColor4fv(start_color);
+        glColor4fv(end_color);
         glVertex2fv(end);
     glEnd();
 }
