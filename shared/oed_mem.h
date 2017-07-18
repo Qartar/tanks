@@ -106,6 +106,9 @@ public:
     {
         mem_link_s  *link;
 
+        if ( !ptr )
+            return;
+
         link = PTR_TO_LINK(ptr);
         if (link->id != mem_id) // bad id
             throw( memerror_c( "mem::free | bad pointer\n", ERROR_BADPTR, true ) );
