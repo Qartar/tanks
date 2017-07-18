@@ -44,7 +44,7 @@ typedef struct snd_link_s
 {
     snd_link_s  *pNext, *pPrev;
     int         nSequence;      // registration sequence
-    char    szFilename[SHORT_STRING];
+    std::string filename;
     int     nNumber;
 
     cSoundSource    *pSource;

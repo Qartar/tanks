@@ -230,7 +230,7 @@ snd_link_t *cSound::Create (char const *szFilename)
     pLink = (snd_link_t *)alloc( sizeof(snd_link_t) );
 
     // alphabetize
-    for ( next = m_Chain.pNext ; (next != &m_Chain) && (stricmp(next->szFilename,szFilename)<0) ; next = next->pNext );
+    for ( next = m_Chain.pNext ; (next != &m_Chain) && (stricmp(next->filename.c_str(), szFilename)<0) ; next = next->pNext );
 
     pLink->pNext = next;
     pLink->pPrev = next->pPrev;
@@ -257,7 +257,7 @@ snd_link_t *cSound::Create (char const *szFilename)
     }
 
 
-    strcpy( pLink->szFilename, szFilename );
+    pLink->filename = szFilename;
     pLink->nSequence = 0;
 
     pLink->pSource = pSource;
@@ -275,7 +275,7 @@ snd_link_t *cSound::Find (char const *szFilename)
 
     for ( pLink = m_Chain.pNext ; pLink != &m_Chain ; pLink = pLink->pNext )
     {
-        cmp = strcmp( szFilename, pLink->szFilename );
+        cmp = strcmp( szFilename, pLink->filename.c_str() );
         if ( cmp == 0 )
             return pLink;
         else if ( cmp < 0 ) // passed it, does not exit
