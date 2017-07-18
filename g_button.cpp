@@ -146,17 +146,47 @@ void submenu_button::draw(render::system* renderer) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+char const* weapon_button::_strings[] = {"Cannon", "Missile", "Blaster"};
+
+//------------------------------------------------------------------------------
+weapon_button::weapon_button(game::weapon_type type, vec2 position, vec2 size)
+    : button(_strings[static_cast<int>(type)], position, size, [type](){g_Game->cls.weapon = type;})
+    , _type(type)
+{}
+
+//------------------------------------------------------------------------------
+void weapon_button::draw(render::system* renderer) const
+{
+    int border_color = _over ? 6 : 4;
+    int button_color = (_down || g_Game->cls.weapon == _type) ? 3 : 5;
+    int text_color = button_color + 2;
+
+    draw_rectangle(renderer, _rectangle, menu::colors[button_color], menu::colors[border_color]);
+    draw_text(renderer, _rectangle, _text, menu::colors[text_color]);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 client_button::client_button(char const* text, vec2 position, vec2 size, color3* color_ptr)
     : button(text, position, size)
     , _text_rectangle(position + vec2(0, size.y / 2.0f - 12.0f), vec2(size.x - 16.0f, 14.0f))
     , _color_ptr(color_ptr)
     , _color_index(0)
     , _text_down(false)
+    , _weapons({
+        weapon_button{game::weapon_type::cannon, position + vec2(size.x / 2 + 24 + 4, (size.y / 3 - 4) / 2 - size.y / 2), vec2(48, size.y / 3 - 4)},
+        weapon_button{game::weapon_type::missile, position + vec2(size.x / 2 + 24 + 4, 0), vec2(48, size.y / 3 - 4)},
+        weapon_button{game::weapon_type::blaster, position + vec2(size.x / 2 + 24 + 4, size.y / 2 - (size.y / 3 - 4) / 2), vec2(48, size.y / 3 - 4)}})
 {}
 
 //------------------------------------------------------------------------------
 bool client_button::key_event(int key, bool down)
 {
+    for (auto& button : _weapons) {
+        if (button.key_event(key, down)) {
+            return true;
+        }
+    }
+
     if (key == K_MOUSE1) {
         if (_text_over && down) {
             _text_down = true;
@@ -186,6 +216,10 @@ bool client_button::key_event(int key, bool down)
 //------------------------------------------------------------------------------
 bool client_button::cursor_event(vec2 position)
 {
+    for (auto& button : _weapons) {
+        button.cursor_event(position);
+    }
+
     _text_over = _text_rectangle.contains(position);
     _over = !_text_over && _rectangle.contains(position);
     return false;
@@ -209,6 +243,10 @@ void client_button::draw(render::system* renderer) const
 
     tank_body_model.draw(_rectangle.center(), 0, color4(*_color_ptr));
     tank_turret_model.draw(_rectangle.center(), 0, color4(*_color_ptr));
+
+    for (auto const& button : _weapons) {
+        button.draw(renderer);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

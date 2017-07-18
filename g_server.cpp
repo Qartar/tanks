@@ -31,6 +31,7 @@ void session::start_server ()
 
         strncpy(svs.clients[0].name, cls.name, SHORT_STRING);
         svs.clients[0].color = cls.color;
+        svs.clients[0].weapon = cls.weapon;
 
         spawn_player(0);
     }

@@ -167,6 +167,8 @@ void session::write_info(network::message& message, int client)
     message.write_byte( svs.clients[client].color.g * 255 );
     message.write_byte( svs.clients[client].color.b * 255 );
 
+    message.write_byte( static_cast<int>(svs.clients[client].weapon ) );
+
     //  write extra shit
 
     message.write_byte( _clients[client].upgrades );
@@ -201,9 +203,12 @@ void session::read_info(network::message& message)
     svs.clients[client].color.g = message.read_byte( ) / 255.0f;
     svs.clients[client].color.b = message.read_byte( ) / 255.0f;
 
+    svs.clients[client].weapon = static_cast<weapon_type>(message.read_byte());
+
     game::tank* player = _world.player(client);
     if (player) {
         player->_color = color4(svs.clients[client].color);
+        player->_weapon = svs.clients[client].weapon;
     }
 
     _clients[client].upgrades = message.read_byte( );

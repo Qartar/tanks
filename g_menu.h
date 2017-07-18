@@ -177,6 +177,20 @@ protected:
 };
 
 //------------------------------------------------------------------------------
+class weapon_button : public button
+{
+public:
+    weapon_button(game::weapon_type type, vec2 position, vec2 size);
+
+    virtual void draw(render::system* renderer) const override;
+
+protected:
+    game::weapon_type _type;
+
+    static char const* _strings[];
+};
+
+//------------------------------------------------------------------------------
 class client_button : public button
 {
 public:
@@ -195,6 +209,8 @@ protected:
     bool _text_over;
 
     menu::rectangle _text_rectangle;
+
+    std::array<weapon_button, 3> _weapons;
 };
 
 //------------------------------------------------------------------------------

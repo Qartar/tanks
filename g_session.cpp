@@ -30,6 +30,7 @@ session::session()
     , _net_server_name("net_serverName", "Tanks! Server", config::archive, "local server name")
     , _cl_name("ui_name", "", config::archive, "user info: name")
     , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
+    , _cl_weapon("ui_weapon", 0, config::archive, "user info: weapon")
 {
     g_Game = this;
     pMain = this;
@@ -879,6 +880,7 @@ void session::spawn_player(int num)
     assert(_world.player(num) == nullptr);
     game::tank* player = _world.spawn_player(num);
     player->_color = color4(svs.clients[num].color);
+    player->_weapon = svs.clients[num].weapon;
     player->_client = _clients + num;
 
     player->respawn();

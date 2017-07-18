@@ -223,6 +223,8 @@ public:
     std::array<sound::channel*,3> _channels;
     game_client_t* _client;
 
+    weapon_type _weapon;
+
 protected:
     void collide(tank* other, physics::contact const* contact);
 
@@ -233,8 +235,6 @@ protected:
 protected:
     static physics::material _material;
     static physics::box_shape _shape;
-
-    weapon_type _weapon;
 
     constexpr static float cannon_speed = 1920.0f;
     constexpr static float missile_speed = 288.0f;

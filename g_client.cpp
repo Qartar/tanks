@@ -42,6 +42,8 @@ void session::init_client()
             cls.color.b *= invsum;
         }
     }
+
+    cls.weapon = static_cast<weapon_type>((int)_cl_weapon);
 }
 
 //------------------------------------------------------------------------------
@@ -49,6 +51,7 @@ void session::shutdown_client()
 {
     _cl_name = cls.name;
     _cl_color = va("%i %i %i", (int )(cls.color.r*255), (int )(cls.color.g*255), (int )(cls.color.b*255) );
+    _cl_weapon = static_cast<int>(cls.weapon);
 }
 
 //------------------------------------------------------------------------------
@@ -186,6 +189,7 @@ void session::connect_ack(char const* message_string)
     svs.clients[cls.number].active = true;
     strcpy( svs.clients[cls.number].name, cls.name );
     svs.clients[cls.number].color = cls.color;
+    svs.clients[cls.number].weapon = cls.weapon;
 
     write_info(_netchan.message, cls.number);
 }

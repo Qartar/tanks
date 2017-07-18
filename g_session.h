@@ -110,6 +110,7 @@ typedef struct client_s
 
     char name[SHORT_STRING];
     color3 color;
+    weapon_type weapon;
 } client_t;
 
 //------------------------------------------------------------------------------
@@ -143,6 +144,7 @@ typedef struct client_state_s
 {
     color3  color;
     char    name[SHORT_STRING];
+    weapon_type weapon;
     int     number;
 
     char    server[SHORT_STRING];
@@ -220,6 +222,7 @@ private:
 
     config::string _cl_name;
     config::string _cl_color;
+    config::integer _cl_weapon;
 
     vec2 _cursor;
 
