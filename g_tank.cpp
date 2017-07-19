@@ -618,21 +618,19 @@ void projectile::touch(object *other, physics::contact const* contact)
         tank* owner_tank = static_cast<tank*>(_owner);
         tank* other_tank = static_cast<tank*>(other);
 
-        vec2    impact_normal, forward;
-        float   impact_angle, damage;
-
         if (other_tank->_damage >= 1.0f) {
             return; // dont add damage or score
         }
 
-        impact_normal = contact ? -contact->normal
-                                : -get_linear_velocity().normalize();
-        forward = rotate(vec2(1,0), other->get_rotation());
-        impact_angle = impact_normal.dot(forward);
-
-        damage = _damage / other_tank->_client->armor_mod;
+        vec2 direction = get_linear_velocity().normalize();
+        vec2 impact_normal = contact ? -contact->normal : -direction;
+        vec2 forward = rotate(vec2(1,0), other->get_rotation());
+        float impact_angle = impact_normal.dot(forward);
+        float damage = _damage / other_tank->_client->armor_mod;
 
         if (_type == weapon_type::cannon) {
+            float surface_angle = impact_normal.dot(-direction);
+            damage = 1.2f * damage * surface_angle;
             if (impact_angle > M_SQRT1_2) {
                 other_tank->_damage += damage * DAMAGE_FRONT;
             } else if (impact_angle > -M_SQRT1_2) {
