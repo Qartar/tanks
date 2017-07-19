@@ -258,7 +258,7 @@ public:
 
     void info_ask();
 
-    void write_sound(int sound_index);
+    void write_sound(int sound, vec2 position, float volume);
     void write_effect(int type, vec2 pos, vec2 vel, float strength);
 
     client_state_t  cls;

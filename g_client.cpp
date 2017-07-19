@@ -209,7 +209,9 @@ void session::client_send ()
 void session::read_sound(network::message& message)
 {
     int asset = message.read_long();
-    pSound->play(static_cast<sound::asset>(asset), vec3(0,0,0), 1.0f, 0.0f);
+    vec2 position = message.read_vector();
+    float volume = message.read_float();
+    pSound->play(static_cast<sound::asset>(asset), vec3(position), volume, 1.0f);
 }
 
 //------------------------------------------------------------------------------

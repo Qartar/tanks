@@ -117,9 +117,9 @@ void cSoundChannel::m_mixMono16 (void *pBuffer, float flRate, int nVolume, int n
     int     sampleIndex;
     float   sampleFrac;
 
-    int     spatial_vol;
+    int     spatial_vol[2];
 
-    m_SpatializeMono( nVolume, &spatial_vol );
+    m_SpatializeStereo( nVolume, spatial_vol );
 
     nSamplesRead = m_pSound->getSamples( (byte *)input, nSamples*flRate, m_nSamplePos, m_bLooping );
     nSamplePos = m_nSamplePos - floor( m_nSamplePos );
@@ -129,8 +129,8 @@ void cSoundChannel::m_mixMono16 (void *pBuffer, float flRate, int nVolume, int n
         sampleIndex = floor( nSamplePos );
         sampleFrac = nSamplePos - sampleIndex;
 
-        output[i].left += (int)(spatial_vol * SAMPLE(input,sampleIndex,sampleFrac)) >> 8;
-        output[i].right += (int)(spatial_vol * SAMPLE(input,sampleIndex,sampleFrac)) >> 8;
+        output[i].left += (int)(spatial_vol[0] * SAMPLE(input,sampleIndex,sampleFrac)) >> 8;
+        output[i].right += (int)(spatial_vol[1] * SAMPLE(input,sampleIndex,sampleFrac)) >> 8;
 
         m_nSamplePos += flRate;
         nSamplePos += flRate;
@@ -205,26 +205,20 @@ void cSoundChannel::m_SpatializeMono (int in, int *out)
 
 void cSoundChannel::m_SpatializeStereo (int in, int out[])
 {
+    vec3 dir = m_vOrigin - gSound->vOrigin;
+    float dist = dir.normalize_length();
+    float dp = dir.dot(gSound->vRight);
+
     if ( m_flAttenuation == ATTN_STATIC )
     {
-        out[0] = in;
-        out[1] = in;
+        out[0] = in * 0.5f * (1.0f - dp);
+        out[1] = in * 0.5f * (1.0f + dp);
     }
     else
     {
-        vec3    vDir;
-        float   len;
-        float   dotRight;
+        float   attn = clamp( powf(ATTN_LEN / dist, m_flAttenuation), 0.0f, 1.0f );
 
-        vDir = m_vOrigin - gSound->vOrigin;
-        len = vDir.length( );
-        vDir.normalize( );
-
-        dotRight = vDir.dot( gSound->vRight );
-
-        float   attn = clamp( powf(ATTN_LEN / len, m_flAttenuation), 0.0f, 1.0f );
-
-        out[0] = in * (0.5f * (1 + dotRight) * attn);
-        out[1] = in * (0.5f * (1 - dotRight) * attn);
+        out[0] = in * 0.5f * (1 - dp) * attn;
+        out[1] = in * 0.5f * (1 + dp) * attn;
     }
 }

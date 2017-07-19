@@ -222,7 +222,7 @@ void tank::think()
         // extra explosion
         if (_dead_time && (g_Game->_frametime - _dead_time > 650) && (g_Game->_frametime - _dead_time < 650+HACK_TIME/2))
         {
-            _world->add_sound(_sound_explode);
+            _world->add_sound(_sound_explode, get_position());
             _world->add_effect(effect_type::explosion, get_position());
             _dead_time -= HACK_TIME;    // dont do it again
         }
@@ -258,22 +258,24 @@ void tank::launch_projectile()
     switch (_weapon) {
         case weapon_type::cannon: {
             if ((_fire_time + cannon_reload / _client->refire_mod) < g_Game->_frametime) {
-                _world->add_effect(
-                    effect_type::smoke,
-                    get_position() + rotate(effect_origin, _turret_rotation),
-                    rotate(effect_origin, _turret_rotation) * 16,
-                    64 );
-
                 _fire_time = g_Game->_frametime;
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod, weapon_type::cannon);
 
                 float launch_rotation = _turret_rotation + crand() * M_PI / 180.f;
+                vec2 launch_direction = rotate(vec2(1, 0), launch_rotation);
+                vec2 launch_position = get_position() + rotate(effect_origin,_turret_rotation);
 
-                proj->set_position(get_position() + rotate(effect_origin, _turret_rotation), true);
-                proj->set_linear_velocity(rotate(vec2(1, 0), launch_rotation) * cannon_speed);
+                proj->set_position(launch_position, true);
+                proj->set_linear_velocity(launch_direction * cannon_speed);
 
-                _world->add_sound(_sound_cannon_fire);
+                _world->add_sound(_sound_cannon_fire, launch_position);
+                _world->add_effect(
+                    effect_type::smoke,
+                    launch_position,
+                    launch_direction * 21 * 16,
+                    64 );
+
             }
             break;
         }
@@ -284,10 +286,13 @@ void tank::launch_projectile()
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod, weapon_type::missile);
 
-                proj->set_position(get_position() + rotate(effect_origin, _turret_rotation), true);
-                proj->set_linear_velocity(rotate(vec2(1, 0), _turret_rotation) * missile_speed);
+                vec2 launch_direction = rotate(vec2(1, 0), _turret_rotation);
+                vec2 launch_position = get_position() + rotate(effect_origin,_turret_rotation);
 
-                _world->add_sound(_sound_cannon_fire);
+                proj->set_position(launch_position, true);
+                proj->set_linear_velocity(launch_direction * missile_speed);
+
+                _world->add_sound(_sound_cannon_fire, launch_position);
             }
             break;
         }
@@ -296,19 +301,21 @@ void tank::launch_projectile()
             if ((_fire_time + blaster_reload / _client->refire_mod) < g_Game->_frametime) {
                 _fire_time = g_Game->_frametime;
 
-                _world->add_effect(
-                    effect_type::blaster,
-                    get_position() + rotate(effect_origin, _turret_rotation),
-                    rotate(vec2(2, 0), _turret_rotation));
-
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod * 0.1f, weapon_type::blaster);
 
                 float launch_rotation = _turret_rotation + crand() * M_PI / 180.f;
+                vec2 launch_direction = rotate(vec2(1, 0), launch_rotation);
+                vec2 launch_position = get_position() + rotate(effect_origin,_turret_rotation);
 
-                proj->set_position(get_position() + rotate(effect_origin,_turret_rotation), true);
-                proj->set_linear_velocity(rotate(vec2(1, 0), launch_rotation) * blaster_speed);
+                proj->set_position(launch_position, true);
+                proj->set_linear_velocity(launch_direction * blaster_speed);
 
-                _world->add_sound(_sound_blaster_fire);
+                _world->add_sound(_sound_blaster_fire, launch_position);
+
+                _world->add_effect(
+                    effect_type::blaster,
+                    launch_position,
+                    launch_direction * 2);
             }
             break;
         }
@@ -434,8 +441,9 @@ void tank::update_sound()
             if (!_channels[0]->playing()) {
                 _channels[0]->loop(_sound_idle);
             }
+            _channels[0]->set_origin(vec3(get_position()));
             _channels[0]->set_volume(0.5f);
-            _channels[0]->set_attenuation(0.0f);
+            _channels[0]->set_attenuation(1.0f);
             _channels[0]->set_frequency(1.0f);
         }
         else if (_channels[0]->playing()) {
@@ -449,8 +457,9 @@ void tank::update_sound()
             if (!_channels[1]->playing()) {
                 _channels[1]->loop(_sound_move);
             }
+            _channels[1]->set_origin(vec3(get_position()));
             _channels[1]->set_volume(0.5f);
-            _channels[1]->set_attenuation(0.0f);
+            _channels[1]->set_attenuation(1.0f);
         }
         else if (_channels[1]->playing()) {
             _channels[1]->stop();
@@ -463,8 +472,9 @@ void tank::update_sound()
             if (!_channels[2]->playing()) {
                 _channels[2]->loop(_sound_turret_move);
             }
+            _channels[2]->set_origin(vec3(get_position()));
             _channels[2]->set_volume(0.3f);
-            _channels[2]->set_attenuation(0.0f);
+            _channels[2]->set_attenuation(1.0f);
         }
         else if (_channels[2]->playing()) {
             _channels[2]->stop( );
@@ -570,10 +580,13 @@ void projectile::update_effects()
 void projectile::update_sound()
 {
     if (_type == weapon_type::missile) {
-        if (_channel && !_channel->playing()) {
-            _channel->loop(_sound_missile_flight);
+        if (_channel) {
+            if (!_channel->playing()) {
+                _channel->loop(_sound_missile_flight);
+            }
             _channel->set_volume(0.2f);
             _channel->set_attenuation(0.0f);
+            _channel->set_origin(vec3(get_position()));
         }
     } else if (_channel && _channel->playing()) {
         _channel->stop();
@@ -591,8 +604,13 @@ void projectile::touch(object *other, physics::contact const* contact)
                   _type == weapon_type::missile ? effect_type::missile_impact :
                   _type == weapon_type::blaster ? effect_type::blaster_impact : effect_type::smoke;
 
-    _world->add_sound(sound);
-    _world->add_effect(effect, get_position(), contact ? -contact->normal : vec2(0,0), 0.5f * _damage);
+    if (contact) {
+        _world->add_sound(sound, contact->point);
+        _world->add_effect(effect, contact->point, -contact->normal, 0.5f * _damage);
+    } else {
+        _world->add_sound(sound, get_position());
+        _world->add_effect(effect, get_position(), vec2_zero, 0.5f * _damage);
+    }
 
     _world->remove(this);
 

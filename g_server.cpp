@@ -261,7 +261,7 @@ void session::client_command(network::message& message, int client)
 }
 
 //------------------------------------------------------------------------------
-void session::write_sound(int sound_index)
+void session::write_sound(int sound, vec2 position, float volume)
 {
     network::message    netmsg;
     static byte netmsgbuf[MAX_MSGLEN];
@@ -273,7 +273,9 @@ void session::write_sound(int sound_index)
     netmsg.clear( );
 
     netmsg.write_byte( svc_sound );
-    netmsg.write_long( sound_index );
+    netmsg.write_long( sound );
+    netmsg.write_vector( position );
+    netmsg.write_float( volume );
 
     broadcast( netmsg.bytes_written, netmsgbuf );
 }

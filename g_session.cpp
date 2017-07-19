@@ -260,6 +260,7 @@ void session::update_screen()
         center_y = world_height - ( view_height / 2 );
     }
     _renderer->set_view_origin(vec2(center_x - view_width / 2, center_y - view_height / 2));
+    pSound->set_listener(vec3(center_x, center_y, view_width * M_SQRT2), vec3(0,0,-1), vec3(1,0,0), vec3(0,1,0));
 
     // draw world
     if (_game_active)
