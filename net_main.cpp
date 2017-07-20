@@ -6,6 +6,10 @@
 
 #include "net_main.h"
 
+#include <WS2tcpip.h>
+#include <WinSock2.h>
+#include <ws2ipdef.h>
+
 network::manager    *pNet;  // extern
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,11 +26,11 @@ bool address::operator==(network::address const& other) const
         case network::address_type::loopback:
             return true;
 
-        case network::address_type::ip:
-            return memcmp(ip, other.ip, 4) == 0 && port == other.port;
+        case network::address_type::ip4:
+            return ip4 == other.ip4 && port == other.port;
 
-        case network::address_type::ipx:
-            return memcmp(ipx, other.ipx, 10) == 0 && port == other.port;
+        case network::address_type::ip6:
+            return ip6 == other.ip6 && port == other.port;
 
         default:
             return false;
@@ -36,19 +40,20 @@ bool address::operator==(network::address const& other) const
 //------------------------------------------------------------------------------
 int manager::init ()
 {
-    _multiplayer = false;
+    WSADATA wsadata = {};
 
-    memset( &_wsadata, 0, sizeof(_wsadata) );
+    _multiplayer = false;
 
     for ( int i=0 ; i<NUM_SOCKETS ; i++ ) {
         memset( &_loopbacks[i], 0, sizeof(_loopbacks[i]) );
 
-        _ip_sockets[ i ] = 0;
-        _ipx_sockets[ i ] = 0;
+        _ip4_sockets[ i ] = 0;
+        _ip6_sockets[ i ] = 0;
     }
 
-    if ( WSAStartup( MAKEWORD( 1, 1 ), &_wsadata ) )
+    if (WSAStartup(MAKEWORD(2, 2), &wsadata)) {
         return ERROR_FAIL;
+    }
 
     config( false );
 
@@ -73,8 +78,8 @@ int manager::config (bool multiplayer)
 
     if ( _multiplayer = multiplayer )
     {
-        open_ip( );
-        open_ipx( );
+        open_ip4( );
+        open_ip6( );
     }
     else
     {
@@ -83,16 +88,16 @@ int manager::config (bool multiplayer)
         // shut it down
         for (i=0 ; i<NUM_SOCKETS ; i++)
         {
-            if ( _ip_sockets[i] )
+            if ( _ip4_sockets[i] )
             {
-                closesocket( _ip_sockets[i] );
-                _ip_sockets[i] = 0;
+                closesocket( _ip4_sockets[i] );
+                _ip4_sockets[i] = 0;
             }
 
-            if ( _ipx_sockets[i] )
+            if ( _ip6_sockets[i] )
             {
-                closesocket( _ipx_sockets[i] );
-                _ipx_sockets[i] = 0;
+                closesocket( _ip6_sockets[i] );
+                _ip6_sockets[i] = 0;
             }
         }
     }
@@ -158,58 +163,48 @@ char const* manager::WSAErrorString (int code)
 }
 
 //------------------------------------------------------------------------------
-#define PORT_ANY    -1
-
-int manager::open_ip ()
+int manager::open_ip4 ()
 {
-    int port;
-
-    if ( !_ip_sockets[network::socket::server] )
-    {
-        port = PORT_SERVER;
-
-        _ip_sockets[network::socket::server] = ip_socket( port );
+    if (!_ip4_sockets[network::socket::server]) {
+        _ip4_sockets[network::socket::server] = ip4_socket(PORT_SERVER);
     }
 
-    if ( !_ip_sockets[network::socket::client] )
-    {
-        port = PORT_CLIENT;
-
-        if ( !(_ip_sockets[network::socket::client] = ip_socket( port )) )
-            _ip_sockets[network::socket::client] = ip_socket( PORT_ANY );
+    if (!_ip4_sockets[network::socket::client]) {
+        if (!(_ip4_sockets[network::socket::client] = ip4_socket(PORT_CLIENT))) {
+            _ip4_sockets[network::socket::client] = ip4_socket(0);
+        }
     }
 
     return ERROR_NONE;
 }
 
 //------------------------------------------------------------------------------
-int manager::ip_socket (int port)
+int manager::ip4_socket (int port)
 {
     sockaddr_in     address;
     int     newsocket;
     unsigned long       args;
 
     // get socket
-    if ( (newsocket = ::socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    if ( (newsocket = ::socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
         return 0;
+    }
 
     // disable blocking
-    if (ioctlsocket (newsocket, FIONBIO, &args) == -1)
+    if (ioctlsocket (newsocket, FIONBIO, &args) == SOCKET_ERROR) {
         return 0;
+    }
 
     // enable broadcasting
-    if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (char *)&args, sizeof(args)) == -1)
+    if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (char *)&args, sizeof(args)) == SOCKET_ERROR) {
         return 0;
+    }
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    if ( port == PORT_ANY )
-        address.sin_port = 0;
-    else
-        address.sin_port = htons( (unsigned short )port );
+    address.sin_port = htons( (unsigned short )port );
 
-    if (bind (newsocket, (sockaddr *)&address, sizeof(address)) == -1)
-    {
+    if (bind (newsocket, (sockaddr *)&address, sizeof(address)) == SOCKET_ERROR) {
         closesocket( newsocket );
         return 0;
     }
@@ -218,15 +213,63 @@ int manager::ip_socket (int port)
 }
 
 //------------------------------------------------------------------------------
-int manager::open_ipx ()
+int manager::open_ip6 ()
 {
+    if (!_ip6_sockets[network::socket::server]) {
+        _ip6_sockets[network::socket::server] = ip6_socket(PORT_SERVER);
+    }
+
+    if (!_ip6_sockets[network::socket::client]) {
+        if (!(_ip6_sockets[network::socket::client] = ip6_socket(PORT_CLIENT))) {
+            _ip6_sockets[network::socket::client] = ip6_socket(0);
+        }
+    }
+
     return ERROR_NONE;
 }
 
 //------------------------------------------------------------------------------
-int manager::ipx_socket (int port)
+int manager::ip6_socket (int port)
 {
-    return 0;
+    sockaddr_in6 address;
+    int newsocket;
+    unsigned long args = 1;
+
+    // get socket
+    if ( (newsocket = ::socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
+        return 0;
+    }
+
+    // disable blocking
+    if (ioctlsocket(newsocket, FIONBIO, &args) == SOCKET_ERROR) {
+        return 0;
+    }
+
+    // enable broadcasting
+    {
+        ipv6_mreq mreq = {};
+
+        mreq.ipv6mr_multiaddr.u.Word[ 0 ] = htons( 0xff02 );
+        mreq.ipv6mr_multiaddr.u.Word[ 7 ] = htons( 0x0001 );
+        mreq.ipv6mr_interface = 0;
+
+        //  add membership to link-local multicast group
+        if (setsockopt(newsocket, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (char const*)&mreq, sizeof(mreq)) == SOCKET_ERROR) {
+            return 0;
+        }
+    }
+
+    memset(&address, 0, sizeof(address));
+    address.sin6_family = AF_INET6;
+    address.sin6_addr = in6addr_any;
+    address.sin6_port = htons((word)port);
+
+    if (bind(newsocket, (sockaddr *)&address, sizeof(address)) == SOCKET_ERROR) {
+        closesocket(newsocket);
+        return 0;
+    }
+
+    return newsocket;
 }
 
 //------------------------------------------------------------------------------
@@ -236,83 +279,47 @@ char const* manager::address_to_string (network::address a)
 
     if ( a.type == network::address_type::loopback )
         fmt( szString, "loopback\0" );
-    else if (a.type == network::address_type::ip )
-        fmt( szString, "%i.%i.%i.%i:%i\0", a.ip[0], a.ip[1], a.ip[2], a.ip[3], ntohs( a.port ) );
-    else if ( a.type == network::address_type::ipx )
-        fmt( szString, "%02x%02x%02x%02x:%02x%02x%02x%02x%02x%02x:%i\0", a.ipx[0], a.ipx[1], a.ipx[2], a.ipx[3], a.ipx[4], a.ipx[5], a.ipx[6], a.ipx[7], a.ipx[8], a.ipx[9], ntohs(a.port));
+    else if (a.type == network::address_type::ip4 )
+        fmt( szString, "%i.%i.%i.%i:%i\0", a.ip4[0], a.ip4[1], a.ip4[2], a.ip4[3], ntohs( a.port ) );
+    else if (a.type == network::address_type::ip6 )
+        fmt( szString, "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x", a.ip6[0], a.ip6[1], a.ip6[2], a.ip6[3], a.ip6[4], a.ip6[5], a.ip6[6], a.ip6[7]);
 
     return szString;
 }
 
 //------------------------------------------------------------------------------
-#define DO(src,dest)    \
-    copy[0] = addr[src];    \
-    copy[1] = addr[src + 1];    \
-    sscanf (copy, "%x", &val);  \
-    ((struct sockaddr_ipx *)sock)->dest = val
-
-bool manager::string_to_sockaddr (char const *addr, sockaddr *sock)
+bool manager::string_to_sockaddr (char const *addr, sockaddr_storage *sock)
 {
-    struct hostent  *h;
-    char    *colon;
-    int     val;
-    char    copy[128];
-    
-    memset (sock, 0, sizeof(*sock));
+    memset(sock, 0, sizeof(*sock));
 
-    if ((strlen(addr) >= 23) && (addr[8] == ':') && (addr[21] == ':'))  // check for an IPX address
-    {
-        ((struct sockaddr_ipx *)sock)->sa_family = AF_IPX;
-        copy[2] = 0;
-        DO(0, sa_netnum[0]);
-        DO(2, sa_netnum[1]);
-        DO(4, sa_netnum[2]);
-        DO(6, sa_netnum[3]);
-        DO(9, sa_nodenum[0]);
-        DO(11, sa_nodenum[1]);
-        DO(13, sa_nodenum[2]);
-        DO(15, sa_nodenum[3]);
-        DO(17, sa_nodenum[4]);
-        DO(19, sa_nodenum[5]);
-        sscanf (&addr[22], "%u", &val);
-        ((struct sockaddr_ipx *)sock)->sa_socket = htons((unsigned short)val);
+    if (inet_pton(AF_INET6, addr, sock) == 1) {
+        return true;
     }
-    else
-    {
-        ((struct sockaddr_in *)sock)->sin_family = AF_INET;
-        
-        ((struct sockaddr_in *)sock)->sin_port = 0;
 
-        strcpy (copy, addr);
-        // strip off a trailing :port if present
-        for (colon = copy ; *colon ; colon++)
-            if (*colon == ':')
-            {
-                *colon = 0;
-                ((struct sockaddr_in *)sock)->sin_port = htons((short)atoi(colon+1));   
-            }
-        
-        if (copy[0] >= '0' && copy[0] <= '9')
-        {
-            *(int *)&((struct sockaddr_in *)sock)->sin_addr = inet_addr(copy);
-        }
-        else
-        {
-            if (! (h = gethostbyname(copy)) )
-                return 0;
-            *(int *)&((struct sockaddr_in *)sock)->sin_addr = *(int *)h->h_addr_list[0];
-        }
+    if (inet_pton(AF_INET, addr, sock) == 1) {
+        return true;
     }
-    
-    return true;
+
+    addrinfo *info_ptr = nullptr;
+
+    addrinfo hints = {};
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    if (getaddrinfo(addr, nullptr, nullptr, &info_ptr) == 0) {
+        memcpy(sock, info_ptr->ai_addr, info_ptr->ai_addrlen);
+        freeaddrinfo(info_ptr);
+        return true;
+    }
+
+    return false;
 }
-
-#undef DO
 
 //------------------------------------------------------------------------------
 bool manager::string_to_address (char const *addr, network::address *net)
 {
-    sockaddr    sadr;
+    sockaddr_storage sadr;
     
     if ( strcmp( addr, "localhost" ) == 0 )
     {
@@ -330,53 +337,47 @@ bool manager::string_to_address (char const *addr, network::address *net)
 }
 
 //------------------------------------------------------------------------------
-void manager::address_to_sockaddr (network::address *net, sockaddr *sock)
+void manager::address_to_sockaddr (network::address *net, sockaddr_storage *sock)
 {
     memset (sock, 0, sizeof(*sock));
+    sockaddr_in6* sa6 = reinterpret_cast<sockaddr_in6*>(sock);
 
-    if (net->type == network::address_type::broadcast)
-    {
-        ((struct sockaddr_in *)sock)->sin_family = AF_INET;
-        ((struct sockaddr_in *)sock)->sin_port = net->port;
-        ((struct sockaddr_in *)sock)->sin_addr.s_addr = INADDR_BROADCAST;
-    }
-    else if (net->type == network::address_type::ip)
-    {
-        ((struct sockaddr_in *)sock)->sin_family = AF_INET;
-        ((struct sockaddr_in *)sock)->sin_addr.s_addr = *(int *)&net->ip;
-        ((struct sockaddr_in *)sock)->sin_port = net->port;
-    }
-    else if (net->type == network::address_type::ipx)
-    {
-        ((struct sockaddr_ipx *)sock)->sa_family = AF_IPX;
-        memcpy(((struct sockaddr_ipx *)sock)->sa_netnum, &net->ipx[0], 4);
-        memcpy(((struct sockaddr_ipx *)sock)->sa_nodenum, &net->ipx[4], 6);
-        ((struct sockaddr_ipx *)sock)->sa_socket = net->port;
-    }
-    else if (net->type == network::address_type::broadcast_ipx)
-    {
-        ((struct sockaddr_ipx *)sock)->sa_family = AF_IPX;
-        memset(((struct sockaddr_ipx *)sock)->sa_netnum, 0, 4);
-        memset(((struct sockaddr_ipx *)sock)->sa_nodenum, 0xff, 6);
-        ((struct sockaddr_ipx *)sock)->sa_socket = net->port;
+    sa6->sin6_family = AF_INET6;
+    sa6->sin6_port = htons(net->port);
+
+    if (net->type == network::address_type::broadcast) {
+        sa6->sin6_addr.u.Word[ 0] = htons(0xff02);
+        sa6->sin6_addr.u.Word[ 7] = htons(0x0001);
+    } else if (net->type == network::address_type::ip4) {
+        sa6->sin6_addr.u.Word[ 5] = 0xffff;
+        sa6->sin6_addr.u.Byte[12] = net->ip4[0];
+        sa6->sin6_addr.u.Byte[13] = net->ip4[1];
+        sa6->sin6_addr.u.Byte[14] = net->ip4[2];
+        sa6->sin6_addr.u.Byte[15] = net->ip4[3];
+    } else if (net->type == network::address_type::ip6) {
+        for (size_t ii = 0; ii < net->ip6.size(); ++ii) {
+            sa6->sin6_addr.u.Word[ii] = htons(net->ip6[ii]);
+        }
     }
 }
 
 //------------------------------------------------------------------------------
-void manager::sockaddr_to_address (sockaddr *sock, network::address *net)
+void manager::sockaddr_to_address (sockaddr_storage *sock, network::address *net)
 {
-    if (sock->sa_family == AF_INET)
+    if (sock->ss_family == AF_INET)
     {
-        net->type = network::address_type::ip;
-        *(int *)&net->ip = ((struct sockaddr_in *)sock)->sin_addr.s_addr;
+        net->type = network::address_type::ip4;
+        *(int *)&net->ip4 = ((struct sockaddr_in *)sock)->sin_addr.s_addr;
         net->port = ((struct sockaddr_in *)sock)->sin_port;
     }
-    else if (sock->sa_family == AF_IPX)
+    else if (sock->ss_family == AF_INET6)
     {
-        net->type = network::address_type::ipx;
-        memcpy(&net->ipx[0], ((struct sockaddr_ipx *)sock)->sa_netnum, 4);
-        memcpy(&net->ipx[4], ((struct sockaddr_ipx *)sock)->sa_nodenum, 6);
-        net->port = ((struct sockaddr_ipx *)sock)->sa_socket;
+        net->type = network::address_type::ip6;
+        net->port = ntohs(((sockaddr_in6*)sock)->sin6_port);
+
+        for (size_t ii = 0; ii < net->ip6.size(); ++ii) {
+            net->ip6[ii] = ntohs(((sockaddr_in6*)sock)->sin6_addr.u.Word[ii]);
+        }
     }
 }
 
@@ -397,34 +398,33 @@ int manager::print (network::socket socket, network::address to, char const *str
 //------------------------------------------------------------------------------
 int manager::send (network::socket socket, int length, void const *data, network::address to)
 {
-    sockaddr    address;
+    sockaddr_storage address = {};
     int     net_socket;
 
     if ( to.type == network::address_type::loopback )
         return send_loopback( socket, length, data, to );
 
     if ( to.type == network::address_type::broadcast )
-        net_socket = _ip_sockets[socket];
-    else if ( to.type == network::address_type::ip )
-        net_socket = _ip_sockets[socket];
-    else if ( to.type == network::address_type::ipx )
-        net_socket = _ip_sockets[socket];
-    else if ( to.type == network::address_type::broadcast_ipx )
-        net_socket = _ipx_sockets[socket];
+        net_socket = _ip6_sockets[socket];
+    else if ( to.type == network::address_type::ip4 )
+        net_socket = _ip4_sockets[socket];
+    else if ( to.type == network::address_type::ip6 )
+        net_socket = _ip6_sockets[socket];
 
     if ( !net_socket )
         return ERROR_FAIL;
 
     address_to_sockaddr( &to, &address );
 
-    if ( (sendto( net_socket, (char const*)data, length, 0, &address, sizeof(address) )) == -1 )
+    int result = sendto( net_socket, (char const*)data, length, 0, (sockaddr*)&address, sizeof(address) );
+    if (result == SOCKET_ERROR)
     {
         int err = WSAGetLastError();
 
         if (err == WSAEWOULDBLOCK)
             return ERROR_NONE;
 
-        if ((err == WSAEADDRNOTAVAIL) && ((to.type == network::address_type::broadcast) || (to.type == network::address_type::broadcast_ipx)))
+        if ((err == WSAEADDRNOTAVAIL) && ((to.type == network::address_type::broadcast)))
             return ERROR_NONE;
 
         return ERROR_FAIL;
@@ -437,7 +437,7 @@ int manager::send (network::socket socket, int length, void const *data, network
 int manager::get (network::socket socket, network::address *remote_address, network::message *message)
 {
     int     protocol;
-    sockaddr    from;
+    sockaddr_storage from = {};
     int     fromlen;
     int     net_socket;
     int     ret;
@@ -448,15 +448,15 @@ int manager::get (network::socket socket, network::address *remote_address, netw
     for ( protocol = 0 ; protocol < 2 ; protocol++ )
     {
         if ( protocol == 0 )
-            net_socket = _ip_sockets[socket];
+            net_socket = _ip4_sockets[socket];
         else
-            net_socket = _ip_sockets[socket];
+            net_socket = _ip6_sockets[socket];
 
         if ( !net_socket )
             continue;
 
         fromlen = sizeof( from );
-        ret = recvfrom( net_socket, (char *)message->data, message->size, 0, &from, &fromlen );
+        ret = recvfrom( net_socket, (char *)message->data, message->size, 0, (sockaddr*)&from, &fromlen );
 
         sockaddr_to_address( &from, remote_address );
 

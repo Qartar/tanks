@@ -155,9 +155,8 @@ void session::connect_to_server (int index)
     if ( index > 0 )
         _netserver = cls.servers[index].address;
 
-    _netserver.type = network::address_type::ip;
     if ( !_netserver.port )
-        _netserver.port = BIG_SHORT( PORT_SERVER );
+        _netserver.port = PORT_SERVER;
 
     pNet->print( network::socket::client, _netserver, va( "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport ) );
 }
@@ -245,13 +244,13 @@ void session::info_ask ()
 
     //  ping master server
     pNet->string_to_address( _net_master, &addr );
-    addr.type = network::address_type::ip;
-    addr.port = BIG_SHORT( PORT_SERVER );
+    addr.type = network::address_type::ip4;
+    addr.port = PORT_SERVER;
     pNet->print( network::socket::client, addr, "info" );
 
     //  ping local network
     addr.type = network::address_type::broadcast;
-    addr.port = BIG_SHORT( PORT_SERVER );
+    addr.port = PORT_SERVER;
 
     pNet->print( network::socket::client, addr, "info" );
 }

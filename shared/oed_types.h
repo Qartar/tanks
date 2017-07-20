@@ -13,6 +13,7 @@ Modified:   11/03/2006
 #pragma once
 
 #include <cmath>   // sqrt
+#include <cstdint>
 
 #define ROLL    0
 #define PITCH   1
@@ -521,7 +522,8 @@ TYPE DEFINITIONS
 =============================
 */
 
-typedef unsigned char byte;
+using byte = std::uint8_t;
+using word = std::uint16_t;
 
 //
 // unit types

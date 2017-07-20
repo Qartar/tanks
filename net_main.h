@@ -5,31 +5,47 @@
 
 #include "shared.h"
 
-#include <winsock.h>
-#include <wsipx.h>
+#include <array>
+
+struct sockaddr_storage;
 
 #define MAX_MSGLEN  1400
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace network {
 
-enum address_type {loopback, broadcast, ip, ipx, broadcast_ipx};
+enum address_type { loopback, broadcast, ip4, ip6 };
 enum socket { client, server, NUM_SOCKETS };
 
 //------------------------------------------------------------------------------
 class address
 {
 public:
+    address_type type;
+
+    union {
+        std::array<byte, 4> ip4;
+        std::array<word, 8> ip6;
+    };
+
+    unsigned short port;
+
+public:
+    address() = default;
+    constexpr address(byte const (&ip)[4], word port = 0)
+        : type(address_type::ip4)
+        , ip4({ip[0], ip[1], ip[2], ip[3]})
+        , port(port)
+    {}
+    constexpr address(word const (&ip)[8], word port = 0)
+        : type(address_type::ip6)
+        , ip6({ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7]})
+        , port(port)
+    {}
+
     bool operator==(network::address const& other) const;
     bool operator!=(network::address const& other) const { return !(*this == other); }
     bool is_local() const { return (type == network::address_type::loopback); }
-
-    address_type type;
-
-    byte ip[4];
-    byte ipx[10];
-
-    unsigned short port;
 };
 
 //------------------------------------------------------------------------------
@@ -144,22 +160,23 @@ private:
 
     // winsock
 
-    WSADATA _wsadata;
-
     char const* WSAErrorString (int code = 0);
 
-    int _ip_sockets[NUM_SOCKETS];
-    int _ipx_sockets[NUM_SOCKETS];
+    int _ip4_sockets[NUM_SOCKETS];
+    int _ip6_sockets[NUM_SOCKETS];
 
-    int open_ip();
-    int open_ipx();
+    constexpr static network::address _ip6_broadcast = {{0xff02, 0, 0, 0, 0, 0, 0, 1}, 0};
+    constexpr static network::address _ip6_loopback = {{0, 0, 0, 0, 0, 0, 0, 1}, 0};
 
-    int ip_socket(int port);
-    int ipx_socket(int port);
+    int open_ip4();
+    int open_ip6();
 
-    void address_to_sockaddr(network::address *net, sockaddr *sock);
-    void sockaddr_to_address(sockaddr *sock, network::address *net);
-    bool string_to_sockaddr(char const *addr, sockaddr *sock);
+    int ip4_socket(int port);
+    int ip6_socket(int port);
+
+    void address_to_sockaddr(network::address *net, sockaddr_storage *sock);
+    void sockaddr_to_address(sockaddr_storage *sock, network::address *net);
+    bool string_to_sockaddr(char const *addr, sockaddr_storage *sock);
 };
 
 } // namespace network
