@@ -10,7 +10,7 @@ namespace game {
 //------------------------------------------------------------------------------
 void session::get_packets ()
 {
-    network::socket   socket;
+    network::socket* socket;
 
     byte message_buf[MAX_MSGLEN];
     network::message message;
@@ -18,15 +18,15 @@ void session::get_packets ()
     message.init(message_buf, MAX_MSGLEN);
 
     if ( _multiserver )
-        socket = network::socket::server;
+        socket = &svs.socket;
     else
-        socket = network::socket::client;
+        socket = &cls.socket;
 
     network::address remote;
 
-    while (pNet->get(socket, &remote, &message)) {
-        if (*(int *)message.data == -1) {
-            if (socket == network::socket::server) {
+    while (socket->read(remote, message)) {
+        if (*(int *)message.data != network::channel::prefix) {
+            if (socket == &svs.socket) {
                 server_connectionless(remote, message);
             } else {
                 client_connectionless(remote, message);
@@ -34,7 +34,7 @@ void session::get_packets ()
             continue;
         }
 
-        if (socket == network::socket::server) {
+        if (socket == &svs.socket) {
             int     netport;
 
             message.begin();

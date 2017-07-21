@@ -31,6 +31,7 @@ set(tanks-sources
     net_main.cpp
     net_main.h
     net_msg.cpp
+    net_sock.cpp
     r_draw.cpp
     r_font.cpp
     r_image.cpp

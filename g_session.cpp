@@ -111,8 +111,6 @@ int session::init (char const *cmdline)
 
     _netchan.init( );
 
-    pNet->config( true );
-
     info_ask( );
 
     if ( strstr( cmdline, "dedicated" ) )
@@ -957,18 +955,18 @@ static bool gs_try_connect = false;
 
 int session::find_server_by_name(void *lpvoid)
 {
-    g_Game->write_message( va("searching for: %s", g_Game->cls.server ) );
+    //g_Game->write_message( va("searching for: %s", g_Game->cls.server ) );
 
-    if ( !pNet->string_to_address( g_Game->cls.server, &g_Game->_netserver ) )
-        g_Game->write_message( va("could not find server: %s", g_Game->cls.server ) );
-    else
-    {
-        g_Game->write_message( va("found: %s", pNet->address_to_string( g_Game->_netserver) ) );
-        g_Game->_have_server = true;
-    }
+    //if ( !pNet->string_to_address( g_Game->cls.server, &g_Game->_netserver ) )
+    //    g_Game->write_message( va("could not find server: %s", g_Game->cls.server ) );
+    //else
+    //{
+    //    g_Game->write_message( va("found: %s", pNet->address_to_string( g_Game->_netserver) ) );
+    //    g_Game->_have_server = true;
+    //}
 
-    if ( g_Game->_have_server && gs_try_connect )
-        g_Game->connect_to_server( -1 );
+    //if ( g_Game->_have_server && gs_try_connect )
+    //    g_Game->connect_to_server( -1 );
 
     return 0;
 }

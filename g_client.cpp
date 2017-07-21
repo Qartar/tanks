@@ -64,6 +64,8 @@ void session::stop_client ()
         _netchan.message.clear( );
     }
 
+    cls.socket.close();
+
     _world.reset();
 
     _multiplayer = false;
@@ -76,9 +78,6 @@ void session::stop_client ()
 //------------------------------------------------------------------------------
 void session::client_connectionless(network::address const& remote, network::message& message)
 {
-    message.begin();
-    message.read_long();
-
     char const* message_string = message.read_string();
 
     if (strstr(message_string, "info")) {
@@ -158,7 +157,12 @@ void session::connect_to_server (int index)
     if ( !_netserver.port )
         _netserver.port = PORT_SERVER;
 
-    pNet->print( network::socket::client, _netserver, va( "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport ) );
+    for (int ii = 0; ii < 16; ++ii) {
+        if (cls.socket.open(network::socket_type::ipv6, PORT_CLIENT+ii)) {
+            break;
+        }
+    }
+    cls.socket.printf(_netserver, "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport);
 }
 
 //------------------------------------------------------------------------------
@@ -168,7 +172,7 @@ void session::connect_ack(char const* message_string)
 
     sscanf(message_string, "connect %i", &cls.number);
 
-    _netchan.setup( network::socket::client, _netserver );
+    _netchan.setup( &cls.socket, _netserver );
 
     _frametime = 0.0f;
     cls.last_frame = 0;
@@ -242,17 +246,25 @@ void session::info_ask ()
 
     _have_server = false;
 
+    for (int ii = 0; ii < 16; ++ii) {
+        if (cls.socket.open(network::socket_type::ipv6, PORT_CLIENT+ii)) {
+            break;
+        }
+    }
+
     //  ping master server
-    pNet->string_to_address( _net_master, &addr );
-    addr.type = network::address_type::ip4;
-    addr.port = PORT_SERVER;
-    pNet->print( network::socket::client, addr, "info" );
+    if (cls.socket.resolve(_net_master, addr)) {
+        if (addr.port == 0) {
+            addr.port = PORT_SERVER;
+        }
+        cls.socket.printf(addr, "info");
+    }
 
     //  ping local network
     addr.type = network::address_type::broadcast;
     addr.port = PORT_SERVER;
 
-    pNet->print( network::socket::client, addr, "info" );
+    cls.socket.printf(addr, "info");
 }
 
 //------------------------------------------------------------------------------

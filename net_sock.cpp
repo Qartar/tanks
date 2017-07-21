@@ -1,0 +1,349 @@
+// net_sock.cpp
+//
+
+#include "precompiled.h"
+#pragma hdrstop
+
+#include "net_main.h"
+
+#include <WS2tcpip.h>
+
+////////////////////////////////////////////////////////////////////////////////
+namespace network {
+
+//------------------------------------------------------------------------------
+socket::socket()
+    : _type(socket_type::unspecified)
+    , _port(any)
+    , _socket(0)
+{}
+
+//------------------------------------------------------------------------------
+socket::socket(socket_type type, word port)
+    : _type(type)
+    , _port(static_cast<socket_port>(port))
+    , _socket(open_socket(type, port))
+{}
+
+//------------------------------------------------------------------------------
+socket::~socket()
+{
+    close();
+}
+
+//------------------------------------------------------------------------------
+socket::socket(socket&& other)
+    : _type(other._type)
+    , _port(other._port)
+    , _socket(other._socket)
+{
+    other._socket = 0;
+}
+
+//------------------------------------------------------------------------------
+socket& socket::operator=(socket&& other)
+{
+    close();
+
+    _type = other._type;
+    _port = other._port;
+    _socket = other._socket;
+
+    other._socket = 0;
+    return *this;
+}
+
+//------------------------------------------------------------------------------
+bool socket::open(socket_type type, word port)
+{
+    close();
+
+    _type = type;
+    _port = static_cast<socket_port>(port);
+    _socket = open_socket(type, port);
+
+    return _socket != 0;
+}
+
+//------------------------------------------------------------------------------
+std::uintptr_t socket::open_socket(socket_type type, word port) const
+{
+    std::uintptr_t newsocket = 0;
+    unsigned long args = 1;
+
+    int family = (type == socket_type::ipv4) ? PF_INET :
+                 (type == socket_type::ipv6) ? PF_INET6 : PF_UNSPEC;
+
+    // get socket
+    if ( (newsocket = ::socket(family, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
+        return 0;
+    }
+
+    // disable blocking
+    if (ioctlsocket(newsocket, FIONBIO, &args) == SOCKET_ERROR) {
+        ::closesocket(newsocket);
+        return 0;
+    }
+
+    // enable broadcasting
+    if (type == socket_type::ipv4) {
+        if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (const char *)&args, sizeof(args) ) == SOCKET_ERROR) {
+            ::closesocket(newsocket);
+            return 0;
+        }
+
+    } else if (type == socket_type::ipv6) {
+        ipv6_mreq mreq = {};
+
+        mreq.ipv6mr_multiaddr.u.Word[ 0 ] = htons( 0xff02 );
+        mreq.ipv6mr_multiaddr.u.Word[ 7 ] = htons( 0x0001 );
+        mreq.ipv6mr_interface = 0;
+
+        //  add membership to link-local multicast group
+        if (setsockopt(newsocket, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (char const*)&mreq, sizeof(mreq)) == SOCKET_ERROR) {
+            ::closesocket(newsocket);
+            return 0;
+        }
+    }
+
+    // bind socket
+    if (type == socket_type::ipv4) {
+        sockaddr_in address = {};
+
+        address.sin_port = htons(port);
+        address.sin_addr = in4addr_any;
+        address.sin_family = AF_INET;
+
+        if (bind(newsocket, (sockaddr *)&address, sizeof(address)) != SOCKET_ERROR) {
+            return newsocket;
+        }
+
+    } else if (type == socket_type::ipv6) {
+        sockaddr_in6 address = {};
+
+        address.sin6_family = AF_INET6;
+        address.sin6_addr = in6addr_any;
+        address.sin6_port = htons(port);
+
+        if (bind(newsocket, (sockaddr *)&address, sizeof(address)) != SOCKET_ERROR) {
+            return newsocket;
+        }
+    }
+
+    closesocket(newsocket);
+    return false;
+}
+
+//------------------------------------------------------------------------------
+void socket::close()
+{
+    if (_socket) {
+        ::closesocket(_socket);
+        _socket = 0;
+    }
+}
+
+//------------------------------------------------------------------------------
+bool socket::read(network::address& remote, network::message& message)
+{
+    sockaddr_storage from = {};
+    int fromlen = sizeof(from);
+
+    if (!_socket) {
+        return false;
+    }
+
+    int len = message.size - message.bytes_written;
+    char* buf = (char*)message.data + message.bytes_written;
+
+    int result = ::recvfrom(_socket, buf, len, 0, (sockaddr*)&from, &fromlen);
+
+    if (result <= 0) {
+        return false;
+    }
+
+    if (!sockaddr_to_address(from, remote)) {
+        return false;
+    }
+
+    message.bytes_written += result;
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool socket::write(network::address const& remote, network::message const& message)
+{
+    sockaddr_storage to = {};
+    int tolen = sizeof(to);
+
+    if (!_socket) {
+        return false;
+    }
+
+    if (!address_to_sockaddr(remote, to)) {
+        return false;
+    }
+
+    char const* buf = (char const*)message.data + message.bytes_read;
+    int len = message.bytes_written - message.bytes_read;
+
+    int result = ::sendto(_socket, buf, len, 0, (sockaddr*)&to, tolen);
+
+    if (result < len) {
+        return false;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool socket::printf(network::address const& remote, char const* fmt, ...)
+{
+    network::message message;
+    char messagebuf[MAX_MSGLEN];
+
+    message.init((byte*)messagebuf, MAX_MSGLEN);
+
+    va_list va;
+
+    va_start(va, fmt);
+    int len = vsprintf_s(messagebuf, fmt, va);
+    va_end(va);
+
+    if (len > 0) {
+        message.bytes_written += len;
+        return write(remote, message);
+    } else {
+        return false;
+    }
+}
+
+//------------------------------------------------------------------------------
+bool socket::resolve(std::string const& address_string, network::address& address) const
+{
+    if (address_string == "localhost") {
+        address = {};
+        address.type = address_type::loopback;
+        return true;
+    } else {
+        sockaddr_storage sockaddr = {};
+
+        if (resolve_sockaddr(address_string, sockaddr)) {
+            return sockaddr_to_address(sockaddr, address);
+        }
+    }
+
+    return false;
+}
+
+//------------------------------------------------------------------------------
+bool socket::sockaddr_to_address(sockaddr_storage const& sockaddr, network::address& address) const
+{
+    if (sockaddr.ss_family == AF_INET) {
+        auto const& sockaddr_ipv4 = reinterpret_cast<sockaddr_in const&>(sockaddr);
+
+        if (_type == socket_type::ipv4 || _type == socket_type::unspecified) {
+            address.type = network::address_type::ipv4;
+            address.port = ntohs(sockaddr_ipv4.sin_port);
+            *(ULONG*)address.ip4.data() = sockaddr_ipv4.sin_addr.s_addr;
+        } else if (_type == socket_type::ipv6) {
+            // IPv4-mapped IPv6 address
+            address.type = network::address_type::ipv6;
+            address.port = ntohs(sockaddr_ipv4.sin_port);
+            address.ip6.fill(0);
+            address.ip6[5] = 0xffff;
+            address.ip6[6] = ntohs(sockaddr_ipv4.sin_addr.S_un.S_un_w.s_w1);
+            address.ip6[7] = ntohs(sockaddr_ipv4.sin_addr.S_un.S_un_w.s_w2);
+        } else {
+            return false;
+        }
+    } else if (sockaddr.ss_family == AF_INET6) {
+        auto const& sockaddr_ipv6 = reinterpret_cast<sockaddr_in6 const&>(sockaddr);
+
+        if (_type == socket_type::ipv6 || _type == socket_type::unspecified) {
+            address.type = network::address_type::ipv6;
+            address.port = ntohs(sockaddr_ipv6.sin6_port);
+            for (std::size_t ii = 0; ii < address.ip6.size(); ++ii) {
+                address.ip6[ii] = ntohs(sockaddr_ipv6.sin6_addr.u.Word[ii]);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool socket::address_to_sockaddr(network::address const& address, sockaddr_storage& sockaddr) const
+{
+    sockaddr = {};
+
+    if (_type == socket_type::ipv4) {
+        auto& sockaddr_ipv4 = reinterpret_cast<sockaddr_in&>(sockaddr);
+
+        sockaddr_ipv4.sin_family = AF_INET;
+        sockaddr_ipv4.sin_port = htons(address.port);
+
+        if (address.type == network::address_type::loopback) {
+            sockaddr_ipv4.sin_addr = in4addr_loopback;
+        } else if (address.type == network::address_type::broadcast) {
+            sockaddr_ipv4.sin_addr = in4addr_broadcast;
+        } else if (address.type == network::address_type::ipv4) {
+            sockaddr_ipv4.sin_addr.s_addr = *(ULONG*)address.ip4.data();
+        } else {
+            return false;
+        }
+    } else if (_type == socket_type::ipv6 || _type == socket_type::unspecified) {
+        auto& sockaddr_ipv6 = reinterpret_cast<sockaddr_in6&>(sockaddr);
+
+        sockaddr_ipv6.sin6_family = AF_INET6;
+        sockaddr_ipv6.sin6_port = htons(address.port);
+
+        if (address.type == network::address_type::loopback) {
+            sockaddr_ipv6.sin6_addr = in6addr_loopback;
+        } else if (address.type == network::address_type::broadcast) {
+            sockaddr_ipv6.sin6_addr = in6addr_allnodesonlink;
+        } else if (address.type == network::address_type::ipv4) {
+            // IPv4-mapped IPv6 address
+            sockaddr_ipv6.sin6_addr.u.Word[ 5] = 0xffff;
+            sockaddr_ipv6.sin6_addr.u.Byte[12] = address.ip4[0];
+            sockaddr_ipv6.sin6_addr.u.Byte[13] = address.ip4[1];
+            sockaddr_ipv6.sin6_addr.u.Byte[14] = address.ip4[2];
+            sockaddr_ipv6.sin6_addr.u.Byte[15] = address.ip4[3];
+        } else if (address.type == network::address_type::ipv6) {
+            for (size_t ii = 0; ii < address.ip6.size(); ++ii) {
+                sockaddr_ipv6.sin6_addr.u.Word[ii] = htons(address.ip6[ii]);
+            }
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool socket::resolve_sockaddr(std::string const& address_string, sockaddr_storage& sockaddr) const
+{
+    addrinfo* info = nullptr;
+
+    addrinfo hints = {};
+
+    hints.ai_family = (_type == socket_type::ipv4) ? PF_INET :
+                      (_type == socket_type::ipv6) ? PF_INET6 : PF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+
+    if (getaddrinfo(address_string.c_str(), nullptr, &hints, &info) == 0) {
+        memcpy(&sockaddr, info->ai_addr, info->ai_addrlen);
+        freeaddrinfo(info);
+        return true;
+    }
+
+    return false;
+}
+
+} // namespace network

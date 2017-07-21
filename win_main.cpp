@@ -6,6 +6,8 @@
 
 #include "keys.h"
 
+#include <WS2tcpip.h>
+
 application *g_Application; // global instance, extern declaration in "win_main.h"
 
 filectrl_c  g_filectrl_c, *s_filectrl_c = &g_filectrl_c;
@@ -74,12 +76,14 @@ int application::init(HINSTANCE hInstance, LPSTR szCmdLine)
 
     srand(_timer_base.QuadPart);
 
-    // NETWORKING OMGWTFLOL
-
-    pNet = &_network;
-    _network.init( );
-
     _config.init();
+
+    // initialize networking
+    {
+        WSADATA wsadata = {};
+        if (WSAStartup(MAKEWORD(2, 2), &wsadata)) {
+        }
+    }
 
     // create sound class
     sound::system::create();
@@ -105,9 +109,10 @@ int application::shutdown()
     // shutdown sound
     sound::system::destroy();
 
-    _config.shutdown();
+    // shutdown networking
+    WSACleanup();
 
-    _network.shutdown( );
+    _config.shutdown();
 
 #ifdef DEBUG_MEM    
     _CrtDumpMemoryLeaks();

@@ -23,7 +23,7 @@ int channel::init (int netport)
 }
 
 //------------------------------------------------------------------------------
-int channel::setup (network::socket socket, network::address remote, int netport)
+int channel::setup (network::socket* socket, network::address remote, int netport)
 {
     if ( netport )
         this->netport = netport;
@@ -48,11 +48,8 @@ int channel::transmit (int length, byte *data)
 
     netmsg.init( netmsgbuf, MAX_MSGLEN );
 
-    // write netport if were are client
-
-    netmsg.write_long( 0 );  // trash
-    if (socket == network::socket::client)
-        netmsg.write_short( netport );
+    netmsg.write_long(network::channel::prefix);
+    netmsg.write_short(netport);
 
     // copy the rest over
 
@@ -62,19 +59,16 @@ int channel::transmit (int length, byte *data)
 
     last_sent = g_Application->time();
 
-    return pNet->send( socket, netmsg.bytes_written, netmsgbuf, address );
+    return (int)socket->write(address, netmsg);
 }
 
 //------------------------------------------------------------------------------
 int channel::process (network::message *message)
 {
-    int netport;
+    message->begin();
 
-    message->begin( );
-
-    message->read_long( );  // trash
-    if (socket == network::socket::server)
-        netport = message->read_short( );
+    int check = message->read_long();
+    int netport = message->read_short();
 
     last_received = g_Application->time();
 

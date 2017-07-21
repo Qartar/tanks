@@ -14,8 +14,7 @@ struct sockaddr_storage;
 ////////////////////////////////////////////////////////////////////////////////
 namespace network {
 
-enum address_type { loopback, broadcast, ip4, ip6 };
-enum socket { client, server, NUM_SOCKETS };
+enum address_type { loopback, broadcast, ipv4, ipv6 };
 
 //------------------------------------------------------------------------------
 class address
@@ -33,12 +32,12 @@ public:
 public:
     address() = default;
     constexpr address(byte const (&ip)[4], word port = 0)
-        : type(address_type::ip4)
+        : type(address_type::ipv4)
         , ip4({ip[0], ip[1], ip[2], ip[3]})
         , port(port)
     {}
     constexpr address(word const (&ip)[8], word port = 0)
-        : type(address_type::ip6)
+        : type(address_type::ipv6)
         , ip6({ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7]})
         , port(port)
     {}
@@ -90,16 +89,64 @@ public:
 };
 
 //------------------------------------------------------------------------------
+enum class socket_type { unspecified, ipv4, ipv6 };
+enum socket_port { any = 0 };
+
+//------------------------------------------------------------------------------
+class socket
+{
+public:
+    socket();
+    socket(socket_type type, word port = socket_port::any);
+    ~socket();
+
+    socket(socket&&);
+    socket& operator=(socket&&);
+
+    socket_type type() const { return _type; }
+    socket_port port() const { return _port; }
+
+    bool valid() const { return _socket != 0; }
+    bool open(socket_type type, word port = socket_port::any);
+    void close();
+
+    //! read data info message and set remote address
+    bool read(network::address& remote, network::message& message);
+    //! write data to the remote address
+    bool write(network::address const& remote, network::message const& message);
+    //! write a formatted string to the remote address
+    bool printf(network::address const& remote, char const* fmt, ...);
+
+    //! resolve the string into an address
+    bool resolve(std::string const& address_string, network::address& address) const;
+
+protected:
+    socket_type _type;
+    socket_port _port;
+    std::uintptr_t _socket;
+
+protected:
+    socket(socket const&) = delete;
+    socket& operator=(socket const&) = delete;
+
+    bool sockaddr_to_address(sockaddr_storage const& sockaddr, network::address& address) const;
+    bool address_to_sockaddr(network::address const& address, sockaddr_storage& sockaddr) const;
+    bool resolve_sockaddr(std::string const& address_string, sockaddr_storage& sockaddr) const;
+
+    std::uintptr_t open_socket(socket_type type, word port = socket_port::any) const;
+};
+
+//------------------------------------------------------------------------------
 class channel
 {
 public:
     int init(int netport = 0);
-    int setup(network::socket socket, network::address remote, int netport = 0);
+    int setup(network::socket* socket, network::address remote, int netport = 0);
 
     int transmit(int nLength, byte *pData);
     int process(network::message *pMessage);
 
-    network::socket socket;
+    constexpr static int prefix = -1;
 
     network::address address;    //  remote address
     int netport;    //  port translation
@@ -112,73 +159,8 @@ public:
 
     float connect_time;
     int connect_tries;
-};
 
-//------------------------------------------------------------------------------
-typedef struct loopmsg_s
-{
-    byte    data[MAX_MSGLEN];
-    int size;
-} loopmsg_t;
-
-#define MAX_LOOPBACK    4
-
-//------------------------------------------------------------------------------
-typedef struct loopback_s
-{
-    loopmsg_t   msgs[MAX_LOOPBACK];
-    int     get, send;
-} loopback_t;
-
-//------------------------------------------------------------------------------
-class manager
-{
-public:
-    friend channel;
-
-    int init();
-    int shutdown();
-
-    int config(bool multiplayer);
-
-    int print(network::socket socket, network::address to, char const *szMessage);
-
-    int get(network::socket socket, network::address *pFrom, network::message *pMessage);
-
-    bool string_to_address(char const *addr, network::address *net);
-    char const* address_to_string(network::address a);
-
-private:
-    int send(network::socket socket, int nLength, void const *pData, network::address to);
-
-    int get_loopback(network::socket socket, network::address *pFrom, network::message *pMessage);
-    int send_loopback(network::socket socket, int nLength, void const *pData, network::address to);
-
-    loopback_t  _loopbacks[NUM_SOCKETS];
-
-    bool _multiplayer;
-
-    // winsock
-
-    char const* WSAErrorString (int code = 0);
-
-    int _ip4_sockets[NUM_SOCKETS];
-    int _ip6_sockets[NUM_SOCKETS];
-
-    constexpr static network::address _ip6_broadcast = {{0xff02, 0, 0, 0, 0, 0, 0, 1}, 0};
-    constexpr static network::address _ip6_loopback = {{0, 0, 0, 0, 0, 0, 0, 1}, 0};
-
-    int open_ip4();
-    int open_ip6();
-
-    int ip4_socket(int port);
-    int ip6_socket(int port);
-
-    void address_to_sockaddr(network::address *net, sockaddr_storage *sock);
-    void sockaddr_to_address(sockaddr_storage *sock, network::address *net);
-    bool string_to_sockaddr(char const *addr, sockaddr_storage *sock);
+    network::socket* socket;
 };
 
 } // namespace network
-
-extern network::manager *pNet;

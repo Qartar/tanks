@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "net_main.h"
+
 namespace render {
 class image;
 class system;
@@ -121,6 +123,8 @@ typedef struct server_state_s
     char        name[SHORT_STRING];
 
     std::array<client_t, MAX_PLAYERS> clients;
+
+    network::socket socket;
 } server_state_t;
 
 //
@@ -152,6 +156,8 @@ typedef struct client_state_s
 
     float           ping_time;
     remote_server_t servers[MAX_SERVERS];
+
+    network::socket socket;
 } client_state_t;
 
 //------------------------------------------------------------------------------

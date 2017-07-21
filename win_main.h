@@ -41,7 +41,6 @@ protected:
 
     render::window _window;
     game::session _game;
-    network::manager _network;
     config::system _config;
 
 protected:

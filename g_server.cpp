@@ -42,7 +42,8 @@ void session::start_server ()
     svs.active = true;
     _net_server_name = svs.name;
 
-    _netchan.setup(network::socket::server, network::address{});
+    svs.socket.open(network::socket_type::ipv6, PORT_SERVER);
+    _netchan.setup(&svs.socket, network::address{});
 }
 
 //------------------------------------------------------------------------------
@@ -100,6 +101,8 @@ void session::stop_server ()
         svs.clients[ii].netchan.message.clear();
     }
 
+    svs.socket.close();
+
     _world.reset();
 
     _game_active = false;
@@ -108,9 +111,6 @@ void session::stop_server ()
 //------------------------------------------------------------------------------
 void session::server_connectionless(network::address const& remote, network::message& message)
 {
-    message.begin();
-    message.read_long();
-
     char const* message_string = message.read_string();
 
     if (strstr(message_string, "info")) {
@@ -192,7 +192,7 @@ void session::client_connect(network::address const& remote, char const* message
         }
     }
 
-    pNet->print(network::socket::server, remote, "fail \"Server is full\"");
+    svs.socket.printf(remote, "fail \"Server is full\"");
 }
 
 //------------------------------------------------------------------------------
@@ -204,13 +204,13 @@ void session::client_connect(network::address const& remote, char const* message
     sscanf(message_string, "connect %i %s %i", &version, cl.name, &netport);
 
     if (version != PROTOCOL_VERSION) {
-        pNet->print(network::socket::server, remote, va("fail \"Bad protocol version: %i\"", version));
+        svs.socket.printf(remote, va("fail \"Bad protocol version: %i\"", version));
     } else {
         cl.active = true;
         cl.local = false;
-        cl.netchan.setup(network::socket::server, remote, netport);
+        cl.netchan.setup(&svs.socket, remote, netport);
 
-        pNet->print(network::socket::server, cl.netchan.address, va("connect %i", client));
+        svs.socket.printf(cl.netchan.address, va("connect %i", client));
 
         // init their tank
 
@@ -318,7 +318,7 @@ void session::info_send(network::address const& remote)
     if ( i == MAX_PLAYERS )
         return;
 
-    pNet->print( network::socket::server, remote, va( "info %s", svs.name) );
+    svs.socket.printf(remote, va( "info %s", svs.name) );
 }
 
 char    *sz_upgrades[] = {
