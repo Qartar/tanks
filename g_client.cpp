@@ -57,11 +57,10 @@ void session::shutdown_client()
 //------------------------------------------------------------------------------
 void session::stop_client ()
 {
-    if ( _multiplayer && !_multiserver && _multiplayer_active )
-    {
+    if (_multiplayer && !_multiserver && _multiplayer_active) {
         _netchan.message.write_byte( clc_disconnect );
-        _netchan.transmit( _netchan.message.bytes_written, _netchan.messagebuf );
-        _netchan.message.clear( );
+        _netchan.transmit(_netchan.message);
+        _netchan.message.reset();
     }
 
     cls.socket.close();
@@ -92,7 +91,7 @@ void session::client_connectionless(network::address const& remote, network::mes
 //------------------------------------------------------------------------------
 void session::client_packet(network::message& message)
 {
-    while (message.bytes_read < message.bytes_written) {
+    while (message.bytes_remaining()) {
         switch (message.read_byte()) {
             case svc_disconnect:
                 write_message( "Disconnected from server." );
@@ -162,7 +161,7 @@ void session::connect_to_server (int index)
             break;
         }
     }
-    cls.socket.printf(_netserver, "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport);
+    cls.socket.printf(_netserver, "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport());
 }
 
 //------------------------------------------------------------------------------

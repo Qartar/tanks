@@ -31,6 +31,7 @@ session::session()
     , _cl_name("ui_name", "", config::archive, "user info: name")
     , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
     , _cl_weapon("ui_weapon", 0, config::archive, "user info: weapon")
+    , _num_messages(0)
 {
     g_Game = this;
     pMain = this;
@@ -47,7 +48,6 @@ int session::init (char const *cmdline)
     _frametime = 0.0f;
     _framenum = 0;
 
-    _num_messages = 0;
     for ( int i=0 ; i<MAX_MESSAGES ; i++ )
         memset( _messages[i].string, 0, MAX_STRING );
 
@@ -77,7 +77,14 @@ int session::init (char const *cmdline)
 
     svs.active = false;
 
-    memset( svs.clients.data(), 0, sizeof(client_t)*MAX_PLAYERS );
+    for (auto& cl : svs.clients) {
+        cl.active = false;
+        cl.local = false;
+        cl.color = color3(1,1,1);
+        cl.name[0] = '\0';
+        cl.weapon = weapon_type::cannon;
+    }
+
     memset( _clientsay, 0, LONG_STRING );
 
     strcpy( svs.name, _net_server_name );
@@ -108,8 +115,6 @@ int session::init (char const *cmdline)
 
     _menu.init( );
     _world.init( );
-
-    _netchan.init( );
 
     info_ask( );
 
@@ -682,12 +687,10 @@ void session::add_score(int player_index, int score)
     }
 
     if (_multiserver) {
-        network::message    netmsg;
-        byte        buf[MAX_MSGLEN];
+        network::message_storage netmsg;
 
-        netmsg.init(buf, MAX_MSGLEN);
         write_info(netmsg, player_index);
-        broadcast(netmsg.bytes_written, netmsg.data);
+        broadcast(netmsg);
     }
 }
 
@@ -805,16 +808,14 @@ void session::new_game()
 
     if ( _multiserver )
     {
-        network::message    netmsg;
-        byte        buf[MAX_MSGLEN];
+        network::message_storage netmsg;
 
-        netmsg.init( buf, MAX_MSGLEN );
         for ( int i=0 ; i<MAX_PLAYERS ; i++ ) {
-            netmsg.write_byte( svc_score );  //  score command
-            netmsg.write_byte( i );          //  player index
-            netmsg.write_byte( 0 );          //  current score
+            netmsg.write_byte(svc_score);   //  score command
+            netmsg.write_byte(i);           //  player index
+            netmsg.write_byte(0);           //  current score
         }
-        broadcast( netmsg.bytes_written, netmsg.data );
+        broadcast(netmsg);
     }
 
     //
@@ -906,6 +907,11 @@ int session::message(char const* format, ...)
     va_start( list, format );
     vsprintf( string, format, list );
     va_end( list );
+
+    strcpy( _messages[_num_messages].string, string );
+    _messages[_num_messages].time = g_Application->time();
+
+    _num_messages = (_num_messages+1)%MAX_MESSAGES;
 
     return ERROR_NONE;
 }

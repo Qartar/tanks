@@ -12,57 +12,57 @@ void session::get_packets ()
 {
     network::socket* socket;
 
-    byte message_buf[MAX_MSGLEN];
-    network::message message;
-
-    message.init(message_buf, MAX_MSGLEN);
-
-    if ( _multiserver )
+    if (_multiserver) {
         socket = &svs.socket;
-    else
+    } else {
         socket = &cls.socket;
+    }
 
+    network::message_storage message;
     network::address remote;
 
     while (socket->read(remote, message)) {
-        if (*(int *)message.data != network::channel::prefix) {
+        int prefix = message.read_long();
+        if (prefix != network::channel::prefix) {
+            message.rewind();
             if (socket == &svs.socket) {
                 server_connectionless(remote, message);
             } else {
                 client_connectionless(remote, message);
             }
+            message.reset();
             continue;
         }
 
         if (socket == &svs.socket) {
-            int     netport;
-
-            message.begin();
-            message.read_long();
-            netport = message.read_short();
+            int netport = (word )message.read_short();
 
             for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
                 if (svs.clients[ii].local)
                     continue;
                 if (!svs.clients[ii].active)
                     continue;
-                if (svs.clients[ii].netchan.address != remote)
+                if (svs.clients[ii].netchan.address() != remote)
                     continue;
-                if (svs.clients[ii].netchan.netport != netport)
+                if (svs.clients[ii].netchan.netport() != netport)
                     continue;
 
                 // found him
-                svs.clients[ii].netchan.process(&message);
+                svs.clients[ii].netchan.process(message);
                 server_packet(message, ii);
                 break;
             }
         } else {
+            message.read_short(); // skip netport
+
             if (remote != _netserver) {
                 break;  // not from our server
             }
-            _netchan.process(&message);
+            _netchan.process(message);
             client_packet(message);
         }
+
+        message.reset();
     }
 
     //
@@ -77,18 +77,16 @@ void session::get_packets ()
                 continue;
             }
 
-            if (svs.clients[ii].netchan.last_received + 10000 < time) {
+            if (svs.clients[ii].netchan.last_received() + 10000 < time) {
                 svs.clients[ii].netchan.message.write_byte(svc_disconnect);
-                svs.clients[ii].netchan.transmit(
-                    svs.clients[ii].netchan.message.bytes_written,
-                    svs.clients[ii].netchan.messagebuf);
+                svs.clients[ii].netchan.transmit(svs.clients[ii].netchan.message);
 
                 write_message(va("%s timed out.", svs.clients[ii].name));
                 client_disconnect(ii);
             }
         }
     } else if (_multiplayer_active) {
-        if (_netchan.last_received + 10000 < time) {
+        if (_netchan.last_received() + 10000 < time) {
             write_message("Server timed out.");
             stop_client();
         }
@@ -96,7 +94,7 @@ void session::get_packets ()
 }
 
 //------------------------------------------------------------------------------
-void session::broadcast (int len, byte *data)
+void session::broadcast(int len, byte const* data)
 {
     for (auto& cl : svs.clients) {
         if (!cl.local && cl.active) {
@@ -106,17 +104,23 @@ void session::broadcast (int len, byte *data)
 }
 
 //------------------------------------------------------------------------------
+void session::broadcast(network::message& message)
+{
+    int length = message.bytes_remaining();
+    byte const* data = message.read(length);
+
+    broadcast(length, data);
+}
+
+//------------------------------------------------------------------------------
 void session::broadcast_print (char const* message)
 {
-    network::message    netmsg;
-    byte        netmsgbuf[MAX_MSGLEN];
-
-    netmsg.init( netmsgbuf, MAX_MSGLEN );
+    network::message_storage netmsg;
         
     netmsg.write_byte( svc_message );
     netmsg.write_string( message );
 
-    broadcast( netmsg.bytes_written, netmsgbuf );
+    broadcast(netmsg);
 }
 
 //------------------------------------------------------------------------------
@@ -128,19 +132,19 @@ void session::send_packets ()
 
     if (_multiserver) {
         for (auto& cl : svs.clients) {
-            if (cl.local || !cl.active || !cl.netchan.message.bytes_written) {
+            if (cl.local || !cl.active || !cl.netchan.message.bytes_remaining()) {
                 continue;
             }
 
-            cl.netchan.transmit(cl.netchan.message.bytes_written, cl.netchan.messagebuf);
-            cl.netchan.message.clear();
+            cl.netchan.transmit(cl.netchan.message);
+            cl.netchan.message.reset();
         }
     } else {
         client_send();
 
-        if (_netchan.message.bytes_written) {
-            _netchan.transmit(_netchan.message.bytes_written, _netchan.messagebuf);
-            _netchan.message.clear();
+        if (_netchan.message.bytes_remaining()) {
+            _netchan.transmit(_netchan.message);
+            _netchan.message.reset();
         }
     }
 }
@@ -187,21 +191,21 @@ void session::write_info(network::message& message, int client)
 //------------------------------------------------------------------------------
 void session::read_info(network::message& message)
 {
-    int     client;
-    int     active;
-    char    *string;
+    int client;
+    int active;
+    char const* string;
 
-    client = message.read_byte( );
-    active = message.read_byte( );
+    client = message.read_byte();
+    active = message.read_byte();
 
-    svs.clients[client].active = ( active == 1 );
+    svs.clients[client].active = (active == 1);
 
-    string = message.read_string( );
-    strncpy( svs.clients[client].name, string, SHORT_STRING );
+    string = message.read_string();
+    strncpy(svs.clients[client].name, string, SHORT_STRING);
 
-    svs.clients[client].color.r = message.read_byte( ) / 255.0f;
-    svs.clients[client].color.g = message.read_byte( ) / 255.0f;
-    svs.clients[client].color.b = message.read_byte( ) / 255.0f;
+    svs.clients[client].color.r = message.read_byte() / 255.0f;
+    svs.clients[client].color.g = message.read_byte() / 255.0f;
+    svs.clients[client].color.b = message.read_byte() / 255.0f;
 
     svs.clients[client].weapon = static_cast<weapon_type>(message.read_byte());
 
@@ -219,12 +223,10 @@ void session::read_info(network::message& message)
 
     // relay info to other clients
     if (_multiserver || _dedicated) {
-        network::message    netmsg;
-        byte        msgbuf[MAX_MSGLEN];
+        network::message_storage netmsg;
 
-        netmsg.init(msgbuf, MAX_MSGLEN);
         write_info(netmsg, client);
-        broadcast(netmsg.bytes_written, netmsg.data);
+        broadcast(netmsg);
     }
 }
 

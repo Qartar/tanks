@@ -153,8 +153,8 @@ bool socket::read(network::address& remote, network::message& message)
         return false;
     }
 
-    int len = message.size - message.bytes_written;
-    char* buf = (char*)message.data + message.bytes_written;
+    int len = message.bytes_available();
+    char* buf = (char*)message.reserve(len);
 
     int result = ::recvfrom(_socket, buf, len, 0, (sockaddr*)&from, &fromlen);
 
@@ -166,7 +166,7 @@ bool socket::read(network::address& remote, network::message& message)
         return false;
     }
 
-    message.bytes_written += result;
+    message.commit(result);
     return true;
 }
 
@@ -184,8 +184,8 @@ bool socket::write(network::address const& remote, network::message const& messa
         return false;
     }
 
-    char const* buf = (char const*)message.data + message.bytes_read;
-    int len = message.bytes_written - message.bytes_read;
+    int len = message.bytes_remaining();
+    char const* buf = (char const*)message.read(len);
 
     int result = ::sendto(_socket, buf, len, 0, (sockaddr*)&to, tolen);
 
@@ -199,19 +199,19 @@ bool socket::write(network::address const& remote, network::message const& messa
 //------------------------------------------------------------------------------
 bool socket::printf(network::address const& remote, char const* fmt, ...)
 {
-    network::message message;
-    char messagebuf[MAX_MSGLEN];
-
-    message.init((byte*)messagebuf, MAX_MSGLEN);
+    network::message_storage message;
 
     va_list va;
 
+    int size = message.bytes_available();
+    byte* buf = message.reserve(size);
+
     va_start(va, fmt);
-    int len = vsprintf_s(messagebuf, fmt, va);
+    int len = vsprintf_s((char*)buf, size, fmt, va);
     va_end(va);
 
-    if (len > 0) {
-        message.bytes_written += len;
+    if (len >= 0) {
+        message.commit(len + 1);
         return write(remote, message);
     } else {
         return false;

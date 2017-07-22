@@ -9,8 +9,6 @@
 
 struct sockaddr_storage;
 
-#define MAX_MSGLEN  1400
-
 ////////////////////////////////////////////////////////////////////////////////
 namespace network {
 
@@ -51,41 +49,92 @@ public:
 class message
 {
 public:
-    byte* data;
-    int size;
-    int bytes_written;
-    int bytes_remaining;
-    int bytes_read;
-    bool allow_overflow;
-    bool overflowed;
+    message(byte* data, std::size_t size);
 
-    void* alloc(int nSize);
+    //! reset write and read cursor to beginning of internal buffer
+    void reset();
+    //! reset read cursor to beginning of internal buffer
+    void rewind() const;
+    //! move read cursor back by the given number of bytes
+    void rewind(std::size_t size) const;
 
-    void init(byte *pData, int nMaxSize);
-    void clear();
-    void write(void const* pData, int nSize);
-    int read(void *pOut, int nSize);
+    //! return a pointer to internal buffer at current write cursor for writing
+    byte* write(std::size_t size);
+    //! return a pointer to internal buffer at current read cursor for reading
+    byte const* read(std::size_t size) const;
 
+    //! reserve bytes for writing but does not advance write cursor until commit
+    byte* reserve(std::size_t size);
+    //! commit reserved bytes, size must be less than or equal to total reserved bytes
+    std::size_t commit(std::size_t size);
+
+    //! write data from the given buffer
+    std::size_t write(byte const* data, std::size_t size);
+    //! read data into the given buffer
+    std::size_t read(byte* data, std::size_t size) const;
+
+    //! number of bytes that have been read
+    std::size_t bytes_read() const { return _bytes_read; }
+    //! number of bytes that have been written
+    std::size_t bytes_written() const { return _bytes_written; }
+
+    //! number of bytes that can be read
+    std::size_t bytes_remaining() const { return _bytes_written - _bytes_read; }
+    //! number of bytes that can be written or reserved
+    std::size_t bytes_available() const { return _size - _bytes_written - _bytes_reserved; }
+
+    //! write an 8-bit unsigned integer
     void write_byte(int b);
+    //! write a 16-bit signed integer
     void write_short(int s);
+    //! write a 32-bit signed integer
     void write_long(int l);
+    //! write a 32-bit float
     void write_float(float f);
+    //! write an 8-bit signed integer
     void write_char(int c);
+    //! write a null-terminated string
     void write_string(char const* sz);
-    void write_angle(float f);
+    //! write a two-dimensional vector
     void write_vector(vec2 v);
 
-    void begin ();
-
+    //! read an 8-bit unsigned integer
     int read_byte();
+    //! read a 16-bit signed integer
     int read_short();
+    //! read a 32-bit signed integer
     int read_long();
+    //! read a 32-bit float
     float read_float();
+    //! read an 8-bit signed integer
     int read_char();
-    char* read_string();
-    char* read_line();
-    float read_angle();
+    //! read a null-terminated string
+    char const* read_string();
+    //! read a two-dimensional vector
     vec2 read_vector();
+
+protected:
+    byte* _data;
+    std::size_t _size;
+    mutable std::size_t _bytes_read;
+    std::size_t _bytes_written;
+    std::size_t _bytes_reserved;
+
+protected:
+    message(message&&) = delete;
+    message& operator=(message&&) = delete;
+};
+
+//------------------------------------------------------------------------------
+class message_storage : public message
+{
+public:
+    message_storage()
+        : message(_buffer.data(), _buffer.size())
+    {}
+
+protected:
+    std::array<byte, 1400> _buffer;
 };
 
 //------------------------------------------------------------------------------
@@ -140,27 +189,32 @@ protected:
 class channel
 {
 public:
-    int init(int netport = 0);
-    int setup(network::socket* socket, network::address remote, int netport = 0);
+    channel(int netport = 0);
 
-    int transmit(int nLength, byte *pData);
-    int process(network::message *pMessage);
+    void setup(network::socket* socket, network::address remote, int netport = 0);
+
+    bool transmit(int length, byte const* data);
+    bool transmit(network::message& message);
+    bool process(network::message& message);
 
     constexpr static int prefix = -1;
 
-    network::address address;    //  remote address
-    int netport;    //  port translation
+    network::message_storage message; //!< outgoing
 
-    network::message message;    // outgoing
-    byte messagebuf[MAX_MSGLEN];
+    network::address const& address() const { return _address; }
+    word netport() const { return _netport; }
 
-    float last_sent;
-    float last_received;
+    float last_send() const { return _last_sent; }
+    float last_received() const { return _last_received; }
 
-    float connect_time;
-    int connect_tries;
+protected:
+    network::address _address; //!< remote address
+    word _netport; //!< port translation
 
-    network::socket* socket;
+    float _last_sent;
+    float _last_received;
+
+    network::socket* _socket;
 };
 
 } // namespace network

@@ -95,10 +95,8 @@ void session::stop_server ()
         client_disconnect(ii);
 
         svs.clients[ii].netchan.message.write_byte(svc_disconnect);
-        svs.clients[ii].netchan.transmit(
-            svs.clients[ii].netchan.message.bytes_written,
-            svs.clients[ii].netchan.messagebuf);
-        svs.clients[ii].netchan.message.clear();
+        svs.clients[ii].netchan.transmit(svs.clients[ii].netchan.message);
+        svs.clients[ii].netchan.message.reset();
     }
 
     svs.socket.close();
@@ -123,7 +121,7 @@ void session::server_connectionless(network::address const& remote, network::mes
 //------------------------------------------------------------------------------
 void session::server_packet(network::message& message, int client)
 {
-    while (message.bytes_read < message.bytes_written) {
+    while (message.bytes_remaining()) {
         switch (message.read_byte()) {
             case clc_command:
                 client_command(message, client);
@@ -157,17 +155,13 @@ void session::server_packet(network::message& message, int client)
 }
 
 //------------------------------------------------------------------------------
-void session::write_frame ()
+void session::write_frame()
 {
-    network::message message;
-    byte messagebuf[MAX_MSGLEN];
-
-    message.init(messagebuf, MAX_MSGLEN);
-    message.clear();
+    network::message_storage message;
 
     _world.write_snapshot(message);
 
-    broadcast(message.bytes_written, messagebuf);
+    broadcast(message);
 }
 
 //------------------------------------------------------------------------------
@@ -180,7 +174,7 @@ void session::client_connect(network::address const& remote, char const* message
 
     // ensure that this client hasn't already connected
     for (auto const& cl : svs.clients) {
-        if (cl.active && cl.netchan.address == remote) {
+        if (cl.active && cl.netchan.address() == remote) {
             return;
         }
     }
@@ -210,7 +204,7 @@ void session::client_connect(network::address const& remote, char const* message
         cl.local = false;
         cl.netchan.setup(&svs.socket, remote, netport);
 
-        svs.socket.printf(cl.netchan.address, va("connect %i", client));
+        svs.socket.printf(cl.netchan.address(), va("connect %i", client));
 
         // init their tank
 
@@ -230,19 +224,17 @@ void session::client_connect(network::address const& remote, char const* message
 //------------------------------------------------------------------------------
 void session::client_disconnect(int client)
 {
-    network::message    message;
-    byte        messagebuf[MAX_MSGLEN];
+    network::message_storage message;
 
-    message.init( messagebuf, MAX_MSGLEN );
-
-    if ( !svs.clients[client].active )
+    if (!svs.clients[client].active) {
         return;
+    }
 
     _world.remove_player(client);
     svs.clients[client].active = false;
 
     write_info(message, client);
-    broadcast(message.bytes_written, messagebuf);
+    broadcast(message);
 }
 
 //------------------------------------------------------------------------------
@@ -263,34 +255,28 @@ void session::client_command(network::message& message, int client)
 //------------------------------------------------------------------------------
 void session::write_sound(int sound, vec2 position, float volume)
 {
-    network::message    netmsg;
-    static byte netmsgbuf[MAX_MSGLEN];
+    network::message_storage netmsg;
 
-    if ( !_multiserver )
+    if (!_multiserver) {
         return;
+    }
 
-    netmsg.init( netmsgbuf, MAX_MSGLEN );
-    netmsg.clear( );
+    netmsg.write_byte(svc_sound);
+    netmsg.write_long(sound);
+    netmsg.write_vector(position);
+    netmsg.write_float(volume);
 
-    netmsg.write_byte( svc_sound );
-    netmsg.write_long( sound );
-    netmsg.write_vector( position );
-    netmsg.write_float( volume );
-
-    broadcast( netmsg.bytes_written, netmsgbuf );
+    broadcast(netmsg);
 }
 
 //------------------------------------------------------------------------------
 void session::write_effect (int type, vec2 pos, vec2 vel, float strength)
 {
-    network::message    netmsg;
-    static byte netmsgbuf[MAX_MSGLEN];
+    network::message_storage netmsg;
 
-    if (!_multiserver)
+    if (!_multiserver) {
         return;
-
-    netmsg.init(netmsgbuf, MAX_MSGLEN);
-    netmsg.clear();
+    }
 
     netmsg.write_byte(svc_effect);
     netmsg.write_byte(type);
@@ -298,7 +284,7 @@ void session::write_effect (int type, vec2 pos, vec2 vel, float strength)
     netmsg.write_vector(vel);
     netmsg.write_float(strength);
 
-    broadcast(netmsg.bytes_written, netmsgbuf);
+    broadcast(netmsg);
 }
 
 //------------------------------------------------------------------------------
@@ -331,8 +317,7 @@ char    *sz_upgrades[] = {
 void session::read_upgrade(int client, int upgrade)
 {
     if (_clients[client].upgrades) {
-        network::message    netmsg;
-        byte        msgbuf[MAX_MSGLEN];
+        network::message_storage netmsg;
 
         _clients[client].upgrades--;
         if (upgrade == 0) {
@@ -367,9 +352,8 @@ void session::read_upgrade(int client, int upgrade)
             (int )(svs.clients[client].color.b * 255),
             svs.clients[client].name, sz_upgrades[upgrade] ) ); 
 
-        netmsg.init(msgbuf, MAX_MSGLEN);
         write_info(netmsg, client);
-        broadcast(netmsg.bytes_written, netmsg.data);
+        broadcast(netmsg);
     }
 }
 

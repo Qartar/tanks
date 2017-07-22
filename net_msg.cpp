@@ -6,310 +6,275 @@
 
 #include "net_main.h"
 
-#define ANGLE2SHORT(x)  ((int)((x)*(32768.0/360)))
-#define SHORT2ANGLE(x)  ((x)*(360.0/32768))
-
 ////////////////////////////////////////////////////////////////////////////////
 namespace network {
 
 //------------------------------------------------------------------------------
-void message::init (byte *buffer, int buffer_size)
-{
-    memset( this, 0, sizeof(network::message) );
-    this->data = buffer;
-    this->size = buffer_size;
+message::message(byte* data, std::size_t size)
+    : _data(data)
+    , _size(size)
+    , _bytes_read(0)
+    , _bytes_written(0)
+    , _bytes_reserved(0)
+{}
 
-    this->bytes_remaining = buffer_size;
-    this->bytes_written = 0;
+//------------------------------------------------------------------------------
+void message::reset()
+{
+    _bytes_read = 0;
+    _bytes_written = 0;
+    _bytes_reserved = 0;
 }
 
 //------------------------------------------------------------------------------
-void message::clear ()
+void message::rewind() const
 {
-    memset( data, 0, bytes_written );
-    bytes_written = 0;
-    bytes_remaining = size;
-    overflowed = false;
+    _bytes_read = 0;
 }
 
 //------------------------------------------------------------------------------
-void *message::alloc (int length)
+void message::rewind(std::size_t size) const
 {
-    void    *ret;
+    if (_bytes_read < size) {
+        _bytes_read = 0;
+    } else {
+        _bytes_read -= size;
+    }
+}
 
-    if (bytes_written + length > size)
-    {
-        overflowed = true;
-        return NULL;
+//------------------------------------------------------------------------------
+byte* message::write(std::size_t size)
+{
+    if (_bytes_reserved) {
+        return nullptr;
+    } else if (_bytes_written + size > _size) {
+        return nullptr;
     }
 
-    ret = (void *)(data + bytes_written);
-    bytes_written += length;
-    bytes_remaining -= length;
-
-    return ret;
+    _bytes_written += size;
+    return _data + _bytes_written - size;
 }
 
 //------------------------------------------------------------------------------
-void message::write (void const* buffer, int length)
+byte const* message::read(std::size_t size) const
 {
-    void    *buf = alloc( length );
+    if (_bytes_read + size > _bytes_written) {
+        return nullptr;
+    }
 
-    if ( buf )
-        memcpy( buf, buffer, length );
+    _bytes_read += size;
+    return _data + _bytes_read - size;
 }
 
 //------------------------------------------------------------------------------
-int message::read (void *buffer, int length)
+byte* message::reserve(std::size_t size)
 {
-    if ( bytes_read + length > size )
-        return -1;
+    if (_bytes_written + _bytes_reserved + size > _size) {
+        return nullptr;
+    }
 
-    memcpy( buffer, (void *)(data+bytes_read), length );
-
-    bytes_read += length;
-
-    return 0;
+    _bytes_reserved += size;
+    return _data + _bytes_written + _bytes_reserved - size;
 }
 
 //------------------------------------------------------------------------------
-void message::write_byte (int b)
+std::size_t message::commit(std::size_t size)
 {
-    byte    *buf = (byte *)alloc( 1 );
+    if (_bytes_reserved < size) {
+        _bytes_reserved = 0;
+        return 0;
+    }
 
-    if ( buf )
+    _bytes_written += size;
+    _bytes_reserved = 0;
+    return size;
+}
+
+//------------------------------------------------------------------------------
+std::size_t message::write(byte const* data, std::size_t size)
+{
+    if (_bytes_written + size > _size) {
+        return 0;
+    }
+
+    memcpy(_data + _bytes_written, data, size);
+    _bytes_written += size;
+    return size;
+}
+
+//------------------------------------------------------------------------------
+std::size_t message::read(byte* data, std::size_t size) const
+{
+    if (_bytes_read + size > _bytes_written) {
+        return 0;
+    }
+
+    memcpy(data, _data + _bytes_read, size);
+    _bytes_read += size;
+    return size;
+}
+
+//------------------------------------------------------------------------------
+void message::write_byte(int b)
+{
+    byte* buf = (byte *)write(1);
+
+    if (buf) {
         buf[0] = b & 0xff;
+    }
 }
 
 //------------------------------------------------------------------------------
-void message::write_short (int s)
+void message::write_short(int s)
 {
-    byte    *buf = (byte *)alloc( 2 );
+    byte* buf = (byte *)write(2);
 
-    if ( buf )
-    {
+    if (buf) {
         buf[0] = s & 0xff;
         buf[1] = s>>8;
     }
 }
 
 //------------------------------------------------------------------------------
-void message::write_long (int l)
+void message::write_long(int l)
 {
-    byte    *buf = (byte *)alloc( 4 );
+    byte* buf = (byte *)write(4);
 
-    if ( buf )
-    {
-        buf[0] = l & 0xff;
-        buf[1] = (l>>8) & 0xff;
+    if (buf) {
+        buf[0] = (l>> 0) & 0xff;
+        buf[1] = (l>> 8) & 0xff;
         buf[2] = (l>>16) & 0xff;
         buf[3] = (l>>24) & 0xff;
     }
 }
 
 //------------------------------------------------------------------------------
-void message::write_float (float f)
+void message::write_float(float f)
 {
-    union
-    {
-        float   f;
+    union {
+        float f;
         int l;
     } dat;
 
     dat.f = f;
-    dat.l = LITTLE_LONG( dat.l );
-
-    write( &dat.l, 4 );
+    write_long( dat.l );
 }
 
 //------------------------------------------------------------------------------
-void message::write_char (int b)
+void message::write_char(int b)
 {
-    char    *buf = (char *)alloc( 1 );
+    char* buf = (char *)write(1);
 
-    if ( buf )
+    if (buf) {
         buf[0] = b & 0xff;
+    }
 }
 
 //------------------------------------------------------------------------------
-void message::write_string (char const* sz)
+void message::write_string(char const* sz)
 {
-    if ( sz )
-        write( sz, strlen(sz)+1 );
-    else
-        write( "", 1 );
+    if (sz) {
+        write((byte const*)sz, strlen(sz) + 1);
+    } else {
+        write((byte const*)"", 1);
+    }
 }
 
 //------------------------------------------------------------------------------
-void message::write_angle (float f)
+void message::write_vector(vec2 v)
 {
-    write_short( ANGLE2SHORT(f) );
+    write_float(v.x);
+    write_float(v.y);
 }
 
 //------------------------------------------------------------------------------
-void message::write_vector (vec2 v)
+int message::read_byte()
 {
-    write_float( v.x );
-    write_float( v.y );
+    byte buf[1];
+
+    if (read(buf, 1) == 1) {
+        return buf[0];
+    } else {
+        return -1;
+    }
 }
 
 //------------------------------------------------------------------------------
-void message::begin ()
+int message::read_short()
 {
-    bytes_read = 0;
+    byte buf[2];
+
+    if (read(buf, 2) == 2) {
+        return short(buf[0] | buf[1] << 8);
+    } else {
+        return -1;
+    }
 }
 
 //------------------------------------------------------------------------------
-int message::read_byte ()
+int message::read_long()
 {
-    int b;
+    byte buf[4];
 
-    if (bytes_read + 1 > bytes_written)
-        b = -1;
-    else
-        b = (byte )data[bytes_read];
-
-    bytes_read++;
-
-    return b;
+    if (read(buf, 4) == 4) {
+        return short(buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24);
+    } else {
+        return -1;
+    }
 }
 
 //------------------------------------------------------------------------------
-int message::read_short ()
+float message::read_float()
 {
-    int s;
+    byte buf[4];
 
-    if (bytes_read + 2 > bytes_written)
-        s = -1;
-    else
-        s = (short )data[bytes_read]
-        + (data[bytes_read+1]<<8);
-
-    bytes_read += 2;
-
-    return s;
-}
-
-//------------------------------------------------------------------------------
-int message::read_long ()
-{
-    int l;
-
-    if (bytes_read + 4 > bytes_written)
-        l = -1;
-    else
-        l = (int )data[bytes_read]
-        + (data[bytes_read+1]<<8)
-        + (data[bytes_read+2]<<16)
-        + (data[bytes_read+3]<<24);
-
-    bytes_read += 4;
-
-    return l;
-}
-
-//------------------------------------------------------------------------------
-float message::read_float ()
-{
-    union
-    {
-        byte    b[4];
-        float   f;
-        int     l;
+    union {
+        float f;
+        int l;
     } dat;
 
-    if (bytes_read + 4 > bytes_written)
-        dat.l = -1;
-    else
-    {
-        dat.b[0] = data[bytes_read + 0];
-        dat.b[1] = data[bytes_read + 1];
-        dat.b[2] = data[bytes_read + 2];
-        dat.b[3] = data[bytes_read + 3];
+    if (read(buf, 4) == 4) {
+        dat.l = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
+        return dat.f;
+    } else {
+        return 0.0f;
+    }
+}
+
+//------------------------------------------------------------------------------
+int message::read_char()
+{
+    byte buf[1];
+
+    if (read(buf, 1) == 1) {
+        return char(buf[0]);
+    } else {
+        return -1;
+    }
+}
+
+//------------------------------------------------------------------------------
+char const* message::read_string()
+{
+    std::size_t remaining = bytes_remaining();
+    char const* str = (char const* )read(remaining);
+    std::size_t len = strnlen(str, remaining);
+
+    rewind(remaining - len - 1);
+    return (char const*)str;
+}
+
+//------------------------------------------------------------------------------
+vec2 message::read_vector()
+{
+    if (_bytes_read + 8 > _bytes_written) {
+        return vec2_zero;
     }
 
-    bytes_read += 4;
+    float outx = read_float();
+    float outy = read_float();
 
-    dat.l = LITTLE_LONG( dat.l );
-
-    return dat.f;
-}
-
-//------------------------------------------------------------------------------
-int message::read_char ()
-{
-    int b;
-
-    if (bytes_read + 1 > bytes_written)
-        b = -1;
-    else
-        b = (char )data[bytes_read];
-
-    bytes_read++;
-
-    return b;
-}
-
-
-//------------------------------------------------------------------------------
-char *message::read_string ()
-{
-    static char string[MAX_STRING];
-    int         i,c;
-
-    for (i=0 ; i<MAX_STRING-1 ; i++)
-    {
-        c = read_byte( );
-        if ( c == -1 || c == 0 )
-            break;
-        string[i] = c;
-    }
-    string[i] = 0;
-
-    return string;
-}
-
-
-//------------------------------------------------------------------------------
-char *message::read_line ()
-{
-    static char string[MAX_STRING];
-    int         i,c;
-
-    for (i=0 ; i<MAX_STRING-1 ; i++)
-    {
-        c = read_byte( );
-        if ( c == -1 || c == 0 || c == '\n')
-            break;
-        string[i] = c;
-    }
-    string[i] = 0;
-
-    return string;
-}
-
-//------------------------------------------------------------------------------
-float message::read_angle ()
-{
-    int     out;
-
-    out = read_short( );
-
-    return ( SHORT2ANGLE(out) );
-}
-
-//------------------------------------------------------------------------------
-vec2 message::read_vector ()
-{
-    float   outx, outy;
-
-    if (bytes_read + 8 > bytes_written)
-        return vec2(0,0);
-
-    outx = read_float( );
-    outy = read_float( );
-
-    return vec2( outx, outy );
+    return vec2(outx, outy);
 }
 
 } // namespace network

@@ -280,7 +280,8 @@ private:
     void write_frame ();
     void send_packets ();
 
-    void broadcast (int len, byte *data);
+    void broadcast(int len, byte const* data);
+    void broadcast(network::message& message);
     void broadcast_print (char const* message);
 
     void server_connectionless(network::address const& remote, network::message& message);

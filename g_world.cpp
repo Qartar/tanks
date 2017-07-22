@@ -101,7 +101,7 @@ void world::draw(render::system* renderer) const
 //------------------------------------------------------------------------------
 void world::run_frame()
 {
-    _message.init(_message_buffer, countof(_message_buffer));
+    _message.reset();
 
     ++_framenum;
 

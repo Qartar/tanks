@@ -8,48 +8,40 @@
 namespace network {
 
 //------------------------------------------------------------------------------
-int channel::init (int netport)
+channel::channel(int netport)
 {
-    LARGE_INTEGER   nCounter;
+    LARGE_INTEGER counter;
 
-    QueryPerformanceCounter( &nCounter );
+    QueryPerformanceCounter(&counter);
 
-    if ( !netport )
-        this->netport = nCounter.QuadPart & 0xffff;
-    else
-        this->netport = netport;
-
-    return ERROR_NONE;
+    if (!netport) {
+        _netport = counter.QuadPart & 0xffff;
+    } else {
+        _netport = netport;
+    }
 }
 
 //------------------------------------------------------------------------------
-int channel::setup (network::socket* socket, network::address remote, int netport)
+void channel::setup(network::socket* socket, network::address remote, int netport)
 {
-    if ( netport )
-        this->netport = netport;
+    if (netport) {
+        _netport = netport;
+    }
 
-    this->socket = socket;
-    this->address = remote;
+    _socket = socket;
+    _address = remote;
 
-    this->message.init( this->messagebuf, MAX_MSGLEN );
-    this->message.allow_overflow = true;
-
-    this->last_sent = g_Application->time();
-    this->last_received = g_Application->time();
-
-    return ERROR_NONE;
+    _last_sent = g_Application->time();
+    _last_received = g_Application->time();
 }
 
 //------------------------------------------------------------------------------
-int channel::transmit (int length, byte *data)
+bool channel::transmit(int length, byte const* data)
 {
-    static  byte    netmsgbuf[MAX_MSGLEN];
-    network::message        netmsg;
-
-    netmsg.init( netmsgbuf, MAX_MSGLEN );
+    network::message_storage netmsg;
 
     netmsg.write_long(network::channel::prefix);
-    netmsg.write_short(netport);
+    netmsg.write_short(_netport);
 
     // copy the rest over
 
@@ -57,22 +49,25 @@ int channel::transmit (int length, byte *data)
 
     // send it off
 
-    last_sent = g_Application->time();
+    _last_sent = g_Application->time();
 
-    return (int)socket->write(address, netmsg);
+    return _socket->write(_address, netmsg);
 }
 
 //------------------------------------------------------------------------------
-int channel::process (network::message *message)
+bool channel::transmit(network::message& message)
 {
-    message->begin();
+    int length = message.bytes_remaining();
+    byte const* data = message.read(length);
 
-    int check = message->read_long();
-    int netport = message->read_short();
+    return transmit(length, data);
+}
 
-    last_received = g_Application->time();
-
-    return ERROR_NONE;
+//------------------------------------------------------------------------------
+bool channel::process(network::message&)
+{
+    _last_received = g_Application->time();
+    return true;
 }
 
 } // namespace network

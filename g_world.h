@@ -342,8 +342,7 @@ private:
 
     int _framenum;
 
-    byte _message_buffer[MAX_MSGLEN];
-    network::message _message;
+    network::message_storage _message;
 
     physics::material _border_material;
     physics::box_shape _border_shapes[2];
