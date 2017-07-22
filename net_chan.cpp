@@ -45,20 +45,25 @@ bool channel::transmit(int length, byte const* data)
 
     // copy the rest over
 
-    netmsg.write( data, length );
+    netmsg.write(data, length);
 
     // send it off
 
     _last_sent = g_Application->time();
 
-    return _socket->write(_address, netmsg);
+    if (_socket->write(_address, netmsg)) {
+        reset();
+        return true;
+    } else {
+        return false;
+    }
 }
 
 //------------------------------------------------------------------------------
-bool channel::transmit(network::message& message)
+bool channel::transmit()
 {
-    int length = message.bytes_remaining();
-    byte const* data = message.read(length);
+    int length = bytes_remaining();
+    byte const* data = read(length);
 
     return transmit(length, data);
 }

@@ -58,9 +58,9 @@ void session::shutdown_client()
 void session::stop_client ()
 {
     if (_multiplayer && !_multiserver && _multiplayer_active) {
-        _netchan.message.write_byte( clc_disconnect );
-        _netchan.transmit(_netchan.message);
-        _netchan.message.reset();
+        _netchan.write_byte(clc_disconnect);
+        _netchan.transmit();
+        _netchan.reset();
     }
 
     cls.socket.close();
@@ -193,7 +193,7 @@ void session::connect_ack(char const* message_string)
     svs.clients[cls.number].color = cls.color;
     svs.clients[cls.number].weapon = cls.weapon;
 
-    write_info(_netchan.message, cls.number);
+    write_info(_netchan, cls.number);
 }
 
 //------------------------------------------------------------------------------
@@ -201,10 +201,10 @@ void session::client_send ()
 {
     game::usercmd cmd = _clients[0].input.generate();
 
-    _netchan.message.write_byte(clc_command);
-    _netchan.message.write_vector(cmd.move);
-    _netchan.message.write_vector(cmd.look);
-    _netchan.message.write_byte(static_cast<int>(cmd.action));
+    _netchan.write_byte(clc_command);
+    _netchan.write_vector(cmd.move);
+    _netchan.write_vector(cmd.look);
+    _netchan.write_byte(static_cast<int>(cmd.action));
 }
 
 //------------------------------------------------------------------------------
@@ -301,8 +301,8 @@ void session::write_upgrade(int upgrade)
     if (_multiserver) {
         read_upgrade(0, upgrade);
     } else {
-        _netchan.message.write_byte(clc_upgrade);
-        _netchan.message.write_byte(upgrade);
+        _netchan.write_byte(clc_upgrade);
+        _netchan.write_byte(upgrade);
     }
 }
 

@@ -476,8 +476,8 @@ void session::key_event(unsigned char key, bool down)
                 else if ( _multiplayer )
                 {
                     // say it
-                    _netchan.message.write_byte( clc_say );
-                    _netchan.message.write_string( _clientsay );
+                    _netchan.write_byte(clc_say);
+                    _netchan.write_string(_clientsay);
 
                     if ( _multiserver )
                     {

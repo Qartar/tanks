@@ -78,8 +78,8 @@ void session::get_packets ()
             }
 
             if (svs.clients[ii].netchan.last_received() + 10000 < time) {
-                svs.clients[ii].netchan.message.write_byte(svc_disconnect);
-                svs.clients[ii].netchan.transmit(svs.clients[ii].netchan.message);
+                svs.clients[ii].netchan.write_byte(svc_disconnect);
+                svs.clients[ii].netchan.transmit();
 
                 write_message(va("%s timed out.", svs.clients[ii].name));
                 client_disconnect(ii);
@@ -98,7 +98,7 @@ void session::broadcast(int len, byte const* data)
 {
     for (auto& cl : svs.clients) {
         if (!cl.local && cl.active) {
-            cl.netchan.message.write(data, len);
+            cl.netchan.write(data, len);
         }
     }
 }
@@ -132,19 +132,19 @@ void session::send_packets ()
 
     if (_multiserver) {
         for (auto& cl : svs.clients) {
-            if (cl.local || !cl.active || !cl.netchan.message.bytes_remaining()) {
+            if (cl.local || !cl.active || !cl.netchan.bytes_remaining()) {
                 continue;
             }
 
-            cl.netchan.transmit(cl.netchan.message);
-            cl.netchan.message.reset();
+            cl.netchan.transmit();
+            cl.netchan.reset();
         }
     } else {
         client_send();
 
-        if (_netchan.message.bytes_remaining()) {
-            _netchan.transmit(_netchan.message);
-            _netchan.message.reset();
+        if (_netchan.bytes_remaining()) {
+            _netchan.transmit();
+            _netchan.reset();
         }
     }
 }

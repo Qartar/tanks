@@ -94,9 +94,9 @@ void session::stop_server ()
 
         client_disconnect(ii);
 
-        svs.clients[ii].netchan.message.write_byte(svc_disconnect);
-        svs.clients[ii].netchan.transmit(svs.clients[ii].netchan.message);
-        svs.clients[ii].netchan.message.reset();
+        svs.clients[ii].netchan.write_byte(svc_disconnect);
+        svs.clients[ii].netchan.transmit();
+        svs.clients[ii].netchan.reset();
     }
 
     svs.socket.close();
@@ -215,7 +215,7 @@ void session::client_connect(network::address const& remote, char const* message
         // broadcast existing client information to new client
         for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
             if (&cl != &svs.clients[ii]) {
-                write_info(cl.netchan.message, ii);
+                write_info(cl.netchan, ii);
             }
         }
     }
