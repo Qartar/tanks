@@ -90,6 +90,8 @@ public:
     void resize() { set_default_state(); }
     render::window const* window() const { return _window; }
 
+    render::view const& view() const { return _view; }
+
     // Font Interface (r_font.cpp)
 
     render::font const* load_font(char const* szName, int nSize);

@@ -235,8 +235,13 @@ private:
     config::integer _cl_weapon;
 
     vec2i _cursor;
+    bool _show_cursor;
 
     void update_screen();
+
+    void draw_world();
+
+    void draw_menu();
 
     int _score[MAX_PLAYERS];
     void draw_score ();

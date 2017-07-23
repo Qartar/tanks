@@ -316,4 +316,52 @@ void session::write_upgrade(int upgrade)
     }
 }
 
+//------------------------------------------------------------------------------
+void session::draw_world()
+{
+    float lerp = (_frametime - (_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
+
+    //
+    // calculate view
+    //
+
+    vec2 world_size = _world.maxs() - _world.mins();
+    vec2 world_center = _world.mins() + world_size * 0.5f;
+
+    render::view view{};
+    view.size = world_size;
+
+    game::tank* player = _world.player(cls.number);
+    if (_multiplayer && player) {
+        vec2 position = player->get_position(lerp);
+        vec2 view_mins = _world.mins() + view.size * 0.5f;
+        vec2 view_maxs = _world.maxs() - view.size * 0.5f;
+
+        view.origin.x = view_mins.x > view_maxs.x ? world_center.x
+            : clamp(position.x, view_mins.x, view_maxs.x);
+
+        view.origin.y = view_mins.y > view_maxs.y ? world_center.y
+            : clamp(position.y, view_mins.y, view_maxs.y);
+    } else {
+        view.origin = world_center;
+    }
+
+    // draw world
+
+    _renderer->set_view(view);
+
+    if (_game_active) {
+        _world.draw(_renderer);
+    }
+
+    // update sound listener
+
+    pSound->set_listener(
+        vec3(view.origin.x, view.origin.y, view.size.x * M_SQRT2),
+        vec3(0,0,-1), // forward
+        vec3(1,0,0), // right
+        vec3(0,1,0) // up
+    );
+}
+
 } // namespace game

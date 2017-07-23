@@ -32,6 +32,8 @@ session::session()
     , _cl_name("ui_name", "", config::archive, "user info: name")
     , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
     , _cl_weapon("ui_weapon", 0, config::archive, "user info: weapon")
+    , _cursor(0,0)
+    , _show_cursor(true)
     , _num_messages(0)
 {
     g_Game = this;
@@ -223,72 +225,60 @@ int session::run_frame(float milliseconds)
 //------------------------------------------------------------------------------
 void session::update_screen()
 {
-    static bool show_cursor = true;
-
     _renderer->begin_frame();
 
-    //  set view center
-    vec2 world_size = _world.maxs() - _world.mins();
+    draw_world();
 
-    render::view view{};
-    view.size = world_size;
+    //
+    // calculate view for ui
+    //
 
-    game::tank* player = _world.player(cls.number);
-    if ( _multiplayer && player ) {
-        float lerp = (_frametime - (_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
-
-        view.origin = player->get_position( lerp );
-    } else {
-        view.origin = _world.mins() + world_size * 0.5f;
-    }
-
-    vec2 view_mins = _world.mins() + view.size * 0.5f;
-    vec2 view_maxs = _world.maxs() - view.size * 0.5f;
-
-    view.origin.x = clamp(view.origin.x, view_mins.x, view_maxs.x);
-    view.origin.y = clamp(view.origin.y, view_mins.y, view_maxs.y);
-
-    pSound->set_listener(vec3(view.origin.x, view.origin.y, view.size.x * M_SQRT2), vec3(0,0,-1), vec3(1,0,0), vec3(0,1,0));
-
-    _renderer->set_view(view);
-
-    // draw world
-    if (_game_active)
-        _world.draw(_renderer);
+    render::view view = {};
 
     view.size = vec2(640, 480);
     view.origin = view.size * 0.5f;
     _renderer->set_view(view);
 
-    // draw menu
-    if (_menu_active)
-    {
-        if ( !show_cursor )
-        {
-            ShowCursor( TRUE );
-            show_cursor = true;
-        }
+    //
+    // draw ui
+    //
 
-        float aspect = float(_menu_image->width()) / float(_menu_image->height());
-        vec2 size = vec2(view.size.y * aspect, view.size.y);
+    draw_menu();
 
-        _renderer->draw_image(_menu_image, (view.size - size) * 0.5f, size);
+    draw_score();
 
-        _menu.draw(_renderer);
-    }
-    else if ( show_cursor )
-    {
-        ShowCursor( FALSE );
-        show_cursor = false;
-    }
-
-    draw_score( );
-
-    draw_messages( );
+    draw_messages();
 
     draw_netgraph();
 
     _renderer->end_frame();
+}
+
+//------------------------------------------------------------------------------
+void session::draw_menu()
+{
+    // draw menu
+
+    if (_menu_active) {
+        if (!_show_cursor) {
+            ShowCursor(TRUE);
+            _show_cursor = true;
+        }
+
+        // draw splash image
+
+        float aspect = float(_menu_image->width()) / float(_menu_image->height());
+        vec2 size = vec2(_renderer->view().size.y * aspect, _renderer->view().size.y);
+        _renderer->draw_image(_menu_image, (_renderer->view().size - size) * 0.5f, size);
+
+        // draw menu items
+
+        _menu.draw(_renderer);
+
+    } else if (_show_cursor) {
+        ShowCursor( FALSE );
+        _show_cursor = false;
+    }
 }
 
 //------------------------------------------------------------------------------
