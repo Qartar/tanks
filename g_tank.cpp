@@ -65,7 +65,7 @@ tank::~tank()
 //------------------------------------------------------------------------------
 void tank::draw(render::system* renderer) const
 {
-    float lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
+    float lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMETIME) / FRAMETIME;
     float denominator = _weapon == weapon_type::cannon ? cannon_reload :
                         _weapon == weapon_type::missile ? missile_reload :
                         _weapon == weapon_type::blaster ? blaster_reload : 1.0f;
@@ -171,7 +171,7 @@ void tank::collide(tank* other, physics::contact const* contact)
     }
 }
 
-#define HACK_TIME       1000.0f
+#define HACK_TIME       1.0f
 
 //------------------------------------------------------------------------------
 void tank::respawn()
@@ -220,7 +220,7 @@ void tank::think()
         _turret_velocity *= 0.9f;
 
         // extra explosion
-        if (_dead_time && (g_Game->_frametime - _dead_time > 650) && (g_Game->_frametime - _dead_time < 650+HACK_TIME/2))
+        if (_dead_time && (g_Game->_frametime - _dead_time > 0.65f) && (g_Game->_frametime - _dead_time < 0.65f+HACK_TIME/2))
         {
             _world->add_sound(_sound_explode, get_position());
             _world->add_effect(effect_type::explosion, get_position());
@@ -332,10 +332,10 @@ void tank::update_effects()
 
     switch (_weapon) {
         case weapon_type::cannon: {
-            if ((_fire_time + 2500/_client->refire_mod) > g_Game->_frametime) {
+            if ((_fire_time + 2.5f/_client->refire_mod) > g_Game->_frametime) {
                 float power;
 
-                power = 1.5 - (g_Game->_frametime - _fire_time)/1000.0f;
+                power = 1.5f - (g_Game->_frametime - _fire_time);
                 power = clamp(power, 0.5f, 1.5f);
 
                 _world->add_effect(
@@ -348,10 +348,10 @@ void tank::update_effects()
         }
 
         case weapon_type::missile: {
-            if ((_fire_time + 2500/_client->refire_mod) > g_Game->_frametime) {
+            if ((_fire_time + 2.5f/_client->refire_mod) > g_Game->_frametime) {
                 float power;
 
-                power = 1.5 - (g_Game->_frametime - _fire_time)/1000.0f;
+                power = 1.5f - (g_Game->_frametime - _fire_time);
                 power = clamp(power, 0.5f, 1.5f);
 
                 _world->add_effect(
@@ -688,7 +688,7 @@ void projectile::touch(object *other, physics::contact const* contact)
 //------------------------------------------------------------------------------
 void projectile::draw(render::system* renderer) const
 {
-    float   lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
+    float   lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMETIME) / FRAMETIME;
     vec2    p1, p2;
 
     p1 = get_position( lerp );

@@ -191,7 +191,7 @@ int session::run_frame(float milliseconds)
 
     _frametime += milliseconds;
 
-    if (_frametime > _framenum * FRAMEMSEC && (!_multiplayer_active || _multiserver) )
+    if (_frametime > _framenum * FRAMETIME && (!_multiplayer_active || _multiserver) )
     {
         _framenum++;
         _net_bytes[_framenum % _net_bytes.size()] = 0;
@@ -638,7 +638,7 @@ void session::key_event(unsigned char key, bool down)
 
         broadcast( 2, msg );
         
-        _restart_time = _frametime + 5000.0f;
+        _restart_time = _frametime + RESTART_TIME;
         return;
     }
 }
@@ -739,7 +739,7 @@ void session::draw_score ()
 
     if ( _restart_time > _frametime )
     {
-        int     nTime = ceil((_restart_time - _frametime)/1000.0f);
+        int     nTime = ceil((_restart_time - _frametime));
 
         _renderer->draw_string(va("Restart in... %i", nTime), vec2(width/2-48,16+13), menu::colors[7]);
     }
@@ -986,9 +986,9 @@ void session::draw_messages ()
         if ( i < 0 )
             continue;
 
-        if ( _messages[i].time+15000 > time )
+        if ( _messages[i].time+15.0f > time )
         {
-            alpha = (_messages[i].time+12000 > time ? 1.0f : (_messages[i].time+15000 - time)/3000.0f );
+            alpha = (_messages[i].time+12.0f > time ? 1.0f : (_messages[i].time+15.0f - time)/3.0f );
 
             _renderer->draw_string(_messages[i].string, vec2(8,ypos), color4(1,1,1,alpha));
 

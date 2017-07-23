@@ -240,9 +240,9 @@ protected:
     constexpr static float missile_speed = 288.0f;
     constexpr static float blaster_speed = 768.0f;
 
-    constexpr static float cannon_reload = 3000.0f;
-    constexpr static float missile_reload = 6000.0f;
-    constexpr static float blaster_reload = 300.0f;
+    constexpr static float cannon_reload = 3.0f;
+    constexpr static float missile_reload = 6.0f;
+    constexpr static float blaster_reload = 0.3f;
 
     sound::asset _sound_idle;
     sound::asset _sound_move;

@@ -127,7 +127,7 @@ void session::client_packet(network::message& message)
                 break;
 
             case svc_restart:
-                _restart_time = _frametime + message.read_byte() * 1000;
+                _restart_time = _frametime + message.read_byte() * 1.0f;
                 break;
 
             default:
@@ -141,7 +141,7 @@ void session::get_frame(network::message& message)
 {
     _world.read_snapshot(message);
     _framenum = _world.framenum();
-    _frametime = (_framenum - 1) * FRAMEMSEC;
+    _frametime = (_framenum - 1) * FRAMETIME;
     _net_bytes[_framenum % _net_bytes.size()] = 0;
 }
 
@@ -319,7 +319,7 @@ void session::write_upgrade(int upgrade)
 //------------------------------------------------------------------------------
 void session::draw_world()
 {
-    float lerp = (_frametime - (_framenum-1) * FRAMEMSEC) / FRAMEMSEC;
+    float lerp = (_frametime - (_framenum-1) * FRAMETIME) / FRAMETIME;
 
     //
     // calculate view

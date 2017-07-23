@@ -146,7 +146,7 @@ float application::time() const
     QueryPerformanceCounter(&counter);
 
     double ticks = counter.QuadPart - _timer_base.QuadPart;
-    return ticks * 1000.0 / _timer_frequency.QuadPart;
+    return ticks / _timer_frequency.QuadPart;
 }
 
 //------------------------------------------------------------------------------

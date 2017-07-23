@@ -11,9 +11,8 @@ class system;
 } // namespace render
 
 #define FRAMETIME   0.05f
-#define FRAMEMSEC   50.0f
 
-#define RESTART_TIME    5000.0f
+#define RESTART_TIME    5.0f
 
 #define SPAWN_BUFFER    32
 
@@ -36,7 +35,7 @@ typedef struct game_client_s
 
     float usercmd_time;
 
-    constexpr static float usercmd_rate = 1000.0f / 60.0f;
+    constexpr static float usercmd_rate = 1.0f / 60.0f;
 } game_client_t;
 
 //------------------------------------------------------------------------------

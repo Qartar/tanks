@@ -79,7 +79,7 @@ void session::get_packets ()
                 continue;
             }
 
-            if (svs.clients[ii].netchan.last_received() + 10000 < time) {
+            if (svs.clients[ii].netchan.last_received() + 10.0f < time) {
                 svs.clients[ii].netchan.write_byte(svc_disconnect);
                 svs.clients[ii].netchan.transmit();
 
@@ -88,7 +88,7 @@ void session::get_packets ()
             }
         }
     } else if (_multiplayer_active) {
-        if (_netchan.last_received() + 10000 < time) {
+        if (_netchan.last_received() + 10.0f < time) {
             write_message("Server timed out.");
             stop_client();
         }
