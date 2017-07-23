@@ -520,9 +520,23 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
         case effect_type::blaster: {
             render::particle* p;
 
+            // vortex
+
+            if ( (p = add_particle()) == NULL )
+                return;
+
+            p->position = position;
+            p->velocity = direction * 9.6f;
+
+            p->color = color4(1,0,0,0);
+            p->color_velocity = color4(0,1,0,2.5f);
+            p->size = 19.2f;
+            p->size_velocity = -96.0f;
+            p->flags = render::particle::invert;
+
             // fire
 
-            for (int ii = 0; ii < 16; ++ii) {
+            for (int ii = 0; ii < 8; ++ii) {
                 if ( (p = add_particle()) == NULL )
                     return;
 
@@ -544,6 +558,23 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->flags = render::particle::invert;
 
                 p->drag = 3.0f + frand() * 3.0f;
+
+                // vortex
+
+                render::particle* p2;
+
+                if ( (p2 = add_particle()) == NULL )
+                    return;
+
+                p2->position = p->position;
+                p2->velocity = p->velocity;
+                p2->drag = p->drag;
+
+                p2->color = color4(1,0,0,0);
+                p2->color_velocity = color4(0,1,0,1);
+                p2->size = 4.8f;
+                p2->size_velocity = -18.0f;
+                p2->flags = render::particle::invert;
             }
 
             // debris
@@ -581,6 +612,20 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
         case effect_type::blaster_impact: {
             render::particle* p;
             float scale = std::sqrt(strength);
+
+            // vortex
+
+            if ( (p = add_particle()) == NULL )
+                return;
+
+            p->position = position;
+            p->velocity = direction * 48.0f * scale;
+
+            p->color = color4(1,0,0,0);
+            p->color_velocity = color4(0,1,0,2.5f);
+            p->size = 96.0f * scale;
+            p->size_velocity = -480.0f * scale;
+            p->flags = render::particle::invert;
 
             // shock wave
 
@@ -733,6 +778,31 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
 
                 p->drag = (1.5f + frand() * 1.0f);
                 p->time += FRAMETIME * ii / count;
+            }
+
+            // debris
+
+            for (int ii = 0; ii < count; ++ii) {
+                if ( (p = add_particle()) == NULL )
+                    return;
+
+                r = frand()*M_PI*2.0f;
+                d = frand();
+
+                p->position = position + vec2(cos(r),sin(r))*d + lerp * ii / count;
+
+                r = frand()*M_PI*2.0f;
+                d = frand() * 64.0f;
+
+                p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*48,crand()*48);
+
+                p->color = color4(1,0.5+frand()*0.5,0,1);
+                p->color_velocity = color4(0,0,0,-3.0f-15.0f*(1.0f-square(frand())));
+                p->size = 0.5f;
+                p->size_velocity = 0.0f;
+                p->drag = 1.5f + frand() * 1.5f;
+                p->time += FRAMETIME * ii / count;
+                p->flags = render::particle::tail;
             }
 
             break;
