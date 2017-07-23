@@ -210,13 +210,10 @@ void message::write_align()
 //------------------------------------------------------------------------------
 void message::write_float(float f)
 {
-    union {
-        float f;
-        int l;
-    } dat;
+    int i;
 
-    dat.f = f;
-    write_bits(dat.l, 32);
+    memcpy(&i, &f, sizeof(i));
+    write_bits(i, 32);
 }
 
 //------------------------------------------------------------------------------
@@ -286,13 +283,11 @@ void message::read_align() const
 //------------------------------------------------------------------------------
 float message::read_float() const
 {
-    union {
-        float f;
-        int l;
-    } dat;
+    float f;
 
-    dat.l = read_bits(32);
-    return dat.f;
+    int i = read_bits(32);
+    memcpy(&f, &i, sizeof(i));
+    return f;
 }
 
 //------------------------------------------------------------------------------
