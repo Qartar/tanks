@@ -28,6 +28,7 @@ session::session()
     , _upgrades("g_upgrades", true, config::archive|config::server, "enable upgrades")
     , _net_master("net_master", "oedhead.no-ip.org", config::archive, "master server hostname")
     , _net_server_name("net_serverName", "Tanks! Server", config::archive, "local server name")
+    , _net_graph("net_graph", false, config::archive, "draw network usage graph")
     , _cl_name("ui_name", "", config::archive, "user info: name")
     , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
     , _cl_weapon("ui_weapon", 0, config::archive, "user info: weapon")
@@ -191,6 +192,7 @@ int session::run_frame(float milliseconds)
     if (_frametime > _framenum * FRAMEMSEC && (!_multiplayer_active || _multiserver) )
     {
         _framenum++;
+        _net_bytes[_framenum % _net_bytes.size()] = 0;
 
         // run time step on world
         if ( !_menu_active || _multiserver )
@@ -293,6 +295,8 @@ void session::update_screen()
     draw_score( );
 
     draw_messages( );
+
+    draw_netgraph();
 
     _renderer->end_frame();
 }
@@ -758,6 +762,63 @@ void session::draw_score ()
         int     nTime = ceil((_restart_time - _frametime)/1000.0f);
 
         _renderer->draw_string(va("Restart in... %i", nTime), vec2(width/2-48,16+13), menu::colors[7]);
+    }
+}
+
+//------------------------------------------------------------------------------
+void session::draw_netgraph()
+{
+    constexpr float width = 580.0f;
+    constexpr float height = 48.0f;
+    constexpr float base = 128.0f; // 10 kbps
+
+    if (!_net_graph) {
+        return;
+    }
+
+    float sum = 0;
+    float max = 0;
+
+    for (size_t ii = 1; ii < _net_bytes.size() && ii < _framenum; ++ii) {
+        int value = _net_bytes[(_framenum - ii) % _net_bytes.size()];
+        sum += value;
+        max = std::max<float>(max, value);
+    }
+
+    float avg = sum / (std::min<int>(_framenum, _net_bytes.size()) - 1);
+    float scale = std::min<float>(height / base, height / max);
+
+    //
+    // draw graph lines
+    //
+
+    for (size_t ii = 1; ii < _net_bytes.size() && ii < _framenum; ++ii) {
+        float x0 = width - (ii - 1) * width / (_net_bytes.size() - 2);
+        float x1 = width - (ii - 0) * width / (_net_bytes.size() - 2);
+        float y0 = 480.0f - _net_bytes[(_framenum - ii + 0) % _net_bytes.size()] * scale;
+        float y1 = 480.0f - _net_bytes[(_framenum - ii - 1) % _net_bytes.size()] * scale;
+
+        _renderer->draw_line(vec2(x0,y0), vec2(x1, y1), color4(1,1,1,1), color4(1,1,1,1));
+    }
+
+    //
+    // draw guide lines
+    //
+
+    {
+        float ymax = std::min<float>(478.0f, 480.0f - max * scale);
+        float yavg = std::min<float>(478.0f, 480.0f - avg * scale);
+        float alpha_avg = std::min<float>(1, std::abs(ymax - yavg) * 0.1f);
+
+        _renderer->draw_line(vec2(width, 480.0f), vec2(width, ymax - 8.0f), color4(1,1,1,1), color4(1,1,1,1));
+        _renderer->draw_line(vec2(0, ymax), vec2(width, ymax), color4(1,1,1,1), color4(1,1,1,1));
+        _renderer->draw_line(vec2(0, yavg), vec2(width, yavg), color4(0.5f,1,0.75f,alpha_avg), color4(0.5f,1,0.7f,alpha_avg));
+
+        std::string smax = va("%0.1f kbps", CHAR_BIT * max / (FRAMETIME * 1024.0f));
+        std::string savg = va("%0.1f kbps", CHAR_BIT * avg / (FRAMETIME * 1024.0f));
+
+        _renderer->draw_string(smax.c_str(), vec2(638.0f - _renderer->string_size(smax.c_str()).x, ymax), color4(1,1,1,1));
+        _renderer->draw_string(savg.c_str(), vec2(638.0f - _renderer->string_size(savg.c_str()).x, yavg), color4(1,1,1,alpha_avg));
     }
 }
 

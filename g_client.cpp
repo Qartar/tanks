@@ -44,6 +44,8 @@ void session::init_client()
     }
 
     cls.weapon = static_cast<weapon_type>((int)_cl_weapon);
+
+    _net_bytes.fill(0);
 }
 
 //------------------------------------------------------------------------------
@@ -140,6 +142,7 @@ void session::get_frame(network::message& message)
     _world.read_snapshot(message);
     _framenum = _world.framenum();
     _frametime = (_framenum - 1) * FRAMEMSEC;
+    _net_bytes[_framenum % _net_bytes.size()] = 0;
 }
 
 //------------------------------------------------------------------------------

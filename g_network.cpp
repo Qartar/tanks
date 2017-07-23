@@ -22,6 +22,8 @@ void session::get_packets ()
     network::address remote;
 
     while (socket->read(remote, message)) {
+        _net_bytes[_framenum % _net_bytes.size()] += message.bytes_remaining();
+
         int prefix = message.read_long();
         if (prefix != network::channel::prefix) {
             message.rewind();

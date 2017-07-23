@@ -44,6 +44,8 @@ void session::start_server ()
 
     svs.socket.open(network::socket_type::ipv6, PORT_SERVER);
     _netchan.setup(&svs.socket, network::address{});
+
+    _net_bytes.fill(0);
 }
 
 //------------------------------------------------------------------------------

@@ -237,6 +237,8 @@ private:
     int _score[MAX_PLAYERS];
     void draw_score ();
 
+    void draw_netgraph();
+
     void spawn_player(int num);
 
     message_t _messages[MAX_MESSAGES];
@@ -245,6 +247,9 @@ private:
     void draw_messages ();
 
     char _shift_keys[256];
+
+    config::boolean _net_graph;
+    std::array<int, 256> _net_bytes;
 
 public:
     void write_message (char const* message, bool broadcast=true);
