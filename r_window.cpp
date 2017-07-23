@@ -42,10 +42,15 @@ static PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
 
+constexpr int windowed_style = WS_OVERLAPPED|WS_BORDER|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX;
+constexpr int fullscreen_style = WS_OVERLAPPED;
+
 //------------------------------------------------------------------------------
 window::window(HINSTANCE hInstance, WNDPROC WndProc)
     : _hinst(hInstance)
     , _wndproc(WndProc)
+    , _hdc(nullptr)
+    , _hrc(nullptr)
     , _renderer(this)
 {
     _fbo       = 0;
@@ -110,7 +115,7 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
 
     int         style;
 
-    style = WS_OVERLAPPED|WS_SYSMENU|WS_BORDER|WS_CAPTION|WS_MINIMIZEBOX;
+    style = windowed_style;
 
     rect.top = 0;
     rect.left = 0;
@@ -118,9 +123,6 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
     rect.bottom = height;
 
     AdjustWindowRect( &rect, style, FALSE );
-
-    width = rect.right - rect.left;
-    height = rect.bottom - rect.top;
 
     // Setup struct for RegisterClass
 
@@ -143,37 +145,20 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
 
     // Create the Window
 
-    _hwnd = CreateWindowA(
+    _hwnd = CreateWindowExA(
+        0,
         APP_CLASSNAME,
         "Tanks!",
         style,
-        xpos, ypos, width, height,
+        CW_USEDEFAULT,
+        0,
+        rect.right - rect.left,
+        rect.bottom - rect.top,
         NULL, NULL,
         _hinst,
-        NULL );
+        NULL);
 
     if (fullscreen) {
-        MONITORINFO info = { sizeof(info) };
-        HMONITOR hMonitor = MonitorFromWindow( _hwnd, MONITOR_DEFAULTTOPRIMARY );
-
-        GetMonitorInfoA( hMonitor, &info );
-
-        _position.x = info.rcMonitor.left;
-        _position.y = info.rcMonitor.top;
-        _size.x = info.rcMonitor.right - info.rcMonitor.left;
-        _size.y = info.rcMonitor.bottom - info.rcMonitor.top;
-
-        SetWindowLongPtrA( _hwnd, GWL_STYLE, WS_OVERLAPPED );
-
-        MoveWindow(
-            _hwnd,
-            _position.x,
-            _position.y, 
-            _size.x,
-            _size.y,
-            FALSE
-        );
-
         _active = true;
         _minimized = false;
         _fullscreen = true;
@@ -194,7 +179,12 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
         return ERROR_FAIL;
     }
 
-    ShowWindow(_hwnd, SW_SHOW);
+    if (fullscreen) {
+        SetWindowLongPtrA(_hwnd, GWL_STYLE, fullscreen_style);
+        ShowWindow(_hwnd, SW_SHOWMAXIMIZED);
+    } else {
+        ShowWindow(_hwnd, SW_SHOWNORMAL);
+    }
     UpdateWindow(_hwnd);
 
     // initialize OpenGL
@@ -286,6 +276,10 @@ int window::init_opengl()
 //------------------------------------------------------------------------------
 int window::create_framebuffer(int, int)
 {
+    if (!_hrc) {
+        return ERROR_FAIL;
+    }
+
     if (_fbo) {
         destroy_framebuffer();
     }
@@ -372,12 +366,39 @@ LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
 }
 
 //------------------------------------------------------------------------------
+bool window::toggle_fullscreen()
+{
+    if (_fullscreen) {
+        ShowWindow(_hwnd, SW_RESTORE);
+        SetWindowLongA(_hwnd, GWL_STYLE, windowed_style | WS_VISIBLE);
+        _fullscreen = false;
+
+        // reset the window dimensions. the resize message from above still
+        // uses the fullscreen style and doesn't have the right dimensions
+        {
+            RECT rect, border = {}; GetWindowRect(_hwnd, &rect);
+            AdjustWindowRect(&border, windowed_style, FALSE);
+            _size.x = rect.right - rect.left - (border.right - border.left);
+            _size.y = rect.bottom - rect.top - (border.bottom - border.top);
+            _renderer.resize(); // uses params in WndParams
+        }
+    } else {
+        SetWindowLongA(_hwnd, GWL_STYLE, fullscreen_style | WS_VISIBLE);
+        ShowWindow(_hwnd, SW_MAXIMIZE);
+        _fullscreen = true;
+    }
+    return true;
+}
+
+//------------------------------------------------------------------------------
 int window::activate(bool active, bool minimized)
 {
     if (active && !minimized) {
         if (!_active || _minimized) {
             SetForegroundWindow(_hwnd);
-            ShowWindow(_hwnd, SW_RESTORE);
+            if (_minimized) {
+                ShowWindow(_hwnd, SW_RESTORE);
+            }
             _active = true;
             _minimized = false;
         }

@@ -29,6 +29,7 @@ public:
     void end_frame();
 
     LRESULT message(UINT uCmd, WPARAM wParam, LPARAM lParam);
+    bool toggle_fullscreen();
 
     HWND hwnd() const { return _hwnd; }
     HDC hdc() const { return _hdc; }

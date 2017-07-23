@@ -177,11 +177,25 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
         g_Application->mouse_event(wParam, vec2((int16_t)LOWORD(lParam), (int16_t)HIWORD(lParam)));
         break;
 
+    case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
+        if (wParam == VK_RETURN && (HIWORD(lParam) & KF_ALTDOWN)) {
+            return 0;
+        }
         g_Application->key_event( lParam, true );
         break;
+
+    case WM_SYSKEYUP:
     case WM_KEYUP:
         g_Application->key_event( lParam, false );
+        break;
+
+    case WM_SYSCHAR:
+    case WM_CHAR:
+        if (wParam == VK_RETURN && (HIWORD(lParam) & KF_ALTDOWN)) {
+            g_Application->_window.toggle_fullscreen();
+            return 0;
+        }
         break;
 
     // glWnd Messages
@@ -189,7 +203,6 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     case WM_ACTIVATE:
     case WM_SIZE:
     case WM_MOVE:
-    case WM_SYSKEYDOWN:
     case WM_DESTROY:
         return g_Application->_window.message( nCmd, wParam, lParam );
 
