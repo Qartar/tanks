@@ -33,6 +33,10 @@ typedef struct game_client_s
     int     upgrades;
 
     usercmdgen input;
+
+    float usercmd_time;
+
+    constexpr static float usercmd_rate = 1000.0f / 60.0f;
 } game_client_t;
 
 //------------------------------------------------------------------------------

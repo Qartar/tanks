@@ -191,6 +191,8 @@ void session::connect_ack(char const* message_string)
     _clients[cls.number].refire_mod = 1.0f;
     _clients[cls.number].speed_mod = 1.0f;
 
+    _clients[0].usercmd_time = 0.0f;
+
     svs.clients[cls.number].active = true;
     strcpy( svs.clients[cls.number].name, cls.name );
     svs.clients[cls.number].color = cls.color;
@@ -202,7 +204,12 @@ void session::connect_ack(char const* message_string)
 //------------------------------------------------------------------------------
 void session::client_send ()
 {
+    if (_frametime - _clients[0].usercmd_time < _clients[0].usercmd_rate) {
+        return;
+    }
+
     game::usercmd cmd = _clients[0].input.generate();
+    _clients[0].usercmd_time = _frametime;
 
     _netchan.write_byte(clc_command);
     _netchan.write_vector(cmd.move);

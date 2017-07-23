@@ -19,6 +19,9 @@ typedef void (APIENTRY* PFNGLGENFRAMEBUFFERS)(GLsizei n, GLuint* framebuffers);
 typedef void (APIENTRY* PFNGLFRAMEBUFFERRENDERBUFFER)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 typedef void (APIENTRY* PFNGLBLITFRAMEBUFFER)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
+typedef BOOL (APIENTRY* PFNWGLSWAPINTERVALEXT)(GLint interval);
+typedef int (APIENTRY* PFNWGLGETSWAPINTERVALEXT)();
+
 static PFNGLBINDRENDERBUFFER glBindRenderbuffer = NULL;
 static PFNGLDELETERENDERBUFFERS glDeleteRenderbuffers = NULL;
 static PFNGLGENRENDERBUFFERS glGenRenderbuffers = NULL;
@@ -28,6 +31,9 @@ static PFNGLDELETEFRAMEBUFFERS glDeleteFramebuffers = NULL;
 static PFNGLGENFRAMEBUFFERS glGenFramebuffers = NULL;
 static PFNGLFRAMEBUFFERRENDERBUFFER glFramebufferRenderbuffer = NULL;
 static PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
+
+static PFNWGLSWAPINTERVALEXT wglSwapIntervalEXT = NULL;
+static PFNWGLGETSWAPINTERVALEXT wglGetSwapIntervalEXT = NULL;
 
 #define GL_FRAMEBUFFER                  0x8D40
 #define GL_READ_FRAMEBUFFER             0x8CA8
@@ -269,6 +275,13 @@ int window::init_opengl()
     glGenFramebuffers = (PFNGLGENFRAMEBUFFERS )wglGetProcAddress("glGenFramebuffers");
     glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFER )wglGetProcAddress("glFramebufferRenderbuffer");
     glBlitFramebuffer = (PFNGLBLITFRAMEBUFFER )wglGetProcAddress("glBlitFramebuffer");
+
+    wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXT )wglGetProcAddress("wglSwapIntervalEXT");
+    wglGetSwapIntervalEXT = (PFNWGLGETSWAPINTERVALEXT )wglGetProcAddress("wglGetSwapIntervalEXT");
+
+    if (wglSwapIntervalEXT) {
+        wglSwapIntervalEXT(0);
+    }
 
     return ERROR_NONE;
 }
