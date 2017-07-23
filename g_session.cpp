@@ -656,7 +656,7 @@ void session::key_event(unsigned char key, bool down)
 //------------------------------------------------------------------------------
 void session::cursor_event(vec2 position)
 {
-    vec2 size(g_Application->window()->size());
+    vec2i size = g_Application->window()->size();
     _cursor.x = position.x * 640 / size.x;
     _cursor.y = position.y * 480 / size.y;
 

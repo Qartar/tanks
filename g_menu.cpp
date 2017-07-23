@@ -16,15 +16,15 @@ void window::init ()
     _submenus.emplace_back(new menu::window);  // network
     _submenus.emplace_back(new menu::window);  // options
 
-    add_button<conditional_button>("Resume", vec2(64,32), vec2(96,32), &g_Game->_game_active, [](){
+    add_button<conditional_button>("Resume", vec2i(64,32), vec2i(96,32), &g_Game->_game_active, [](){
         g_Game->resume();
     });
 
-    add_button<submenu_button>("Network Game", vec2(192,32), vec2(96,32), this, _submenus[1].get());
-    add_button<submenu_button>("Local Game", vec2(320,32), vec2(96,32), this, _submenus[0].get());
-    add_button<submenu_button>("Game Options", vec2(448,32), vec2(96,32), this, _submenus[2].get());
+    add_button<submenu_button>("Network Game", vec2i(192,32), vec2i(96,32), this, _submenus[1].get());
+    add_button<submenu_button>("Local Game", vec2i(320,32), vec2i(96,32), this, _submenus[0].get());
+    add_button<submenu_button>("Game Options", vec2i(448,32), vec2i(96,32), this, _submenus[2].get());
 
-    add_button<button>("Quit", vec2(576,32), vec2(96,32), [](){
+    add_button<button>("Quit", vec2i(576,32), vec2i(96,32), [](){
         g_Game->stop_server();
         g_Game->stop_client();
         g_Application->quit(0);
@@ -32,13 +32,13 @@ void window::init ()
 
     // local
 
-    _submenus[0]->add_button<button>("New Round", vec2(48,80), vec2(64,32), [](){
+    _submenus[0]->add_button<button>("New Round", vec2i(48,80), vec2i(64,32), [](){
         g_Game->stop_server();
         g_Game->stop_client();
         g_Game->start_server_local();
     });
 
-    _submenus[0]->add_button<button>("Reset", vec2(48,128), vec2(64,32), [](){
+    _submenus[0]->add_button<button>("Reset", vec2i(48,128), vec2i(64,32), [](){
         g_Game->reset();
     });
 
@@ -46,31 +46,31 @@ void window::init ()
 
     _submenus[1]->_submenus.emplace_back(new menu::window);
     _submenus[1]->_submenus.emplace_back(new menu::window);
-    _submenus[1]->add_button<submenu_button>("Host", vec2(48,80), vec2(64,24), _submenus[1].get(), _submenus[1]->_submenus[0].get());
-    _submenus[1]->add_button<submenu_button>("Join", vec2(128,80), vec2(64,24), _submenus[1].get(), _submenus[1]->_submenus[1].get());
+    _submenus[1]->add_button<submenu_button>("Host", vec2i(48,80), vec2i(64,24), _submenus[1].get(), _submenus[1]->_submenus[0].get());
+    _submenus[1]->add_button<submenu_button>("Join", vec2i(128,80), vec2i(64,24), _submenus[1].get(), _submenus[1]->_submenus[1].get());
 
     // network->host
 
-    _submenus[1]->_submenus[0]->add_button<host_button>(vec2(144,128), vec2(256,24), [](){
+    _submenus[1]->_submenus[0]->add_button<host_button>(vec2i(144,128), vec2i(256,24), [](){
         g_Game->_dedicated = false;
         g_Game->start_server();
     });
 
     // network->join
 
-    _submenus[1]->_submenus[1]->add_button<button>("Refresh", vec2(240,80), vec2(64,24), [](){
+    _submenus[1]->_submenus[1]->add_button<button>("Refresh", vec2i(240,80), vec2i(64,24), [](){
         g_Game->info_ask( );
     });
 
     for (int ii = 0; ii < 8; ++ii) {
-        _submenus[1]->_submenus[1]->add_button<server_button>(vec2(144,128+ii*32), vec2(256,24), g_Game->cls.servers[ii].name, &g_Game->cls.servers[ii].ping, [ii](){
+        _submenus[1]->_submenus[1]->add_button<server_button>(vec2i(144,128+ii*32), vec2i(256,24), g_Game->cls.servers[ii].name, &g_Game->cls.servers[ii].ping, [ii](){
             g_Game->connect_to_server(ii);
         });
     }
 
     // options
 
-    _submenus[2]->add_button<client_button>("Player", vec2(64,104), vec2(96,80), &g_Game->cls.color);
+    _submenus[2]->add_button<client_button>("Player", vec2i(64,104), vec2i(96,80), &g_Game->cls.color);
 }
 
 //------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ bool window::key_event(int key, bool down)
 }
 
 //------------------------------------------------------------------------------
-bool window::cursor_event(vec2 position)
+bool window::cursor_event(vec2i position)
 {
     if (_active_menu && _active_menu->cursor_event(position)) {
         return true;

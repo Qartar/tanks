@@ -69,11 +69,7 @@ struct view
 {
     vec2 origin; //!< center
     vec2 size;
-
-    int x; //!< viewport left
-    int y; //!< viewport top
-    int width; //!< viewport width
-    int height; //!< viewport height
+    rect viewport;
 };
 
 //------------------------------------------------------------------------------

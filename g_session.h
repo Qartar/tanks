@@ -234,7 +234,7 @@ private:
     config::string _cl_color;
     config::integer _cl_weapon;
 
-    vec2 _cursor;
+    vec2i _cursor;
 
     void update_screen();
 

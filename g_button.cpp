@@ -27,7 +27,7 @@ bool button::key_event(int key, bool down)
 }
 
 //------------------------------------------------------------------------------
-bool button::cursor_event(vec2 position)
+bool button::cursor_event(vec2i position)
 {
     _over = _rectangle.contains(position);
     return false;
@@ -45,22 +45,22 @@ void button::draw(render::system* renderer) const
 }
 
 //------------------------------------------------------------------------------
-void button::draw_rectangle(render::system* renderer, menu::rectangle const& rect, color4 color) const
+void button::draw_rectangle(render::system* renderer, rect const& rect, color4 color) const
 {
-    renderer->draw_box(rect.size(), rect.center(), color);
+    renderer->draw_box(vec2(rect.size()), vec2(rect.center()), color);
 }
 
 //------------------------------------------------------------------------------
-void button::draw_rectangle(render::system* renderer, menu::rectangle const& rect, color4 color, color4 border_color) const
+void button::draw_rectangle(render::system* renderer, rect const& rect, color4 color, color4 border_color) const
 {
-    renderer->draw_box(rect.size(), rect.center(), border_color);
-    renderer->draw_box(rect.size() - vec2(2, 2), rect.center(), color);
+    renderer->draw_box(vec2(rect.size()), vec2(rect.center()), border_color);
+    renderer->draw_box(vec2(rect.size()) - vec2(2, 2), vec2(rect.center()), color);
 }
 
 //------------------------------------------------------------------------------
-void button::draw_text(render::system* renderer, menu::rectangle const& rect, std::string const& text, color4 color, int flags, float margin) const
+void button::draw_text(render::system* renderer, rect const& rect, std::string const& text, color4 color, int flags, float margin) const
 {
-    vec2 position = rect.center();
+    vec2i position = rect.center();
     vec2 size = renderer->string_size(text.c_str());
 
     if (flags & halign_left) {
@@ -82,11 +82,11 @@ void button::draw_text(render::system* renderer, menu::rectangle const& rect, st
     position.x = std::floor(position.x + 0.5f);
     position.y = std::floor(position.y + 0.5f);
 
-    renderer->draw_string(text.c_str(), position, color);
+    renderer->draw_string(text.c_str(), vec2(position), color);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-conditional_button::conditional_button(char const* text, vec2 position, vec2 size, bool* condition_ptr, std::function<void()>&& op_click)
+conditional_button::conditional_button(char const* text, vec2i position, vec2i size, bool* condition_ptr, std::function<void()>&& op_click)
     : button(text, position, size, std::move(op_click))
     , _condition_ptr(condition_ptr)
 {}
@@ -121,7 +121,7 @@ void conditional_button::draw(render::system* renderer) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-submenu_button::submenu_button(char const* text, vec2 position, vec2 size, menu::window* parent, menu::window* menu)
+submenu_button::submenu_button(char const* text, vec2i position, vec2i size, menu::window* parent, menu::window* menu)
     : button(text, position, size, [this](){ _active = _parent->activate(this, _menu); })
     , _parent(parent)
     , _menu(menu)
@@ -149,7 +149,7 @@ void submenu_button::draw(render::system* renderer) const
 char const* weapon_button::_strings[] = {"Cannon", "Missile", "Blaster"};
 
 //------------------------------------------------------------------------------
-weapon_button::weapon_button(game::weapon_type type, vec2 position, vec2 size)
+weapon_button::weapon_button(game::weapon_type type, vec2i position, vec2i size)
     : button(_strings[static_cast<int>(type)], position, size, [type](){g_Game->cls.weapon = type;})
     , _type(type)
 {}
@@ -166,16 +166,16 @@ void weapon_button::draw(render::system* renderer) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-client_button::client_button(char const* text, vec2 position, vec2 size, color3* color_ptr)
+client_button::client_button(char const* text, vec2i position, vec2i size, color3* color_ptr)
     : button(text, position, size)
-    , _text_rectangle(position + vec2(0, size.y / 2.0f - 12.0f), vec2(size.x - 16.0f, 14.0f))
+    , _text_rectangle(rect::from_center(position + vec2i(0, size.y / 2.0f - 12.0f), vec2i(size.x - 16.0f, 14.0f)))
     , _color_ptr(color_ptr)
     , _color_index(0)
     , _text_down(false)
     , _weapons({
-        weapon_button{game::weapon_type::cannon, position + vec2(size.x / 2 + 24 + 4, (size.y / 3 - 4) / 2 - size.y / 2), vec2(48, size.y / 3 - 4)},
-        weapon_button{game::weapon_type::missile, position + vec2(size.x / 2 + 24 + 4, 0), vec2(48, size.y / 3 - 4)},
-        weapon_button{game::weapon_type::blaster, position + vec2(size.x / 2 + 24 + 4, size.y / 2 - (size.y / 3 - 4) / 2), vec2(48, size.y / 3 - 4)}})
+        weapon_button{game::weapon_type::cannon, position + vec2i(size.x / 2 + 24 + 4, (size.y / 3 - 4) / 2 - size.y / 2), vec2i(48, size.y / 3 - 4)},
+        weapon_button{game::weapon_type::missile, position + vec2i(size.x / 2 + 24 + 4, 0), vec2i(48, size.y / 3 - 4)},
+        weapon_button{game::weapon_type::blaster, position + vec2i(size.x / 2 + 24 + 4, size.y / 2 - (size.y / 3 - 4) / 2), vec2i(48, size.y / 3 - 4)}})
 {}
 
 //------------------------------------------------------------------------------
@@ -214,7 +214,7 @@ bool client_button::key_event(int key, bool down)
 }
 
 //------------------------------------------------------------------------------
-bool client_button::cursor_event(vec2 position)
+bool client_button::cursor_event(vec2i position)
 {
     for (auto& button : _weapons) {
         button.cursor_event(position);
@@ -241,8 +241,8 @@ void client_button::draw(render::system* renderer) const
     draw_rectangle(renderer, _text_rectangle, menu::colors[text_button_color], menu::colors[text_border_color]);
     draw_text(renderer, _text_rectangle, g_Game->cls.name, menu::colors[7], valign_bottom|halign_left);
 
-    tank_body_model.draw(_rectangle.center(), 0, color4(*_color_ptr));
-    tank_turret_model.draw(_rectangle.center(), 0, color4(*_color_ptr));
+    tank_body_model.draw(vec2(_rectangle.center()), 0, color4(*_color_ptr));
+    tank_turret_model.draw(vec2(_rectangle.center()), 0, color4(*_color_ptr));
 
     for (auto const& button : _weapons) {
         button.draw(renderer);
@@ -250,10 +250,10 @@ void client_button::draw(render::system* renderer) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-server_button::server_button(vec2 position, vec2 size, char const* name_ptr, float const* ping_ptr, std::function<void()>&& op_click)
+server_button::server_button(vec2i position, vec2i size, char const* name_ptr, float const* ping_ptr, std::function<void()>&& op_click)
     : button("", position, size, std::move(op_click))
-    , _join_rectangle(position + vec2(size.x * 0.5f - 18.0f, 0), vec2(32, size.y - 4.0f))
-    , _text_rectangle(position - vec2(17, 0), size - vec2(38, 4))
+    , _join_rectangle(rect::from_center(position + vec2i(size.x * 0.5f - 18.0f, 0), vec2i(32, size.y - 4.0f)))
+    , _text_rectangle(rect::from_center(position - vec2i(17, 0), size - vec2i(38, 4)))
     , _name_ptr(name_ptr)
     , _ping_ptr(ping_ptr)
 {}
@@ -306,10 +306,10 @@ void server_button::draw(render::system* renderer) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-host_button::host_button(vec2 position, vec2 size, std::function<void()>&& op_click)
+host_button::host_button(vec2i position, vec2i size, std::function<void()>&& op_click)
     : button("Host", position, size, std::move(op_click))
-    , _create_rectangle(position + vec2(size.x * 0.5f - 18.0f, 0), vec2(32, size.y - 4.0f))
-    , _text_rectangle(position - vec2(17, 0), size - vec2(38, 4))
+    , _create_rectangle(rect::from_center(position + vec2i(size.x * 0.5f - 18.0f, 0), vec2i(32, size.y - 4.0f)))
+    , _text_rectangle(rect::from_center(position - vec2i(17, 0), size - vec2i(38, 4)))
     , _create_down(false)
     , _text_down(false)
     , _create_over(false)
@@ -345,7 +345,7 @@ bool host_button::key_event(int key, bool down)
 }
 
 //------------------------------------------------------------------------------
-bool host_button::cursor_event(vec2 position)
+bool host_button::cursor_event(vec2i position)
 {
     _text_over = _text_rectangle.contains(position);
     _create_over = _create_rectangle.contains(position);

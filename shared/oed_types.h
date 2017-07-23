@@ -14,6 +14,7 @@ Modified:   11/03/2006
 
 #include <cmath>   // sqrt
 #include <cstdint>
+#include <algorithm>
 
 #define ROLL    0
 #define PITCH   1
@@ -351,6 +352,93 @@ public:
     int dot(const vec2i &V) const { return x*V.x + y*V.y; }
     vec2i cross(int V) const { return vec2i(y*V, -x*V); }
     explicit operator vec2() const { return vec2((float)x, (float)y); }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// integer rectangle
+
+//------------------------------------------------------------------------------
+class rect
+{
+public:
+
+// constructors
+
+    rect() = default;
+    constexpr rect(int X, int Y, int W, int H) : _mins(X, Y), _maxs(W, H) {}
+    constexpr rect(vec2i mins, vec2i maxs) : _mins(mins), _maxs(maxs) {}
+
+    rect& operator=(const rect &R) { _mins=R._mins; _maxs=R._maxs; return *this; }
+    bool operator==(const rect &R) const { return _mins == R._mins && _maxs == R._maxs; }
+    bool operator!=(const rect &R) const { return _mins != R._mins || _maxs != R._maxs; }
+    vec2i operator[](std::size_t idx) const { return (&_mins)[idx]; }
+    vec2i& operator[](std::size_t idx) { return (&_mins)[idx]; }
+
+    vec2i& mins() { return _mins; }
+    vec2i& maxs() { return _mins; }
+    vec2i mins() const { return _mins; }
+    vec2i maxs() const { return _maxs; }
+
+// algebraic vector operations
+
+    rect operator+(vec2i const& V) const { return rect(_mins+V, _maxs+V); }
+    rect operator-(vec2i const& V) const { return rect(_mins-V, _maxs-V); }
+    rect operator*(int S) const { return rect(_mins*S, _maxs*S); }
+    rect operator/(int S) const { return rect(_mins/S, _maxs/S); }
+
+// boolean operations
+
+    rect operator|(rect const& R) const {
+        return rect(vec2i(std::min<int>(_mins.x, R._mins.x),
+                          std::min<int>(_mins.y, R._mins.y)),
+                    vec2i(std::max<int>(_maxs.x, R._maxs.x),
+                          std::max<int>(_maxs.y, R._maxs.y)));
+    }
+
+    rect operator&(rect const& R) const {
+        return rect(vec2i(std::max<int>(_mins.x, R._mins.x),
+                          std::max<int>(_mins.y, R._mins.y)),
+                    vec2i(std::min<int>(_maxs.x, R._maxs.x),
+                          std::min<int>(_maxs.y, R._maxs.y)));
+    }
+
+// algebraic vector assignment operations
+
+    rect& operator+=(vec2i const& V) { _mins += V; _maxs += V; return *this; }
+    rect& operator-=(vec2i const& V) { _mins -= V; _maxs -= V; return *this; }
+    rect& operator*=(int S) { _mins *= S; _maxs *= S; return *this; }
+    rect& operator/=(int S) { _mins /= S; _maxs /= S; return *this; }
+
+// boolean assignment operations
+
+    rect& operator|=(rect const& R) { *this = *this | R; return *this; }
+    rect& operator&=(rect const& R) { *this = *this & R; return *this; }
+
+// utility functions
+
+    vec2i center() const { return _mins + (_maxs - _mins) / 2; }
+    vec2i size() const { return _maxs - _mins; }
+    int area() const { return (_maxs.x - _mins.x) * (_maxs.y - _mins.y); }
+
+    bool contains(vec2i point) const {
+        return point.x >= _mins.x
+            && point.y >= _mins.y
+            && point.x <= _maxs.x
+            && point.y <= _maxs.y;
+    }
+
+    void clear() { _mins.clear(); _maxs.clear(); }
+
+    bool empty() const { return _maxs.x <= _mins.x || _maxs.y <= _mins.y; }
+    bool inverted() const { return _maxs.x < _mins.x && _maxs.y < _mins.y; }
+
+    static rect from_center(vec2i center, vec2i size) {
+        return rect(center - size / 2, center + (size - size / 2));
+    }
+
+protected:
+    vec2i _mins;
+    vec2i _maxs;
 };
 
 //

@@ -12,6 +12,7 @@ int system::init()
 {
     _view.size = vec2(_window->framebuffer_size());
     _view.origin = _view.size * 0.5f;
+    _view.viewport = {};
 
     set_default_state();
 
@@ -79,12 +80,16 @@ void system::set_default_state()
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glViewport(
-        _view.x,
-        _view.y,
-        _view.width ? _view.width : _window->framebuffer_size().x,
-        _view.height ? _view.height : _window->framebuffer_size().y
-    );
+    if (!_view.viewport.empty()) {
+        glViewport(
+            _view.viewport.mins().x,
+            _view.viewport.mins().y,
+            _view.viewport.size().x,
+            _view.viewport.size().y
+        );
+    } else {
+        glViewport(0, 0, _window->framebuffer_size().x, _window->framebuffer_size().y);
+    }
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
