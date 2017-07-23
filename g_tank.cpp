@@ -654,18 +654,33 @@ void projectile::touch(object *other, physics::contact const* contact)
             g_Game->add_score( owner_tank->_player_index, 1 );
             other_tank->_dead_time = g_Game->_frametime;
 
-            int r = rand()%3;
-            switch (r) {
-                case 0:
-                    g_Game->write_message(va("%s couldn't take %s's HEAT.", other_tank->player_name(), owner_tank->player_name()));
+            char const* fmt = "";
+
+            switch (_type) {
+                case weapon_type::cannon:
+                    switch (rand()%3) {
+                        case 0: fmt = "%s couldn't take %s's HEAT."; break;
+                        case 1: fmt = "%s was on the wrong end of %s's cannon."; break;
+                        case 2: fmt = "%s ate all 125mm of %s's boom stick."; break;
+                    }
                     break;
-                case 1:
-                    g_Game->write_message(va("%s was on the wrong end of %s's cannon.", other_tank->player_name(), owner_tank->player_name()));
+
+                case weapon_type::missile:
+                    switch (rand()%2) {
+                        case 0: fmt = "%s couldn't hide from %s's heat seeker."; break;
+                        case 1: fmt = "%s ate %s's rocket."; break;
+                    }
                     break;
-                case 2:
-                    g_Game->write_message(va("%s ate all 125mm of %s's boom stick.", other_tank->player_name(), owner_tank->player_name()));
+
+                case weapon_type::blaster:
+                    switch (rand()%2) {
+                        case 0: fmt = "%s was melted by %s's blaster."; break;
+                        case 1: fmt = "%s was blasted by %s."; break;
+                    }
                     break;
             }
+
+            g_Game->write_message(va(fmt, other_tank->player_name(), owner_tank->player_name()));
         }
     }
 }
