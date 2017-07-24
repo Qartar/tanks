@@ -681,43 +681,65 @@ void session::add_score(int player_index, int score)
 //------------------------------------------------------------------------------
 void session::draw_score ()
 {
-    int i, n, count;
+    int width = _renderer->view().size.x;
+    int height = _renderer->view().size.y;
 
-    int width = DEFAULT_W;
-    int height = DEFAULT_H;
+    // draw console/chat box
 
-    if ( _client_say )
-    {
+    if (_client_say) {
         _renderer->draw_string("say:", vec2(width/4,height-16), menu::colors[7]);
         _renderer->draw_string(_clientsay, vec2(width/4+32,height-16), menu::colors[7]);
     }
 
-    if ( _menu_active )
+    // don't draw score if menu is active
+
+    if (_menu_active) {
         return;
+    }
 
-    count = 0;
-    if ( _multiplayer )
-        for ( i=0 ; i<MAX_PLAYERS ; i++ )
-        {
-            if ( svs.clients[i].active )
-                count++;
-        }
-    else
-        count = 2;
+    // show player if upgrades are available
 
-    if ( _clients[cls.number].upgrades )
-    {
+    if (_clients[cls.number].upgrades) {
         int num = _clients[cls.number].upgrades;
 
-        if ( num > 1 )
-            _renderer->draw_string(va( "you have %i upgrades waiting...", num ), vec2(8,12), menu::colors[7]);
-        else
+        if (num > 1) {
+            _renderer->draw_string(va( "you have %i upgrades waiting...", num), vec2(8,12), menu::colors[7]);
+        } else {
             _renderer->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu::colors[7]);
+        }
         _renderer->draw_string("for help with upgrades press F9", vec2(8,24), menu::colors[7]);
     }
 
-    _renderer->draw_box(vec2(96,8+12*count), vec2(width-32-22,32+4+6*count), menu::colors[4]);
-    _renderer->draw_box(vec2(96,8+12*count-2), vec2(width-32-22,32+4+6*count), menu::colors[5]);
+    // count active players and maximum name width
+
+    int panel_width = 96;
+    int active_count = 0;
+
+    if (_multiplayer) {
+        for (auto const& cl : svs.clients) {
+            if (cl.active) {
+                int cl_width = _renderer->string_size(cl.name).x;
+                panel_width = std::max<int>(panel_width, cl_width + 40);
+                active_count++;
+            }
+        }
+    } else {
+        active_count = 2;
+    }
+
+    // draw the score panel
+
+    _renderer->draw_box(
+        vec2(panel_width, active_count*12 + 8),
+        vec2(width - panel_width/2 - 16, active_count*6 + 20),
+        menu::colors[4]);
+
+    _renderer->draw_box(
+        vec2(panel_width - 2, active_count*12 + 8 - 2),
+        vec2(width - panel_width/2 - 16, active_count*6 + 20),
+        menu::colors[5]);
+
+    // sort players by score
 
     std::array<int, MAX_PLAYERS> sort;
     std::iota(sort.begin(), sort.end(), 0);
@@ -725,22 +747,27 @@ void session::draw_score ()
         return _score[lhs] > _score[rhs];
     });
 
-    for ( i=0,n=0 ; i<MAX_PLAYERS ; i++ ) {
-        if (!svs.clients[sort[i]].active) {
+    // draw each player score
+
+    for (int n = 0, ii = 0; ii < MAX_PLAYERS; ++ii) {
+        if (!svs.clients[sort[ii]].active) {
             continue;
         }
 
-        _renderer->draw_box(vec2(7,7), vec2(width-96, 32+11+12*n), color4(svs.clients[sort[i]].color));
-        _renderer->draw_string(svs.clients[ sort[ i ] ].name, vec2(width-96+4, 32+14+12*n), menu::colors[7]);
-        _renderer->draw_string(va(": %i", _score[ sort[ i ] ]), vec2(width-96+64+4,32+14+12*n), menu::colors[7]);
+        std::string score = va("%d", _score[sort[ii]]);
+        int score_width = _renderer->string_size(score.c_str()).x;
+
+        _renderer->draw_box(vec2(7,7), vec2(width - panel_width - 8, n*12 + 26), color4(svs.clients[sort[ii]].color));
+        _renderer->draw_string(svs.clients[sort[ii]].name, vec2(width - panel_width - 2, n*12 + 30), menu::colors[7]);
+        _renderer->draw_string(score.c_str(), vec2(width - score_width - 20, n*12 + 30), menu::colors[7]);
 
         n++;
     }
 
-    if ( _restart_time > _frametime )
-    {
-        int     nTime = ceil((_restart_time - _frametime));
+    // draw restart timer
 
+    if (_restart_time > _frametime) {
+        int nTime = ceil((_restart_time - _frametime));
         _renderer->draw_string(va("Restart in... %i", nTime), vec2(width/2-48,16+13), menu::colors[7]);
     }
 }
