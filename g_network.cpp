@@ -83,7 +83,7 @@ void session::get_packets ()
                 svs.clients[ii].netchan.write_byte(svc_disconnect);
                 svs.clients[ii].netchan.transmit();
 
-                write_message(va("%s timed out.", svs.clients[ii].name));
+                write_message(va("%s timed out.", svs.clients[ii].info.name.data()));
                 client_disconnect(ii);
             }
         }
@@ -167,13 +167,13 @@ void session::write_info(network::message& message, int client)
     message.write_byte( svc_info );
     message.write_byte( client );
     message.write_byte( svs.clients[client].active );
-    message.write_string( svs.clients[client].name );
+    message.write_string( svs.clients[client].info.name.data() );
 
-    message.write_byte( svs.clients[client].color.r * 255 );
-    message.write_byte( svs.clients[client].color.g * 255 );
-    message.write_byte( svs.clients[client].color.b * 255 );
+    message.write_float( svs.clients[client].info.color.r );
+    message.write_float( svs.clients[client].info.color.g );
+    message.write_float( svs.clients[client].info.color.b );
 
-    message.write_byte( static_cast<int>(svs.clients[client].weapon ) );
+    message.write_byte( static_cast<int>(svs.clients[client].info.weapon ) );
 
     //  write extra shit
 
@@ -203,18 +203,18 @@ void session::read_info(network::message& message)
     svs.clients[client].active = (active == 1);
 
     string = message.read_string();
-    strncpy(svs.clients[client].name, string, SHORT_STRING);
+    strncpy(svs.clients[client].info.name.data(), string, SHORT_STRING);
 
-    svs.clients[client].color.r = message.read_byte() / 255.0f;
-    svs.clients[client].color.g = message.read_byte() / 255.0f;
-    svs.clients[client].color.b = message.read_byte() / 255.0f;
+    svs.clients[client].info.color.r = message.read_float();
+    svs.clients[client].info.color.g = message.read_float();
+    svs.clients[client].info.color.b = message.read_float();
 
-    svs.clients[client].weapon = static_cast<weapon_type>(message.read_byte());
+    svs.clients[client].info.weapon = static_cast<weapon_type>(message.read_byte());
 
     game::tank* player = _world.player(client);
     if (player) {
-        player->_color = color4(svs.clients[client].color);
-        player->_weapon = svs.clients[client].weapon;
+        player->_color = color4(svs.clients[client].info.color);
+        player->_weapon = svs.clients[client].info.weapon;
     }
 
     _clients[client].upgrades = message.read_byte( );

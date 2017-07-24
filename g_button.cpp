@@ -150,7 +150,7 @@ char const* weapon_button::_strings[] = {"Cannon", "Missile", "Blaster"};
 
 //------------------------------------------------------------------------------
 weapon_button::weapon_button(game::weapon_type type, vec2i position, vec2i size)
-    : button(_strings[static_cast<int>(type)], position, size, [type](){g_Game->cls.weapon = type;})
+    : button(_strings[static_cast<int>(type)], position, size, [type](){g_Game->cls.info.weapon = type;})
     , _type(type)
 {}
 
@@ -158,7 +158,7 @@ weapon_button::weapon_button(game::weapon_type type, vec2i position, vec2i size)
 void weapon_button::draw(render::system* renderer) const
 {
     int border_color = _over ? 6 : 4;
-    int button_color = (_down || g_Game->cls.weapon == _type) ? 3 : 5;
+    int button_color = (_down || g_Game->cls.info.weapon == _type) ? 3 : 5;
     int text_color = button_color + 2;
 
     draw_rectangle(renderer, _rectangle, menu::colors[button_color], menu::colors[border_color]);
@@ -239,7 +239,7 @@ void client_button::draw(render::system* renderer) const
     draw_text(renderer, _rectangle, _text, menu::colors[text_color], valign_top, 8.0f);
 
     draw_rectangle(renderer, _text_rectangle, menu::colors[text_button_color], menu::colors[text_border_color]);
-    draw_text(renderer, _text_rectangle, g_Game->cls.name, menu::colors[7], valign_bottom|halign_left);
+    draw_text(renderer, _text_rectangle, g_Game->cls.info.name.data(), menu::colors[7], valign_bottom|halign_left);
 
     tank_body_model.draw(vec2(_rectangle.center()), 0, color4(*_color_ptr));
     tank_turret_model.draw(vec2(_rectangle.center()), 0, color4(*_color_ptr));

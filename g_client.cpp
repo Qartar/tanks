@@ -20,30 +20,31 @@ void session::init_client()
     _client_button_down = 0;
     _client_say = 0;
 
-    if ( strlen(_cl_name) )
-        strcpy( cls.name, _cl_name );
-    else
-        GetUserNameA( cls.name, (LPDWORD )&length );
+    if (strlen(_cl_name)) {
+        strncpy(cls.info.name.data(), _cl_name, cls.info.name.size());
+    } else {
+        GetUserNameA(cls.info.name.data(), (LPDWORD )&length);
+    }
 
     text.parse( _cl_color );
-    cls.color.r = (float )atoi(text.argv(0)) / 255.0f;
-    cls.color.g = (float )atoi(text.argv(1)) / 255.0f;
-    cls.color.b = (float )atoi(text.argv(2)) / 255.0f;
+    cls.info.color.r = (float )atoi(text.argv(0)) / 255.0f;
+    cls.info.color.g = (float )atoi(text.argv(1)) / 255.0f;
+    cls.info.color.b = (float )atoi(text.argv(2)) / 255.0f;
 
-    csum = cls.color.r + cls.color.g + cls.color.b;
+    csum = cls.info.color.r + cls.info.color.g + cls.info.color.b;
     if ( csum < colorMinFrac ) {
         if ( csum == 0.0f ) {
-            cls.color.r = cls.color.g = cls.color.b = colorMinFrac * 0.334f;
+            cls.info.color.r = cls.info.color.g = cls.info.color.b = colorMinFrac * 0.334f;
         } else {
             float   invsum = colorMinFrac / csum;
 
-            cls.color.r *= invsum;
-            cls.color.g *= invsum;
-            cls.color.b *= invsum;
+            cls.info.color.r *= invsum;
+            cls.info.color.g *= invsum;
+            cls.info.color.b *= invsum;
         }
     }
 
-    cls.weapon = static_cast<weapon_type>((int)_cl_weapon);
+    cls.info.weapon = static_cast<weapon_type>((int)_cl_weapon);
 
     _net_bytes.fill(0);
 }
@@ -51,9 +52,9 @@ void session::init_client()
 //------------------------------------------------------------------------------
 void session::shutdown_client()
 {
-    _cl_name = cls.name;
-    _cl_color = va("%i %i %i", (int )(cls.color.r*255), (int )(cls.color.g*255), (int )(cls.color.b*255) );
-    _cl_weapon = static_cast<int>(cls.weapon);
+    _cl_name = cls.info.name.data();
+    _cl_color = va("%i %i %i", (int )(cls.info.color.r*255), (int )(cls.info.color.g*255), (int )(cls.info.color.b*255) );
+    _cl_weapon = static_cast<int>(cls.info.weapon);
 }
 
 //------------------------------------------------------------------------------
@@ -164,7 +165,7 @@ void session::connect_to_server (int index)
             break;
         }
     }
-    cls.socket.printf(_netserver, "connect %i %s %i", PROTOCOL_VERSION, cls.name, _netchan.netport());
+    cls.socket.printf(_netserver, "connect %i %s %i", PROTOCOL_VERSION, cls.info.name.data(), _netchan.netport());
 }
 
 //------------------------------------------------------------------------------
@@ -194,9 +195,9 @@ void session::connect_ack(char const* message_string)
     _clients[0].usercmd_time = 0.0f;
 
     svs.clients[cls.number].active = true;
-    strcpy( svs.clients[cls.number].name, cls.name );
-    svs.clients[cls.number].color = cls.color;
-    svs.clients[cls.number].weapon = cls.weapon;
+    svs.clients[cls.number].info.name, cls.info.name;
+    svs.clients[cls.number].info.color = cls.info.color;
+    svs.clients[cls.number].info.weapon = cls.info.weapon;
 
     write_info(_netchan, cls.number);
 }
@@ -215,6 +216,19 @@ void session::client_send ()
     _netchan.write_vector(cmd.move);
     _netchan.write_vector(cmd.look);
     _netchan.write_byte(static_cast<int>(cmd.action));
+
+    // check if user info has been changed
+    if (!_menu_active) {
+        if (strcmp(svs.clients[cls.number].info.name.data(), cls.info.name.data())
+            || svs.clients[cls.number].info.color != cls.info.color
+            || svs.clients[cls.number].info.weapon != cls.info.weapon) {
+
+            strcpy(svs.clients[cls.number].info.name.data(), cls.info.name.data());
+            svs.clients[cls.number].info.color = cls.info.color;
+            svs.clients[cls.number].info.weapon = cls.info.weapon;
+            write_info(_netchan, cls.number);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------

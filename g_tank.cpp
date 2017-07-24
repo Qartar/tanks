@@ -489,7 +489,7 @@ char const* tank::player_name() const
               int(_color.r * 255),
               int(_color.g * 255),
               int(_color.b * 255),
-              g_Game->svs.clients[_player_index].name);
+              g_Game->svs.clients[_player_index].info.name.data());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

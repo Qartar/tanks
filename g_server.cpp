@@ -29,9 +29,9 @@ void session::start_server ()
         svs.clients[0].active = true;
         svs.clients[0].local = true;
 
-        strncpy(svs.clients[0].name, cls.name, SHORT_STRING);
-        svs.clients[0].color = cls.color;
-        svs.clients[0].weapon = cls.weapon;
+        svs.clients[0].info.name = cls.info.name;
+        svs.clients[0].info.color = cls.info.color;
+        svs.clients[0].info.weapon = cls.info.weapon;
 
         spawn_player(0);
     }
@@ -65,8 +65,10 @@ void session::start_server_local()
             svs.clients[ii].active = true;
             svs.clients[ii].local = true;
 
-            fmt(svs.clients[ii].name, "Player %i", ii+1);
-            svs.clients[ii].color = player_colors[ii];
+            snprintf(svs.clients[ii].info.name.data(),
+                     svs.clients[ii].info.name.size(), "Player %zu", ii+1);
+            svs.clients[ii].info.color = player_colors[ii];
+            svs.clients[ii].info.weapon = weapon_type::cannon;
         } else {
             svs.clients[ii].active = false;
             svs.clients[ii].local = false;
@@ -130,16 +132,16 @@ void session::server_packet(network::message& message, int client)
                 break;
 
             case clc_disconnect:
-                write_message(va("%s disconnected.", svs.clients[client].name ));
+                write_message(va("%s disconnected.", svs.clients[client].info.name.data() ));
                 client_disconnect(client);
                 break;
 
             case clc_say:
                 write_message(va( "\\c%02x%02x%02x%s\\cx: %s",
-                    (int )(svs.clients[client].color.r * 255),
-                    (int )(svs.clients[client].color.g * 255),
-                    (int )(svs.clients[client].color.b * 255),
-                    svs.clients[client].name, message.read_string())); 
+                    (int )(svs.clients[client].info.color.r * 255),
+                    (int )(svs.clients[client].info.color.g * 255),
+                    (int )(svs.clients[client].info.color.b * 255),
+                    svs.clients[client].info.name.data(), message.read_string()));
                 break;
 
             case clc_upgrade:
@@ -160,6 +162,27 @@ void session::server_packet(network::message& message, int client)
 void session::write_frame()
 {
     network::message_storage message;
+
+    // check if local user info has been changed
+    if (!_menu_active && svs.clients[0].local) {
+        if (strcmp(svs.clients[0].info.name.data(), cls.info.name.data())
+            || svs.clients[0].info.color != cls.info.color
+            || svs.clients[0].info.weapon != cls.info.weapon) {
+
+            strcpy(svs.clients[0].info.name.data(), cls.info.name.data());
+            svs.clients[0].info.color = cls.info.color;
+            svs.clients[0].info.weapon = cls.info.weapon;
+
+            game::tank* player = _world.player(0);
+            if (player) {
+                player->_color = color4(svs.clients[0].info.color);
+                player->_weapon = svs.clients[0].info.weapon;
+            }
+
+            write_info(message, 0);
+        }
+    }
+
 
     _world.write_snapshot(message);
 
@@ -197,7 +220,7 @@ void session::client_connect(network::address const& remote, char const* message
     auto& cl = svs.clients[client];
     int netport, version;
 
-    sscanf(message_string, "connect %i %s %i", &version, cl.name, &netport);
+    sscanf(message_string, "connect %i %s %i", &version, cl.info.name.data(), &netport);
 
     if (version != PROTOCOL_VERSION) {
         svs.socket.printf(remote, va("fail \"Bad protocol version: %i\"", version));
@@ -212,7 +235,7 @@ void session::client_connect(network::address const& remote, char const* message
 
         spawn_player(client);
 
-        write_message(va("%s connected.", cl.name));
+        write_message(va("%s connected.", cl.info.name.data()));
 
         // broadcast existing client information to new client
         for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
@@ -349,10 +372,10 @@ void session::read_upgrade(int client, int upgrade)
         }
 
         write_message( va( "\\c%02x%02x%02x%s\\cx has upgraded their %s!",
-            (int )(svs.clients[client].color.r * 255),
-            (int )(svs.clients[client].color.g * 255),
-            (int )(svs.clients[client].color.b * 255),
-            svs.clients[client].name, sz_upgrades[upgrade] ) ); 
+            (int )(svs.clients[client].info.color.r * 255),
+            (int )(svs.clients[client].info.color.g * 255),
+            (int )(svs.clients[client].info.color.b * 255),
+            svs.clients[client].info.name.data(), sz_upgrades[upgrade] ) );
 
         write_info(netmsg, client);
         broadcast(netmsg);

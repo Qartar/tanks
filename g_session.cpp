@@ -83,9 +83,9 @@ int session::init (char const *cmdline)
     for (auto& cl : svs.clients) {
         cl.active = false;
         cl.local = false;
-        cl.color = color3(1,1,1);
-        cl.name[0] = '\0';
-        cl.weapon = weapon_type::cannon;
+        cl.info.name.fill('\0');
+        cl.info.color = color3(1,1,1);
+        cl.info.weapon = weapon_type::cannon;
     }
 
     memset( _clientsay, 0, LONG_STRING );
@@ -310,18 +310,19 @@ void session::key_event(unsigned char key, bool down)
             if ( shift )
                 key = _shift_keys[key];
 
-            if ( key == K_BACKSPACE )
-                cls.name[strlen(cls.name)-1] = 0;
-            else if ( key == K_ENTER )
+            std::size_t len = strnlen(cls.info.name.data(), cls.info.name.size());
+
+            if (key == K_BACKSPACE && len) {
+                cls.info.name[len-1] = 0;
+            } else if (key == K_ENTER) {
                 _client_button_down = false;
-            else if ( key <= K_SPACE )
+            } else if (key < K_SPACE) {
                 return;
-            else if ( key > K_BACKSPACE )
+            } else if (key >= K_BACKSPACE) {
                 return;
-            else if ( strlen(cls.name) < 13 )
-            {
-                cls.name[strlen(cls.name)+1] = 0;
-                cls.name[strlen(cls.name)] = key;
+            } else if (len < 13) {
+                cls.info.name[len+1] = 0;
+                cls.info.name[len] = key;
             }
 
             return;
@@ -339,18 +340,19 @@ void session::key_event(unsigned char key, bool down)
             if ( shift )
                 key = _shift_keys[key];
 
-            if ( key == K_BACKSPACE )
+            std::size_t len = strnlen(svs.name, countof(svs.name));
+
+            if (key == K_BACKSPACE && len) {
                 svs.name[strlen(svs.name)-1] = 0;
-            else if ( key == K_ENTER )
+            } else if (key == K_ENTER) {
                 _server_button_down = false;
-            else if ( key < K_SPACE )
+            } else if (key < K_SPACE) {
                 return;
-            else if ( key > K_BACKSPACE )
+            } else if (key >= K_BACKSPACE) {
                 return;
-            else if ( strlen(svs.name) < 32 )
-            {
-                svs.name[strlen(svs.name)+1] = 0;
-                svs.name[strlen(svs.name)] = key;
+            } else if (len < countof(svs.name)) {
+                svs.name[len+1] = 0;
+                svs.name[len] = key;
             }
 
             return;
@@ -469,10 +471,10 @@ void session::key_event(unsigned char key, bool down)
                             write_message( va( "[Server]: %s", _clientsay ) );
                         else {
                             write_message( va( "\\c%02x%02x%02x%s\\cx: %s",
-                                (int )(cls.color.r * 255),
-                                (int )(cls.color.g * 255),
-                                (int )(cls.color.b * 255),
-                                cls.name, _clientsay ) ); 
+                                (int )(cls.info.color.r * 255),
+                                (int )(cls.info.color.g * 255),
+                                (int )(cls.info.color.b * 255),
+                                cls.info.name.data(), _clientsay ) );
                         }
                     }
                 }
@@ -718,7 +720,7 @@ void session::draw_score ()
     if (_multiplayer) {
         for (auto const& cl : svs.clients) {
             if (cl.active) {
-                int cl_width = _renderer->string_size(cl.name).x;
+                int cl_width = _renderer->string_size(cl.info.name.data()).x;
                 panel_width = std::max<int>(panel_width, cl_width + 40);
                 active_count++;
             }
@@ -757,8 +759,8 @@ void session::draw_score ()
         std::string score = va("%d", _score[sort[ii]]);
         int score_width = _renderer->string_size(score.c_str()).x;
 
-        _renderer->draw_box(vec2(7,7), vec2(width - panel_width - 8, n*12 + 26), color4(svs.clients[sort[ii]].color));
-        _renderer->draw_string(svs.clients[sort[ii]].name, vec2(width - panel_width - 2, n*12 + 30), menu::colors[7]);
+        _renderer->draw_box(vec2(7,7), vec2(width - panel_width - 8, n*12 + 26), color4(svs.clients[sort[ii]].info.color));
+        _renderer->draw_string(svs.clients[sort[ii]].info.name.data(), vec2(width - panel_width - 2, n*12 + 30), menu::colors[7]);
         _renderer->draw_string(score.c_str(), vec2(width - score_width - 20, n*12 + 30), menu::colors[7]);
 
         n++;
@@ -947,8 +949,8 @@ void session::spawn_player(int num)
 
     assert(_world.player(num) == nullptr);
     game::tank* player = _world.spawn_player(num);
-    player->_color = color4(svs.clients[num].color);
-    player->_weapon = svs.clients[num].weapon;
+    player->_color = color4(svs.clients[num].info.color);
+    player->_weapon = svs.clients[num].info.weapon;
     player->_client = _clients + num;
 
     player->respawn();

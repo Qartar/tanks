@@ -101,6 +101,14 @@ typedef struct  message_s
 
 #define MAX_MESSAGES    32
 
+//------------------------------------------------------------------------------
+struct userinfo
+{
+    std::array<char, 64> name;
+    color3 color;
+    weapon_type weapon;
+};
+
 //
 // SERVER SIDE DATA
 //
@@ -111,11 +119,8 @@ typedef struct client_s
     bool    active;
     bool    local;
 
-    network::channel   netchan;
-
-    char name[SHORT_STRING];
-    color3 color;
-    weapon_type weapon;
+    network::channel netchan;
+    game::userinfo info;
 } client_t;
 
 //------------------------------------------------------------------------------
@@ -149,9 +154,8 @@ typedef struct remote_server_s
 //------------------------------------------------------------------------------
 typedef struct client_state_s
 {
-    color3  color;
-    char    name[SHORT_STRING];
-    weapon_type weapon;
+    game::userinfo info;
+
     int     number;
 
     char    server[SHORT_STRING];
