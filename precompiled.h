@@ -5,7 +5,7 @@
 
 #include "shared.h"
 
-#include <windows.h>
+#include "win_include.h"
 //  data type headers
 #include "r_particle.h"
 #include "r_model.h"

@@ -46,6 +46,7 @@ set(tanks-sources
     resource.h
     win_main.cpp
     win_main.h
+    win_include.h
 )
 
 add_executable(tanks WIN32

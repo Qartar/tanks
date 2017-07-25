@@ -14,8 +14,6 @@ Date    :   10/16/2004
 
 #include <cstddef>
 
-#define WIN32_LEAN_AND_MEAN     // exclude rarely used Windows crap
-
 #define APP_CLASSNAME       "Tanks!"
 
 #define PORT_SERVER     28101
