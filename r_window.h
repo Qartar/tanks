@@ -40,6 +40,7 @@ public:
     vec2i framebuffer_size() const { return _framebuffer_size; }
     int width() const { return _physical_size.x; }
     int height() const { return _physical_size.y; }
+    bool fullscreen() const { return _fullscreen; }
 
     render::system* renderer() { return &_renderer; }
 

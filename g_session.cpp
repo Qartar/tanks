@@ -257,13 +257,23 @@ void session::update_screen()
 //------------------------------------------------------------------------------
 void session::draw_menu()
 {
-    // draw menu
+    // update cursor visibility
 
-    if (_menu_active) {
+    if (_menu_active || !_renderer->window()->fullscreen()) {
         if (!_show_cursor) {
             ShowCursor(TRUE);
             _show_cursor = true;
         }
+    } else {
+        if (_show_cursor) {
+            ShowCursor(FALSE);
+            _show_cursor = false;
+        }
+    }
+
+    // draw menu
+
+    if (_menu_active) {
 
         // draw splash image
 
@@ -274,10 +284,6 @@ void session::draw_menu()
         // draw menu items
 
         _menu.draw(_renderer);
-
-    } else if (_show_cursor) {
-        ShowCursor( FALSE );
-        _show_cursor = false;
     }
 }
 
