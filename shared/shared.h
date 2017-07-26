@@ -39,9 +39,6 @@ Date    :   10/16/2004
 #include "oed_files.h"
 #include "oed_tools.h"
 
-#define strnicmp    _strnicmp
-#define stricmp     _stricmp
-
 class vObject
 {
 public:

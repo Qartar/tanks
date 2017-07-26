@@ -76,16 +76,12 @@ void window::create()
     if ( (command = strstr( g_Application->init_string(), "fullscreen" )) )
         fullscreen = ( atoi(command+11) > 0 );
 
-    create(
-        DEFAULT_W,
-        DEFAULT_H,
-        DEFAULT_X,
-        DEFAULT_Y,
-        fullscreen );
+    create(CW_USEDEFAULT, 0, DEFAULT_W, DEFAULT_H, fullscreen);
 
     _renderer.init();
 }
 
+//------------------------------------------------------------------------------
 void window::end_frame ()
 {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
@@ -117,7 +113,7 @@ window::~window()
 }
 
 //------------------------------------------------------------------------------
-int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
+int window::create(int xpos, int ypos, int width, int height, bool fullscreen)
 {
     SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
@@ -152,8 +148,8 @@ int window::create(int width, int height, int xpos, int ypos, bool fullscreen)
         APP_CLASSNAME,
         "Tanks!",
         style,
-        CW_USEDEFAULT,
-        0,
+        xpos,
+        ypos,
         rect.right - rect.left,
         rect.bottom - rect.top,
         NULL, NULL,
@@ -393,7 +389,7 @@ LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
             return 0;
 
         case WM_DPICHANGED: {
-            resize_for_dpi(reinterpret_cast<RECT*>(lParam), _logical_size, HIWORD(wParam));
+            resize_for_dpi(reinterpret_cast<RECT*>(lParam), HIWORD(wParam));
             break;
         }
 
@@ -405,7 +401,7 @@ LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
 }
 
 //------------------------------------------------------------------------------
-void window::resize_for_dpi(RECT const* suggested, vec2i logical_size, int dpi)
+void window::resize_for_dpi(RECT const* suggested, int dpi)
 {
     // By default Windows adjusts the window to preserve scale for the entire
     // window including the non-client area. This causes the dimensions of the

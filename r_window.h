@@ -7,8 +7,6 @@
 #include <gl/glu.h>
 
 // default size and position
-#define DEFAULT_X   100
-#define DEFAULT_Y   100
 #define DEFAULT_W   640
 #define DEFAULT_H   480
 #define DEFAULT_FS  1       // fullscreen
@@ -45,7 +43,7 @@ public:
     render::system* renderer() { return &_renderer; }
 
 private:
-    int create(int width, int height, int xpos, int ypos, bool fullscreen);
+    int create(int xpos, int ypos, int width, int height, bool fullscreen);
     int create_framebuffer(int width, int height);
     void destroy_framebuffer();
 
@@ -53,7 +51,7 @@ private:
     void shutdown_opengl();
 
     int activate(bool active, bool minimized);
-    void resize_for_dpi(RECT const* suggested, vec2i logical_size, int dpi);
+    void resize_for_dpi(RECT const* suggested, int dpi);
 
     int _current_dpi;
 

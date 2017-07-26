@@ -1036,7 +1036,7 @@ void session::draw_messages ()
 //------------------------------------------------------------------------------
 static bool gs_try_connect = false;
 
-int session::find_server_by_name(void *lpvoid)
+int session::find_server_by_name(void*)
 {
     //g_Game->write_message( va("searching for: %s", g_Game->cls.server ) );
 

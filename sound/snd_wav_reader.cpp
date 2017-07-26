@@ -50,7 +50,7 @@ riffChunk_c::riffChunk_c (char const *szFilename)
     chunkSet( );
 }
 
-riffChunk_c::riffChunk_c (byte* pChunkData, int nChunkSize)
+riffChunk_c::riffChunk_c (byte* pChunkData, int /*nChunkSize*/)
 {
     int     name;
 

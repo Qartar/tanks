@@ -219,18 +219,18 @@ void cSound::free (void *ptr)
 
 snd_link_t *cSound::Create (char const *szFilename)
 {
-    int         i, len = strlen(szFilename);
     snd_link_t      *pLink, *next;
     cSoundSource    *pSource;
 
     pSource = cSoundSource::createSound( szFilename );
-    if ( !pSource )
-        return NULL;
+    if (!pSource) {
+        return nullptr;
+    }
 
     pLink = (snd_link_t *)alloc( sizeof(snd_link_t) );
 
     // alphabetize
-    for ( next = m_Chain.pNext ; (next != &m_Chain) && (stricmp(next->filename.c_str(), szFilename)<0) ; next = next->pNext );
+    for ( next = m_Chain.pNext ; (next != &m_Chain) && (_stricmp(next->filename.c_str(), szFilename)<0) ; next = next->pNext );
 
     pLink->pNext = next;
     pLink->pPrev = next->pPrev;
@@ -238,31 +238,24 @@ snd_link_t *cSound::Create (char const *szFilename)
     pLink->pNext->pPrev = pLink;
     pLink->pPrev->pNext = pLink;
 
-    for ( i = 0 ; i<MAX_SOUNDS ; i++ )
-    {
-        if ( m_Sounds[i] == NULL )
-        {
-            m_Sounds[i] = pLink;
-            pLink->nNumber = i;
-            break;
+    for (int ii = 0; ii < MAX_SOUNDS; ++ii) {
+        if (m_Sounds[ii] == nullptr) {
+            m_Sounds[ii] = pLink;
+            pLink->nNumber = ii;
+
+            pLink->filename = szFilename;
+            pLink->nSequence = 0;
+            pLink->pSource = pSource;
+
+            return pLink;
         }
     }
-    if ( i == MAX_SOUNDS )
-    {
-        pLink->nNumber = MAX_SOUNDS;
-        Delete( pLink );
 
-        pMain->message( "could not load %s: out of room\n", szFilename );
-        return NULL;
-    }
+    pLink->nNumber = MAX_SOUNDS;
+    Delete( pLink );
 
-
-    pLink->filename = szFilename;
-    pLink->nSequence = 0;
-
-    pLink->pSource = pSource;
-
-    return pLink;
+    pMain->message( "could not load %s: out of room\n", szFilename );
+    return nullptr;
 }
 
 /*=========================================================

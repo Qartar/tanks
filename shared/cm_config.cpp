@@ -229,11 +229,11 @@ int get_config_path(char *path, int size, bool create = false)
 }
 
 //------------------------------------------------------------------------------
-char const* system::print(variable_base const* base, int tab_size) const
+char const* system::print(variable_base const* base, int /*tab_size*/) const
 {
     static char buffer[MAX_STRING];
 
-    fmt(buffer, "%-20s %-20s %-8s %3d \"%s\"\n",
+    sprintf(buffer, "%-20s %-20s %-8s %3d \"%s\"\n",
          base->name(),
          va("\"%s\"", base->value().c_str()),
          config::type_strings[static_cast<int>(base->type())],

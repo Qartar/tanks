@@ -17,7 +17,6 @@ trace::trace(rigid_body const* body, vec2 start, vec2 end)
     physics::rigid_body point_body(&shape, &material, 0);
 
     vec2 direction = end - start;
-    float length = direction.length();
     float fraction = 0.0f;
 
     for (int num_iterations = 0; num_iterations < max_iterations && fraction < 1.0f; ++num_iterations) {

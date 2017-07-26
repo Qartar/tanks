@@ -135,9 +135,9 @@ void font::draw(char const* string, vec2 position, color4 color) const
             next = cursor + strlen(cursor);
         }
 
-        if (strnicmp(cursor, "\\c", 2) == 0) {
+        if (_strnicmp(cursor, "\\c", 2) == 0) {
             cursor += 2;    // skip past marker
-            if (strnicmp(cursor, "x", 1) == 0) {
+            if (_strnicmp(cursor, "x", 1) == 0) {
                 r = color.r * 255;
                 g = color.g * 255;
                 b = color.b * 255;
@@ -170,9 +170,9 @@ vec2 font::size(char const* string) const
             next = cursor + strlen(cursor);
         }
 
-        if (strnicmp(cursor, "\\c", 2) == 0) {
+        if (_strnicmp(cursor, "\\c", 2) == 0) {
             cursor += 2;    // skip past marker
-            if (strnicmp(cursor, "x", 1) == 0) {
+            if (_strnicmp(cursor, "x", 1) == 0) {
                 cursor++;
             } else {
                 cursor += 6;    // skip past color

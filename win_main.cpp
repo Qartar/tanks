@@ -14,7 +14,7 @@ filectrl_c  g_filectrl_c, *s_filectrl_c = &g_filectrl_c;
 memctrl_c   g_memctrl_c, *s_memctrl_c = &g_memctrl_c;
 
 //------------------------------------------------------------------------------
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR szCmdLine, int nCmdShow)
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR szCmdLine, int nCmdShow)
 {
     return application(hInstance).main(szCmdLine, nCmdShow);
 }
@@ -30,7 +30,7 @@ application::application(HINSTANCE hInstance)
 }
 
 //------------------------------------------------------------------------------
-int application::main(LPSTR szCmdLine, int nCmdShow)
+int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
 {
     float previous_time, current_time;
     MSG msg;

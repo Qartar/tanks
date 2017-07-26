@@ -108,12 +108,3 @@ static char *va (char const *szMessage, ...)
 
     return Ret;
 }
-
-static void fmt (char *szDest, char const *szMessage, ...)
-{
-    va_list     apList;
-
-    va_start( apList, szMessage );
-    vsprintf( szDest, szMessage, apList );
-    va_end( apList );
-}
