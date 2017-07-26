@@ -57,6 +57,8 @@ void session::start_server_local()
     _multiserver = false;
     _multiplayer_active = false;
 
+    _worldtime = 0;
+
     svs.active = false;
 
     // init local players
@@ -229,7 +231,7 @@ void session::client_connect(network::address const& remote, char const* message
         cl.local = false;
         cl.netchan.setup(&svs.socket, remote, netport);
 
-        svs.socket.printf(cl.netchan.address(), va("connect %i", client));
+        svs.socket.printf(cl.netchan.address(), va("connect %i %.3f", client, _worldtime));
 
         // init their tank
 
@@ -275,41 +277,6 @@ void session::client_command(network::message& message, int client)
     if (player) {
         player->update_usercmd(cmd);
     }
-}
-
-//------------------------------------------------------------------------------
-void session::write_sound(int sound, vec2 position, float volume)
-{
-    network::message_storage netmsg;
-
-    if (!_multiserver) {
-        return;
-    }
-
-    netmsg.write_byte(svc_sound);
-    netmsg.write_long(sound);
-    netmsg.write_vector(position);
-    netmsg.write_float(volume);
-
-    broadcast(netmsg);
-}
-
-//------------------------------------------------------------------------------
-void session::write_effect (int type, vec2 pos, vec2 vel, float strength)
-{
-    network::message_storage netmsg;
-
-    if (!_multiserver) {
-        return;
-    }
-
-    netmsg.write_byte(svc_effect);
-    netmsg.write_byte(type);
-    netmsg.write_vector(pos);
-    netmsg.write_vector(vel);
-    netmsg.write_float(strength);
-
-    broadcast(netmsg);
 }
 
 //------------------------------------------------------------------------------

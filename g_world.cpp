@@ -89,13 +89,13 @@ void world::remove(game::object* object)
 }
 
 //------------------------------------------------------------------------------
-void world::draw(render::system* renderer) const
+void world::draw(render::system* renderer, float time) const
 {
     for (auto& obj : _objects) {
-        obj->draw(renderer);
+        obj->draw(renderer, time);
     }
 
-    draw_particles(renderer);
+    draw_particles(renderer, time);
 }
 
 //------------------------------------------------------------------------------
@@ -134,6 +134,46 @@ void world::read_snapshot(network::message& message)
     }
     _pending.clear();
 
+    while (message.bytes_remaining()) {
+        message_type type = static_cast<message_type>(message.read_byte());
+        if (type == message_type::none) {
+            break;
+        }
+
+        switch (type) {
+            case message_type::frame:
+                read_frame(message);
+                break;
+
+            case message_type::sound:
+                read_sound(message);
+                break;
+
+            case message_type::effect:
+                read_effect(message);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    for (auto obj : _removed) {
+        _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
+            return it.get() == obj;
+        }));
+    }
+    _removed.clear();
+
+    for (auto& obj : _pending) {
+        _objects.push_back(std::move(obj));
+    }
+    _pending.clear();
+}
+
+//------------------------------------------------------------------------------
+void world::read_frame(network::message const& message)
+{
     _framenum = message.read_long();
 
     // read active objects
@@ -162,24 +202,36 @@ void world::read_snapshot(network::message& message)
             _objects[ii]->read_snapshot(message);
         }
     }
+}
 
-    for (auto obj : _removed) {
-        _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
-            return it.get() == obj;
-        }));
-    }
-    _removed.clear();
+//------------------------------------------------------------------------------
+void world::read_sound(network::message const& message)
+{
+    int asset = message.read_long();
+    vec2 position = message.read_vector();
+    float volume = message.read_float();
 
-    for (auto& obj : _pending) {
-        _objects.push_back(std::move(obj));
-    }
-    _pending.clear();
+    add_sound(static_cast<sound::asset>(asset), position, volume);
+}
+
+//------------------------------------------------------------------------------
+void world::read_effect(network::message const& message)
+{
+    int type = message.read_byte();
+    vec2 pos = message.read_vector();
+    vec2 vel = message.read_vector();
+    float strength = message.read_float();
+
+    add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
 }
 
 //------------------------------------------------------------------------------
 void world::write_snapshot(network::message& message) const
 {
-    message.write_byte(svc_frame);
+    message.write_byte(svc_snapshot);
+
+    // write frame
+    message.write_byte(static_cast<int>(message_type::frame));
     message.write_long(_framenum);
 
     // write active objects
@@ -188,8 +240,32 @@ void world::write_snapshot(network::message& message) const
         message.write_byte(static_cast<int>(obj->_type));
         obj->write_snapshot(message);
     }
-
     message.write_long(0);
+
+    // write sounds and effects
+    message.write(_message);
+    message.write_byte(static_cast<int>(message_type::none));
+
+    _message.rewind();
+}
+
+//------------------------------------------------------------------------------
+void world::write_sound(sound::asset sound_asset, vec2 position, float volume)
+{
+    _message.write_byte(static_cast<int>(message_type::sound));
+    _message.write_long(static_cast<int>(sound_asset));
+    _message.write_vector(position);
+    _message.write_float(volume);
+}
+
+//------------------------------------------------------------------------------
+void world::write_effect(effect_type type, vec2 position, vec2 direction, float strength)
+{
+    _message.write_byte(static_cast<int>(message_type::effect));
+    _message.write_byte(static_cast<int>(type));
+    _message.write_vector(position);
+    _message.write_vector(direction);
+    _message.write_float(strength);
 }
 
 //------------------------------------------------------------------------------
@@ -213,6 +289,7 @@ game::object* world::spawn_snapshot(std::size_t spawn_id, object_type type)
             obj->_spawn_id = _spawn_id = spawn_id;
             return obj;
         }
+
         case object_type::object:
         default:
             return nullptr;
@@ -334,14 +411,14 @@ void world::move_object(game::object *object)
 //------------------------------------------------------------------------------
 void world::add_sound(sound::asset sound_asset, vec2 position, float volume)
 {
-    g_Game->write_sound(static_cast<int>(sound_asset), position, volume);
+    write_sound(sound_asset, position, volume);
     pSound->play(sound_asset, vec3(position), volume, 1.0f);
 }
 
 //------------------------------------------------------------------------------
 void world::add_effect(effect_type type, vec2 position, vec2 direction, float strength)
 {
-    g_Game->write_effect(static_cast<int>(type), position, direction, strength);
+    write_effect(type, position, direction, strength);
 
     float   r, d;
 
@@ -727,8 +804,6 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 //------------------------------------------------------------------------------
 void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position, vec2 direction, float strength)
 {
-    g_Game->write_effect(static_cast<int>(type), position, direction, strength);
-
     float   r, d;
 
     vec2 lerp = position - old_position;
@@ -810,12 +885,6 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
         default:
             break;
     }
-}
-
-//------------------------------------------------------------------------------
-void world::clear_particles()
-{
-    _particles.clear();
 }
 
 } // namespace game

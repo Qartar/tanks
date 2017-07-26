@@ -141,6 +141,20 @@ std::size_t message::read(byte* data, std::size_t size) const
 }
 
 //------------------------------------------------------------------------------
+std::size_t message::write(network::message const& message)
+{
+    std::size_t remaining = message.bytes_remaining();
+    return write(message.read(remaining), remaining);
+}
+
+//------------------------------------------------------------------------------
+std::size_t message::read(network::message& message) const
+{
+    std::size_t remaining = bytes_remaining();
+    return message.write(read(remaining), remaining);
+}
+
+//------------------------------------------------------------------------------
 std::size_t message::bits_read() const
 {
     return _bytes_read * byte_bits - ((byte_bits - _bits_read) % byte_bits);

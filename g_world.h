@@ -67,11 +67,11 @@ public:
 
     std::size_t spawn_id() const { return _spawn_id; }
 
-    virtual void draw(render::system* renderer) const;
+    virtual void draw(render::system* renderer, float time) const;
     virtual void touch(object *other, physics::contact const* contact);
     virtual void think();
 
-    virtual void read_snapshot(network::message& message);
+    virtual void read_snapshot(network::message const& message);
     virtual void write_snapshot(network::message& message) const;
 
     //! Get frame-interpolated position
@@ -146,11 +146,11 @@ public:
     projectile(tank* owner, float damage, weapon_type type);
     ~projectile();
 
-    virtual void draw(render::system* renderer) const override;
+    virtual void draw(render::system* renderer, float time) const override;
     virtual void touch(object *other, physics::contact const* contact) override;
     virtual void think() override;
 
-    virtual void read_snapshot(network::message& message) override;
+    virtual void read_snapshot(network::message const& message) override;
     virtual void write_snapshot(network::message& message) const override;
 
     float damage() const { return _damage; }
@@ -182,11 +182,11 @@ public:
     tank();
     ~tank();
 
-    virtual void draw(render::system* renderer) const override;
+    virtual void draw(render::system* renderer, float time) const override;
     virtual void touch(object *other, physics::contact const* contact) override;
     virtual void think() override;
 
-    virtual void read_snapshot(network::message& message) override;
+    virtual void read_snapshot(network::message const& message) override;
     virtual void write_snapshot(network::message& message) const override;
 
     //! Get frame-interpolated turret rotation
@@ -273,7 +273,7 @@ public:
     void clear_particles();
 
     void run_frame ();
-    void draw(render::system* renderer) const;
+    void draw(render::system* renderer, float time) const;
 
     void read_snapshot(network::message& message);
     void write_snapshot(network::message& message) const;
@@ -335,7 +335,7 @@ private:
     render::particle* add_particle();
     void free_particle (render::particle* particle) const;
 
-    void draw_particles(render::system* renderer) const;
+    void draw_particles(render::system* renderer, float time) const;
 
     vec2        _mins;
     vec2        _maxs;
@@ -347,6 +347,22 @@ private:
     physics::material _border_material;
     physics::box_shape _border_shapes[2];
     constexpr static int _border_thickness = 512;
+
+protected:
+    enum class message_type
+    {
+        none,
+        frame,
+        sound,
+        effect,
+    };
+
+    void read_frame(network::message const& message);
+    void read_sound(network::message const& message);
+    void read_effect(network::message const& message);
+
+    void write_sound(sound::asset sound_asset, vec2 position, float volume);
+    void write_effect(effect_type type, vec2 position, vec2 direction, float strength);
 };
 
 //------------------------------------------------------------------------------

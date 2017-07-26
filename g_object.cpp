@@ -26,7 +26,7 @@ void object::touch(object* /*other*/, physics::contact const* /*contact*/)
 }
 
 //------------------------------------------------------------------------------
-void object::draw(render::system* /*renderer*/) const
+void object::draw(render::system* /*renderer*/, float /*time*/) const
 {
     if (_model) {
         _model->draw(get_position(), get_rotation(), _color);
@@ -39,7 +39,7 @@ void object::think()
 }
 
 //------------------------------------------------------------------------------
-void object::read_snapshot(network::message& /*message*/)
+void object::read_snapshot(network::message const& /*message*/)
 {
 }
 

@@ -78,9 +78,7 @@ typedef enum netops_e
     svc_message,    //  message from server
     svc_score,      //  score update
     svc_info,       //  client info
-    svc_frame,      //  frame update
-    svc_effect,     //  particle effect
-    svc_sound,      //  sound effect
+    svc_snapshot,   //  game snapshot
     svc_restart     //  game restart
 } netops_t;
 
@@ -159,7 +157,6 @@ typedef struct client_state_s
     int     number;
 
     char    server[SHORT_STRING];
-    int     last_frame;
 
     float           ping_time;
     remote_server_t servers[MAX_SERVERS];
@@ -196,22 +193,7 @@ public:
 
     bool _menu_active;
     bool _game_active;
-
-    bool _multiplayer;     // is multiplayer
-    bool _multiserver;     // hosting multiplayer
-    bool _have_server;      // found a server
-    bool _multiplayer_active;     // active and playing
     bool _dedicated;
-
-    float _frametime;
-    int _framenum;
-
-    game_mode _mode;
-
-    bool _extended_armor;
-    bool _random_spawn;
-
-    float _restart_time;
 
     static int find_server_by_name(void *lpvoid);
 
@@ -236,6 +218,19 @@ private:
     config::string _cl_name;
     config::string _cl_color;
     config::integer _cl_weapon;
+
+    bool _multiplayer;     // is multiplayer
+    bool _multiserver;     // hosting multiplayer
+    bool _have_server;      // found a server
+    bool _multiplayer_active;     // active and playing
+
+    game_mode _mode;
+
+    float _restart_time;
+
+    float _worldtime;
+    float _frametime;
+    int _framenum;
 
     vec2i _cursor;
     bool _show_cursor;
@@ -281,9 +276,6 @@ public:
 
     void info_ask();
 
-    void write_sound(int sound, vec2 position, float volume);
-    void write_effect(int type, vec2 pos, vec2 vel, float strength);
-
     client_state_t  cls;
     server_state_t  svs;
 
@@ -293,7 +285,7 @@ public:
 
 private:
     void get_packets ();
-    void get_frame(network::message& message);
+    void read_snapshot(network::message& message);
     void write_frame ();
     void send_packets ();
 
@@ -316,9 +308,6 @@ private:
 
     void read_upgrade(int client, int upgrade);
     void write_upgrade(int upgrade);
-
-    void read_sound(network::message& message);
-    void read_effect(network::message& message);
 
     void client_send ();
 

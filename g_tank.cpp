@@ -63,14 +63,15 @@ tank::~tank()
 }
 
 //------------------------------------------------------------------------------
-void tank::draw(render::system* renderer) const
+void tank::draw(render::system* renderer, float time) const
 {
-    float lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMETIME) / FRAMETIME;
+    float lerp = (time - _world->framenum() * FRAMETIME) / FRAMETIME;
+
     float denominator = _weapon == weapon_type::cannon ? cannon_reload :
                         _weapon == weapon_type::missile ? missile_reload :
                         _weapon == weapon_type::blaster ? blaster_reload : 1.0f;
 
-    float reload = 20.0f * clamp((g_Game->_frametime - _fire_time) * _client->refire_mod / denominator, 0.0f, 1.0f);
+    float reload = 20.0f * clamp((time - _fire_time) * _client->refire_mod / denominator, 0.0f, 1.0f);
     float health = 20.0f * clamp(1.0f - _damage, 0.0f, 1.0f);
 
     if ( lerp > 1.0f ) {
@@ -150,9 +151,7 @@ void tank::collide(tank* other, physics::contact const* contact)
     vec2 forward = rotate(vec2(1,0), other->get_rotation());
     float impact_angle = direction.dot(forward);
 
-    if (!g_Game->_extended_armor && !g_Game->_multiplayer) {
-        base_damage *= DAMAGE_FULL;
-    } else if (impact_angle > M_SQRT1_2) {
+    if (impact_angle > M_SQRT1_2) {
         base_damage *= DAMAGE_FRONT;
     } else if (impact_angle > -M_SQRT1_2) {
         base_damage *= DAMAGE_SIDE;
@@ -165,7 +164,7 @@ void tank::collide(tank* other, physics::contact const* contact)
     if (other->_damage >= 1.0f)
     {
         g_Game->add_score(_player_index, 1);
-        other->_dead_time = g_Game->_frametime;
+        other->_dead_time = _world->framenum() * FRAMETIME;
 
         g_Game->write_message( va("%s got a little too cozy with %s.", other->player_name(), player_name() ) );
     }
@@ -196,9 +195,11 @@ void tank::respawn()
 //------------------------------------------------------------------------------
 void tank::think()
 {
+    float const time = _world->framenum() * FRAMETIME;
+
     _old_turret_rotation = _turret_rotation;
 
-    if ((_damage >= 1.0f) && (_dead_time+RESTART_TIME+HACK_TIME <= g_Game->_frametime)) {
+    if ((_damage >= 1.0f) && (_dead_time+RESTART_TIME+HACK_TIME <= time)) {
         respawn();
     }
 
@@ -220,7 +221,7 @@ void tank::think()
         _turret_velocity *= 0.9f;
 
         // extra explosion
-        if (_dead_time && (g_Game->_frametime - _dead_time > 0.65f) && (g_Game->_frametime - _dead_time < 0.65f+HACK_TIME/2))
+        if (_dead_time && (time - _dead_time > 0.65f) && (time - _dead_time < 0.65f+HACK_TIME/2))
         {
             _world->add_sound(_sound_explode, get_position());
             _world->add_effect(effect_type::explosion, get_position());
@@ -255,16 +256,18 @@ void tank::launch_projectile()
 {
     constexpr vec2 effect_origin(21,0);
 
+    float const time = _world->framenum() * FRAMETIME;
+
     switch (_weapon) {
         case weapon_type::cannon: {
-            if ((_fire_time + cannon_reload / _client->refire_mod) < g_Game->_frametime) {
-                _fire_time = g_Game->_frametime;
+            if ((_fire_time + cannon_reload / _client->refire_mod) < time) {
+                _fire_time = time;
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod, weapon_type::cannon);
 
                 float launch_rotation = _turret_rotation + crand() * M_PI / 180.f;
                 vec2 launch_direction = rotate(vec2(1, 0), launch_rotation);
-                vec2 launch_position = get_position() + rotate(effect_origin,_turret_rotation);
+                vec2 launch_position = get_position() + rotate(effect_origin, _turret_rotation);
 
                 proj->set_position(launch_position, true);
                 proj->set_linear_velocity(launch_direction * cannon_speed);
@@ -281,13 +284,13 @@ void tank::launch_projectile()
         }
 
         case weapon_type::missile: {
-            if ((_fire_time + missile_reload / _client->refire_mod) < g_Game->_frametime) {
-                _fire_time = g_Game->_frametime;
+            if ((_fire_time + missile_reload / _client->refire_mod) < time) {
+                _fire_time = time;
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod, weapon_type::missile);
 
                 vec2 launch_direction = rotate(vec2(1, 0), _turret_rotation);
-                vec2 launch_position = get_position() + rotate(effect_origin,_turret_rotation);
+                vec2 launch_position = get_position() + rotate(effect_origin, _turret_rotation);
 
                 proj->set_position(launch_position, true);
                 proj->set_linear_velocity(launch_direction * missile_speed);
@@ -298,14 +301,14 @@ void tank::launch_projectile()
         }
 
         case weapon_type::blaster: {
-            if ((_fire_time + blaster_reload / _client->refire_mod) < g_Game->_frametime) {
-                _fire_time = g_Game->_frametime;
+            if ((_fire_time + blaster_reload / _client->refire_mod) < time) {
+                _fire_time = time;
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod * 0.1f, weapon_type::blaster);
 
                 float launch_rotation = _turret_rotation + crand() * M_PI / 180.f;
                 vec2 launch_direction = rotate(vec2(1, 0), launch_rotation);
-                vec2 launch_position = get_position() + rotate(effect_origin,_turret_rotation);
+                vec2 launch_position = get_position() + rotate(effect_origin, _turret_rotation);
 
                 proj->set_position(launch_position, true);
                 proj->set_linear_velocity(launch_direction * blaster_speed);
@@ -329,13 +332,14 @@ void tank::launch_projectile()
 void tank::update_effects()
 {
     constexpr vec2 effect_origin(21,0);
+    float const time = _world->framenum() * FRAMETIME;
 
     switch (_weapon) {
         case weapon_type::cannon: {
-            if ((_fire_time + 2.5f/_client->refire_mod) > g_Game->_frametime) {
+            if ((_fire_time + 2.5f/_client->refire_mod) > time) {
                 float power;
 
-                power = 1.5f - (g_Game->_frametime - _fire_time);
+                power = 1.5f - (time - _fire_time);
                 power = clamp(power, 0.5f, 1.5f);
 
                 _world->add_effect(
@@ -348,10 +352,10 @@ void tank::update_effects()
         }
 
         case weapon_type::missile: {
-            if ((_fire_time + 2.5f/_client->refire_mod) > g_Game->_frametime) {
+            if ((_fire_time + 2.5f/_client->refire_mod) > time) {
                 float power;
 
-                power = 1.5f - (g_Game->_frametime - _fire_time);
+                power = 1.5f - (time - _fire_time);
                 power = clamp(power, 0.5f, 1.5f);
 
                 _world->add_effect(
@@ -370,7 +374,7 @@ void tank::update_effects()
 }
 
 //------------------------------------------------------------------------------
-void tank::read_snapshot(network::message& message)
+void tank::read_snapshot(network::message const& message)
 {
     _old_position = get_position();
     _old_rotation = get_rotation();
@@ -652,7 +656,7 @@ void projectile::touch(object *other, physics::contact const* contact)
 
         if (other_tank->_damage >= 1.0f) {
             g_Game->add_score( owner_tank->_player_index, 1 );
-            other_tank->_dead_time = g_Game->_frametime;
+            other_tank->_dead_time = _world->framenum() * FRAMETIME;
 
             char const* fmt = "";
 
@@ -686,13 +690,12 @@ void projectile::touch(object *other, physics::contact const* contact)
 }
 
 //------------------------------------------------------------------------------
-void projectile::draw(render::system* renderer) const
+void projectile::draw(render::system* renderer, float time) const
 {
-    float   lerp = (g_Game->_frametime - (g_Game->_framenum-1) * FRAMETIME) / FRAMETIME;
-    vec2    p1, p2;
+    float lerp = (time - _world->framenum() * FRAMETIME) / FRAMETIME;
 
-    p1 = get_position( lerp );
-    p2 = get_position( lerp + 0.4f );
+    vec2 p1 = get_position(lerp);
+    vec2 p2 = get_position(lerp + 0.4f);
 
     switch (_type) {
         case weapon_type::cannon:
@@ -713,7 +716,7 @@ void projectile::draw(render::system* renderer) const
 }
 
 //------------------------------------------------------------------------------
-void projectile::read_snapshot(network::message& message)
+void projectile::read_snapshot(network::message const& message)
 {
     _old_position = get_position();
 

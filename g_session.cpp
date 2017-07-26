@@ -20,8 +20,9 @@ namespace game {
 
 //------------------------------------------------------------------------------
 session::session()
-    : _client_button_down(false)
-    , _server_button_down(false)
+    : _menu_active(true)
+    , _game_active(false)
+    , _dedicated(false)
     , _upgrade_frac("g_upgradeFrac", 0.5f, config::archive|config::server, "upgrade fraction")
     , _upgrade_penalty("g_upgradePenalty", 0.2f, config::archive|config::server, "upgrade penalty")
     , _upgrade_min("g_upgradeMin", 0.2f, config::archive|config::server, "minimum upgrade fraction")
@@ -32,9 +33,20 @@ session::session()
     , _cl_name("ui_name", "", config::archive, "user info: name")
     , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
     , _cl_weapon("ui_weapon", 0, config::archive, "user info: weapon")
+    , _multiplayer(false)
+    , _multiserver(false)
+    , _have_server(false)
+    , _multiplayer_active(false)
+    , _restart_time(0)
+    , _worldtime(0)
+    , _frametime(0)
+    , _framenum(0)
     , _cursor(0,0)
     , _show_cursor(true)
     , _num_messages(0)
+    , _client_button_down(false)
+    , _server_button_down(false)
+    , _client_say(false)
 {
     g_Game = this;
     pMain = this;
@@ -48,9 +60,6 @@ int session::init (char const *cmdline)
 
     _menu_image = _renderer->load_image(MAKEINTRESOURCE(IDB_BITMAP1));
 
-    _frametime = 0.0f;
-    _framenum = 0;
-
     for ( int i=0 ; i<MAX_MESSAGES ; i++ )
         memset( _messages[i].string, 0, MAX_STRING );
 
@@ -59,21 +68,6 @@ int session::init (char const *cmdline)
         cls.servers[i].active = false;
         memset( cls.servers[i].name, 0, 32 );
     }
-
-    _menu_active = true;
-    _game_active = false;
-
-    _multiplayer = false;
-    _multiserver = false;
-    _have_server = false;
-    _multiplayer_active = false;
-
-    _dedicated = false;
-
-    _extended_armor = true;
-    _random_spawn = true;
-
-    _restart_time = 0;
 
     _score[0] = 0;
     _score[1] = 0;
@@ -191,17 +185,24 @@ int session::run_frame(float milliseconds)
 
     _frametime += milliseconds;
 
-    if (_frametime > _framenum * FRAMETIME && (!_multiplayer_active || _multiserver) )
-    {
+    // step session
+
+    if (_frametime > _framenum * FRAMETIME) {
         _framenum++;
         _net_bytes[_framenum % _net_bytes.size()] = 0;
+    }
 
-        // run time step on world
-        if ( !_menu_active || _multiserver )
-        {
-            _world.run_frame( );
-            if ( _multiserver )
-                write_frame( );
+    // step world
+
+    if (!_menu_active || _multiserver) {
+        // clamp world step size
+        _worldtime += std::min(milliseconds, FRAMETIME);
+
+        if (_worldtime > (1 + _world.framenum()) * FRAMETIME && (!_multiplayer_active || _multiserver)) {
+            _world.run_frame();
+            if (_multiserver) {
+                write_frame();
+            }
         }
     }
 

@@ -76,6 +76,11 @@ public:
     //! read data into the given buffer
     std::size_t read(byte* data, std::size_t size) const;
 
+    //! write data from the given message
+    std::size_t write(network::message const& message);
+    //! read data into the given message
+    std::size_t read(network::message& message) const;
+
     //! number of bits that have been read
     std::size_t bits_read() const;
     //! number of bits that have been written

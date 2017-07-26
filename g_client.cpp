@@ -115,16 +115,8 @@ void session::client_packet(network::message& message)
                 read_info(message);
                 break;
 
-            case svc_frame:
-                get_frame(message);
-                break;
-
-            case svc_effect:
-                read_effect(message);
-                break;
-
-            case svc_sound:
-                read_sound(message);
+            case svc_snapshot:
+                read_snapshot(message);
                 break;
 
             case svc_restart:
@@ -138,12 +130,14 @@ void session::client_packet(network::message& message)
 }
 
 //------------------------------------------------------------------------------
-void session::get_frame(network::message& message)
+void session::read_snapshot(network::message& message)
 {
     _world.read_snapshot(message);
-    _framenum = _world.framenum();
-    _frametime = (_framenum - 1) * FRAMETIME;
-    _net_bytes[_framenum % _net_bytes.size()] = 0;
+    // gradually adjust client world time to match server
+    // to compensate for variability in packet delivery
+    float snapshot_time = _world.framenum() * FRAMETIME;
+    _worldtime += (snapshot_time - _worldtime) * 0.1f;
+    _net_bytes[++_framenum % _net_bytes.size()] = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -173,12 +167,9 @@ void session::connect_ack(char const* message_string)
 {
     // server has ack'd our connect
 
-    sscanf(message_string, "connect %i", &cls.number);
+    sscanf(message_string, "connect %i %f", &cls.number, &_worldtime);
 
     _netchan.setup( &cls.socket, _netserver );
-
-    _frametime = 0.0f;
-    cls.last_frame = 0;
 
     _multiplayer = true;      // wtf are all these bools?
     _multiplayer_active = true;      // i dont even remember
@@ -229,26 +220,6 @@ void session::client_send ()
             write_info(_netchan, cls.number);
         }
     }
-}
-
-//------------------------------------------------------------------------------
-void session::read_sound(network::message& message)
-{
-    int asset = message.read_long();
-    vec2 position = message.read_vector();
-    float volume = message.read_float();
-    pSound->play(static_cast<sound::asset>(asset), vec3(position), volume, 1.0f);
-}
-
-//------------------------------------------------------------------------------
-void session::read_effect(network::message& message)
-{
-    int type = message.read_byte();
-    vec2 pos = message.read_vector();
-    vec2 vel = message.read_vector();
-    float strength = message.read_float();
-
-    _world.add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
 }
 
 //------------------------------------------------------------------------------
@@ -333,7 +304,7 @@ void session::write_upgrade(int upgrade)
 //------------------------------------------------------------------------------
 void session::draw_world()
 {
-    float lerp = (_frametime - (_framenum-1) * FRAMETIME) / FRAMETIME;
+    float const lerp = (_worldtime - _world.framenum() * FRAMETIME) / FRAMETIME;
 
     //
     // calculate view
@@ -365,7 +336,7 @@ void session::draw_world()
     _renderer->set_view(view);
 
     if (_game_active) {
-        _world.draw(_renderer);
+        _world.draw(_renderer, _worldtime);
     }
 
     // update sound listener

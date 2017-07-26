@@ -11,7 +11,7 @@ namespace game {
 render::particle* world::add_particle ()
 {
     _particles.emplace_back(render::particle{0});
-    _particles.back().time = g_Game->_frametime;
+    _particles.back().time = _framenum * FRAMETIME;
     return &_particles.back();
 }
 
@@ -23,10 +23,8 @@ void world::free_particle (render::particle *p) const
 }
 
 //------------------------------------------------------------------------------
-void world::draw_particles(render::system* renderer) const
+void world::draw_particles(render::system* renderer, float time) const
 {
-    float time = g_Game->_frametime;
-
     for (std::size_t ii = 0; ii < _particles.size(); ++ii) {
         float ptime = time - _particles[ii].time;
         if (_particles[ii].color.a + _particles[ii].color_velocity.a * ptime < 0.0f) {
@@ -42,6 +40,12 @@ void world::draw_particles(render::system* renderer) const
         time,
         _particles.data(),
         _particles.size());
+}
+
+//------------------------------------------------------------------------------
+void world::clear_particles()
+{
+    _particles.clear();
 }
 
 } // namespace game
