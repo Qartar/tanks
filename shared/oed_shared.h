@@ -17,10 +17,6 @@ Modified:   11/03/2006
 #pragma warning (disable:4244)  // 8 to 4 byte floating point truncation
 #pragma warning (disable:4267)  // 8 to 4 byte integer truncation
 
-// local includes
-
-#include "oed_types.h"
-
 // standard includes
 
 #include <stdio.h>  // va_start va_end vsprintf

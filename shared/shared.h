@@ -12,7 +12,12 @@ Date    :   10/16/2004
 
 #pragma once
 
+#include <cmath>
+#include <cstdarg>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstdio>
 
 #define APP_CLASSNAME       "Tanks!"
 
@@ -26,18 +31,20 @@ Date    :   10/16/2004
 
 #define LITTLE_LONG(a)  (a)
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+//------------------------------------------------------------------------------
+using byte = std::uint8_t;
+using word = std::uint16_t;
 
 #define OED_LIB
 
 #include "oed_shared.h"
-#include "oed_types.h"
 #include "oed_error.h"
 #include "oed_files.h"
 #include "oed_tools.h"
+
+#include "cm_vector.h"
+#include "cm_matrix.h"
+#include "cm_color.h"
 
 class vObject
 {
