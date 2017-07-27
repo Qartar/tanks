@@ -16,7 +16,7 @@ void window::init ()
     _submenus.emplace_back(new menu::window);  // network
     _submenus.emplace_back(new menu::window);  // options
 
-    add_button<conditional_button>("Resume", vec2i(64,32), vec2i(96,32), &g_Game->_game_active, [](){
+    add_button<conditional_button>("Resume", vec2i(64,32), vec2i(96,32), &g_Game->svs.active, [](){
         g_Game->resume();
     });
 
@@ -36,6 +36,7 @@ void window::init ()
         g_Game->stop_server();
         g_Game->stop_client();
         g_Game->start_server_local();
+        g_Game->start_client_local();
     });
 
     _submenus[0]->add_button<button>("Reset", vec2i(48,128), vec2i(64,32), [](){
@@ -52,8 +53,10 @@ void window::init ()
     // network->host
 
     _submenus[1]->_submenus[0]->add_button<host_button>(vec2i(144,128), vec2i(256,24), [](){
-        g_Game->_dedicated = false;
         g_Game->start_server();
+        if (!g_Game->_dedicated) {
+            g_Game->start_client_local();
+        }
     });
 
     // network->join

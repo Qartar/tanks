@@ -10,14 +10,7 @@ namespace game {
 //------------------------------------------------------------------------------
 void session::get_packets ()
 {
-    network::socket* socket;
-
-    if (_multiserver) {
-        socket = &svs.socket;
-    } else {
-        socket = &cls.socket;
-    }
-
+    network::socket* socket = svs.active ? &svs.socket : &cls.socket;
     network::message_storage message;
     network::address remote;
 
@@ -73,7 +66,7 @@ void session::get_packets ()
 
     float time = g_Application->time();
 
-    if (_multiserver) {
+    if (svs.active) {
         for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
             if (svs.clients[ii].local || !svs.clients[ii].active) {
                 continue;
@@ -87,7 +80,7 @@ void session::get_packets ()
                 client_disconnect(ii);
             }
         }
-    } else if (_multiplayer_active) {
+    } else if (cls.active) {
         if (_netchan.last_received() + 10.0f < time) {
             write_message("Server timed out.");
             stop_client();
@@ -128,11 +121,7 @@ void session::broadcast_print (char const* message)
 //------------------------------------------------------------------------------
 void session::send_packets ()
 {
-    if (!_multiplayer_active) {
-        return;
-    }
-
-    if (_multiserver) {
+    if (svs.active) {
         for (auto& cl : svs.clients) {
             if (cl.local || !cl.active || !cl.netchan.bytes_remaining()) {
                 continue;
@@ -141,7 +130,7 @@ void session::send_packets ()
             cl.netchan.transmit();
             cl.netchan.reset();
         }
-    } else {
+    } else if (cls.active) {
         client_send();
 
         if (_netchan.bytes_remaining()) {
@@ -224,7 +213,7 @@ void session::read_info(network::message& message)
     _clients[client].speed_mod = message.read_byte( ) / 10.0f;
 
     // relay info to other clients
-    if (_multiserver || _dedicated) {
+    if (svs.active) {
         network::message_storage netmsg;
 
         write_info(netmsg, client);

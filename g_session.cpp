@@ -21,7 +21,6 @@ namespace game {
 //------------------------------------------------------------------------------
 session::session()
     : _menu_active(true)
-    , _game_active(false)
     , _dedicated(false)
     , _upgrade_frac("g_upgradeFrac", 0.5f, config::archive|config::server, "upgrade fraction")
     , _upgrade_penalty("g_upgradePenalty", 0.2f, config::archive|config::server, "upgrade penalty")
@@ -33,10 +32,6 @@ session::session()
     , _cl_name("ui_name", "", config::archive, "user info: name")
     , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
     , _cl_weapon("ui_weapon", 0, config::archive, "user info: weapon")
-    , _multiplayer(false)
-    , _multiserver(false)
-    , _have_server(false)
-    , _multiplayer_active(false)
     , _restart_time(0)
     , _worldtime(0)
     , _frametime(0)
@@ -73,6 +68,7 @@ int session::init (char const *cmdline)
     _score[1] = 0;
 
     svs.active = false;
+    svs.local = false;
 
     for (auto& cl : svs.clients) {
         cl.active = false;
@@ -86,6 +82,8 @@ int session::init (char const *cmdline)
 
     strcpy( svs.name, _net_server_name );
 
+    cls.active = false;
+    cls.local = false;
     cls.number = 0;
 
     _clients[0].input.bind({
@@ -112,8 +110,6 @@ int session::init (char const *cmdline)
 
     _menu.init( );
     _world.init( );
-
-    info_ask( );
 
     if ( strstr( cmdline, "dedicated" ) )
     {
@@ -194,13 +190,13 @@ int session::run_frame(float milliseconds)
 
     // step world
 
-    if (!_menu_active || _multiserver) {
+    if (!_menu_active || svs.active) {
         // clamp world step size
         _worldtime += std::min(milliseconds, FRAMETIME);
 
-        if (_worldtime > (1 + _world.framenum()) * FRAMETIME && (!_multiplayer_active || _multiserver)) {
+        if (_worldtime > (1 + _world.framenum()) * FRAMETIME && svs.active) {
             _world.run_frame();
-            if (_multiserver) {
+            if (!svs.local) {
                 write_frame();
             }
         }
@@ -466,14 +462,13 @@ void session::key_event(unsigned char key, bool down)
                     else
                         write_message_client( va("unrecognized command: %s", _clientsay+1) );
                 }
-                else if ( _multiplayer )
+                else if (svs.active || cls.active)
                 {
                     // say it
                     _netchan.write_byte(clc_say);
                     _netchan.write_string(_clientsay);
 
-                    if ( _multiserver )
-                    {
+                    if (svs.active && !svs.local) {
                         if ( _dedicated )
                             write_message( va( "[Server]: %s", _clientsay ) );
                         else {
@@ -628,13 +623,8 @@ void session::key_event(unsigned char key, bool down)
 
     // menu commands
 
-    if (key == K_ESCAPE)
-    {
-        if ( ! _game_active )
-            return;
-
+    if (key == K_ESCAPE) {
         _menu_active ^= 1;
-
         return;
     }
 
@@ -671,7 +661,7 @@ void session::add_score(int player_index, int score)
 
     _score[player_index] += score;
 
-    if ( _multiplayer ) {
+    if (svs.active || cls.active) {
         if ( _score[player_index] % 10 == 0 ) {
             if ( _upgrades ) {
                 _clients[player_index].upgrades++;
@@ -679,7 +669,7 @@ void session::add_score(int player_index, int score)
         }
     }
 
-    if (_multiserver) {
+    if (svs.active && !svs.local) {
         network::message_storage netmsg;
 
         write_info(netmsg, player_index);
@@ -724,7 +714,7 @@ void session::draw_score ()
     int panel_width = 96;
     int active_count = 0;
 
-    if (_multiplayer) {
+    if (svs.active || cls.active) {
         for (auto const& cl : svs.clients) {
             if (cl.active) {
                 int cl_width = _renderer->string_size(cl.info.name.data()).x;
@@ -852,14 +842,12 @@ void session::reset()
         _clients[i].upgrades = 0;
     }
 
-    _game_active = false;
     _world.reset( );
 }
 
 //------------------------------------------------------------------------------
 void session::resume()
 {
-    _game_active = true;
     _menu_active = false;
 }
 
@@ -869,7 +857,7 @@ void session::new_game()
     _restart_time = 0.0f;
     _world.clear_particles( );
 
-    if ( _multiplayer && !_multiserver ) {
+    if (!svs.active) {
         return;
     }
 
@@ -883,8 +871,7 @@ void session::new_game()
     //  reset scores
     //
 
-    if ( _multiserver )
-    {
+    if (svs.local) {
         network::message_storage netmsg;
 
         for ( int i=0 ; i<MAX_PLAYERS ; i++ ) {
@@ -909,9 +896,9 @@ void session::new_game()
 
         _score[ i ] = 0;
 
-        if ( !_multiserver && i > 1 )
+        if (svs.local && i > 1 )
             break;
-        else if ( _multiserver && !svs.clients[i].active )
+        else if (svs.active && !svs.clients[i].active )
             continue;
 
         if (!_restart_time || !_world.player(i)) {
@@ -919,7 +906,6 @@ void session::new_game()
         }
     }
 
-    _game_active = true;
     _menu_active = false;
 }
 
@@ -928,14 +914,14 @@ void session::restart()
 {
     _restart_time = 0.0f;
 
-    if ( _multiplayer && !_multiserver ) {
+    if (!svs.active) {
         return;
     }
 
     for (int ii = 0; ii < MAX_PLAYERS; ++ii) {
-        if (!_multiserver && ii > 1) {
+        if (svs.local && ii > 1) {
             break;
-        } else if (_multiserver && !svs.clients[ii].active) {
+        } else if (svs.local && !svs.clients[ii].active) {
             continue;
         }
 
@@ -943,7 +929,6 @@ void session::restart()
         _world.player(ii)->respawn();
     }
 
-    _game_active = true;
     _menu_active = false;
 }
 
@@ -996,8 +981,9 @@ int session::message(char const* format, ...)
 //------------------------------------------------------------------------------
 void session::write_message (char const* message, bool broadcast)
 {
-    if ( _multiserver && broadcast )
+    if (svs.active && broadcast) {
         broadcast_print( message );
+    }
 
     memset( _messages[_num_messages].string, 0, MAX_STRING );
     strcpy( _messages[_num_messages].string, message );

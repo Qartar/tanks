@@ -12,10 +12,6 @@ void session::start_server ()
 {
     stop_client( );
 
-    _multiplayer = true;
-    _multiserver = true;
-    _multiplayer_active = true;
-
     reset();
 
     for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
@@ -36,10 +32,10 @@ void session::start_server ()
         spawn_player(0);
     }
 
-    _game_active = true;
     _menu_active = false;
 
     svs.active = true;
+    svs.local = false;
     _net_server_name = svs.name;
 
     svs.socket.open(network::socket_type::ipv6, PORT_SERVER);
@@ -53,13 +49,10 @@ void session::start_server_local()
 {
     stop_client();
 
-    _multiplayer = false;
-    _multiserver = false;
-    _multiplayer_active = false;
-
     _worldtime = 0;
 
-    svs.active = false;
+    svs.active = true;
+    svs.local = true;
 
     // init local players
     for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
@@ -83,15 +76,12 @@ void session::start_server_local()
 //------------------------------------------------------------------------------
 void session::stop_server ()
 {
-    if (!_multiserver) {
+    if (!svs.active) {
         return;
     }
 
     svs.active = false;
-
-    _multiplayer = false;
-    _multiserver = false;
-    _multiplayer_active = false;
+    svs.local = false;
 
     for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
         if (svs.clients[ii].local || !svs.clients[ii].active) {
@@ -108,8 +98,6 @@ void session::stop_server ()
     svs.socket.close();
 
     _world.reset();
-
-    _game_active = false;
 }
 
 //------------------------------------------------------------------------------
@@ -195,7 +183,7 @@ void session::write_frame()
 void session::client_connect(network::address const& remote, char const* message_string)
 {
     // client has asked for connection
-    if (!_multiserver) {
+    if (!svs.active) {
         return;
     }
 

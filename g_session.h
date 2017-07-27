@@ -114,8 +114,8 @@ struct userinfo
 //------------------------------------------------------------------------------
 typedef struct client_s
 {
-    bool    active;
-    bool    local;
+    bool active; //!< client is connected and active
+    bool local; //!< client is local (host or hotseat)
 
     network::channel netchan;
     game::userinfo info;
@@ -124,7 +124,8 @@ typedef struct client_s
 //------------------------------------------------------------------------------
 typedef struct server_state_s
 {
-    bool    active;
+    bool active; //!< server is connected and active
+    bool local; //!< server is local only (hotseat)
 
     char        name[SHORT_STRING];
 
@@ -152,6 +153,9 @@ typedef struct remote_server_s
 //------------------------------------------------------------------------------
 typedef struct client_state_s
 {
+    bool active; //!< client is connected and active
+    bool local; //!< client is local (host or hotseat)
+
     game::userinfo info;
 
     int     number;
@@ -192,7 +196,6 @@ public:
     void add_score(int player_index, int score);
 
     bool _menu_active;
-    bool _game_active;
     bool _dedicated;
 
     static int find_server_by_name(void *lpvoid);
@@ -218,11 +221,6 @@ private:
     config::string _cl_name;
     config::string _cl_color;
     config::integer _cl_weapon;
-
-    bool _multiplayer;     // is multiplayer
-    bool _multiserver;     // hosting multiplayer
-    bool _have_server;      // found a server
-    bool _multiplayer_active;     // active and playing
 
     game_mode _mode;
 
@@ -270,6 +268,7 @@ public:
     void start_server_local();
     void stop_server();
 
+    void start_client_local();
     void stop_client();
 
     void connect_to_server(int index);

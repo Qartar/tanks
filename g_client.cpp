@@ -60,21 +60,25 @@ void session::shutdown_client()
 //------------------------------------------------------------------------------
 void session::stop_client ()
 {
-    if (_multiplayer && !_multiserver && _multiplayer_active) {
+    if (cls.active) {
         _netchan.write_byte(clc_disconnect);
         _netchan.transmit();
         _netchan.reset();
     }
 
+    cls.active = false;
     cls.socket.close();
 
     _world.reset();
 
-    _multiplayer = false;
-    _multiplayer_active = false;
-
-    _game_active = false;
     _menu_active = true;
+}
+
+//------------------------------------------------------------------------------
+void session::start_client_local()
+{
+    cls.active = true;
+    cls.local = true;
 }
 
 //------------------------------------------------------------------------------
@@ -171,11 +175,9 @@ void session::connect_ack(char const* message_string)
 
     _netchan.setup( &cls.socket, _netserver );
 
-    _multiplayer = true;      // wtf are all these bools?
-    _multiplayer_active = true;      // i dont even remember
+    cls.active = true;
 
-    _menu_active = false;      // so you're totally screwed
-    _game_active = true;       // if you ever want to know
+    _menu_active = false;
 
     _clients[cls.number].upgrades = 0;
     _clients[cls.number].damage_mod = 1.0f;
@@ -238,8 +240,6 @@ void session::info_ask ()
     stop_client( );
     stop_server( );
 
-    _have_server = false;
-
     for (int ii = 0; ii < 16; ++ii) {
         if (cls.socket.open(network::socket_type::ipv6, PORT_CLIENT+ii)) {
             break;
@@ -281,10 +281,7 @@ void session::info_get(network::address const& remote, char const* message_strin
         cls.servers[ii].active = true;
 
         // old server code
-        if (!_have_server) {
-            _netserver = remote;
-            _have_server = true;
-        }
+        _netserver = remote;
 
         return;
     }
@@ -293,7 +290,7 @@ void session::info_get(network::address const& remote, char const* message_strin
 //------------------------------------------------------------------------------
 void session::write_upgrade(int upgrade)
 {
-    if (_multiserver) {
+    if (svs.active) {
         read_upgrade(0, upgrade);
     } else {
         _netchan.write_byte(clc_upgrade);
@@ -317,7 +314,7 @@ void session::draw_world()
     view.size = world_size;
 
     game::tank* player = _world.player(cls.number);
-    if (_multiplayer && player) {
+    if (cls.active && player) {
         vec2 position = player->get_position(lerp);
         vec2 view_mins = _world.mins() + view.size * 0.5f;
         vec2 view_maxs = _world.maxs() - view.size * 0.5f;
@@ -335,7 +332,7 @@ void session::draw_world()
 
     _renderer->set_view(view);
 
-    if (_game_active) {
+    if (cls.active) {
         _world.draw(_renderer, _worldtime);
     }
 

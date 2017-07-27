@@ -9,6 +9,10 @@ namespace network {
 
 //------------------------------------------------------------------------------
 channel::channel(int netport)
+    : _address{}
+    , _last_sent{}
+    , _last_received{}
+    , _socket{}
 {
     LARGE_INTEGER counter;
 
@@ -51,7 +55,7 @@ bool channel::transmit(int length, byte const* data)
 
     _last_sent = g_Application->time();
 
-    if (_socket->write(_address, netmsg)) {
+    if (_socket && _socket->write(_address, netmsg)) {
         reset();
         return true;
     } else {
