@@ -9,6 +9,63 @@
 // matrix types
 
 //------------------------------------------------------------------------------
+class mat2
+{
+public:
+
+// constructors
+
+    mat2() = default;
+    constexpr mat2(float in11, float in12,
+                   float in21, float in22)
+        : _rows{vec2{in11, in12},
+                vec2{in21, in22}}
+    {}
+
+    mat2& operator=(mat2 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; return *this;}
+    bool operator==(mat2 const& M) const { return _rows[0] == M[0] && _rows[1] == M[1]; }
+    bool operator!=(mat2 const& M) const { return _rows[0] != M[0] || _rows[1] != M[1]; }
+    vec2 const& operator[](std::size_t idx) const { return _rows[idx]; }
+    vec2& operator[](std::size_t idx) { return _rows[idx]; }
+
+// basic functions
+
+    void set_identity() {
+        _rows[0][0] = 1.f; _rows[0][1] = 0.f;
+        _rows[1][0] = 0.f; _rows[1][1] = 1.f;
+    }
+
+// rotation
+
+    void set_rotation(float theta) {
+        float cost = std::cos(theta);
+        float sint = std::sin(theta);
+
+        _rows[0][0] = +cost; _rows[0][1] = -sint;
+        _rows[1][0] = +sint; _rows[1][1] = +cost;
+    }
+
+// scale
+
+    void set_scale(vec2 const& s) {
+        _rows[0][0] = s.x; _rows[0][1] = 0.f;
+        _rows[1][0] = 0.f; _rows[1][1] = s.y;
+    }
+
+    void set_scale(float s) { set_scale(vec2(s)); }
+
+// multiplication
+
+    friend vec2 operator*(vec2 const& v, mat2 const& m) {
+        return vec2(m[0][0] * v[0] + m[0][1] * v[1],
+                    m[1][0] * v[0] + m[1][1] * v[1]);
+    }
+
+protected:
+    vec2 _rows[2];
+};
+
+//------------------------------------------------------------------------------
 class mat3
 {
 public:
@@ -50,6 +107,16 @@ public:
         _rows[i1][i0] = 0.f; _rows[i1][i1] = +cost; _rows[i1][i2] = -sint;
         _rows[i2][i0] = 0.f; _rows[i2][i1] = +sint; _rows[i2][i2] = +cost;
     }
+
+// scale
+
+    void set_scale(vec3 const& s) {
+        _rows[0][0] = s.x; _rows[0][1] = 0.f; _rows[0][2] = 0.f;
+        _rows[1][0] = 0.f; _rows[1][1] = s.y; _rows[1][2] = 0.f;
+        _rows[2][0] = 0.f; _rows[2][1] = 0.f; _rows[2][2] = s.z;
+    }
+
+    void set_scale(float s) { set_scale(vec3(s)); }
 
 // multiplication
 
@@ -157,5 +224,6 @@ protected:
 };
 
 //------------------------------------------------------------------------------
+constexpr mat2 mat2_identity = mat2(1,0,0,1);
 constexpr mat3 mat3_identity = mat3(1,0,0,0,1,0,0,0,1);
 constexpr mat4 mat4_identity = mat4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
