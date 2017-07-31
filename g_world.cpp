@@ -175,6 +175,8 @@ void world::read_snapshot(network::message& message)
 void world::read_frame(network::message const& message)
 {
     _framenum = message.read_long();
+    _mins = message.read_vector();
+    _maxs = message.read_vector();
 
     // read active objects
     for (std::size_t ii = 0; ; ++ii) {
@@ -233,6 +235,8 @@ void world::write_snapshot(network::message& message) const
     // write frame
     message.write_byte(static_cast<int>(message_type::frame));
     message.write_long(_framenum);
+    message.write_vector(_mins);
+    message.write_vector(_maxs);
 
     // write active objects
     for (auto const& obj : _objects) {
