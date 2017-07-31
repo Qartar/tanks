@@ -29,20 +29,20 @@ public:
     vec2& operator=(const vec2 &V) {x=V.x; y=V.y; return *this;}
     bool operator==(const vec2 &V) const { return x == V.x && y == V.y; }
     bool operator!=(const vec2 &V) const { return x != V.x || y != V.y; }
-    float operator[](std::size_t idx) const { return (&x)[idx]; }
+    constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
     float& operator[](std::size_t idx) { return (&x)[idx]; }
     operator float*() { return &x; }
     operator float const*() const { return &x; }
 
 // algebraic vector operations
 
-    vec2 operator-() const {return vec2(-x, -y);}
-    vec2 operator+(vec2 const& V) const { return vec2(x+V.x, y+V.y); }
-    vec2 operator-(vec2 const& V) const { return vec2(x-V.x, y-V.y); }
-    vec2 operator*(vec2 const& V) const { return vec2(x*V.x, y*V.y); }
-    vec2 operator/(vec2 const& V) const { return vec2(x/V.x, y/V.y); }
-    vec2 operator*(float S) const { return vec2(x*S, y*S); }
-    vec2 operator/(float S) const { return vec2(x/S, y/S); }
+    constexpr vec2 operator-() const {return vec2(-x, -y);}
+    constexpr vec2 operator+(vec2 const& V) const { return vec2(x+V.x, y+V.y); }
+    constexpr vec2 operator-(vec2 const& V) const { return vec2(x-V.x, y-V.y); }
+    constexpr vec2 operator*(vec2 const& V) const { return vec2(x*V.x, y*V.y); }
+    constexpr vec2 operator/(vec2 const& V) const { return vec2(x/V.x, y/V.y); }
+    constexpr vec2 operator*(float S) const { return vec2(x*S, y*S); }
+    constexpr vec2 operator/(float S) const { return vec2(x/S, y/S); }
 
 // algebraic vector assignment operations
 
@@ -62,8 +62,8 @@ public:
     float normalize_length() { float len = length(); *this /= len; return len; }
     void clear() { x=0.0f; y=0.0f; }
 
-    float dot(const vec2 &V) const { return x*V.x + y*V.y; }
-    vec2 cross(float V) const { return vec2(y*V, -x*V); }
+    constexpr float dot(const vec2 &V) const { return x*V.x + y*V.y; }
+    constexpr vec2 cross(float V) const { return vec2(y*V, -x*V); }
 };
 
 //------------------------------------------------------------------------------
@@ -84,20 +84,20 @@ public:
     vec3& operator=(const vec3 &V) {x=V.x; y=V.y; z=V.z; return *this; }
     bool operator==(const vec3 &V) const {return x == V.x && y == V.y && z == V.z; }
     bool operator!=(const vec3 &V) const {return x != V.x || y != V.y || z != V.z; }
-    float operator[](std::size_t idx) const { return (&x)[idx]; }
+    constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
     float& operator[](std::size_t idx) { return (&x)[idx]; }
     operator float*() { return &x; }
     operator float const*() const { return &x; }
 
 // algebraic vector operations
 
-    vec3 operator-() const { return vec3(-x, -y, -z); }
-    vec3 operator+(vec3 const& V) const { return vec3(x+V.x, y+V.y, z+V.z); }
-    vec3 operator-(vec3 const& V) const { return vec3(x-V.x, y-V.y, z-V.z); }
-    vec3 operator*(vec3 const& V) const { return vec3(x*V.x, y*V.y, z*V.z); }
-    vec3 operator/(vec3 const& V) const { return vec3(x/V.x, y/V.y, z/V.z); }
-    vec3 operator*(float S) const { return vec3(x*S, y*S, z*S); }
-    vec3 operator/(float S) const { return vec3(x/S, y/S, z/S); }
+    constexpr vec3 operator-() const { return vec3(-x, -y, -z); }
+    constexpr vec3 operator+(vec3 const& V) const { return vec3(x+V.x, y+V.y, z+V.z); }
+    constexpr vec3 operator-(vec3 const& V) const { return vec3(x-V.x, y-V.y, z-V.z); }
+    constexpr vec3 operator*(vec3 const& V) const { return vec3(x*V.x, y*V.y, z*V.z); }
+    constexpr vec3 operator/(vec3 const& V) const { return vec3(x/V.x, y/V.y, z/V.z); }
+    constexpr vec3 operator*(float S) const { return vec3(x*S, y*S, z*S); }
+    constexpr vec3 operator/(float S) const { return vec3(x/S, y/S, z/S); }
 
 // algebraic vector assignment operations
 
@@ -117,10 +117,10 @@ public:
     float normalize_length() { float len = length(); *this /= len; return len; }
     void clear() { x=0.0f; y=0.0f; z=0.0f; }
 
-    float dot(vec3 const& V) const { return x*V.x + y*V.y + z*V.z;}
-    vec3 cross(vec3 const& V) const { return vec3( y*V.z - z*V.y, z*V.x - x*V.z, x*V.y - y*V.x ); }
+    constexpr float dot(vec3 const& V) const { return x*V.x + y*V.y + z*V.z;}
+    constexpr vec3 cross(vec3 const& V) const { return vec3( y*V.z - z*V.y, z*V.x - x*V.z, x*V.y - y*V.x ); }
 
-    vec2 to_vec2() const { return vec2(x, y); }
+    constexpr vec2 to_vec2() const { return vec2(x, y); }
 };
 
 //------------------------------------------------------------------------------
@@ -142,20 +142,20 @@ public:
     vec4& operator=(const vec4 &V) { x=V.x; y=V.y; z=V.z; w=V.w; return *this; }
     bool operator==(const vec4 &V) const { return x==V.x && y==V.y && z==V.z && w==V.w; }
     bool operator!=(const vec4 &V) const { return x!=V.x || y!=V.y || z!=V.z || w!=V.w; }
-    float operator[](std::size_t idx) const { return (&x)[idx]; }
+    constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
     float& operator[](std::size_t idx) { return (&x)[idx]; }
     operator float*() { return &x; }
     operator float const*() const { return &x; }
 
 // algebraic vector operations
 
-    vec4 operator-() const { return vec4(-x, -y, -z, -w); }
-    vec4 operator+(vec4 const& V) const { return vec4(x+V.x, y+V.y, z+V.z, w+V.w); }
-    vec4 operator-(vec4 const& V) const { return vec4(x-V.x, y-V.y, z-V.z, w-V.w); }
-    vec4 operator*(vec4 const& V) const { return vec4(x*V.x, y*V.y, z*V.z, w*V.w); }
-    vec4 operator/(vec4 const& V) const { return vec4(x/V.x, y/V.y, z/V.z, w/V.w); }
-    vec4 operator*(float S) const { return vec4(x*S, y*S, z*S, w*S); }
-    vec4 operator/(float S) const { return vec4(x/S, y/S, z/S, w/S); }
+    constexpr vec4 operator-() const { return vec4(-x, -y, -z, -w); }
+    constexpr vec4 operator+(vec4 const& V) const { return vec4(x+V.x, y+V.y, z+V.z, w+V.w); }
+    constexpr vec4 operator-(vec4 const& V) const { return vec4(x-V.x, y-V.y, z-V.z, w-V.w); }
+    constexpr vec4 operator*(vec4 const& V) const { return vec4(x*V.x, y*V.y, z*V.z, w*V.w); }
+    constexpr vec4 operator/(vec4 const& V) const { return vec4(x/V.x, y/V.y, z/V.z, w/V.w); }
+    constexpr vec4 operator*(float S) const { return vec4(x*S, y*S, z*S, w*S); }
+    constexpr vec4 operator/(float S) const { return vec4(x/S, y/S, z/S, w/S); }
 
 // algebraic vector assignment operations
 
@@ -175,10 +175,10 @@ public:
     float normalize_length() { float len = length(); *this /= len; return len; }
     void clear() { x=0.0f; y=0.0f; z=0.0f; w=0.0f; }
 
-    float dot(vec4 const& V) const { return x*V.x + y*V.y + z*V.z + w*V.w; }
-    vec4 cross(vec4 const& V) const { return vec4(y*V.z - z*V.y, z*V.x - x*V.z, x*V.y - y*V.x, 0.0f); }
+    constexpr float dot(vec4 const& V) const { return x*V.x + y*V.y + z*V.z + w*V.w; }
+    constexpr vec4 cross(vec4 const& V) const { return vec4(y*V.z - z*V.y, z*V.x - x*V.z, x*V.y - y*V.x, 0.0f); }
 
-    vec3 to_vec3() const { return vec3(x, y, z); }
+    constexpr vec3 to_vec3() const { return vec3(x, y, z); }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -200,20 +200,20 @@ public:
     vec2i& operator=(const vec2i &V) {x=V.x; y=V.y; return *this;}
     bool operator==(const vec2i &V) const { return x == V.x && y == V.y; }
     bool operator!=(const vec2i &V) const { return x != V.x || y != V.y; }
-    int operator[](std::size_t idx) const { return (&x)[idx]; }
+    constexpr int operator[](std::size_t idx) const { return (&x)[idx]; }
     int& operator[](std::size_t idx) { return (&x)[idx]; }
     operator int*() { return &x; }
     operator int const*() const { return &x; }
 
 // algebraic vector operations
 
-    vec2i operator-() const {return vec2i(-x, -y);}
-    vec2i operator+(vec2i const& V) const { return vec2i(x+V.x, y+V.y); }
-    vec2i operator-(vec2i const& V) const { return vec2i(x-V.x, y-V.y); }
-    vec2i operator*(vec2i const& V) const { return vec2i(x*V.x, y*V.y); }
-    vec2i operator/(vec2i const& V) const { return vec2i(x/V.x, y/V.y); }
-    vec2i operator*(int S) const { return vec2i(x*S, y*S); }
-    vec2i operator/(int S) const { return vec2i(x/S, y/S); }
+    constexpr vec2i operator-() const {return vec2i(-x, -y);}
+    constexpr vec2i operator+(vec2i const& V) const { return vec2i(x+V.x, y+V.y); }
+    constexpr vec2i operator-(vec2i const& V) const { return vec2i(x-V.x, y-V.y); }
+    constexpr vec2i operator*(vec2i const& V) const { return vec2i(x*V.x, y*V.y); }
+    constexpr vec2i operator/(vec2i const& V) const { return vec2i(x/V.x, y/V.y); }
+    constexpr vec2i operator*(int S) const { return vec2i(x*S, y*S); }
+    constexpr vec2i operator/(int S) const { return vec2i(x/S, y/S); }
 
 // algebraic vector assignment operations
 
@@ -230,9 +230,9 @@ public:
     int length_sqr() const { return x*x + y*y; }
     void clear() { x=0; y=0; }
 
-    int dot(const vec2i &V) const { return x*V.x + y*V.y; }
-    vec2i cross(int V) const { return vec2i(y*V, -x*V); }
-    explicit operator vec2() const { return vec2((float)x, (float)y); }
+    constexpr int dot(const vec2i &V) const { return x*V.x + y*V.y; }
+    constexpr vec2i cross(int V) const { return vec2i(y*V, -x*V); }
+    explicit constexpr operator vec2() const { return vec2((float)x, (float)y); }
 };
 
 //------------------------------------------------------------------------------

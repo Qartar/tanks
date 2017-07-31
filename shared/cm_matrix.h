@@ -21,6 +21,9 @@ public:
         : _rows{vec2{in11, in12},
                 vec2{in21, in22}}
     {}
+    constexpr mat2(vec2 r1, vec2 r2)
+        : _rows{r1, r2}
+    {}
 
     mat2& operator=(mat2 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; return *this;}
     bool operator==(mat2 const& M) const { return _rows[0] == M[0] && _rows[1] == M[1]; }
@@ -60,9 +63,14 @@ public:
 
 // multiplication
 
-    friend vec2 operator*(vec2 const& v, mat2 const& m) {
+    constexpr friend vec2 operator*(vec2 const& v, mat2 const& m) {
         return vec2(m[0][0] * v[0] + m[0][1] * v[1],
                     m[1][0] * v[0] + m[1][1] * v[1]);
+    }
+
+    constexpr friend mat2 operator*(mat2 const& lhs, mat2 const& rhs) {
+        return mat2(lhs[0] * rhs,
+                    lhs[1] * rhs);
     }
 
 protected:
@@ -83,6 +91,9 @@ public:
         : _rows{vec3{in11, in12, in13},
                 vec3{in21, in22, in23},
                 vec3{in31, in32, in33}}
+    {}
+    constexpr mat3(vec3 r1, vec3 r2, vec3 r3)
+        : _rows{r1, r2, r3}
     {}
 
     mat3& operator=(mat3 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; _rows[2]=M[2]; return *this;}
@@ -128,15 +139,21 @@ public:
 
 // multiplication
 
-    friend vec2 operator*(vec2 const& v, mat3 const& m) {
+    constexpr friend vec2 operator*(vec2 const& v, mat3 const& m) {
         return vec2(m[0][0] * v[0] + m[0][1] * v[1] + m[0][1],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2]);
     }
 
-    friend vec3 operator*(vec3 const& v, mat3 const& m) {
+    constexpr friend vec3 operator*(vec3 const& v, mat3 const& m) {
         return vec3(m[0][0] * v[0] + m[0][1] * v[1] + m[0][1] * v[2],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
                     m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2]);
+    }
+
+    constexpr friend mat3 operator*(mat3 const& lhs, mat3 const& rhs) {
+        return mat3(lhs[0] * rhs,
+                    lhs[1] * rhs,
+                    lhs[2] * rhs);
     }
 
 protected:
@@ -159,6 +176,9 @@ public:
                 vec4{in21, in22, in23, in24},
                 vec4{in31, in32, in33, in34},
                 vec4{in41, in42, in43, in44}}
+    {}
+    constexpr mat4(vec4 r1, vec4 r2, vec4 r3, vec4 r4)
+        : _rows{r1, r2, r3, r4}
     {}
 
     mat4& operator=(mat4 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; _rows[2]=M[2]; _rows[3]=M[3]; return *this;}
@@ -221,17 +241,24 @@ public:
 
 // multiplication
 
-    friend vec3 operator*(vec3 const& v, mat4 const& m) {
+    constexpr friend vec3 operator*(vec3 const& v, mat4 const& m) {
         return vec3(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3],
                     m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3]);
     }
 
-    friend vec4 operator*(vec4 const& v, mat4 const& m) {
+    constexpr friend vec4 operator*(vec4 const& v, mat4 const& m) {
         return vec4(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3] * v[3],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3] * v[3],
                     m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3] * v[3],
                     m[3][0] * v[0] + m[3][1] * v[1] + m[3][2] * v[2] + m[3][3] * v[3]);
+    }
+
+    constexpr friend mat4 operator*(mat4 const& lhs, mat4 const& rhs) {
+        return mat4(lhs[0] * rhs,
+                    lhs[1] * rhs,
+                    lhs[2] * rhs,
+                    lhs[3] * rhs);
     }
 
 protected:
