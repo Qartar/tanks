@@ -319,7 +319,7 @@ void session::key_event(unsigned char key, bool down)
                 cls.info.name[len-1] = 0;
             } else if (key == K_ENTER) {
                 _client_button_down = false;
-            } else if (key < K_SPACE) {
+            } else if (key <= K_SPACE) {
                 return;
             } else if (key >= K_BACKSPACE) {
                 return;
