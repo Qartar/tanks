@@ -36,10 +36,8 @@ public:
     }
 
     virtual vec2 supporting_vertex(vec2 direction) const override {
-        vec2 sign(direction.x < 0.f ? -1.f : 1.f,
-                  direction.y < 0.f ? -1.f : 1.f);
-
-        return sign * _half_size;
+        return _half_size * mat2::scale(direction.x < 0.f ? -1.f : 1.f,
+                                        direction.y < 0.f ? -1.f : 1.f);
     }
 
     virtual void calculate_mass_properties(float inverse_mass, vec2& center_of_mass, float& inverse_inertia) const override {

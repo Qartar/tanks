@@ -54,6 +54,10 @@ public:
 
     void set_scale(float s) { set_scale(vec2(s)); }
 
+    constexpr static mat2 scale(float s) { return scale(vec2(s)); }
+    constexpr static mat2 scale(float sx, float sy) { return scale(vec2(sx, sy)); }
+    constexpr static mat2 scale(vec2 s) { return mat2(s.x, 0, 0, s.y); }
+
 // multiplication
 
     friend vec2 operator*(vec2 const& v, mat2 const& m) {
@@ -117,6 +121,10 @@ public:
     }
 
     void set_scale(float s) { set_scale(vec3(s)); }
+
+    constexpr static mat3 scale(float s) { return scale(vec3(s)); }
+    constexpr static mat3 scale(float sx, float sy, float sz) { return scale(vec3(sx, sy, sz)); }
+    constexpr static mat3 scale(vec3 s) { return mat3(s.x, 0, 0, 0, s.y, 0, 0, 0, s.z); }
 
 // multiplication
 
@@ -193,6 +201,9 @@ public:
 
     void set_translation(vec3 const& t) { set_translation(vec4(t)); }
 
+    constexpr static mat4 translate(float tx, float ty, float tz) { return translate(vec3(tx, ty, tz)); }
+    constexpr static mat4 translate(vec3 t) { return mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, t.x, t.y, t.z, 1); }
+
 // scale
 
     void set_scale(vec4 const& s) {
@@ -203,6 +214,10 @@ public:
     }
 
     void set_scale(float s) { set_scale(vec4(s)); }
+
+    constexpr static mat4 scale(float s) { return scale(vec4(s)); }
+    constexpr static mat4 scale(float sx, float sy, float sz, float sw = 1) { return scale(vec4(sx, sy, sz, sw)); }
+    constexpr static mat4 scale(vec4 s) { return mat4(s.x, 0, 0, 0, 0, s.y, 0, 0, 0, 0, s.z, 0, 0, 0, 0, s.w); }
 
 // multiplication
 

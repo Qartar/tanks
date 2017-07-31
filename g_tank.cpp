@@ -176,7 +176,7 @@ void tank::collide(tank* other, physics::contact const* contact)
 void tank::respawn()
 {
     vec2 spawn_size = _world->maxs() - _world->mins() - vec2(SPAWN_BUFFER) * 2.0f;
-    vec2 spawn_pos = _world->mins() + vec2(frand(), frand()) * spawn_size + vec2(SPAWN_BUFFER);
+    vec2 spawn_pos = _world->mins() + spawn_size * mat2::scale(frand(), frand()) + vec2(SPAWN_BUFFER);
 
     _dead_time = 0.0f;
 
