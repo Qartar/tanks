@@ -195,7 +195,7 @@ void cSoundChannel::m_SpatializeMono (int in, int *out)
     else
     {
         vec3    dir = m_vOrigin - gSound->vOrigin;
-        dir.normalize( );
+        dir.normalize_self( );
 
         float   attn = clamp( powf(ATTN_LEN / dir.length_sqr( ), m_flAttenuation), 0.0f, 1.0f );
 

@@ -57,7 +57,8 @@ public:
 
     float length() const { return std::sqrt(length_sqr()); }
     float length_sqr() const { return x*x + y*y; }
-    vec2& normalize() { *this /= length(); return *this; }
+    vec2 normalize() const { return *this / length(); }
+    void normalize_self() { *this /= length(); }
     float normalize_length() { float len = length(); *this /= len; return len; }
     void clear() { x=0.0f; y=0.0f; }
 
@@ -111,7 +112,8 @@ public:
 
     float length() const {return std::sqrt(length_sqr()); }
     float length_sqr() const {return x*x + y*y + z*z; }
-    vec3& normalize() { *this/=length(); return *this; }
+    vec3 normalize() const { return *this / length(); }
+    void normalize_self() { *this /= length(); }
     float normalize_length() { float len = length(); *this /= len; return len; }
     void clear() { x=0.0f; y=0.0f; z=0.0f; }
 
@@ -168,7 +170,8 @@ public:
 
     float length() const { return std::sqrt(length_sqr()); }
     float length_sqr() const { return x*x + y*y + z*z + w*w; }
-    vec4& normalize() { *this/=length(); return *this; }
+    vec4 normalize() const { return *this / length(); }
+    void normalize_self() { *this /= length(); }
     float normalize_length() { float len = length(); *this /= len; return len; }
     void clear() { x=0.0f; y=0.0f; z=0.0f; w=0.0f; }
 
