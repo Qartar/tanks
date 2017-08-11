@@ -5,6 +5,15 @@
 
 #include "cm_vector.h"
 
+// Visual Studio 2015 apparently does not support constexpr subscript operators
+// which are used by the multiplication methods. This removes constexpr for those
+// methods when compiling with Visual Studio 2015 or earlier.
+#if defined(_MSC_VER) && _MSC_VER <= 1900
+#   define CONSTEXPR
+#else
+#   define CONSTEXPR constexpr
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // matrix types
 
@@ -28,7 +37,7 @@ public:
     mat2& operator=(mat2 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; return *this;}
     bool operator==(mat2 const& M) const { return _rows[0] == M[0] && _rows[1] == M[1]; }
     bool operator!=(mat2 const& M) const { return _rows[0] != M[0] || _rows[1] != M[1]; }
-    vec2 const& operator[](std::size_t idx) const { return _rows[idx]; }
+    constexpr vec2 operator[](std::size_t idx) const { return _rows[idx]; }
     vec2& operator[](std::size_t idx) { return _rows[idx]; }
 
 // basic functions
@@ -63,12 +72,12 @@ public:
 
 // multiplication
 
-    constexpr friend vec2 operator*(vec2 const& v, mat2 const& m) {
+    CONSTEXPR friend vec2 operator*(vec2 const& v, mat2 const& m) {
         return vec2(m[0][0] * v[0] + m[0][1] * v[1],
                     m[1][0] * v[0] + m[1][1] * v[1]);
     }
 
-    constexpr friend mat2 operator*(mat2 const& lhs, mat2 const& rhs) {
+    CONSTEXPR friend mat2 operator*(mat2 const& lhs, mat2 const& rhs) {
         return mat2(lhs[0] * rhs,
                     lhs[1] * rhs);
     }
@@ -99,7 +108,7 @@ public:
     mat3& operator=(mat3 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; _rows[2]=M[2]; return *this;}
     bool operator==(mat3 const& M) const { return _rows[0] == M[0] && _rows[1] == M[1] && _rows[2] == M[2]; }
     bool operator!=(mat3 const& M) const { return _rows[0] != M[0] || _rows[1] != M[1] || _rows[2] != M[2]; }
-    vec3 const& operator[](std::size_t idx) const { return _rows[idx]; }
+    constexpr vec3 operator[](std::size_t idx) const { return _rows[idx]; }
     vec3& operator[](std::size_t idx) { return _rows[idx]; }
 
 // basic functions
@@ -139,18 +148,18 @@ public:
 
 // multiplication
 
-    constexpr friend vec2 operator*(vec2 const& v, mat3 const& m) {
+    CONSTEXPR friend vec2 operator*(vec2 const& v, mat3 const& m) {
         return vec2(m[0][0] * v[0] + m[0][1] * v[1] + m[0][1],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2]);
     }
 
-    constexpr friend vec3 operator*(vec3 const& v, mat3 const& m) {
+    CONSTEXPR friend vec3 operator*(vec3 const& v, mat3 const& m) {
         return vec3(m[0][0] * v[0] + m[0][1] * v[1] + m[0][1] * v[2],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
                     m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2]);
     }
 
-    constexpr friend mat3 operator*(mat3 const& lhs, mat3 const& rhs) {
+    CONSTEXPR friend mat3 operator*(mat3 const& lhs, mat3 const& rhs) {
         return mat3(lhs[0] * rhs,
                     lhs[1] * rhs,
                     lhs[2] * rhs);
@@ -184,7 +193,7 @@ public:
     mat4& operator=(mat4 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; _rows[2]=M[2]; _rows[3]=M[3]; return *this;}
     bool operator==(mat4 const& M) const { return _rows[0] == M[0] && _rows[1] == M[1] && _rows[2] == M[2] && _rows[3] == M[3]; }
     bool operator!=(mat4 const& M) const { return _rows[0] != M[0] || _rows[1] != M[1] || _rows[2] != M[2] || _rows[3] != M[3]; }
-    vec4 const& operator[](std::size_t idx) const { return _rows[idx]; }
+    constexpr vec4 operator[](std::size_t idx) const { return _rows[idx]; }
     vec4& operator[](std::size_t idx) { return _rows[idx]; }
 
 // basic functions
@@ -241,20 +250,20 @@ public:
 
 // multiplication
 
-    constexpr friend vec3 operator*(vec3 const& v, mat4 const& m) {
+    CONSTEXPR friend vec3 operator*(vec3 const& v, mat4 const& m) {
         return vec3(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3],
                     m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3]);
     }
 
-    constexpr friend vec4 operator*(vec4 const& v, mat4 const& m) {
+    CONSTEXPR friend vec4 operator*(vec4 const& v, mat4 const& m) {
         return vec4(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3] * v[3],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3] * v[3],
                     m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3] * v[3],
                     m[3][0] * v[0] + m[3][1] * v[1] + m[3][2] * v[2] + m[3][3] * v[3]);
     }
 
-    constexpr friend mat4 operator*(mat4 const& lhs, mat4 const& rhs) {
+    CONSTEXPR friend mat4 operator*(mat4 const& lhs, mat4 const& rhs) {
         return mat4(lhs[0] * rhs,
                     lhs[1] * rhs,
                     lhs[2] * rhs,
@@ -269,3 +278,5 @@ protected:
 constexpr mat2 mat2_identity = mat2(1,0,0,1);
 constexpr mat3 mat3_identity = mat3(1,0,0,0,1,0,0,0,1);
 constexpr mat4 mat4_identity = mat4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
+
+#undef CONSTEXPR
