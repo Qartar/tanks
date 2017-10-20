@@ -152,17 +152,43 @@ void session::connect_to_server (int index)
     stop_client( );
     stop_server( );
 
+    for (int ii = 0; ii < 16; ++ii) {
+        if (cls.socket.open(network::socket_type::ipv6, PORT_CLIENT+ii)) {
+            break;
+        }
+    }
+
     if ( index > 0 )
         _netserver = cls.servers[index].address;
 
     if ( !_netserver.port )
         _netserver.port = PORT_SERVER;
 
+    cls.socket.printf(_netserver, "connect %i %s %i", PROTOCOL_VERSION, cls.info.name.data(), _netchan.netport());
+}
+
+//------------------------------------------------------------------------------
+void session::connect_to_server (char const* address)
+{
+    // ask server for a connection
+
+    stop_client( );
+    stop_server( );
+
     for (int ii = 0; ii < 16; ++ii) {
         if (cls.socket.open(network::socket_type::ipv6, PORT_CLIENT+ii)) {
             break;
         }
     }
+
+    if (!cls.socket.resolve(address, _netserver)) {
+        write_message_client(va("Failed to resolve address: \"%s\"", address));
+        return;
+    }
+
+    if ( !_netserver.port )
+        _netserver.port = PORT_SERVER;
+
     cls.socket.printf(_netserver, "connect %i %s %i", PROTOCOL_VERSION, cls.info.name.data(), _netchan.netport());
 }
 

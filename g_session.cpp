@@ -397,11 +397,6 @@ void session::key_event(unsigned char key, bool down)
                     // command, parse it
                     if ( (command = strstr( _clientsay, "quit" )) )
                         PostQuitMessage( 0 );
-                    else if ( (command = strstr( _clientsay, "find" )) )
-                    {
-                        strncpy( cls.server, command + 5, SHORT_STRING );
-                        find_server( false );
-                    }
                     else if ( (command = strstr( _clientsay, "disconnect" )) )
                     {
                         stop_client( );
@@ -411,11 +406,12 @@ void session::key_event(unsigned char key, bool down)
                     {
                         if ( strlen( command ) > 8 )
                         {
-                            strncpy( cls.server, command + 8, SHORT_STRING );
-                            find_server( true );
+                            connect_to_server(command + 8);
                         }
                         else
+                        {
                             connect_to_server( -1 );
+                        }
                     }
                     else if ( (command = strstr( _clientsay, "set" )) )
                     {
@@ -1019,35 +1015,4 @@ void session::draw_messages ()
     }
 }
 
-//------------------------------------------------------------------------------
-static bool gs_try_connect = false;
-
-int session::find_server_by_name(void*)
-{
-    //g_Game->write_message( va("searching for: %s", g_Game->cls.server ) );
-
-    //if ( !pNet->string_to_address( g_Game->cls.server, &g_Game->_netserver ) )
-    //    g_Game->write_message( va("could not find server: %s", g_Game->cls.server ) );
-    //else
-    //{
-    //    g_Game->write_message( va("found: %s", pNet->address_to_string( g_Game->_netserver) ) );
-    //    g_Game->_have_server = true;
-    //}
-
-    //if ( g_Game->_have_server && gs_try_connect )
-    //    g_Game->connect_to_server( -1 );
-
-    return 0;
-}
-
 } // namespace game
-
-//------------------------------------------------------------------------------
-void find_server(bool connect)
-{
-    unsigned int    id;
-
-    game::gs_try_connect = connect;
-
-    CreateThread( NULL, NULL, (LPTHREAD_START_ROUTINE )g_Game->find_server_by_name, NULL, NULL, (LPDWORD )&id );
-}
