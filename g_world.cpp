@@ -375,6 +375,18 @@ void world::move_object(game::object *object)
         }
 
         if (best_object) {
+            // If the projectile starts inside the other object then trace again
+            // from the previous position to the current position. This can
+            // happen when spawning projectiles inside another object or when an
+            // object moves on top of the projectile during its move phase.
+            if (best_fraction < 1e-6f && contact.distance < -1e-6f) {
+                end = start;
+                start = end - object->get_linear_velocity() * FRAMETIME;
+
+                auto tr = physics::trace(&best_object->rigid_body(), start, end);
+                best_fraction = tr.get_fraction();
+                contact = tr.get_contact();
+            }
             object->set_position(start + (end - start) * best_fraction);
             object->touch(best_object, &contact);
         } else {
@@ -387,6 +399,10 @@ void world::move_object(game::object *object)
             }
 
             if (other->_owner == object) {
+                continue;
+            }
+
+            if (other->_type == object_type::projectile) {
                 continue;
             }
 
