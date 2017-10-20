@@ -185,8 +185,9 @@ public:
 
     int run_frame(float milliseconds);
 
-    void key_event(unsigned char key, bool down);
+    void key_event(int key, bool down);
     void cursor_event(vec2 position);
+    void gamepad_event(int index, gamepad const& pad);
 
     void reset();
     void new_game();

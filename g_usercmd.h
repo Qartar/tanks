@@ -12,6 +12,21 @@
 namespace game {
 
 //------------------------------------------------------------------------------
+struct gamepad
+{
+    enum side
+    {
+        left = 0,
+        right = 1,
+    };
+
+    //! left and right thumbstick state, normalized to unit length
+    vec2 thumbstick[2];
+    //! left and right trigger state, normalized to [0,1]
+    float trigger[2];
+};
+
+//------------------------------------------------------------------------------
 struct usercmd
 {
     enum class action
@@ -20,8 +35,8 @@ struct usercmd
         attack,
     };
 
-    vec2 move; //!< forward/back, left/right
-    vec2 look; //!< turret left/right, _
+    vec2 move; //!< right/left, forward/back
+    vec2 look; //!< turret right/left, _
     action action;
 };
 
@@ -42,6 +57,7 @@ public:
 
     usercmdgen()
         : _button_state(0)
+        , _gamepad_state{}
     {}
 
     void reset(bool unbind_all = false);
@@ -50,6 +66,7 @@ public:
     template<std::size_t Size> void bind(std::pair<int, button> const (&bindings)[Size]);
 
     bool key_event(int key, bool down);
+    void gamepad_event(gamepad const& pad);
 
     int state(button button) const;
     usercmd generate() const;
@@ -57,6 +74,7 @@ public:
 protected:
     std::map<int, button> _bindings;
     uint32_t _button_state;
+    gamepad _gamepad_state;
 };
 
 //------------------------------------------------------------------------------

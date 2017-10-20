@@ -50,6 +50,8 @@ protected:
     void key_event(int param, bool down);
     void mouse_event(int mouse_state, vec2 position);
 
+    void generate_gamepad_events();
+
     static LRESULT WINAPI wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam);
 };
 

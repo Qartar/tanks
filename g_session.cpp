@@ -8,6 +8,8 @@
 #include "resource.h"
 
 #include <numeric>
+// #todo: abstract XInput virtual keycodes
+#include <XInput.h>
 
 // global object
 vMain   *pMain;
@@ -155,7 +157,7 @@ int session::init (char const *cmdline)
     pSound->load_sound("assets/sound/cannon_impact.wav");
     pSound->load_sound("assets/sound/missile_flight.wav");
 
-    write_message( "Welcome to Tanks! Press F1 for help." );
+    write_message( "Welcome to Tanks! Press F1 or LSHLDR for help." );
 
     return ERROR_NONE;
 }
@@ -285,7 +287,7 @@ void session::draw_menu()
 }
 
 //------------------------------------------------------------------------------
-void session::key_event(unsigned char key, bool down)
+void session::key_event(int key, bool down)
 {
     static bool shift = false;
     static bool ctrl = false;
@@ -310,7 +312,7 @@ void session::key_event(unsigned char key, bool down)
             if ( !down )
                 return;
 
-            if ( shift )
+            if ( shift && key < countof(_shift_keys) )
                 key = _shift_keys[key];
 
             std::size_t len = strnlen(cls.info.name.data(), cls.info.name.size());
@@ -340,7 +342,7 @@ void session::key_event(unsigned char key, bool down)
             if ( !down )
                 return;
 
-            if ( shift )
+            if ( shift && key < countof(_shift_keys) )
                 key = _shift_keys[key];
 
             std::size_t len = strnlen(svs.name, countof(svs.name));
@@ -380,7 +382,7 @@ void session::key_event(unsigned char key, bool down)
                 return;
             }
 
-            if ( shift )
+            if ( shift && key < countof(_shift_keys) )
                 key = _shift_keys[key];
 
             if ( key == K_BACKSPACE )
@@ -541,6 +543,7 @@ void session::key_event(unsigned char key, bool down)
         {
 
         case K_F1:
+        case VK_PAD_LSHOULDER:
             write_message_client( "" );
             write_message_client( "----- TANKS HELP -----" );
             write_message_client( "note: pressing PGDN will refresh the message log" );
@@ -562,7 +565,7 @@ void session::key_event(unsigned char key, bool down)
             write_message_client( "time by pressing the ESC key." );
             write_message_client( "  Every 10 kills you achieve in multiplayer you will be" );
             write_message_client( "prompted to upgrade your tank, you can see more about" );
-            write_message_client( "upgrades by pressing F9" );
+            write_message_client( "upgrades by pressing F9 or RSHLDR" );
             write_message_client( "" );
             break;
 
@@ -571,34 +574,39 @@ void session::key_event(unsigned char key, bool down)
         //
 
         case '1':
+        case VK_PAD_A:
             if ( _clients[cls.number].upgrades )
                 write_upgrade( 0 );
             break;
 
         case '2':
+        case VK_PAD_B:
             if ( _clients[cls.number].upgrades )
                 write_upgrade( 1 );
             break;
 
         case '3':
+        case VK_PAD_X:
             if ( _clients[cls.number].upgrades )
                 write_upgrade( 2 );
             break;
 
         case '4':
+        case VK_PAD_Y:
             if ( _clients[cls.number].upgrades )
                 write_upgrade( 3 );
             break;
 
         case K_F9:
+        case VK_PAD_RSHOULDER:
             write_message_client( "" );
             write_message_client( "---- UPGRADES HELP ----" );
             write_message_client( "  Upgrades are given every ten kills you achieve. The" );
             write_message_client( "categories you can upgrade in are the following: ");
-            write_message_client( "1) Damage - weapon damage" );
-            write_message_client( "2) Armor - damage absorption" );
-            write_message_client( "3) Gunnery - fire rate" );
-            write_message_client( "4) Speed - tank speed" );
+            write_message_client( "(1)(\\c7fff7fA\\cx) Damage - weapon damage" );
+            write_message_client( "(2)(\\cff3f3fB\\cx) Armor - damage absorption" );
+            write_message_client( "(3)(\\c3f3fffX\\cx) Gunnery - fire rate" );
+            write_message_client( "(4)(\\cffff00Y\\cx) Speed - tank speed" );
             write_message_client( "  To upgrade your tank, press the number associated with" );
             write_message_client( "the upgrade when you have upgrades available to you. You" );
             write_message_client( "should note that when you upgrade your tank a penalty" );
@@ -647,6 +655,18 @@ void session::cursor_event(vec2 position)
 
     if (_menu_active) {
         _menu.cursor_event(_cursor);
+    }
+}
+
+//------------------------------------------------------------------------------
+void session::gamepad_event(int index, gamepad const& pad)
+{
+    if (!_dedicated) {
+        game::tank* player = _world.player(index);
+        if (player) {
+            _clients[index].input.gamepad_event(pad);
+            player->update_usercmd(_clients[index].input.generate());
+        }
     }
 }
 
@@ -702,7 +722,7 @@ void session::draw_score ()
         } else {
             _renderer->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu::colors[7]);
         }
-        _renderer->draw_string("for help with upgrades press F9", vec2(8,24), menu::colors[7]);
+        _renderer->draw_string("for help with upgrades press F9 or RSHLDR", vec2(8,24), menu::colors[7]);
     }
 
     // count active players and maximum name width

@@ -66,6 +66,7 @@ target_link_libraries(tanks
     ws2_32
     opengl32
     Pathcch
+    Xinput
 )
 
 # Set up precompiled header

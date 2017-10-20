@@ -230,14 +230,14 @@ void tank::think()
     }
     else
     {
-        float new_speed = _track_speed * 0.9 * (1 - FRAMETIME) + _usercmd.move[0] * 192 * _client->speed_mod * FRAMETIME;
+        float new_speed = _track_speed * 0.9 * (1 - FRAMETIME) + _usercmd.move[1] * 192 * _client->speed_mod * FRAMETIME;
         new_speed = clamp(new_speed, -32 * _client->speed_mod, 48 * _client->speed_mod);
 
         set_linear_velocity(get_linear_velocity() + forward * (new_speed - _track_speed));
         _track_speed = new_speed;
 
-        set_angular_velocity(deg2rad(-_usercmd.move[1] * 90));
-        _turret_velocity = deg2rad(-_usercmd.look[0] * 90);
+        set_angular_velocity(deg2rad(_usercmd.move[0] * 90));
+        _turret_velocity = deg2rad(_usercmd.look[0] * 90);
     }
 
     // update position here because Move doesn't

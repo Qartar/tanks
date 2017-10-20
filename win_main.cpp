@@ -7,6 +7,7 @@
 #include "keys.h"
 
 #include <WS2tcpip.h>
+#include <XInput.h>
 
 application *g_Application; // global instance, extern declaration in "win_main.h"
 
@@ -40,6 +41,12 @@ int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
     previous_time = time();
 
     while (true) {
+
+        // inactive/idle loop
+        if (!_window.active()) {
+            Sleep(1);
+        }
+
         // message loop (pump)
         while (PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
             if (!GetMessageA(&msg, NULL, 0, 0 )) {
@@ -50,10 +57,8 @@ int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
             DispatchMessageA(&msg);
         }
 
-        // inactive/idle loop
-        if (!_window.active()) {
-            Sleep(1);
-        }
+        // gamepad events are polled from the device
+        generate_gamepad_events();
 
         current_time = time();
         _game.run_frame(current_time - previous_time);
@@ -302,6 +307,58 @@ void application::mouse_event(int mouse_state, vec2 position)
 
     _mouse_state = mouse_state;
     _game.cursor_event(position);
+}
+
+//------------------------------------------------------------------------------
+void application::generate_gamepad_events()
+{
+    for (DWORD ii = 0; ii < XUSER_MAX_COUNT; ++ii) {
+        XINPUT_STATE state{};
+
+        DWORD dwResult = XInputGetState(ii, &state);
+        if (dwResult != ERROR_SUCCESS) {
+            continue;
+        }
+
+        constexpr DWORD thumb_maximum = 32767;
+        constexpr DWORD thumb_deadzone =
+            (XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE + XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE) / 2;
+
+        game::gamepad pad{};
+
+        pad.thumbstick[game::gamepad::left] = {
+            (float)state.Gamepad.sThumbLX, (float)state.Gamepad.sThumbLY
+        };
+
+        pad.thumbstick[game::gamepad::right] = {
+            (float)state.Gamepad.sThumbRX, (float)state.Gamepad.sThumbRY
+        };
+
+        pad.trigger[game::gamepad::left] = state.Gamepad.bLeftTrigger * (1.0f / 255.0f);
+        pad.trigger[game::gamepad::right] = state.Gamepad.bRightTrigger * (1.0f / 255.0f);
+
+        for (int side = 0; side < 2; ++side) {
+            float thumb_magnitude = pad.thumbstick[side].length();
+            if (thumb_magnitude < thumb_deadzone) {
+                pad.thumbstick[side] = vec2_zero;
+            } else {
+                pad.thumbstick[side].normalize_self();
+                if (thumb_magnitude < thumb_maximum) {
+                    pad.thumbstick[side] *= (thumb_magnitude - thumb_deadzone) / (thumb_maximum - thumb_deadzone);
+                }
+            }
+        }
+
+        // emit gamepad event
+        _game.gamepad_event(ii, pad);
+
+        // process buttons
+        XINPUT_KEYSTROKE keystroke{};
+
+        while (XInputGetKeystroke(ii, 0, &keystroke) == ERROR_SUCCESS) {
+            _game.key_event(keystroke.VirtualKey, !(keystroke.Flags & XINPUT_KEYSTROKE_KEYUP));
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
