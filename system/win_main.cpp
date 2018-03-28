@@ -186,6 +186,13 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
         break;
     }
 
+    case WM_MOUSEWHEEL: {
+        POINT P{(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
+        ScreenToClient(hWnd, &P);
+        g_Application->mouse_event(wParam, vec2i(P.x, P.y));
+        break;
+    }
+
     case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
         if (wParam == VK_RETURN && (HIWORD(lParam) & KF_ALTDOWN)) {
@@ -330,6 +337,14 @@ void application::mouse_event(WPARAM mouse_state, vec2i position)
         if (!(mouse_state & (1LL << ii)) && (_mouse_state & (1LL << ii))) {
             _game.key_event (K_MOUSE1 + ii, false);
         }
+    }
+
+    if ((int16_t)HIWORD(mouse_state) < 0) {
+        _game.key_event(K_MWHEELDOWN, true);
+        _game.key_event(K_MWHEELDOWN, false);
+    } else if ((int16_t)HIWORD(mouse_state) > 0) {
+        _game.key_event(K_MWHEELUP, true);
+        _game.key_event(K_MWHEELUP, false);
     }
 
     _mouse_state = mouse_state;

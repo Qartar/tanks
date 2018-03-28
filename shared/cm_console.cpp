@@ -493,7 +493,7 @@ bool console::key_event(int key, bool down)
     } else if (down && _control && key == K_END) {
         _scroll_offset = 0;
         return true;
-    } else if (down && key == K_PGUP) {
+    } else if (down && (key == K_PGUP || key == K_MWHEELUP)) {
         std::size_t n = _control ? 10 : 1;
         if (_scroll_offset + n < _buffer.num_rows()) {
             _scroll_offset += n;
@@ -501,7 +501,7 @@ bool console::key_event(int key, bool down)
             _scroll_offset = _buffer.num_rows();
         }
         return true;
-    } else if (down && key == K_PGDN) {
+    } else if (down && (key == K_PGDN || key == K_MWHEELDOWN)) {
         std::size_t n = _control ? 10 : 1;
         if (_scroll_offset > n) {
             _scroll_offset -= n;
