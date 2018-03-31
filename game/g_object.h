@@ -43,7 +43,7 @@ public:
     std::size_t spawn_id() const { return _spawn_id; }
 
     virtual void draw(render::system* renderer, float time) const;
-    virtual void touch(object *other, physics::contact const* contact);
+    virtual bool touch(object *other, physics::contact const* contact);
     virtual void think();
 
     virtual void read_snapshot(network::message const& message);

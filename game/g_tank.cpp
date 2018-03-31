@@ -115,24 +115,27 @@ void tank::draw(render::system* renderer, float time) const
 }
 
 //------------------------------------------------------------------------------
-void tank::touch(object *other, physics::contact const* contact)
+bool tank::touch(object *other, physics::contact const* contact)
 {
     if (!other || !contact) {
-        return;
+        return false;
     }
 
     float impulse = contact->impulse.length();
     float strength = clamp((impulse - 5.0f) / 5.0f, 0.0f, 1.0f);
     _world->add_effect(effect_type::sparks, contact->point, -contact->normal, strength);
 
-    if (other->_type != object_type::tank) {
-        return;
+    if (other->_type == object_type::projectile) {
+        return true;
+    } else if (other->_type != object_type::tank) {
+        return false;
     }
 
     tank* other_tank = static_cast<tank*>(other);
 
     this->collide(other_tank, contact);
     other_tank->collide(this, contact);
+    return true;
 }
 
 //------------------------------------------------------------------------------

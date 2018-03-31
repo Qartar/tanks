@@ -350,10 +350,19 @@ void world::move_object(game::object *object)
         return;
     }
 
+    struct candidate {
+        float fraction;
+        physics::contact contact;
+        game::object* object;
+
+        bool operator<(candidate const& other) const {
+            return fraction < other.fraction;
+        }
+    };
+
     if (object->_type == object_type::projectile) {
-        game::object* best_object = NULL;
-        float best_fraction = 1.f;
-        physics::contact contact{};
+        std::set<candidate> candidates;
+        bool touched = false;
 
         vec2 start = object->get_position();
         vec2 end = start + object->get_linear_velocity() * FRAMETIME;
@@ -368,30 +377,38 @@ void world::move_object(game::object *object)
             }
 
             auto tr = physics::trace(&other->rigid_body(), start, end);
-
-            if (tr.get_fraction() < best_fraction) {
-                best_fraction = tr.get_fraction();
-                best_object = other.get();
-                contact = tr.get_contact();
+            if (tr.get_fraction() < 1.0f) {
+                candidates.insert(candidate{
+                    tr.get_fraction(),
+                    tr.get_contact(),
+                    other.get()}
+                );
             }
         }
 
-        if (best_object) {
+        for (auto const& c : candidates) {
+            float fraction = c.fraction;
+            physics::contact contact = c.contact;
+
             // If the projectile starts inside the other object then trace again
             // from the previous position to the current position. This can
             // happen when spawning projectiles inside another object or when an
             // object moves on top of the projectile during its move phase.
-            if (best_fraction < 1e-6f && contact.distance < -1e-6f) {
-                end = start;
-                start = end - object->get_linear_velocity() * FRAMETIME;
-
-                auto tr = physics::trace(&best_object->rigid_body(), start, end);
-                best_fraction = tr.get_fraction();
+            if (fraction < 1e-6f && contact.distance < -1e-6f) {
+                vec2 prev = start - object->get_linear_velocity() * FRAMETIME;
+                auto tr = physics::trace(&c.object->rigid_body(), prev, start);
+                fraction = tr.get_fraction() - 1.f;
                 contact = tr.get_contact();
             }
-            object->set_position(start + (end - start) * best_fraction);
-            object->touch(best_object, &contact);
-        } else {
+
+            if (object->touch(c.object, &contact)) {
+                object->set_position(start + (end - start) * fraction);
+                touched = true;
+                break;
+            }
+        }
+
+        if (!touched) {
             object->set_position(end);
         }
     } else {
@@ -411,6 +428,10 @@ void world::move_object(game::object *object)
             auto c = physics::collide(&object->rigid_body(), &other->rigid_body());
 
             if (c.has_contact()) {
+                if (!object->touch(other.get(), &c.get_contact())) {
+                    continue;
+                }
+
                 object->apply_impulse(
                     -c.get_contact().impulse,
                     c.get_contact().point
@@ -421,7 +442,6 @@ void world::move_object(game::object *object)
                     c.get_contact().point
                 );
 
-                object->touch(other.get(), &c.get_contact());
             }
         }
 

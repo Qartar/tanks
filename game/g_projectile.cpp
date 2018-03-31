@@ -112,7 +112,7 @@ void projectile::update_sound()
 }
 
 //------------------------------------------------------------------------------
-void projectile::touch(object *other, physics::contact const* contact)
+bool projectile::touch(object *other, physics::contact const* contact)
 {
     auto sound = _type == weapon_type::cannon ? _sound_cannon_impact :
                  _type == weapon_type::missile ? _sound_cannon_impact :
@@ -121,6 +121,10 @@ void projectile::touch(object *other, physics::contact const* contact)
     auto effect = _type == weapon_type::cannon ? effect_type::cannon_impact :
                   _type == weapon_type::missile ? effect_type::missile_impact :
                   _type == weapon_type::blaster ? effect_type::blaster_impact : effect_type::smoke;
+
+    if (other && other->_type != object_type::projectile && !other->touch(this, contact)) {
+        return false;
+    }
 
     if (contact) {
         _world->add_sound(sound, contact->point);
@@ -137,7 +141,7 @@ void projectile::touch(object *other, physics::contact const* contact)
         tank* other_tank = static_cast<tank*>(other);
 
         if (other_tank->_damage >= 1.0f) {
-            return; // dont add damage or score
+            return true; // dont add damage or score
         }
 
         vec2 direction = get_linear_velocity().normalize();
@@ -201,6 +205,8 @@ void projectile::touch(object *other, physics::contact const* contact)
             g_Game->write_message(va(fmt, other_tank->player_name(), owner_tank->player_name()));
         }
     }
+
+    return true;
 }
 
 //------------------------------------------------------------------------------

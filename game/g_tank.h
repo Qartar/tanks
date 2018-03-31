@@ -21,7 +21,7 @@ public:
     ~tank();
 
     virtual void draw(render::system* renderer, float time) const override;
-    virtual void touch(object *other, physics::contact const* contact) override;
+    virtual bool touch(object *other, physics::contact const* contact) override;
     virtual void think() override;
 
     virtual void read_snapshot(network::message const& message) override;

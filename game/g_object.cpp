@@ -21,8 +21,9 @@ object::object(object_type type, object* owner)
 {}
 
 //------------------------------------------------------------------------------
-void object::touch(object* /*other*/, physics::contact const* /*contact*/)
+bool object::touch(object* /*other*/, physics::contact const* /*contact*/)
 {
+    return true;
 }
 
 //------------------------------------------------------------------------------
