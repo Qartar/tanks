@@ -188,10 +188,8 @@ paintbuffer_t *cSound::getPaintBuffer (int nBytes)
 
 void cSound::set_listener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp)
 {
-    this->vOrigin = vOrigin;
-    this->vForward = vForward;
-    this->vRight = vRight;
-    this->vUp = vUp;
+    _origin = vOrigin;
+    _axis = mat3(vForward, vRight, vUp);
 }
 
 /*=========================================================

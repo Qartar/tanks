@@ -15,19 +15,9 @@ void cSound::mixStereo16 (samplepair_t *pInput, stereo16_t *pOutput, int nSample
     for ( i=0 ; i<nSamples ; i++ )
     {
         val = (pInput[i].left * nVolume) >> 8;
-        if ( val > 0x7fff )
-            pOutput[i].left = 0x7fff;
-        else if ( val < (short)0x8000 )
-            pOutput[i].left = (short)0x8000;
-        else
-            pOutput[i].left = val;
+        pOutput[i].left = clamp<int>(val, INT16_MIN, INT16_MAX);
 
         val = (pInput[i].right * nVolume) >> 8;
-        if ( val > 0x7fff )
-            pOutput[i].right = 0x7fff;
-        else if ( val < (short)0x8000 )
-            pOutput[i].right = (short)0x8000;
-        else
-            pOutput[i].right = val;
+        pOutput[i].right = clamp<int>(val, INT16_MIN, INT16_MAX);
     }
 }

@@ -149,7 +149,8 @@ public:
 
     //  spatialization
 
-    vec3    vOrigin, vForward, vRight, vUp;
+    vec3    _origin;
+    mat3    _axis;
 
 private:
     config::boolean snd_disable;

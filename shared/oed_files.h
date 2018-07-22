@@ -198,8 +198,11 @@ private:
             m_file_paths[m_num_paths].src = (char *)malloc(strlen(text.argv(0))+1);
             m_file_paths[m_num_paths].dst = (char *)malloc(strlen(text.argv(1))+1);
 
-            strncpy( m_file_paths[m_num_paths].src, _strlwr(text.argv(0)), strlen(text.argv(0)) );
-            strncpy( m_file_paths[m_num_paths].dst, _strlwr(text.argv(1)), strlen(text.argv(1)) );
+            strncpy( m_file_paths[m_num_paths].src, text.argv(0), strlen(text.argv(0)) );
+            strncpy( m_file_paths[m_num_paths].dst, text.argv(1), strlen(text.argv(1)) );
+
+            _strlwr( m_file_paths[m_num_paths].src );
+            _strlwr( m_file_paths[m_num_paths].dst );
 
             m_file_paths[m_num_paths].src[strlen(text.argv(0))] = 0;
             m_file_paths[m_num_paths].dst[strlen(text.argv(1))] = 0;

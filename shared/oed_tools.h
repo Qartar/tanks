@@ -28,7 +28,7 @@ public:
     ~textutils_c () { for( unsigned int i=0 ; i<m_argc ; i++ ) mem::free( m_argv[i] ); }
 
     unsigned int    argc() { return m_argc; }
-    char        *argv(unsigned int argc) { if (argc >= m_argc) return "\0"; return m_argv[argc];    }
+    char const  *argv(unsigned int argc) { if (argc >= m_argc) return "\0"; return m_argv[argc];    }
 
     int parse (char const *string)
     {

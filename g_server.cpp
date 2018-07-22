@@ -287,11 +287,12 @@ void session::info_send(network::address const& remote)
     svs.socket.printf(remote, va( "info %s", svs.name) );
 }
 
-char    *sz_upgrades[] = {
+char const* sz_upgrades[] = {
     "damage",
     "armor",
     "gunnery",
-    "speed" };
+    "speed",
+};
 
 //------------------------------------------------------------------------------
 void session::read_upgrade(int client, int upgrade)

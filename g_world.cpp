@@ -351,7 +351,7 @@ void world::move_object(game::object *object)
     if (object->_type == object_type::projectile) {
         game::object* best_object = NULL;
         float best_fraction = 1.f;
-        physics::contact contact;
+        physics::contact contact{};
 
         vec2 start = object->get_position();
         vec2 end = start + object->get_linear_velocity() * FRAMETIME;

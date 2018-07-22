@@ -41,12 +41,11 @@ cSoundSource *cSoundSource::createSound (char const *szFilename)
     return NULL;
 }
 
-void cSoundSource::destroySound (cSoundSource *pSound)
+void cSoundSource::destroySound (cSoundSource *source)
 {
-    if ( pSound )
-    {
-        pSound->Unload( );
-        delete pSound;
+    if (source) {
+        source->Unload();
+        delete source;
     }
 }
 
@@ -104,7 +103,7 @@ void cSoundWaveSource::parseCue (riffChunk_t &chunk)
         int     sampleOffset;
     } cue_point;
 
-    int cue_count = chunk.readInt( );
+    /*int cue_count =*/ chunk.readInt( );
 
     chunk.readData( (byte *)&cue_point, sizeof(cue_point) );
     m_loopStart = cue_point.sampleOffset;

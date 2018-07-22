@@ -6,6 +6,13 @@ add_definitions(
     -D_CRT_SECURE_NO_WARNINGS
 )
 
+add_compile_options(
+    /W4             # Enable warning level 4
+    /WX             # Enable warnings as errors
+    /wd4706         # Disable C4706: assignment within conditional expression
+    /permissive-    # Enable language conformance mode
+)
+
 add_subdirectory(shared)
 add_subdirectory(sound)
 add_subdirectory(physics)

@@ -194,7 +194,7 @@ void cSoundChannel::m_SpatializeMono (int in, int *out)
         out[0] = in;
     else
     {
-        vec3    dir = m_vOrigin - gSound->vOrigin;
+        vec3    dir = m_vOrigin - gSound->_origin;
         dir.normalize_self( );
 
         float   attn = clamp( powf(ATTN_LEN / dir.length_sqr( ), m_flAttenuation), 0.0f, 1.0f );
@@ -205,9 +205,9 @@ void cSoundChannel::m_SpatializeMono (int in, int *out)
 
 void cSoundChannel::m_SpatializeStereo (int in, int out[])
 {
-    vec3 dir = m_vOrigin - gSound->vOrigin;
+    vec3 dir = m_vOrigin - gSound->_origin;
     float dist = dir.normalize_length();
-    float dp = dir.dot(gSound->vRight);
+    float dp = dir.dot(gSound->_axis[1]);
 
     if ( m_flAttenuation == ATTN_STATIC )
     {
