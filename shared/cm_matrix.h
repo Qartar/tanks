@@ -57,6 +57,13 @@ public:
         _rows[1][0] = +sint; _rows[1][1] = +cost;
     }
 
+    static mat2 rotate(float theta) {
+        float cost = std::cos(theta);
+        float sint = std::sin(theta);
+
+        return mat2(+cost, -sint, +sint, +cost);
+    }
+
 // scale
 
     void set_scale(vec2 const& s) {
@@ -130,6 +137,10 @@ public:
         _rows[i0][i0] = 1.f; _rows[i0][i1] =   0.f; _rows[i0][i2] =   0.f;
         _rows[i1][i0] = 0.f; _rows[i1][i1] = +cost; _rows[i1][i2] = -sint;
         _rows[i2][i0] = 0.f; _rows[i2][i1] = +sint; _rows[i2][i2] = +cost;
+    }
+
+    template<int axis> static mat3 rotate(float theta) {
+        mat3 m; m.set_rotation<axis>(theta); return m;
     }
 
 // scale
@@ -217,6 +228,10 @@ public:
         _rows[i1][i0] = 0.f; _rows[i1][i1] = +cost; _rows[i1][i2] = -sint; _rows[ 1][ 3] = 0.f;
         _rows[i2][i0] = 0.f; _rows[i2][i1] = +sint; _rows[i2][i2] = +cost; _rows[ 2][ 3] = 0.f;
         _rows[ 3][ 0] = 0.f; _rows[ 3][ 1] =   0.f; _rows[ 3][ 2] =   0.f; _rows[ 3][ 3] = 1.f;
+    }
+
+    template<int axis> static mat4 rotate(float theta) {
+        mat4 m; m.set_rotation<axis>(theta); return m;
     }
 
 // translation

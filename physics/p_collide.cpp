@@ -154,8 +154,8 @@ collide::support_vertex collide::supporting_vertex(vec3 direction) const
 //------------------------------------------------------------------------------
 vec3 collide::body_supporting_vertex(rigid_body const* body, vec3 direction) const
 {
-    mat3 world_to_local; world_to_local.set_rotation<2>(-body->get_rotation());
-    mat3 local_to_world; local_to_world.set_rotation<2>( body->get_rotation());
+    mat3 world_to_local = mat3::rotate<2>(-body->get_rotation());
+    mat3 local_to_world = mat3::rotate<2>( body->get_rotation());
 
     vec2 v = body->get_shape()->supporting_vertex((direction * world_to_local).to_vec2());
     return vec3(v) * local_to_world + vec3(body->get_position());
