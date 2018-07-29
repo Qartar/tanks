@@ -149,12 +149,12 @@ public:
 // multiplication
 
     CONSTEXPR friend vec2 operator*(vec2 const& v, mat3 const& m) {
-        return vec2(m[0][0] * v[0] + m[0][1] * v[1] + m[0][1],
+        return vec2(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2]);
     }
 
     CONSTEXPR friend vec3 operator*(vec3 const& v, mat3 const& m) {
-        return vec3(m[0][0] * v[0] + m[0][1] * v[1] + m[0][1] * v[2],
+        return vec3(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2],
                     m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
                     m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2]);
     }
