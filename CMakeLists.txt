@@ -33,11 +33,14 @@ set(TANKS_SOURCES
     game/g_usercmd.h
     game/g_world.cpp
     game/g_world.h
-    network/net_chan.cpp
-    network/net_main.cpp
-    network/net_main.h
-    network/net_msg.cpp
-    network/net_sock.cpp
+    network/net_address.cpp
+    network/net_address.h
+    network/net_channel.cpp
+    network/net_channel.h
+    network/net_message.cpp
+    network/net_message.h
+    network/net_socket.cpp
+    network/net_socket.h
     render/r_draw.cpp
     render/r_font.cpp
     render/r_image.cpp

@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include "net_main.h"
+#include "net_channel.h"
+#include "net_socket.h"
 
 namespace render {
 class image;

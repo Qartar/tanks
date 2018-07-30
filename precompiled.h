@@ -12,8 +12,6 @@
 //  common headers
 #include "cm_config.h"
 #include "cm_sound.h"
-//  network headers
-#include "net_main.h"
 //  game headers
 #include "g_world.h"
 #include "g_menu.h"

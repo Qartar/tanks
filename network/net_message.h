@@ -1,50 +1,12 @@
-// net_main.h
+// net_message.h
 //
 
 #pragma once
 
-#include "shared.h"
-
-#include <climits>
 #include <array>
-
-struct sockaddr_storage;
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace network {
-
-enum address_type { loopback, broadcast, ipv4, ipv6 };
-
-//------------------------------------------------------------------------------
-class address
-{
-public:
-    address_type type;
-
-    union {
-        std::array<byte, 4> ip4;
-        std::array<word, 8> ip6;
-    };
-
-    unsigned short port;
-
-public:
-    address() = default;
-    constexpr address(byte const (&ip)[4], word port = 0)
-        : type(address_type::ipv4)
-        , ip4({ip[0], ip[1], ip[2], ip[3]})
-        , port(port)
-    {}
-    constexpr address(word const (&ip)[8], word port = 0)
-        : type(address_type::ipv6)
-        , ip6({ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7]})
-        , port(port)
-    {}
-
-    bool operator==(network::address const& other) const;
-    bool operator!=(network::address const& other) const { return !(*this == other); }
-    bool is_local() const { return (type == network::address_type::loopback); }
-};
 
 //------------------------------------------------------------------------------
 class message
@@ -165,97 +127,6 @@ public:
 
 protected:
     std::array<byte, 1400> _buffer;
-};
-
-//------------------------------------------------------------------------------
-enum class socket_type { unspecified, ipv4, ipv6 };
-enum socket_port { any = 0 };
-
-//------------------------------------------------------------------------------
-class socket
-{
-public:
-    socket();
-    socket(socket_type type, word port = socket_port::any);
-    ~socket();
-
-    socket(socket&&);
-    socket& operator=(socket&&);
-
-    socket_type type() const { return _type; }
-    socket_port port() const { return _port; }
-
-    bool valid() const { return _socket != 0; }
-    bool open(socket_type type, word port = socket_port::any);
-    void close();
-
-    //! read data info message and set remote address
-    bool read(network::address& remote, network::message& message);
-    //! write data to the remote address
-    bool write(network::address const& remote, network::message const& message);
-    //! write a formatted string to the remote address
-    bool printf(network::address const& remote, char const* fmt, ...);
-
-    //! resolve the string into an address
-    bool resolve(std::string const& address_string, network::address& address) const;
-
-protected:
-    socket_type _type;
-    socket_port _port;
-    std::uintptr_t _socket;
-
-protected:
-    socket(socket const&) = delete;
-    socket& operator=(socket const&) = delete;
-
-    bool sockaddr_to_address(sockaddr_storage const& sockaddr, network::address& address) const;
-    bool address_to_sockaddr(network::address const& address, sockaddr_storage& sockaddr) const;
-    bool resolve_sockaddr(std::string const& address_string, sockaddr_storage& sockaddr) const;
-
-    std::uintptr_t open_socket(socket_type type, word port = socket_port::any) const;
-};
-
-//------------------------------------------------------------------------------
-class channel : public message_storage
-{
-public:
-    constexpr static int prefix = -1;
-
-public:
-    channel(int netport = 0);
-
-    //! set up channel with the remote address over the given network socket
-    void setup(network::socket* socket, network::address remote, int netport = 0);
-
-    //! transmit accumulated message to remote address
-    bool transmit();
-
-    //! process incoming message
-    bool process(network::message& message);
-
-    //! remote address
-    network::address const& address() const { return _address; }
-
-    //! network port for address translation
-    word netport() const { return _netport; }
-
-    //! time of most recently transmitted message
-    float last_send() const { return _last_sent; }
-
-    //! time of most recently processed message
-    float last_received() const { return _last_received; }
-
-protected:
-    network::address _address; //!< remote address
-    word _netport; //!< port translation
-
-    float _last_sent; //!< time of most recently transmitted message
-    float _last_received; //!< time of most recently processed message
-
-    network::socket* _socket; //!< socket used for transmitting data
-
-protected:
-    bool transmit(int length, byte const* data);
 };
 
 } // namespace network

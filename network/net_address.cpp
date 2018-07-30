@@ -1,10 +1,10 @@
-// net_main.cpp
+// net_address.cpp
 //
 
 #include "precompiled.h"
 #pragma hdrstop
 
-#include "net_main.h"
+#include "net_address.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace network {

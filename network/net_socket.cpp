@@ -4,7 +4,7 @@
 #include "precompiled.h"
 #pragma hdrstop
 
-#include "net_main.h"
+#include "net_socket.h"
 
 #include <WS2tcpip.h>
 
