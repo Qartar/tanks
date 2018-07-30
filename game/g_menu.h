@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "g_projectile.h"
+
 namespace render {
 class system;
 } // namespace render

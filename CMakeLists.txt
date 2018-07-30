@@ -24,11 +24,15 @@ set(TANKS_SOURCES
     game/g_menu.h
     game/g_network.cpp
     game/g_object.cpp
+    game/g_object.h
     game/g_particles.cpp
+    game/g_projectile.cpp
+    game/g_projectile.h
     game/g_server.cpp
     game/g_session.cpp
     game/g_session.h
     game/g_tank.cpp
+    game/g_tank.h
     game/g_usercmd.cpp
     game/g_usercmd.h
     game/g_world.cpp

@@ -4,6 +4,8 @@
 #include "precompiled.h"
 #pragma hdrstop
 
+#include "g_tank.h"
+
 #include "keys.h"
 #include "resource.h"
 

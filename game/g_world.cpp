@@ -4,6 +4,8 @@
 #include "precompiled.h"
 #pragma hdrstop
 
+#include "g_projectile.h"
+#include "g_tank.h"
 #include "p_collide.h"
 #include "p_trace.h"
 
