@@ -42,6 +42,9 @@ void system::draw_box(vec2 size, vec2 position, color4 color)
 //------------------------------------------------------------------------------
 void system::draw_particles(float time, render::particle const* particles, std::size_t num_particles)
 {
+    // Scaling factor for particle tessellation
+    const float view_scale = sqrtf(vec2(DEFAULT_W, DEFAULT_H).length_sqr() / _view.size.length_sqr());
+
     render::particle const* end = particles + num_particles;
     for (render::particle const*p = particles; p < end; ++p) {
         float ptime = time - p->time;
@@ -64,7 +67,7 @@ void system::draw_particles(float time, render::particle const* particles, std::
         glBegin(GL_TRIANGLE_FAN);
 
         // Number of circle segments, approximation for pi / acos(1 - 1/2x)
-        int n = 1 + M_PI * sqrtf(radius - 0.25f);
+        int n = 1 + M_PI * sqrtf(radius * view_scale - 0.25f);
         int k = std::max<int>(1, 360 / n);
 
         glColor4fv(color_in);
