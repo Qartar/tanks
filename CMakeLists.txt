@@ -27,6 +27,7 @@ add_subdirectory(network)
 set(TANKS_SOURCES
     game/g_button.cpp
     game/g_client.cpp
+    game/g_handle.h
     game/g_menu.cpp
     game/g_menu.h
     game/g_network.cpp
