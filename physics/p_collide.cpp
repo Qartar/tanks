@@ -112,6 +112,12 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
     direction = -nearest_difference(simplex[0], simplex[1]);
 
     for (int num_iterations = 0; ; ++num_iterations) {
+        // Direction can be zero if two shapes have a coincident feature
+        if (direction == vec3_zero) {
+            point = nearest_point(simplex[0], simplex[1]);
+            return 0.f;
+        }
+
         candidate = supporting_vertex(direction);
 
         vec3 n = (simplex[1].d - simplex[0].d).cross(candidate.d - simplex[1].d);
