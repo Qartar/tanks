@@ -18,12 +18,7 @@ vec2 rigid_body::get_linear_velocity(vec2 position) const
 //------------------------------------------------------------------------------
 mat3 rigid_body::get_transform() const
 {
-    float cosa = cosf(_rotation);
-    float sina = sinf(_rotation);
-
-    return mat3(cosa, -sina, _position.x,
-                sina,  cosa, _position.y,
-                0.0f,  0.0f, 1.0f);
+    return mat3::transform(_position, _rotation);
 }
 
 //------------------------------------------------------------------------------

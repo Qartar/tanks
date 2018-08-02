@@ -44,15 +44,15 @@ public:
         float cost = std::cos(theta);
         float sint = std::sin(theta);
 
-        _rows[0][0] = +cost; _rows[0][1] = -sint;
-        _rows[1][0] = +sint; _rows[1][1] = +cost;
+        _rows[0][0] = +cost; _rows[0][1] = +sint;
+        _rows[1][0] = -sint; _rows[1][1] = +cost;
     }
 
     static mat2 rotate(float theta) {
         float cost = std::cos(theta);
         float sint = std::sin(theta);
 
-        return mat2(+cost, -sint, +sint, +cost);
+        return mat2(+cost, +sint, -sint, +cost);
     }
 
 // scale
@@ -71,8 +71,8 @@ public:
 // multiplication
 
     constexpr friend vec2 operator*(vec2 const& v, mat2 const& m) {
-        return vec2(m[0][0] * v[0] + m[0][1] * v[1],
-                    m[1][0] * v[0] + m[1][1] * v[1]);
+        return vec2(v[0] * m[0][0] + v[1] * m[1][0],
+                    v[0] * m[0][1] + v[1] * m[1][1]);
     }
 
     constexpr friend mat2 operator*(mat2 const& lhs, mat2 const& rhs) {
@@ -126,8 +126,8 @@ public:
         constexpr int i0 = axis, i1 = (axis + 1) % 3, i2 = (axis + 2) % 3;
 
         _rows[i0][i0] = 1.f; _rows[i0][i1] =   0.f; _rows[i0][i2] =   0.f;
-        _rows[i1][i0] = 0.f; _rows[i1][i1] = +cost; _rows[i1][i2] = -sint;
-        _rows[i2][i0] = 0.f; _rows[i2][i1] = +sint; _rows[i2][i2] = +cost;
+        _rows[i1][i0] = 0.f; _rows[i1][i1] = +cost; _rows[i1][i2] = +sint;
+        _rows[i2][i0] = 0.f; _rows[i2][i1] = -sint; _rows[i2][i2] = +cost;
     }
 
     template<int axis> static mat3 rotate(float theta) {
@@ -148,17 +148,28 @@ public:
     constexpr static mat3 scale(float sx, float sy, float sz) { return scale(vec3(sx, sy, sz)); }
     constexpr static mat3 scale(vec3 s) { return mat3(s.x, 0, 0, 0, s.y, 0, 0, 0, s.z); }
 
+// homogenous transformation in two dimensions
+
+    static mat3 transform(vec2 translation, float rotation) {
+        float cosa = std::cos(rotation);
+        float sina = std::sin(rotation);
+
+        return mat3( cosa, sina, 0,
+                    -sina, cosa, 0,
+                    translation.x, translation.y, 1);
+    }
+
 // multiplication
 
     constexpr friend vec2 operator*(vec2 const& v, mat3 const& m) {
-        return vec2(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2],
-                    m[1][0] * v[0] + m[1][1] * v[1] + m[1][2]);
+        return vec2(v[0] * m[0][0] + v[1] * m[1][0] + m[2][0],
+                    v[0] * m[0][1] + v[1] * m[1][1] + m[2][1]);
     }
 
     constexpr friend vec3 operator*(vec3 const& v, mat3 const& m) {
-        return vec3(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2],
-                    m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
-                    m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2]);
+        return vec3(v[0] * m[0][0] + v[1] * m[1][0] + v[2] * m[2][0],
+                    v[0] * m[0][1] + v[1] * m[1][1] + v[2] * m[2][1],
+                    v[0] * m[0][2] + v[1] * m[1][2] + v[2] * m[2][2]);
     }
 
     constexpr friend mat3 operator*(mat3 const& lhs, mat3 const& rhs) {
@@ -216,8 +227,8 @@ public:
         constexpr int i0 = axis, i1 = (axis + 1) % 3, i2 = (axis + 2) % 3;
 
         _rows[i0][i0] = 1.f; _rows[i0][i1] =   0.f; _rows[i0][i2] =   0.f; _rows[ 0][ 3] = 0.f;
-        _rows[i1][i0] = 0.f; _rows[i1][i1] = +cost; _rows[i1][i2] = -sint; _rows[ 1][ 3] = 0.f;
-        _rows[i2][i0] = 0.f; _rows[i2][i1] = +sint; _rows[i2][i2] = +cost; _rows[ 2][ 3] = 0.f;
+        _rows[i1][i0] = 0.f; _rows[i1][i1] = +cost; _rows[i1][i2] = +sint; _rows[ 1][ 3] = 0.f;
+        _rows[i2][i0] = 0.f; _rows[i2][i1] = -sint; _rows[i2][i2] = +cost; _rows[ 2][ 3] = 0.f;
         _rows[ 3][ 0] = 0.f; _rows[ 3][ 1] =   0.f; _rows[ 3][ 2] =   0.f; _rows[ 3][ 3] = 1.f;
     }
 
@@ -257,16 +268,16 @@ public:
 // multiplication
 
     constexpr friend vec3 operator*(vec3 const& v, mat4 const& m) {
-        return vec3(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3],
-                    m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3],
-                    m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3]);
+        return vec3(v[0] * m[0][0] + v[1] * m[1][0] + v[2] * m[2][0] + m[3][0],
+                    v[0] * m[0][1] + v[1] * m[1][1] + v[2] * m[2][1] + m[3][1],
+                    v[0] * m[0][2] + v[1] * m[1][2] + v[2] * m[2][2] + m[3][2]);
     }
 
     constexpr friend vec4 operator*(vec4 const& v, mat4 const& m) {
-        return vec4(m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2] + m[0][3] * v[3],
-                    m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2] + m[1][3] * v[3],
-                    m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2] + m[2][3] * v[3],
-                    m[3][0] * v[0] + m[3][1] * v[1] + m[3][2] * v[2] + m[3][3] * v[3]);
+        return vec4(v[0] * m[0][0] + v[1] * m[1][0] + v[2] * m[2][0] + v[3] * m[3][0],
+                    v[0] * m[0][1] + v[1] * m[1][1] + v[2] * m[2][1] + v[3] * m[3][1],
+                    v[0] * m[0][2] + v[1] * m[1][2] + v[2] * m[2][2] + v[3] * m[3][2],
+                    v[0] * m[0][3] + v[1] * m[1][3] + v[2] * m[2][3] + v[3] * m[3][3]);
     }
 
     constexpr friend mat4 operator*(mat4 const& lhs, mat4 const& rhs) {
