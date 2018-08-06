@@ -98,7 +98,7 @@ void system::draw_particles(float time, render::particle const* particles, std::
 
             // particle needs at least 4 verts to look reasonable
             int n0 = std::max<int>(4, n);
-            int k0 = std::min<int>(1, 360 / n0);
+            int k0 = std::max<int>(1, 360 / n0);
 
             glColor4fv(color_in);
             for (int ii = 0; ii < 360; ii += k0) {
