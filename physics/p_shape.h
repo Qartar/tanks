@@ -3,7 +3,12 @@
 
 #pragma once
 
+#include "cm_bounds.h"
 #include "cm_vector.h"
+
+#ifndef M_SQRT2
+#define M_SQRT2    1.41421356237309504880
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace physics {
@@ -19,6 +24,8 @@ public:
     virtual vec2 supporting_vertex(vec2 direction) const = 0;
 
     virtual void calculate_mass_properties(float inverse_mass, vec2& center_of_mass, float& inverse_inertia) const = 0;
+
+    virtual bounds calculate_bounds(vec2 position, float rotation) const = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -49,6 +56,10 @@ public:
         }
     }
 
+    virtual bounds calculate_bounds(vec2 position, float /*rotation*/) const {
+        return bounds(position - _half_size * float(M_SQRT2), position + _half_size * float(M_SQRT2));
+    }
+
 protected:
     vec2 _half_size;
 };
@@ -77,6 +88,10 @@ public:
         } else {
             inverse_inertia = 0.0f;
         }
+    }
+
+    virtual bounds calculate_bounds(vec2 position, float /*rotation*/) const {
+        return bounds(position - vec2(_radius), position + vec2(_radius));
     }
 
 protected:

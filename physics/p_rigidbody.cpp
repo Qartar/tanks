@@ -22,6 +22,12 @@ mat3 rigid_body::get_transform() const
 }
 
 //------------------------------------------------------------------------------
+bounds rigid_body::get_bounds() const
+{
+    return _shape->calculate_bounds(_position, _rotation);
+}
+
+//------------------------------------------------------------------------------
 float rigid_body::get_kinetic_energy() const
 {
     float energy = 0.0f;

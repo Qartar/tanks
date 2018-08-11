@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_bounds.h"
 #include "cm_vector.h"
 #include "cm_matrix.h"
 
@@ -50,6 +51,8 @@ public:
     }
 
     mat3 get_transform() const;
+
+    bounds get_bounds() const;
 
     //
     //  velocity

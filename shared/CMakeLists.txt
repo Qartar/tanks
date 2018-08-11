@@ -1,4 +1,5 @@
 set(SHARED_SOURCES
+    cm_bounds.h
     cm_color.h
     cm_config.cpp
     cm_config.h
