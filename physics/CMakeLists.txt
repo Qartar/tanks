@@ -7,6 +7,8 @@ set(PHYSICS_SOURCES
     p_shape.h
     p_trace.cpp
     p_trace.h
+    p_world.cpp
+    p_world.h
 )
 
 add_library(physics STATIC ${PHYSICS_SOURCES})

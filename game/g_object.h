@@ -38,7 +38,9 @@ class object
 {
 public:
     object(object_type type, object* owner = nullptr);
-    virtual ~object() {}
+    virtual ~object();
+
+    void spawn(); //!< Note: not virtual
 
     std::size_t spawn_id() const { return _spawn_id; }
 

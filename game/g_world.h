@@ -9,6 +9,7 @@
 #include "p_material.h"
 #include "p_rigidbody.h"
 #include "p_shape.h"
+#include "p_world.h"
 
 #include "net_message.h"
 
@@ -49,14 +50,7 @@ enum class effect_type
 class world
 {
 public:
-    world ()
-        : _spawn_id(0)
-        , _players{}
-        , _border_material{0,0}
-        , _border_shapes{{vec2(0,0)}, {vec2(0,0)}}
-        , _arena_width("g_arenaWidth", 640, config::archive|config::server|config::reset, "arena width")
-        , _arena_height("g_arenaHeight", 480, config::archive|config::server|config::reset, "arena height")
-    {}
+    world ();
     ~world () {}
 
     void init();
@@ -87,6 +81,9 @@ public:
     void add_effect(effect_type type, vec2 position, vec2 direction = vec2(0,0), float strength = 1);
     void add_trail_effect(effect_type type, vec2 position, vec2 old_position, vec2 direction = vec2(0,0), float strength = 1);
 
+    void add_body(game::object* owner, physics::rigid_body* body);
+    void remove_body(physics::rigid_body* body);
+
     vec2 mins() const { return _mins; }
     vec2 maxs() const { return _maxs; }
     int framenum() const { return _framenum; }
@@ -106,7 +103,11 @@ private:
     //! Previous object spawn id
     std::size_t _spawn_id;
 
-    void move_object(object* object);
+    physics::world _physics;
+    std::map<physics::rigid_body const*, game::object*> _physics_objects;
+
+    bool physics_filter_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b);
+    bool physics_collide_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b, physics::contact const& contact);
 
     game::object* spawn_snapshot(std::size_t spawn_id, object_type type);
 
@@ -166,9 +167,11 @@ T* world::spawn(Args&& ...args)
                   "'spawn': 'T' must be derived from 'game::object'");
 
     _pending.push_back(std::make_unique<T>(std::move(args)...));
-    _pending.back()->_world = this;
-    _pending.back()->_spawn_id = ++_spawn_id;
-    return static_cast<T*>(_pending.back().get());
+    T* obj = static_cast<T*>(_pending.back().get());
+    obj->_world = this;
+    obj->_spawn_id = ++_spawn_id;
+    obj->spawn();
+    return obj;
 }
 
 } // namespace game

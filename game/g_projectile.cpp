@@ -20,7 +20,7 @@ projectile::projectile(tank* owner, float damage, weapon_type type)
     , _damage(damage)
     , _type(type)
 {
-    _rigid_body = physics::rigid_body(&_shape, &_material, 1.0f);
+    _rigid_body = physics::rigid_body(&_shape, &_material, 1e-3f);
     _channel = pSound->allocate_channel();
     _sound_cannon_impact = pSound->load_sound("assets/sound/cannon_impact.wav");
     _sound_blaster_impact = pSound->load_sound("assets/sound/blaster_impact.wav");

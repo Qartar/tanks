@@ -67,18 +67,18 @@ PREPROCESSOR DEFINITIONS
 
 #define MAKEID(d,c,b,a)                 ( ((int)(a) << 24) | ((int)(b) << 16) | ((int)(c) << 8) | ((int)(d)) )
 
-template<typename T> T deg2rad(T value) { return value * T(M_PI / 180.0); }
-template<typename T> T rad2deg(T value) { return value * T(180.0 / M_PI); }
+template<typename T> constexpr T deg2rad(T value) { return value * T(M_PI / 180.0); }
+template<typename T> constexpr T rad2deg(T value) { return value * T(180.0 / M_PI); }
 
 __forceinline float frand() { return ((float)((rand()&32767)*(1.0f/32767.0f))); }
 __forceinline float crand() { return ((float)((rand()&32767)*(2.0f/32767.0f)-1.0f)); }
 
-template<typename T> T square(T value) { return value * value; }
+template<typename T> constexpr T square(T value) { return value * value; }
 
-template<typename T> T clamp(T value, T min, T max) { return (value < min) ? min : (value > max) ? max : value; }
+template<typename T> constexpr T clamp(T value, T min, T max) { return (value < min) ? min : (value > max) ? max : value; }
 
-template<typename T> T min(T a, T b) { return a < b ? a : b; }
-template<typename T> T max(T a, T b) { return a > b ? a : b; }
+template<typename T> constexpr T min(T a, T b) { return a < b ? a : b; }
+template<typename T> constexpr T max(T a, T b) { return a > b ? a : b; }
 
 /*
 ===========================================================

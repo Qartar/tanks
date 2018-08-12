@@ -21,6 +21,18 @@ object::object(object_type type, object* owner)
 {}
 
 //------------------------------------------------------------------------------
+object::~object()
+{
+    _world->remove_body(&_rigid_body);
+}
+
+//------------------------------------------------------------------------------
+void object::spawn()
+{
+    _world->add_body(this, &_rigid_body);
+}
+
+//------------------------------------------------------------------------------
 bool object::touch(object* /*other*/, physics::contact const* /*contact*/)
 {
     return true;

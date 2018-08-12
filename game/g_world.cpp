@@ -15,6 +15,19 @@
 namespace game {
 
 //------------------------------------------------------------------------------
+world::world()
+    : _spawn_id(0)
+    , _players{}
+    , _border_material{0,0}
+    , _border_shapes{{vec2(0,0)}, {vec2(0,0)}}
+    , _arena_width("g_arenaWidth", 640, config::archive|config::server|config::reset, "arena width")
+    , _arena_height("g_arenaHeight", 480, config::archive|config::server|config::reset, "arena height")
+    , _physics(
+        std::bind(&world::physics_filter_callback, this, std::placeholders::_1, std::placeholders::_2),
+        std::bind(&world::physics_collide_callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
+{}
+
+//------------------------------------------------------------------------------
 void world::init()
 {
     char const* command;
@@ -35,6 +48,9 @@ void world::init()
 //------------------------------------------------------------------------------
 void world::shutdown()
 {
+    _objects.clear();
+    _pending.clear();
+    _removed.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -112,8 +128,15 @@ void world::run_frame()
     }
 
     for (auto& obj : _objects) {
-        move_object(obj.get());
+        obj->_old_position = obj->get_position();
+        obj->_old_rotation = obj->get_rotation();
     }
+    _physics.step(FRAMETIME);
+
+    for (auto& obj : _pending) {
+        _objects.push_back(std::move(obj));
+    }
+    _pending.clear();
 
     for (auto obj : _removed) {
         _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
@@ -337,117 +360,6 @@ game::object* world::find_object(std::size_t spawn_id) const
     }
 
     return nullptr;
-}
-
-//------------------------------------------------------------------------------
-void world::move_object(game::object *object)
-{
-    object->_old_position = object->get_position();
-    object->_old_rotation = object->get_rotation();
-
-    if (object->get_linear_velocity().length_sqr() < 1e-12f
-            && std::abs(object->get_angular_velocity()) < 1e-6f) {
-        return;
-    }
-
-    struct candidate {
-        float fraction;
-        physics::contact contact;
-        game::object* object;
-
-        bool operator<(candidate const& other) const {
-            return fraction < other.fraction;
-        }
-    };
-
-    if (object->_type == object_type::projectile) {
-        std::set<candidate> candidates;
-        bool touched = false;
-
-        vec2 start = object->get_position();
-        vec2 end = start + object->get_linear_velocity() * FRAMETIME;
-
-        for (auto& other : _objects) {
-            if (other.get() == object) {
-                continue;
-            }
-
-            if (object->_owner == other.get()) {
-                continue;
-            }
-
-            auto tr = physics::trace(&other->rigid_body(), start, end);
-            if (tr.get_fraction() < 1.0f) {
-                candidates.insert(candidate{
-                    tr.get_fraction(),
-                    tr.get_contact(),
-                    other.get()}
-                );
-            }
-        }
-
-        for (auto const& c : candidates) {
-            float fraction = c.fraction;
-            physics::contact contact = c.contact;
-
-            // If the projectile starts inside the other object then trace again
-            // from the previous position to the current position. This can
-            // happen when spawning projectiles inside another object or when an
-            // object moves on top of the projectile during its move phase.
-            if (fraction < 1e-6f && contact.distance < -1e-6f) {
-                vec2 prev = start - object->get_linear_velocity() * FRAMETIME;
-                auto tr = physics::trace(&c.object->rigid_body(), prev, start);
-                fraction = tr.get_fraction() - 1.f;
-                contact = tr.get_contact();
-            }
-
-            if (object->touch(c.object, &contact)) {
-                object->set_position(start + (end - start) * fraction);
-                touched = true;
-                break;
-            }
-        }
-
-        if (!touched) {
-            object->set_position(end);
-        }
-    } else {
-        for (auto& other : _objects) {
-            if (other.get() == object) {
-                continue;
-            }
-
-            if (other->_owner == object) {
-                continue;
-            }
-
-            if (other->_type == object_type::projectile) {
-                continue;
-            }
-
-            auto c = physics::collide(&object->rigid_body(), &other->rigid_body());
-
-            if (c.has_contact()) {
-                if (!object->touch(other.get(), &c.get_contact())) {
-                    continue;
-                }
-
-                object->apply_impulse(
-                    -c.get_contact().impulse,
-                    c.get_contact().point
-                );
-
-                other->apply_impulse(
-                    c.get_contact().impulse,
-                    c.get_contact().point
-                );
-
-            }
-        }
-
-        object->set_position(object->get_position() + object->get_linear_velocity() * FRAMETIME);
-        object->set_rotation(object->get_rotation() + object->get_angular_velocity() * FRAMETIME);
-    }
 }
 
 //------------------------------------------------------------------------------
@@ -927,6 +839,49 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
         default:
             break;
     }
+}
+
+//------------------------------------------------------------------------------
+void world::add_body(game::object* owner, physics::rigid_body* body)
+{
+    _physics.add_body(body);
+    _physics_objects[body] = owner;
+}
+
+//------------------------------------------------------------------------------
+void world::remove_body(physics::rigid_body* body)
+{
+    _physics.remove_body(body);
+    _physics_objects.erase(body);
+}
+
+//------------------------------------------------------------------------------
+bool world::physics_filter_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b)
+{
+    game::object* obj_a = _physics_objects[body_a];
+    game::object* obj_b = _physics_objects[body_b];
+
+    if (obj_b->_type == object_type::projectile) {
+        return false;
+    }
+
+    game::object const* owner_a = obj_a->_owner ? obj_a->_owner : obj_a;
+    game::object const* owner_b = obj_b->_owner ? obj_b->_owner : obj_b;
+
+    if (owner_a == owner_b) {
+        return false;
+    }
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+bool world::physics_collide_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b, physics::contact const& contact)
+{
+    game::object* obj_a = _physics_objects[body_a];
+    game::object* obj_b = _physics_objects[body_b];
+
+    return obj_a->touch(obj_b, &contact);
 }
 
 } // namespace game

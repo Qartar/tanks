@@ -14,6 +14,16 @@ collide::collide(rigid_body const* body_a, rigid_body const* body_b)
     : _body{body_a, body_b}
 {
     vec3 position, direction = vec3(body_b->get_position() - body_a->get_position());
+
+    if (direction == vec3_zero) {
+        _has_contact = false;
+        _contact.distance = 0;
+        _contact.point = vec2(0,0);
+        _contact.normal = vec2(0,0);
+        _contact.impulse = vec2(0,0);
+        return;
+    }
+
     float distance = minimum_distance(position, direction);
 
     // Calculate the relative velocity of the bodies at the contact point
