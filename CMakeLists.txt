@@ -31,6 +31,8 @@ set(TANKS_SOURCES
     game/g_handle.natvis
     game/g_menu.cpp
     game/g_menu.h
+    game/g_module.cpp
+    game/g_module.h
     game/g_network.cpp
     game/g_object.cpp
     game/g_object.h
