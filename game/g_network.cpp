@@ -66,7 +66,8 @@ void session::get_packets ()
     // check for timeouts
     //
 
-    float time = g_Application->time();
+    time_value time = g_Application->time();
+    constexpr time_delta timeout = time_delta::from_seconds(10);
 
     if (svs.active) {
         for (std::size_t ii = 0; ii < svs.clients.size(); ++ii) {
@@ -74,7 +75,7 @@ void session::get_packets ()
                 continue;
             }
 
-            if (svs.clients[ii].netchan.last_received() + 10.0f < time) {
+            if (svs.clients[ii].netchan.last_received() + timeout < time) {
                 svs.clients[ii].netchan.write_byte(svc_disconnect);
                 svs.clients[ii].netchan.transmit();
 
@@ -83,7 +84,7 @@ void session::get_packets ()
             }
         }
     } else if (cls.active) {
-        if (_netchan.last_received() + 10.0f < time) {
+        if (_netchan.last_received() + timeout < time) {
             write_message("Server timed out.");
             stop_client();
         }

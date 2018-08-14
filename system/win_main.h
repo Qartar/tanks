@@ -22,7 +22,7 @@ public:
     std::string clipboard() const;
     char const* init_string() { return _init_string; }
 
-    float time() const;
+    time_value time() const;
 
     HINSTANCE hinstance() { return _hinstance; }
     config::system* config() { return &_config; }

@@ -39,10 +39,11 @@ bool object::touch(object* /*other*/, physics::contact const* /*contact*/)
 }
 
 //------------------------------------------------------------------------------
-void object::draw(render::system* /*renderer*/, float /*time*/) const
+void object::draw(render::system* /*renderer*/, time_value time) const
 {
     if (_model) {
-        _model->draw(get_position(), get_rotation(), _color);
+        float lerp = (time - _world->framenum() * FRAMETIME) / FRAMETIME;
+        _model->draw(get_position(lerp), get_rotation(lerp), _color);
     }
 }
 

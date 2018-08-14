@@ -36,9 +36,9 @@ session::session()
     , _cl_name("ui_name", "", config::archive, "user info: name")
     , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
     , _cl_weapon("ui_weapon", 0, config::archive, "user info: weapon")
-    , _restart_time(0)
-    , _worldtime(0)
-    , _frametime(0)
+    , _restart_time(time_value::zero)
+    , _worldtime(time_value::zero)
+    , _frametime(time_value::zero)
     , _framenum(0)
     , _cursor(0,0)
     , _show_cursor(true)
@@ -177,17 +177,17 @@ int session::shutdown()
 }
 
 //------------------------------------------------------------------------------
-int session::run_frame(float milliseconds)
+int session::run_frame(time_delta time)
 {
     rand( );
 
     get_packets( );
 
-    _frametime += milliseconds;
+    _frametime += time;
 
     // step session
 
-    if (_frametime > _framenum * FRAMETIME) {
+    if (_frametime > time_value(_framenum * FRAMETIME)) {
         _framenum++;
         _net_bytes[_framenum % _net_bytes.size()] = 0;
     }
@@ -196,9 +196,9 @@ int session::run_frame(float milliseconds)
 
     if (!_menu_active || svs.active) {
         // clamp world step size
-        _worldtime += std::min(milliseconds, FRAMETIME);
+        _worldtime += std::min(time, FRAMETIME);
 
-        if (_worldtime > (1 + _world.framenum()) * FRAMETIME && svs.active) {
+        if (_worldtime > time_value((1 + _world.framenum()) * FRAMETIME) && svs.active) {
             _world.run_frame();
             if (!svs.local) {
                 write_frame();
@@ -216,7 +216,7 @@ int session::run_frame(float milliseconds)
 
     pSound->update( );
 
-    if ( _restart_time && (_frametime > _restart_time) && !_menu_active ) {
+    if (_restart_time != time_value::zero && (_frametime > _restart_time) && !_menu_active ) {
         restart();
     }
 
@@ -521,7 +521,7 @@ void session::key_event(int key, bool down)
     }
     else if ( key == K_PGDN && down )
     {
-        float   time = g_Application->time();
+        time_value time = g_Application->time();
 
         for ( int i=0 ; i<MAX_MESSAGES ; i++ )
             _messages[i].time = time;
@@ -784,7 +784,7 @@ void session::draw_score ()
     // draw restart timer
 
     if (_restart_time > _frametime) {
-        int nTime = ceil((_restart_time - _frametime));
+        int nTime = (_restart_time - _frametime).to_microseconds() / 1000;
         _renderer->draw_string(va("Restart in... %i", nTime), vec2(width/2-48,16+13), menu::colors[7]);
     }
 }
@@ -838,8 +838,8 @@ void session::draw_netgraph()
         _renderer->draw_line(vec2(0, ymax), vec2(width, ymax), color4(1,1,1,1), color4(1,1,1,1));
         _renderer->draw_line(vec2(0, yavg), vec2(width, yavg), color4(0.5f,1,0.75f,alpha_avg), color4(0.5f,1,0.7f,alpha_avg));
 
-        std::string smax = va("%0.1f kbps", CHAR_BIT * max / (FRAMETIME * 1024.0f));
-        std::string savg = va("%0.1f kbps", CHAR_BIT * avg / (FRAMETIME * 1024.0f));
+        std::string smax = va("%0.1f kbps", CHAR_BIT * max / (FRAMETIME.to_seconds() * 1024.0f));
+        std::string savg = va("%0.1f kbps", CHAR_BIT * avg / (FRAMETIME.to_seconds() * 1024.0f));
 
         _renderer->draw_string(smax.c_str(), vec2(638.0f - _renderer->string_size(smax.c_str()).x, ymax), color4(1,1,1,1));
         _renderer->draw_string(savg.c_str(), vec2(638.0f - _renderer->string_size(savg.c_str()).x, yavg), color4(1,1,1,alpha_avg));
@@ -872,7 +872,7 @@ void session::resume()
 //------------------------------------------------------------------------------
 void session::new_game()
 {
-    _restart_time = 0.0f;
+    _restart_time = time_value::zero;
     _world.clear_particles( );
 
     if (!svs.active) {
@@ -919,7 +919,7 @@ void session::new_game()
         else if (svs.active && !svs.clients[i].active )
             continue;
 
-        if (!_restart_time || !_world.player(i)) {
+        if (_restart_time == time_value::zero || !_world.player(i)) {
             spawn_player(i);
         }
     }
@@ -930,7 +930,7 @@ void session::new_game()
 //------------------------------------------------------------------------------
 void session::restart()
 {
-    _restart_time = 0.0f;
+    _restart_time = time_value::zero;
 
     if (!svs.active) {
         return;
@@ -1013,24 +1013,24 @@ void session::write_message (char const* message, bool broadcast)
 //------------------------------------------------------------------------------
 void session::draw_messages ()
 {
-    int         i;
     int         ypos;
     float       alpha;
 
-    float       time = g_Application->time();
+    time_value time = g_Application->time();
+    constexpr time_delta view_time = time_delta::from_seconds(15);
+    constexpr time_delta fade_time = time_delta::from_seconds(3);
 
     ypos = DEFAULT_H - 36;
 
-    for ( i=_num_messages-1 ; i!=_num_messages ; i = ( i<=0 ? MAX_MESSAGES-1 : i-1 ) )
-    {
-        if ( i < 0 )
+    for (int ii = _num_messages-1; ii != _num_messages; ii = (ii <= 0 ? MAX_MESSAGES-1 : ii-1)) {
+        if (ii < 0) {
             continue;
+        }
 
-        if ( _messages[i].time+15.0f > time )
-        {
-            alpha = (_messages[i].time+12.0f > time ? 1.0f : (_messages[i].time+15.0f - time)/3.0f );
+        if (_messages[ii].time + view_time > time) {
+            alpha = (_messages[ii].time + (view_time - fade_time) > time ? 1.0f : (_messages[ii].time + view_time - time) / fade_time);
 
-            _renderer->draw_string(_messages[i].string, vec2(8,ypos), color4(1,1,1,alpha));
+            _renderer->draw_string(_messages[ii].string, vec2(8,ypos), color4(1,1,1,alpha));
 
             ypos -= 12;
         }

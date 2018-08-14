@@ -33,7 +33,7 @@ application::application(HINSTANCE hInstance)
 //------------------------------------------------------------------------------
 int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
 {
-    float previous_time, current_time;
+    time_value previous_time, current_time;
     MSG msg;
 
     init(_hinstance, szCmdLine);
@@ -145,13 +145,13 @@ void application::quit(int exit_code)
 }
 
 //------------------------------------------------------------------------------
-float application::time() const
+time_value application::time() const
 {
     LARGE_INTEGER counter;
     QueryPerformanceCounter(&counter);
 
-    double ticks = counter.QuadPart - _timer_base.QuadPart;
-    return ticks / _timer_frequency.QuadPart;
+    LONGLONG ticks = counter.QuadPart - _timer_base.QuadPart;
+    return time_value::from_microseconds(ticks * (1e6 / _timer_frequency.QuadPart));
 }
 
 //------------------------------------------------------------------------------

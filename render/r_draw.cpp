@@ -42,14 +42,14 @@ void system::draw_box(vec2 size, vec2 position, color4 color)
 }
 
 //------------------------------------------------------------------------------
-void system::draw_particles(float time, render::particle const* particles, std::size_t num_particles)
+void system::draw_particles(time_value time, render::particle const* particles, std::size_t num_particles)
 {
     // Scaling factor for particle tessellation
     const float view_scale = sqrtf(_window->framebuffer_size().length_sqr() / _view.size.length_sqr());
 
     render::particle const* end = particles + num_particles;
     for (render::particle const*p = particles; p < end; ++p) {
-        float ptime = time - p->time;
+        float ptime = (time - p->time).to_seconds();
 
         if (ptime < 0) {
             continue;
@@ -84,7 +84,7 @@ void system::draw_particles(float time, render::particle const* particles, std::
             }
             glVertex2f(position.x + radius, position.y);
         } else {
-            float tail_time = std::max<float>(0.0f, time - p->time - FRAMETIME);
+            float tail_time = std::max<float>(0.0f, (time - p->time - FRAMETIME).to_seconds());
             float tail_vtime = p->drag ? tanhf(p->drag * tail_time) / p->drag : tail_time;
 
             vec2 tail_position = p->position

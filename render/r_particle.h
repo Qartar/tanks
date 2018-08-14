@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_time.h"
 #include "cm_vector.h"
 #include "cm_color.h"
 #include "oed_shared.h"
@@ -22,7 +23,7 @@ struct particle
         tail = BIT(1),
     };
 
-    float time;
+    time_value time;
     float size, size_velocity;
     vec2 position, velocity, acceleration;
     float drag;

@@ -20,7 +20,7 @@ public:
     tank();
     ~tank();
 
-    virtual void draw(render::system* renderer, float time) const override;
+    virtual void draw(render::system* renderer, time_value time) const override;
     virtual bool touch(object *other, physics::contact const* contact) override;
     virtual void think() override;
 
@@ -53,8 +53,8 @@ public:
     float _damage;
     int _player_index;
 
-    float _dead_time;
-    float _fire_time;
+    time_value _dead_time;
+    time_value _fire_time;
 
     game::usercmd _usercmd;
 
@@ -78,9 +78,9 @@ protected:
     constexpr static float missile_speed = 288.0f;
     constexpr static float blaster_speed = 768.0f;
 
-    constexpr static float cannon_reload = 3.0f;
-    constexpr static float missile_reload = 6.0f;
-    constexpr static float blaster_reload = 0.3f;
+    constexpr static time_delta cannon_reload = time_delta::from_seconds(3.0f);
+    constexpr static time_delta missile_reload = time_delta::from_seconds(6.0f);
+    constexpr static time_delta blaster_reload = time_delta::from_seconds(0.3f);
 
     sound::asset _sound_idle;
     sound::asset _sound_move;

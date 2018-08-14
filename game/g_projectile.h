@@ -23,7 +23,7 @@ public:
     projectile(tank* owner, float damage, weapon_type type);
     ~projectile();
 
-    virtual void draw(render::system* renderer, float time) const override;
+    virtual void draw(render::system* renderer, time_value time) const override;
     virtual bool touch(object *other, physics::contact const* contact) override;
     virtual void think() override;
 

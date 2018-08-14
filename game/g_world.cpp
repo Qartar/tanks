@@ -107,7 +107,7 @@ void world::remove(game::object* object)
 }
 
 //------------------------------------------------------------------------------
-void world::draw(render::system* renderer, float time) const
+void world::draw(render::system* renderer, time_value time) const
 {
     for (auto& obj : _objects) {
         obj->draw(renderer, time);
@@ -131,7 +131,7 @@ void world::run_frame()
         obj->_old_position = obj->get_position();
         obj->_old_rotation = obj->get_rotation();
     }
-    _physics.step(FRAMETIME);
+    _physics.step(FRAMETIME.to_seconds());
 
     for (auto& obj : _pending) {
         _objects.push_back(std::move(obj));

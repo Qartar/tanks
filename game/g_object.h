@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_time.h"
 #include "p_material.h"
 #include "p_rigidbody.h"
 #include "p_shape.h"
@@ -44,7 +45,7 @@ public:
 
     std::size_t spawn_id() const { return _spawn_id; }
 
-    virtual void draw(render::system* renderer, float time) const;
+    virtual void draw(render::system* renderer, time_value time) const;
     virtual bool touch(object *other, physics::contact const* contact);
     virtual void think();
 

@@ -90,7 +90,7 @@ protected:
 class server_button : public button
 {
 public:
-    server_button(vec2i position, vec2i size, char const* name_ptr, float const* ping_ptr, std::function<void()>&& op_click);
+    server_button(vec2i position, vec2i size, char const* name_ptr, time_delta const* ping_ptr, std::function<void()>&& op_click);
 
     virtual bool key_event(int key, bool down) override;
 
@@ -98,7 +98,7 @@ public:
 
 protected:
     char const* _name_ptr;
-    float const* _ping_ptr;
+    time_delta const* _ping_ptr;
 
     rect _join_rectangle;
     rect _text_rectangle;

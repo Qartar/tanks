@@ -5,6 +5,7 @@ set(SHARED_SOURCES
     cm_config.h
     cm_matrix.h
     cm_sound.h
+    cm_time.h
     cm_vector.h
     oed_error.h
     oed_files.h

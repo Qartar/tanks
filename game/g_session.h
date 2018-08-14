@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_time.h"
 #include "net_channel.h"
 #include "net_socket.h"
 
@@ -11,9 +12,7 @@ class image;
 class system;
 } // namespace render
 
-#define FRAMETIME   0.05f
-
-#define RESTART_TIME    5.0f
+constexpr const time_delta RESTART_TIME = time_delta::from_seconds(5.0f);
 
 #define SPAWN_BUFFER    32
 
@@ -34,9 +33,9 @@ typedef struct game_client_s
 
     usercmdgen input;
 
-    float usercmd_time;
+    time_value usercmd_time;
 
-    constexpr static float usercmd_rate = 1.0f / 60.0f;
+    static constexpr time_delta usercmd_rate = time_delta::from_hertz(60.0f);
 } game_client_t;
 
 //------------------------------------------------------------------------------
@@ -94,8 +93,8 @@ enum class game_mode
 //------------------------------------------------------------------------------
 typedef struct  message_s
 {
-    char    string[MAX_STRING];
-    float   time;
+    char string[MAX_STRING];
+    time_value time;
 } message_t;
 
 #define MAX_MESSAGES    32
@@ -145,7 +144,7 @@ typedef struct remote_server_s
     char        name[SHORT_STRING];
     network::address    address;
 
-    float       ping;
+    time_delta  ping;
     bool        active;
 } remote_server_t;
 
@@ -163,7 +162,7 @@ typedef struct client_state_s
 
     char    server[SHORT_STRING];
 
-    float           ping_time;
+    time_value      ping_time;
     remote_server_t servers[MAX_SERVERS];
 
     network::socket socket;
@@ -184,7 +183,7 @@ public:
 
     virtual int message(char const* message, ...);
 
-    int run_frame(float milliseconds);
+    int run_frame(time_delta time);
 
     void key_event(int key, bool down);
     void cursor_event(vec2 position);
@@ -226,10 +225,10 @@ private:
 
     game_mode _mode;
 
-    float _restart_time;
+    time_value _restart_time;
 
-    float _worldtime;
-    float _frametime;
+    time_value _worldtime;
+    time_value _frametime;
     int _framenum;
 
     vec2i _cursor;

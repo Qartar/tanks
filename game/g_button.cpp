@@ -250,7 +250,7 @@ void client_button::draw(render::system* renderer) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-server_button::server_button(vec2i position, vec2i size, char const* name_ptr, float const* ping_ptr, std::function<void()>&& op_click)
+server_button::server_button(vec2i position, vec2i size, char const* name_ptr, time_delta const* ping_ptr, std::function<void()>&& op_click)
     : button("", position, size, std::move(op_click))
     , _join_rectangle(rect::from_center(position + vec2i(size.x * 0.5f - 18.0f, 0), vec2i(32, size.y - 4.0f)))
     , _text_rectangle(rect::from_center(position - vec2i(17, 0), size - vec2i(38, 4)))
@@ -291,7 +291,7 @@ void server_button::draw(render::system* renderer) const
 
     if (_name_ptr && _name_ptr[0]) {
         draw_text(renderer, _text_rectangle, _name_ptr, menu::colors[7], halign_left);
-        draw_text(renderer, _text_rectangle, va("%i", (int)(*_ping_ptr)), menu::colors[7], halign_right);
+        draw_text(renderer, _text_rectangle, va("%lld", _ping_ptr->to_milliseconds()), menu::colors[7], halign_right);
 
         int border_color = _over ? 6 : 4;
         int button_color = _down ? 3 : 5;

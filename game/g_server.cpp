@@ -51,7 +51,7 @@ void session::start_server_local()
 {
     stop_client();
 
-    _worldtime = 0;
+    _worldtime = time_value::zero;
 
     svs.active = true;
     svs.local = true;
@@ -221,7 +221,7 @@ void session::client_connect(network::address const& remote, char const* message
         cl.local = false;
         cl.netchan.setup(&svs.socket, remote, netport);
 
-        svs.socket.printf(cl.netchan.address(), va("connect %i %.3f", client, _worldtime));
+        svs.socket.printf(cl.netchan.address(), va("connect %i %lld", client, _worldtime.to_microseconds()));
 
         // init their tank
 

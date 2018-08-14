@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "cm_time.h"
+
 #ifndef _WINDOWS_
 typedef struct HFONT__* HFONT;
 typedef struct HBITMAP__* HBITMAP;
@@ -107,7 +109,7 @@ public:
 
     void draw_line(vec2 start, vec2 end, color4 start_color, color4 end_color);
     void draw_box(vec2 size, vec2 position, color4 color);
-    void draw_particles(float time, render::particle const* particles, std::size_t num_particles);
+    void draw_particles(time_value time, render::particle const* particles, std::size_t num_particles);
 
     void set_view(render::view const& view);
 

@@ -126,7 +126,7 @@ void session::client_packet(network::message& message)
                 break;
 
             case svc_restart:
-                _restart_time = _frametime + message.read_byte() * 1.0f;
+                _restart_time = _frametime + time_delta::from_seconds(message.read_byte() * 1.0f);
                 break;
 
             default:
@@ -141,8 +141,7 @@ void session::read_snapshot(network::message& message)
     _world.read_snapshot(message);
     // gradually adjust client world time to match server
     // to compensate for variability in packet delivery
-    float snapshot_time = _world.framenum() * FRAMETIME;
-    _worldtime += (snapshot_time - _worldtime) * 0.1f;
+    _worldtime += (_world.frametime() - _worldtime) * 0.1f;
     _net_bytes[++_framenum % _net_bytes.size()] = 0;
 }
 
@@ -199,7 +198,7 @@ void session::connect_ack(char const* message_string)
 {
     // server has ack'd our connect
 
-    sscanf(message_string, "connect %i %f", &cls.number, &_worldtime);
+    sscanf(message_string, "connect %i %lld", &cls.number, reinterpret_cast<int64_t*>(&_worldtime));
 
     _netchan.setup( &cls.socket, _netserver );
 
@@ -213,7 +212,7 @@ void session::connect_ack(char const* message_string)
     _clients[cls.number].refire_mod = 1.0f;
     _clients[cls.number].speed_mod = 1.0f;
 
-    _clients[0].usercmd_time = 0.0f;
+    _clients[0].usercmd_time = time_value::zero;
 
     svs.clients[cls.number].active = true;
     svs.clients[cls.number].info.name, cls.info.name;

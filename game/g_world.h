@@ -24,6 +24,8 @@
 
 #define MAX_PLAYERS 16
 
+constexpr const time_delta FRAMETIME = time_delta::from_seconds(0.05f);
+
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
@@ -60,7 +62,7 @@ public:
     void clear_particles();
 
     void run_frame ();
-    void draw(render::system* renderer, float time) const;
+    void draw(render::system* renderer, time_value time) const;
 
     void read_snapshot(network::message& message);
     void write_snapshot(network::message& message) const;
@@ -87,6 +89,7 @@ public:
     vec2 mins() const { return _mins; }
     vec2 maxs() const { return _maxs; }
     int framenum() const { return _framenum; }
+    time_value frametime() const { return time_value(_framenum * FRAMETIME); }
 
     game::tank* player( int index ) { return _players[ index ]; }
 
@@ -129,7 +132,7 @@ private:
     render::particle* add_particle();
     void free_particle (render::particle* particle) const;
 
-    void draw_particles(render::system* renderer, float time) const;
+    void draw_particles(render::system* renderer, time_value time) const;
 
     vec2        _mins;
     vec2        _maxs;

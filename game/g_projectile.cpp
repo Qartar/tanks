@@ -75,7 +75,7 @@ void projectile::update_homing()
         vec2 target_pos = bestTarget->get_position();
         vec2 closest_point = get_position() + direction * (target_pos - get_position()).dot(direction);
         vec2 displacement = (target_pos - closest_point).normalize();
-        vec2 delta = displacement * speed * 0.5f * FRAMETIME;
+        vec2 delta = displacement * speed * 0.5f * FRAMETIME.to_seconds();
         vec2 new_velocity = (get_linear_velocity() + delta).normalize() * speed;
         set_linear_velocity(new_velocity);
     }
@@ -174,7 +174,7 @@ bool projectile::touch(object *other, physics::contact const* contact)
 
         if (other_tank->_damage >= 1.0f) {
             g_Game->add_score( owner_tank->_player_index, 1 );
-            other_tank->_dead_time = _world->framenum() * FRAMETIME;
+            other_tank->_dead_time = _world->frametime();
 
             char const* fmt = "";
 
@@ -210,9 +210,9 @@ bool projectile::touch(object *other, physics::contact const* contact)
 }
 
 //------------------------------------------------------------------------------
-void projectile::draw(render::system* renderer, float time) const
+void projectile::draw(render::system* renderer, time_value time) const
 {
-    float lerp = (time - _world->framenum() * FRAMETIME) / FRAMETIME;
+    float lerp = (time - _world->frametime()) / FRAMETIME;
 
     vec2 p1 = get_position(lerp);
     vec2 p2 = get_position(lerp + 0.4f);

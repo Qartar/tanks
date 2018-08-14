@@ -36,17 +36,17 @@ public:
     word netport() const { return _netport; }
 
     //! time of most recently transmitted message
-    float last_send() const { return _last_sent; }
+    time_value last_send() const { return _last_sent; }
 
     //! time of most recently processed message
-    float last_received() const { return _last_received; }
+    time_value last_received() const { return _last_received; }
 
 protected:
     network::address _address; //!< remote address
     word _netport; //!< port translation
 
-    float _last_sent; //!< time of most recently transmitted message
-    float _last_received; //!< time of most recently processed message
+    time_value _last_sent; //!< time of most recently transmitted message
+    time_value _last_received; //!< time of most recently processed message
 
     network::socket* _socket; //!< socket used for transmitting data
 

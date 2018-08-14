@@ -24,8 +24,8 @@ tank::tank()
     , _track_speed(0)
     , _damage(0)
     , _player_index(0)
-    , _dead_time(0)
-    , _fire_time(0)
+    , _dead_time(time_value::zero)
+    , _fire_time(time_value::zero)
     , _usercmd{}
     , _channels{0}
     , _client(nullptr)
@@ -60,13 +60,13 @@ tank::~tank()
 }
 
 //------------------------------------------------------------------------------
-void tank::draw(render::system* renderer, float time) const
+void tank::draw(render::system* renderer, time_value time) const
 {
     float lerp = (time - _world->framenum() * FRAMETIME) / FRAMETIME;
 
-    float denominator = _weapon == weapon_type::cannon ? cannon_reload :
-                        _weapon == weapon_type::missile ? missile_reload :
-                        _weapon == weapon_type::blaster ? blaster_reload : 1.0f;
+    time_delta denominator = _weapon == weapon_type::cannon ? cannon_reload :
+                             _weapon == weapon_type::missile ? missile_reload :
+                             _weapon == weapon_type::blaster ? blaster_reload : time_delta::from_seconds(1);
 
     float reload = 20.0f * clamp((time - _fire_time) * _client->refire_mod / denominator, 0.0f, 1.0f);
     float health = 20.0f * clamp(1.0f - _damage, 0.0f, 1.0f);
@@ -145,7 +145,7 @@ void tank::collide(tank* other, physics::contact const* contact)
         return;
     }
 
-    float base_damage = std::max<float>(0, contact->impulse.dot(contact->normal) - 10.0f) / 2.0f * FRAMETIME;
+    float base_damage = std::max<float>(0, contact->impulse.dot(contact->normal) - 10.0f) / 2.0f * FRAMETIME.to_seconds();
 
     vec2 direction = (contact->point - other->get_position()).normalize();
     vec2 forward = rotate(vec2(1,0), other->get_rotation());
@@ -164,13 +164,13 @@ void tank::collide(tank* other, physics::contact const* contact)
     if (other->_damage >= 1.0f)
     {
         g_Game->add_score(_player_index, 1);
-        other->_dead_time = _world->framenum() * FRAMETIME;
+        other->_dead_time = _world->frametime();
 
         g_Game->write_message( va("%s got a little too cozy with %s.", other->player_name(), player_name() ) );
     }
 }
 
-#define HACK_TIME       1.0f
+#define HACK_TIME       time_delta::from_seconds(1.0f)
 
 //------------------------------------------------------------------------------
 void tank::respawn()
@@ -178,7 +178,7 @@ void tank::respawn()
     vec2 spawn_size = _world->maxs() - _world->mins() - vec2(SPAWN_BUFFER) * 2.0f;
     vec2 spawn_pos = _world->mins() + spawn_size * mat2::scale(frand(), frand()) + vec2(SPAWN_BUFFER);
 
-    _dead_time = 0.0f;
+    _dead_time = time_value::zero;
 
     set_position(spawn_pos, true);
     set_rotation(frand()*2.0f*M_PI, true);
@@ -195,7 +195,7 @@ void tank::respawn()
 //------------------------------------------------------------------------------
 void tank::think()
 {
-    float const time = _world->framenum() * FRAMETIME;
+    time_value const time = _world->frametime();
 
     _old_turret_rotation = _turret_rotation;
 
@@ -208,20 +208,20 @@ void tank::think()
 
     vec2 track_velocity = rotate(vec2(_track_speed,0), get_rotation());
     vec2 delta_velocity = track_velocity - get_linear_velocity();
-    vec2 friction_impulse = delta_velocity * _rigid_body.get_mass() * _rigid_body.get_material()->sliding_friction() * FRAMETIME;
+    vec2 friction_impulse = delta_velocity * _rigid_body.get_mass() * _rigid_body.get_material()->sliding_friction() * FRAMETIME.to_seconds();
 
     _rigid_body.apply_impulse(friction_impulse);
 
     if (_damage >= 1.0f)
     {
-        vec2 vVel = vec2(speed * 0.98 * (1-FRAMETIME),0);
+        vec2 vVel = vec2(speed * 0.98 * (1-FRAMETIME.to_seconds()),0);
 
         set_linear_velocity(rotate(vVel,get_rotation()));
         set_angular_velocity(get_angular_velocity() * 0.9f);
         _turret_velocity *= 0.9f;
 
         // extra explosion
-        if (_dead_time && (time - _dead_time > 0.65f) && (time - _dead_time < 0.65f+HACK_TIME/2))
+        if (_dead_time != time_value::zero && (time - _dead_time > time_delta::from_seconds(0.65f)) && (time - _dead_time < time_delta::from_seconds(0.65f)+HACK_TIME/2))
         {
             _world->add_sound(_sound_explode, get_position());
             _world->add_effect(effect_type::explosion, get_position());
@@ -230,7 +230,7 @@ void tank::think()
     }
     else
     {
-        float new_speed = _track_speed * 0.9 * (1 - FRAMETIME) + _usercmd.move[1] * 192 * _client->speed_mod * FRAMETIME;
+        float new_speed = _track_speed * 0.9 * (1 - FRAMETIME.to_seconds()) + _usercmd.move[1] * 192 * _client->speed_mod * FRAMETIME.to_seconds();
         new_speed = clamp(new_speed, -32 * _client->speed_mod, 48 * _client->speed_mod);
 
         set_linear_velocity(get_linear_velocity() + forward * (new_speed - _track_speed));
@@ -241,7 +241,7 @@ void tank::think()
     }
 
     // update position here because Move doesn't
-    _turret_rotation += _turret_velocity * FRAMETIME;
+    _turret_rotation += _turret_velocity * FRAMETIME.to_seconds();
 
     if (_usercmd.action == usercmd::action::attack && _damage < 1.0f) {
         launch_projectile();
@@ -256,7 +256,7 @@ void tank::launch_projectile()
 {
     constexpr vec2 effect_origin(21,0);
 
-    float const time = _world->framenum() * FRAMETIME;
+    time_value const time = _world->frametime();
 
     switch (_weapon) {
         case weapon_type::cannon: {
@@ -332,14 +332,14 @@ void tank::launch_projectile()
 void tank::update_effects()
 {
     constexpr vec2 effect_origin(21,0);
-    float const time = _world->framenum() * FRAMETIME;
+    time_value const time = _world->frametime();
 
     switch (_weapon) {
         case weapon_type::cannon: {
-            if ((_fire_time + 2.5f/_client->refire_mod) > time) {
+            if ((_fire_time + time_delta::from_seconds(2.5f)/_client->refire_mod) > time) {
                 float power;
 
-                power = 1.5f - (time - _fire_time);
+                power = 1.5f - (time - _fire_time).to_seconds();
                 power = clamp(power, 0.5f, 1.5f);
 
                 _world->add_effect(
@@ -352,10 +352,10 @@ void tank::update_effects()
         }
 
         case weapon_type::missile: {
-            if ((_fire_time + 2.5f/_client->refire_mod) > time) {
+            if ((_fire_time + time_delta::from_seconds(2.5f)/_client->refire_mod) > time) {
                 float power;
 
-                power = 1.5f - (time - _fire_time);
+                power = 1.5f - (time - _fire_time).to_seconds();
                 power = clamp(power, 0.5f, 1.5f);
 
                 _world->add_effect(
@@ -393,7 +393,7 @@ void tank::read_snapshot(network::message const& message)
     _turret_rotation = message.read_float();
     _turret_velocity = message.read_float();
     _damage = message.read_float();
-    _fire_time = message.read_float();
+    _fire_time = time_value::from_seconds(message.read_float());
 
     update_sound();
 }
@@ -412,7 +412,7 @@ void tank::write_snapshot(network::message& message) const
     message.write_float(_turret_rotation);
     message.write_float(_turret_velocity);
     message.write_float(_damage);
-    message.write_float(_fire_time);
+    message.write_float(_fire_time.to_seconds());
 }
 
 //------------------------------------------------------------------------------
