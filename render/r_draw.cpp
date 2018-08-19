@@ -16,7 +16,9 @@ void system::draw_string(char const* string, vec2 position, color4 color)
 //------------------------------------------------------------------------------
 vec2 system::string_size(char const* string) const
 {
-    return _fonts[0]->size(string);
+    vec2 scale(_view.size.x / _window->framebuffer_size().x,
+               _view.size.y / _window->framebuffer_size().y);
+    return _fonts[0]->size(string) * scale;
 }
 
 //------------------------------------------------------------------------------
@@ -43,7 +45,7 @@ void system::draw_box(vec2 size, vec2 position, color4 color)
 void system::draw_particles(float time, render::particle const* particles, std::size_t num_particles)
 {
     // Scaling factor for particle tessellation
-    const float view_scale = sqrtf(vec2(DEFAULT_W, DEFAULT_H).length_sqr() / _view.size.length_sqr());
+    const float view_scale = sqrtf(_window->framebuffer_size().length_sqr() / _view.size.length_sqr());
 
     render::particle const* end = particles + num_particles;
     for (render::particle const*p = particles; p < end; ++p) {
