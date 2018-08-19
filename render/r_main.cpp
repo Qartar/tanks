@@ -14,9 +14,8 @@ int system::init()
     _view.origin = _view.size * 0.5f;
     _view.viewport = {};
 
+    create_default_font();
     set_default_state();
-
-    _fonts.push_back(std::make_unique<render::font>("Tahoma", 12));
 
     for (int ii = 0; ii < 360 ; ++ii) {
         _sintbl[ii] = sin(deg2rad<float>(ii));
@@ -51,6 +50,23 @@ void system::set_view(render::view const& view)
 {
     _view = view;
     set_default_state();
+}
+
+//------------------------------------------------------------------------------
+void system::resize()
+{
+    create_default_font();
+    set_default_state();
+}
+
+//------------------------------------------------------------------------------
+void system::create_default_font()
+{
+    int size = 12 * (float(_window->framebuffer_size().y) / float(DEFAULT_H));
+
+    if (!_default_font || !_default_font->compare("Tahoma", size)) {
+        _default_font = std::make_unique<render::font>("Tahoma", size);
+    }
 }
 
 //------------------------------------------------------------------------------

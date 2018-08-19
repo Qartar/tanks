@@ -10,7 +10,7 @@ namespace render {
 //------------------------------------------------------------------------------
 void system::draw_string(char const* string, vec2 position, color4 color)
 {
-    _fonts[0]->draw(string, position, color);
+    _default_font->draw(string, position, color);
 }
 
 //------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ vec2 system::string_size(char const* string) const
 {
     vec2 scale(_view.size.x / _window->framebuffer_size().x,
                _view.size.y / _window->framebuffer_size().y);
-    return _fonts[0]->size(string) * scale;
+    return _default_font->size(string) * scale;
 }
 
 //------------------------------------------------------------------------------

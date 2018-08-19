@@ -376,7 +376,10 @@ LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
         case WM_SIZE:
             _physical_size.x = LOWORD(lParam);
             _physical_size.y = HIWORD(lParam);
-            _renderer.resize(); // uses params in WndParams
+            // don't update renderer unless it's been initialized
+            if (_fbo) {
+                _renderer.resize(); // uses params in WndParams
+            }
             break;
 
         case WM_MOVE:

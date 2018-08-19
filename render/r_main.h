@@ -87,7 +87,7 @@ public:
     void begin_frame();
     void end_frame();
 
-    void resize() { set_default_state(); }
+    void resize();
     render::window const* window() const { return _window; }
 
     render::view const& view() const { return _view; }
@@ -115,6 +115,8 @@ private:
 
     // More font stuff (r_font.cpp)
 
+    std::unique_ptr<render::font> _default_font;
+
     std::vector<std::unique_ptr<render::font>> _fonts;
 
     std::vector<std::unique_ptr<render::image>> _images;
@@ -123,6 +125,7 @@ private:
 
     render::window* _window;
 
+    void create_default_font();
     void set_default_state();
 
     render::view _view;
