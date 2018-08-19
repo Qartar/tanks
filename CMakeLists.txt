@@ -26,6 +26,8 @@ add_subdirectory(network)
 
 set(TANKS_SOURCES
     game/g_button.cpp
+    game/g_character.cpp
+    game/g_character.h
     game/g_client.cpp
     game/g_handle.h
     game/g_handle.natvis
