@@ -75,6 +75,18 @@ float object::get_rotation(float lerp) const
 }
 
 //------------------------------------------------------------------------------
+mat3 object::get_transform(float lerp) const
+{
+    return mat3::transform(get_position(lerp), get_rotation(lerp));
+}
+
+//------------------------------------------------------------------------------
+mat3 object::get_inverse_transform(float lerp) const
+{
+    return mat3::inverse_transform(get_position(lerp), get_rotation(lerp));
+}
+
+//------------------------------------------------------------------------------
 void object::set_position(vec2 position, bool teleport/* = false*/)
 {
     _rigid_body.set_position(position);

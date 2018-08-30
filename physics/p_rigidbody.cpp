@@ -22,6 +22,12 @@ mat3 rigid_body::get_transform() const
 }
 
 //------------------------------------------------------------------------------
+mat3 rigid_body::get_inverse_transform() const
+{
+    return mat3::inverse_transform(_position, _rotation);
+}
+
+//------------------------------------------------------------------------------
 bounds rigid_body::get_bounds() const
 {
     return _shape->calculate_bounds(_position, _rotation);

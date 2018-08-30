@@ -58,6 +58,12 @@ public:
     //! Get frame-interpolated rotation
     virtual float get_rotation(float lerp) const;
 
+    //! Get frame-interpolated transform matrix
+    virtual mat3 get_transform(float lerp) const;
+
+    //! Get frame-interpolated inverse transform matrix
+    virtual mat3 get_inverse_transform(float lerp) const;
+
     physics::rigid_body const& rigid_body() const { return _rigid_body; }
 
     void set_position(vec2 position, bool teleport = false);
@@ -67,6 +73,8 @@ public:
 
     vec2 get_position() const { return _rigid_body.get_position(); }
     float get_rotation() const { return _rigid_body.get_rotation(); }
+    mat3 get_transform() const { return _rigid_body.get_transform(); }
+    mat3 get_inverse_transform() const { return _rigid_body.get_inverse_transform(); }
     vec2 get_linear_velocity() const { return _rigid_body.get_linear_velocity(); }
     float get_angular_velocity() const { return _rigid_body.get_angular_velocity(); }
 

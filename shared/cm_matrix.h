@@ -159,6 +159,20 @@ public:
                     translation.x, translation.y, 1);
     }
 
+// homogenous inverse transformation in two dimensions
+
+    static mat3 inverse_transform(vec2 translation, float rotation) {
+        float cosa = std::cos(rotation);
+        float sina = std::sin(rotation);
+
+        float tx = -translation.x * cosa - translation.y * sina;
+        float ty =  translation.x * sina - translation.y * cosa;
+
+        return mat3( cosa,-sina, 0,
+                     sina, cosa, 0,
+                     tx,   ty,   1);
+    }
+
 // multiplication
 
     constexpr friend vec2 operator*(vec2 const& v, mat3 const& m) {

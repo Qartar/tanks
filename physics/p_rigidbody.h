@@ -52,6 +52,8 @@ public:
 
     mat3 get_transform() const;
 
+    mat3 get_inverse_transform() const;
+
     bounds get_bounds() const;
 
     //
