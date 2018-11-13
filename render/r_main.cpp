@@ -80,9 +80,10 @@ result system::init()
 
     resize(_window->size());
 
-    for (int ii = 0; ii < 360 ; ++ii) {
-        _sintbl[ii] = std::sin(math::deg2rad(static_cast<float>(ii)));
-        _costbl[ii] = std::cos(math::deg2rad(static_cast<float>(ii)));
+    float k = 2.f * math::pi<float> / countof(_costbl);
+    for (int ii = 0; ii < countof(_costbl); ++ii) {
+        _sintbl[ii] = std::sin(k * ii);
+        _costbl[ii] = std::cos(k * ii);
     }
 
     return result::success;
