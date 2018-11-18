@@ -22,16 +22,6 @@ Modified:   11/03/2006
 
 class filectrl_c
 {
-private:
-    class filerror_c : public errorobj_c
-    {
-    private:
-        filerror_c () {}
-    public:
-        filerror_c (char const *message, bool fatal) : errorobj_c(message,fatal) { strcpy( m_type, "file i/o" ); }
-        filerror_c (char const *message, int code, bool fatal) : errorobj_c(message,code,fatal) { strcpy( m_type, "file i/o" ); }
-    };
-
 public:
     filectrl_c () { m_make_paths(); }
     ~filectrl_c () { m_del_paths(); }
@@ -171,7 +161,7 @@ private:
 
     void m_make_paths ()
     {
-        void *path_file;
+        void *path_file = nullptr;
         char const *path_cursor;
         char    path_line[MAX_STRING];
 
@@ -180,7 +170,7 @@ private:
         m_num_paths = 0;
 
         try { load( &path_file, "DATA/DEF/PATHS.DEF" ); }
-        catch ( filerror_c ) { return; }
+        catch (...) { return; }
 
         if ( !path_file )
             return;

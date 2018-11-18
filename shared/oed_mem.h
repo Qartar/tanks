@@ -36,15 +36,6 @@ private:
         unsigned short      tag;
     };
 
-    class memerror_c : public errorobj_c
-    {
-    private:
-        memerror_c () {}
-    public:
-        memerror_c (char const *message, bool fatal) : errorobj_c(message,fatal) { strcpy( m_type, "memory" ); }
-        memerror_c (char const *message, int code, bool fatal) : errorobj_c(message,code,fatal) { strcpy( m_type, "memory" ); }
-    };
-
     mem_link_s  mem_head;
 
     int     link_size;
@@ -111,7 +102,7 @@ public:
 
         link = PTR_TO_LINK(ptr);
         if (link->id != mem_id) // bad id
-            throw( memerror_c( "mem::free | bad pointer\n", ERROR_BADPTR, true ) );
+            throw( va( "mem::free | bad pointer\n", ERROR_BADPTR, true ) );
 
         link->next->prev = link->prev;
         link->prev->next = link->next;
