@@ -23,9 +23,6 @@ Modified:   11/03/2006
 class filectrl_c
 {
 public:
-    filectrl_c () { m_make_paths(); }
-    ~filectrl_c () { m_del_paths(); }
-
     //
     //  load    -   loads a file into a buffer
     //
@@ -122,12 +119,7 @@ public:
 private:
     unsigned int    m_open (char const *filename, char const *attribs, FILE **file)
     {
-        if ( m_num_paths )
-        {
-            if ( (*file = m_open_paths( filename, attribs )) )
-                return length( *file );
-        }
-        else if ( (*file = fopen( filename, attribs )) )
+        if ( (*file = fopen( filename, attribs )) )
             return length( *file );
 
         return 0;
@@ -158,106 +150,6 @@ private:
 
         return ERROR_NONE;
     }
-
-    void m_make_paths ()
-    {
-        void *path_file = nullptr;
-        char const *path_cursor;
-        char    path_line[MAX_STRING];
-
-        textutils_c text;
-
-        m_num_paths = 0;
-
-        try { load( &path_file, "DATA/DEF/PATHS.DEF" ); }
-        catch (...) { return; }
-
-        if ( !path_file )
-            return;
-
-        path_cursor = (char const *)path_file;
-        while ( path_cursor && *path_cursor && m_num_paths < m_max_paths )
-        {
-            path_cursor = text.getline( path_cursor, path_line, MAX_STRING );
-
-            text.parse( path_line );
-
-            if ( text.argc( ) < 2 )
-                continue;
-
-            m_file_paths[m_num_paths].src = (char *)malloc(strlen(text.argv(0))+1);
-            m_file_paths[m_num_paths].dst = (char *)malloc(strlen(text.argv(1))+1);
-
-            strncpy( m_file_paths[m_num_paths].src, text.argv(0), strlen(text.argv(0)) );
-            strncpy( m_file_paths[m_num_paths].dst, text.argv(1), strlen(text.argv(1)) );
-
-            _strlwr( m_file_paths[m_num_paths].src );
-            _strlwr( m_file_paths[m_num_paths].dst );
-
-            m_file_paths[m_num_paths].src[strlen(text.argv(0))] = 0;
-            m_file_paths[m_num_paths].dst[strlen(text.argv(1))] = 0;
-
-            m_num_paths++;
-        }
-
-        unload( path_file );
-    }
-
-    FILE *m_open_paths (char const *file, char const *attribs)
-    {
-        char    file_lwr[LONG_STRING];
-        char    path_file[LONG_STRING];
-        char    *src_begin;
-        FILE    *out;
-
-        int     src_len, src_offs;
-        int     dst_len;
-        int     file_len;
-
-        strcpy( file_lwr, file );
-        _strlwr( file_lwr );
-
-        for ( int i=0 ; i<m_num_paths ; i++ )
-        {
-            if ( (src_begin = strstr( file_lwr, m_file_paths[i].src )) )
-            {
-                src_len = strlen(m_file_paths[i].src);
-                dst_len = strlen(m_file_paths[i].dst);
-                file_len = strlen(file_lwr);
-                src_offs = src_begin - file_lwr;
-
-                memset( path_file, 0, LONG_STRING );
-
-                strncpy( path_file, file_lwr, src_offs );
-                strncpy( path_file + src_offs, m_file_paths[i].dst, dst_len );
-                strncpy( path_file + src_offs + dst_len, src_begin + src_len, file_len - src_offs - src_len );
-
-                if ( (out = fopen( path_file, attribs )) )
-                    return out;
-            }
-        }
-
-        return NULL;
-    }
-
-    void m_del_paths ()
-    {
-        while ( m_num_paths-- )
-        {
-            free (m_file_paths[m_num_paths].src);
-            free (m_file_paths[m_num_paths].dst);
-        }
-    }
-
-    static const int    m_max_paths = 32;
-
-    int m_num_paths;
-    struct file_path_s
-    {
-        char    *src;
-        char    *dst;
-    } m_file_paths[m_max_paths];
-
 };
 
 extern filectrl_c   *s_filectrl_c;
