@@ -200,7 +200,7 @@ void *cSound::alloc (unsigned int size)
     void    *ptr;
 
     if ( !m_hHeap || (ptr = HeapAlloc( m_hHeap, 0, size )) == NULL)
-        return mem::alloc( size );
+        return malloc( size );
     return ptr;
 }
 
@@ -209,7 +209,7 @@ void cSound::free (void *ptr)
     if ( m_hHeap )
         HeapFree( m_hHeap, 0, ptr );
     else
-        mem::free( ptr );
+        ::free( ptr );
 }
 
 /*=========================================================

@@ -25,7 +25,7 @@ private:
 
 public:
     textutils_c () { m_argc = 0; }
-    ~textutils_c () { for( unsigned int i=0 ; i<m_argc ; i++ ) mem::free( m_argv[i] ); }
+    ~textutils_c () { for( unsigned int i=0 ; i<m_argc ; i++ ) ::free( m_argv[i] ); }
 
     unsigned int    argc() { return m_argc; }
     char const  *argv(unsigned int argc) { if (argc >= m_argc) return "\0"; return m_argv[argc];    }
@@ -41,7 +41,7 @@ public:
         // reset the args
 
         for( i=0 ; i<m_argc ; i++ )
-            mem::free( m_argv[i] );
+            ::free( m_argv[i] );
         m_argc = 0;
 
         seqchar = K_SPACE;
@@ -55,7 +55,7 @@ public:
 
                 if (cursor - argptr > 0)
                 {
-                    m_argv[m_argc] = (char *)mem::alloc( cursor - argptr + 1 );
+                    m_argv[m_argc] = (char *)malloc( cursor - argptr + 1 );
                     strncpy( m_argv[m_argc], argptr, cursor - argptr );
                     *((m_argv[m_argc])+(cursor-argptr)) = '\0'; // add escape char
 

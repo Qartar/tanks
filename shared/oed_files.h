@@ -44,7 +44,7 @@ public:
             return 0;
         }
 
-        buffer = (byte *)mem::alloc( len+1 );
+        buffer = (byte *)malloc( len+1 );
         m_read( buffer, len, file );
 
         buffer[len] = 0;
@@ -102,7 +102,7 @@ public:
 
     int unload (void *data)
     {
-        mem::free( data );
+        ::free( data );
 
         return ERROR_NONE;
     }
