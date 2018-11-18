@@ -16,7 +16,7 @@ Date    :   04/07/2006
 #define CHUNK_CUE       MAKEID('c','u','e',' ')
 #define CHUNK_DATA      MAKEID('d','a','t','a')
 
-typedef class riffChunk_c : public vObject
+typedef class riffChunk_c
 {
 public:
     riffChunk_c (char const *szFilename);

@@ -27,7 +27,7 @@ typedef enum device_state_s
     device_abort
 } device_state_t;
 
-class cAudioDevice : public vObject
+class cAudioDevice
 {
 public:
     static cAudioDevice *Create (HWND hWnd);

@@ -18,7 +18,7 @@ typedef struct soundFormat_s
     int     frequency;
 } soundFormat_t;
 
-class cSoundSource : public vObject
+class cSoundSource
 {
 public:
     static cSoundSource *createSound (char const *szFilename);

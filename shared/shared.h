@@ -46,13 +46,6 @@ using word = std::uint16_t;
 #include "cm_matrix.h"
 #include "cm_color.h"
 
-class vObject
-{
-public:
-    void * operator new (size_t s) { return mem::alloc( s ); }
-    void operator delete (void *ptr) { mem::free( ptr ); }
-};
-
 class vMain
 {
 public:
@@ -60,21 +53,6 @@ public:
 };
 
 extern vMain    *pMain;
-
-//
-//  default static create/destroy routines
-//
-
-//  the problem with this is that VS intellisense doesn't
-//  recognize p##x when programming other modules
-
-#define DEF_CREATE_DESTROY(x)           \
-    v##x    *p##x = NULL;               \
-void v##x::Create () {                  \
-    p##x = (v##x *) new c##x; }         \
-                                        \
-void v##x::Destroy () {                 \
-    ((c##x *)p##x)->~c##x(); delete p##x; p##x = NULL; }        
 
 //------------------------------------------------------------------------------
 template<typename T, std::size_t Sz> constexpr std::size_t countof(T const (&)[Sz])
