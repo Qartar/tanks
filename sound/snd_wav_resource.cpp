@@ -47,8 +47,6 @@ int cSoundWaveResource::Load (char const *szFilename)
             parseChunk( reader );
             reader.chunkNext( );
         }
-
-        reader.chunkClose( );
     }
 
     UnlockResource( m_lpvData );

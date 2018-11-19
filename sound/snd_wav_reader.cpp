@@ -17,8 +17,7 @@ riffChunk_c::riffChunk_c (char const *szFilename)
     int     name;
 
     m_pos = 0;
-
-    file::open( &m_riff, szFilename, "rb" );
+    m_riff = file::open(szFilename, file::mode::read);
     if ( !m_riff )
     {
         m_chunkName = NULL;
@@ -56,7 +55,6 @@ riffChunk_c::riffChunk_c (byte* pChunkData, int /*nChunkSize*/)
 
     m_pos = 0;
 
-    m_riff = NULL;
     m_riffData = pChunkData;
 
     if ( !m_riffData )
@@ -101,14 +99,6 @@ riffChunk_c::riffChunk_c (riffChunk_c &Outer)
     chunkSet( );
 }
 
-void riffChunk_c::chunkClose ()
-{
-    if ( m_riff ) {
-        file::close( m_riff );
-        m_riff = NULL;
-    }
-}
-
 /*=========================================================
 =========================================================*/
 
@@ -116,7 +106,7 @@ int riffChunk_c::m_read (void *out, int len)
 {
     if ( m_riff ) {
 
-        int read = fread( out, 1, len, m_riff );
+        int read = m_riff.read( (byte*)out, len );
         m_pos += read;
         return read;
 
@@ -162,7 +152,7 @@ int riffChunk_c::setPos (int pos)
 {
     m_pos = pos;
     if ( m_riff ) {
-        fseek( m_riff, pos, SEEK_SET );
+        m_riff.seek( pos, file::seek::set );
     }
     return m_pos;
 }

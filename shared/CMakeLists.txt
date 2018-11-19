@@ -3,6 +3,8 @@ set(SHARED_SOURCES
     cm_color.h
     cm_config.cpp
     cm_config.h
+    cm_filesystem.cpp
+    cm_filesystem.h
     cm_matrix.h
     cm_sound.h
     cm_time.h

@@ -2,6 +2,7 @@
 //
 
 #include "cm_config.h"
+#include "cm_filesystem.h"
 
 #include <Shlobj.h>
 #include <PathCch.h>
@@ -280,17 +281,15 @@ void system::init()
     // load saved configuration from ini file
     {
         char filename[LONG_STRING];
-        char* buffer;
         char const* ptr;
         char line[MAX_STRING];
-        int filelen;
 
         textutils_c text;
 
         get_config_path(filename, countof(filename));
-        file::load((void **)&buffer, filename, &filelen);
+        file::buffer buffer = file::read(filename);
 
-        for(ptr = buffer; ptr && *ptr; ) {
+        for(ptr = (char const*)buffer.data(); ptr && *ptr; ) {
             ptr = text.getline( ptr, line, MAX_STRING );
 
             text.parse( line );
@@ -312,8 +311,6 @@ void system::init()
                 _variables[text.argv(0)] = std::make_shared<variable_base>(text.argv(0), text.argv(1), text.argv(2), text.argv(3), text.argv(4));
             }
         }
-
-        file::unload(buffer);
     }
 }
 
@@ -321,20 +318,19 @@ void system::init()
 void system::shutdown()
 {
     char filename[LONG_STRING];
-    FILE* file;
     char const* line;
 
     get_config_path(filename, countof(filename), true);
-    file::open(&file, filename, "w+");
 
     if (filename) {
+        file::stream file = file::open(filename, file::mode::write);
+
         for (auto it : _variables) {
             if (it.second->flags() & config::archive) {
                 line = print(it.second.get(), 4);
-                fwrite(line, 1, strlen(line), file);
+                file.write((byte const*)line, strlen(line));
             }
         }
-        file::close(file);
     }
 }
 

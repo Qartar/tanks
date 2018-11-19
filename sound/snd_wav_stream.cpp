@@ -24,7 +24,6 @@ int cSoundWaveStream::Load (char const *szFilename)
 
 void cSoundWaveStream::Unload ()
 {
-    m_reader->chunkClose( );
     delete m_reader;
 }
 

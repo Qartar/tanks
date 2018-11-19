@@ -6,6 +6,7 @@ Date    :   04/07/2006
 #pragma once
 
 #include "snd_files.h"
+#include "cm_filesystem.h"
 
 /*=========================================================
 =========================================================*/
@@ -23,7 +24,6 @@ public:
     riffChunk_c (byte* pChunkData, int nChunkSize);
     riffChunk_c (riffChunk_c &Outer);
 
-    void        chunkClose ();
     bool        chunkNext ();
 
     unsigned int    name ();
@@ -50,7 +50,7 @@ private:
     int             m_chunkSize;
     int             m_chunkStart;
 
-    FILE    *m_riff;
+    file::stream m_riff;
     byte    *m_riffData;
 } riffChunk_t;
 

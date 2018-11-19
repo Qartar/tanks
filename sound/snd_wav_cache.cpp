@@ -19,7 +19,6 @@ int cSoundWaveCache::Load (char const *szFilename)
         pReader->chunkNext( );
     }
 
-    pReader->chunkClose( );
     delete pReader;
 
     return (m_numSamples > 0 ? ERROR_NONE : ERROR_FAIL);

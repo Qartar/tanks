@@ -11,8 +11,6 @@
 
 application *g_Application; // global instance, extern declaration in "win_main.h"
 
-filectrl_c  g_filectrl_c, *s_filectrl_c = &g_filectrl_c;
-
 //------------------------------------------------------------------------------
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR szCmdLine, int nCmdShow)
 {

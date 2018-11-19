@@ -21,7 +21,7 @@ cSoundSource *cSoundSource::createSound (char const *szFilename)
 
     if ( strcmp( szFilename+len-4, ".wav" ) == 0 )
     {
-        filelen = file::length( szFilename );
+        filelen = file::open( szFilename, file::mode::read ).size();
 
         if ( filelen == 0 )
             pSource = (cSoundSource *)new cSoundWaveResource;
