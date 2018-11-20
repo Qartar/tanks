@@ -4,6 +4,7 @@
 #include "precompiled.h"
 #pragma hdrstop
 
+#include "cm_parser.h"
 #include "g_tank.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -146,11 +147,12 @@ void session::send_packets ()
 //------------------------------------------------------------------------------
 void session::read_fail(char const* message_string)
 {
-    textutils_c text;
-
-    text.parse(message_string);
-
-    write_message(va("Failed to connect: %s", text.argv(1)));
+    parser::text text(message_string);
+    if (text.tokens().size() > 1) {
+        write_message(va("Failed to connect: %s", text.tokens()[1]));
+    } else {
+        write_message("Failed to connect");
+    }
 }
 
 //------------------------------------------------------------------------------

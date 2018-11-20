@@ -6,6 +6,8 @@ set(SHARED_SOURCES
     cm_filesystem.cpp
     cm_filesystem.h
     cm_matrix.h
+    cm_parser.cpp
+    cm_parser.h
     cm_sound.h
     cm_time.h
     cm_vector.h

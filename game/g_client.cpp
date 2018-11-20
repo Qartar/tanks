@@ -17,8 +17,6 @@ void session::init_client()
     int length;
     float   csum;
 
-    textutils_c text;
-
     _client_button_down = 0;
     _client_say = 0;
 
@@ -28,10 +26,13 @@ void session::init_client()
         GetUserNameA(cls.info.name.data(), (LPDWORD )&length);
     }
 
-    text.parse( _cl_color );
-    cls.info.color.r = (float )atoi(text.argv(0)) / 255.0f;
-    cls.info.color.g = (float )atoi(text.argv(1)) / 255.0f;
-    cls.info.color.b = (float )atoi(text.argv(2)) / 255.0f;
+    {
+        int r = 255, g = 255, b = 255;
+        sscanf_s(_cl_color, "%d %d %d", &r, &g, &b);
+        cls.info.color.r = static_cast<float>(r) * (1.f / 255.f);
+        cls.info.color.g = static_cast<float>(g) * (1.f / 255.f);
+        cls.info.color.b = static_cast<float>(b) * (1.f / 255.f);
+    }
 
     csum = cls.info.color.r + cls.info.color.g + cls.info.color.b;
     if ( csum < colorMinFrac ) {

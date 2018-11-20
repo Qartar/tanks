@@ -3,6 +3,7 @@
 
 #include "cm_config.h"
 #include "cm_filesystem.h"
+#include "cm_parser.h"
 
 #include <Shlobj.h>
 #include <PathCch.h>
@@ -281,34 +282,39 @@ void system::init()
     // load saved configuration from ini file
     {
         char filename[LONG_STRING];
-        char const* ptr;
-        char line[MAX_STRING];
-
-        textutils_c text;
 
         get_config_path(filename, countof(filename));
         file::buffer buffer = file::read(filename);
 
-        for(ptr = (char const*)buffer.data(); ptr && *ptr; ) {
-            ptr = text.getline( ptr, line, MAX_STRING );
+        char const* ptr = (char const*)buffer.data();
+        char const* end = ptr + buffer.size();
 
-            text.parse( line );
-            if (text.argc() < 2) {
+        while(ptr && ptr < end) {
+            char const* next = strchr(ptr, '\n');
+            parser::text text(ptr, next);
+
+            ptr = next ? next + 1 : nullptr;
+            if (text.tokens().size() < 2) {
                 break;
             }
 
-            auto it = _variables.find(text.argv(0));
+            auto it = _variables.find(text.tokens()[0]);
             if (it != _variables.end()) {
                 // update existing variable
-                auto type = type_from_string(text.argv(2));
+                auto type = type_from_string(text.tokens()[2]);
                 if (type != it->second->_type) {
-                    printf("archived variable '%s' has wrong type, reverting to default\n", text.argv(0));
+                    printf("archived variable '%s' has wrong type, reverting to default\n", text.tokens()[0]);
                 } else {
-                    it->second->_value = text.argv(1);
+                    it->second->_value = text.tokens()[1];
                 }
             } else {
                 // create new variable
-                _variables[text.argv(0)] = std::make_shared<variable_base>(text.argv(0), text.argv(1), text.argv(2), text.argv(3), text.argv(4));
+                _variables[text.tokens()[0]] = std::make_shared<variable_base>(
+                    text.tokens()[0],
+                    text.tokens()[1],
+                    text.tokens()[2],
+                    text.tokens()[3],
+                    text.tokens()[4]);
             }
         }
     }
