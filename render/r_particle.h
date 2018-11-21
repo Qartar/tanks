@@ -6,7 +6,6 @@
 #include "cm_time.h"
 #include "cm_vector.h"
 #include "cm_color.h"
-#include "oed_shared.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
@@ -17,10 +16,10 @@ struct particle
     enum flag_bits
     {
         //! Fade alpha towards the particle center instead of outside
-        invert = BIT(0),
+        invert = 1 << 0,
 
         //! Draw particle as a half-circle with an elliptical tail
-        tail = BIT(1),
+        tail = 1 << 1,
     };
 
     time_value time;

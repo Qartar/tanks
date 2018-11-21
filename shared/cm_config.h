@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "shared.h"
+#include "cm_shared.h"
 
 #include <memory>
 #include <string>
@@ -17,9 +17,9 @@ class variable;
 
 enum flags
 {
-    archive     = BIT(0),
-    server      = BIT(1),
-    reset       = BIT(2),
+    archive     = 1 << 0,
+    server      = 1 << 1,
+    reset       = 1 << 2,
 };
 
 enum class value_type { string, integer, boolean, scalar };

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "shared.h"
+#include "cm_shared.h"
 
 #include "win_include.h"
 //  data type headers

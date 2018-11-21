@@ -72,13 +72,13 @@ protected:
 
         // horizontal alignment
         halign_center   = align_default,
-        halign_left     = BIT(0),
-        halign_right    = BIT(1),
+        halign_left     = 1 << 0,
+        halign_right    = 1 << 1,
 
         // vertical alignment
         valign_center   = align_default,
-        valign_top      = BIT(2),
-        valign_bottom   = BIT(3),
+        valign_top      = 1 << 2,
+        valign_bottom   = 1 << 3,
     };
 
     void draw_rectangle(render::system* renderer, rect const& rect, color4 color) const;

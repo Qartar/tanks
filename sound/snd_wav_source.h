@@ -13,9 +13,14 @@ Date    :   04/07/2006
 
 #define STREAM_THRESHOLD    0x10000     // 65k
 
-#define CHUNK_FMT       MAKEID('f','m','t',' ')
-#define CHUNK_CUE       MAKEID('c','u','e',' ')
-#define CHUNK_DATA      MAKEID('d','a','t','a')
+constexpr int make_id(char a, char b, char c, char d)
+{
+    return (int(d) << 24) | (int(c) << 16) | (int(b) << 8) | (int(a));
+}
+
+constexpr int CHUNK_FMT     = make_id('f','m','t',' ');
+constexpr int CHUNK_CUE     = make_id('c','u','e',' ');
+constexpr int CHUNK_DATA    = make_id('d','a','t','a');
 
 typedef class riffChunk_c
 {
