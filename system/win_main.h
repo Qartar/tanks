@@ -44,7 +44,7 @@ protected:
     config::system _config;
 
 protected:
-    int init(HINSTANCE hInstance, LPSTR szCmdLine);
+    result init(HINSTANCE hInstance, LPSTR szCmdLine);
     int shutdown();
 
     void key_event(int param, bool down);

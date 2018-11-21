@@ -30,7 +30,7 @@ public:
     virtual float           getLoopPosition (float flPosition) = 0;
 
 private:
-    virtual int     Load (char const *szFilename) = 0;
+    virtual result  Load (char const *szFilename) = 0;
     virtual void    Unload () = 0;
 };
 

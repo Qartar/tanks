@@ -43,14 +43,14 @@ public:
     render::system* renderer() { return &_renderer; }
 
 private:
-    int create(int xpos, int ypos, int width, int height, bool fullscreen);
-    int create_framebuffer(int width, int height);
+    result create(int xpos, int ypos, int width, int height, bool fullscreen);
+    result create_framebuffer(int width, int height);
     void destroy_framebuffer();
 
-    int init_opengl();
+    result init_opengl();
     void shutdown_opengl();
 
-    int activate(bool active, bool minimized);
+    result activate(bool active, bool minimized);
     void resize_for_dpi(RECT const* suggested, int dpi);
 
     int _current_dpi;

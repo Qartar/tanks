@@ -64,7 +64,7 @@ int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
 }
 
 //------------------------------------------------------------------------------
-int application::init(HINSTANCE hInstance, LPSTR szCmdLine)
+result application::init(HINSTANCE hInstance, LPSTR szCmdLine)
 {
     // set instance
     _hinstance = hInstance;
@@ -96,7 +96,7 @@ int application::init(HINSTANCE hInstance, LPSTR szCmdLine)
     // init game
     _game.init( szCmdLine );
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ void application::error(char const *title, char const *message)
 {
     MessageBoxA(NULL, message, title, MB_OK);
 
-    quit(ERROR_FAIL);
+    quit(-1);
 }
 
 //------------------------------------------------------------------------------

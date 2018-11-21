@@ -9,7 +9,7 @@ Date    :   04/07/2006
 /*=========================================================
 =========================================================*/
 
-int cSoundWaveCache::Load (char const *szFilename)
+result cSoundWaveCache::Load (char const *szFilename)
 {
     riffChunk_t *pReader = new riffChunk_t( szFilename );
 
@@ -21,7 +21,7 @@ int cSoundWaveCache::Load (char const *szFilename)
 
     delete pReader;
 
-    return (m_numSamples > 0 ? ERROR_NONE : ERROR_FAIL);
+    return (m_numSamples > 0 ? result::success : result::failure);
 }
 
 void cSoundWaveCache::Unload ()

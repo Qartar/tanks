@@ -9,7 +9,7 @@ Date    :   04/07/2006
 /*=========================================================
 =========================================================*/
 
-int cSoundWaveStream::Load (char const *szFilename)
+result cSoundWaveStream::Load (char const *szFilename)
 {
     m_reader = new riffChunk_c( szFilename );
 
@@ -19,7 +19,7 @@ int cSoundWaveStream::Load (char const *szFilename)
         m_reader->chunkNext( );
     }
 
-    return (m_numSamples > 0 ? ERROR_NONE : ERROR_FAIL);
+    return (m_numSamples > 0 ? result::success : result::failure);
 }
 
 void cSoundWaveStream::Unload ()
@@ -78,7 +78,7 @@ int cSoundWaveStream::getSamples (byte *pOutput, int nSamples, int nOffset, bool
 /*=========================================================
 =========================================================*/
 
-int cSoundWaveStream::readData (byte *pOutput, int nStart, int nBytes)
+result cSoundWaveStream::readData (byte *pOutput, int nStart, int nBytes)
 {
     int         i, fin, sample;
 
@@ -96,5 +96,5 @@ int cSoundWaveStream::readData (byte *pOutput, int nStart, int nBytes)
         }
     }
 
-    return ERROR_NONE;
+    return result::success;
 }

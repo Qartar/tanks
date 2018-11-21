@@ -72,7 +72,7 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
         return;
     }
 
-    if ( CreateBuffers( ) != ERROR_NONE )
+    if ( failed( CreateBuffers() ) )
         return;
 
     pMain->message( "...completed successfully" );
@@ -109,7 +109,7 @@ void cDirectSoundDevice::Destroy ()
 /*=========================================================
 =========================================================*/
 
-int cDirectSoundDevice::CreateBuffers ()
+result cDirectSoundDevice::CreateBuffers ()
 {
     DSBUFFERDESC        dsbd;
     WAVEFORMATEX        wfx;
@@ -121,7 +121,7 @@ int cDirectSoundDevice::CreateBuffers ()
     if ( pDirectSound->SetCooperativeLevel( m_hWnd, DSSCL_EXCLUSIVE ) != DS_OK )
     {
         pMain->message( "failed" );
-        return ERROR_FAIL;
+        return result::failure;
     }
 
     memset( &wfx, 0, sizeof(wfx) );
@@ -175,13 +175,13 @@ int cDirectSoundDevice::CreateBuffers ()
         if ( pDirectSound->CreateSoundBuffer( &dsbd, &pSoundBuffer, 0 ) != DS_OK )
         {
             pMain->message( "failed" );
-            return ERROR_FAIL;
+            return result::failure;
         }
 
         if ( pSoundBuffer->GetCaps( &m_BufferCaps ) != DS_OK )
         {
             pMain->message( "...GetCaps failed" );
-            return ERROR_FAIL;
+            return result::failure;
         }
 
         pMain->message( "...using secondary buffer" );
@@ -192,13 +192,13 @@ int cDirectSoundDevice::CreateBuffers ()
         if ( pDirectSound->SetCooperativeLevel( m_hWnd, DSSCL_WRITEPRIMARY ) != DS_OK )
         {
             pMain->message( "failed\n" );
-            return ERROR_FAIL;
+            return result::failure;
         }
 
         if ( pPrimaryBuffer->GetCaps( &m_BufferCaps ) != DS_OK )
         {
             pMain->message( "...GetCaps failed\n" );
-            return ERROR_FAIL;
+            return result::failure;
         }
 
         pSoundBuffer = pPrimaryBuffer;
@@ -213,7 +213,7 @@ int cDirectSoundDevice::CreateBuffers ()
     pSoundBuffer->Play( 0, 0, DSBPLAY_LOOPING );
     m_nOffset = 0;
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 /*=========================================================

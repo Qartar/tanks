@@ -38,7 +38,7 @@ private:
     DSBCAPS             m_BufferCaps;
     int                 m_nOffset;
 
-    int                 CreateBuffers ();
+    result              CreateBuffers ();
     void                DestroyBuffers ();
 
     device_state_t      m_State;

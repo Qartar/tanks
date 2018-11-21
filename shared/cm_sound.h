@@ -27,8 +27,8 @@ public:
     virtual bool playing() = 0;
     virtual bool looping() = 0;
 
-    virtual int play(sound::asset asset) = 0;
-    virtual int loop(sound::asset asset) = 0;
+    virtual result play(sound::asset asset) = 0;
+    virtual result loop(sound::asset asset) = 0;
     virtual void stop() = 0;
 
     virtual void set_origin(vec3 origin) = 0;

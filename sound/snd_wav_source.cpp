@@ -33,7 +33,7 @@ cSoundSource *cSoundSource::createSound (char const *szFilename)
     else
         pMain->message( "unknown sound format: %s\n", szFilename );
 
-    if ( pSource && pSource->Load( szFilename ) == ERROR_NONE )
+    if ( pSource && succeeded(pSource->Load( szFilename )) )
         return pSource;
     else if ( pSource )
         delete pSource;

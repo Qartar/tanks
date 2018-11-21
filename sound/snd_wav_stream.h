@@ -15,13 +15,13 @@ class cSoundWaveStream : public cSoundWaveSource
 public:
     virtual int             getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping);
 
-    virtual int     Load (char const *szFilename);
+    virtual result  Load (char const *szFilename);
     virtual void    Unload ();
 
 private:
     virtual void    parseData   (riffChunk_t &chunk);
 
-    int             readData (byte *pOutput, int nStart, int nBytes);
+    result          readData (byte *pOutput, int nStart, int nBytes);
 
     int     m_dataOffset;   // data chunk
     int     m_dataSize;     // in bytes

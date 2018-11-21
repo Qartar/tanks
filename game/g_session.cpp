@@ -52,7 +52,7 @@ session::session()
 }
 
 //------------------------------------------------------------------------------
-int session::init (char const *cmdline)
+result session::init (char const *cmdline)
 {
     _config = g_Application->config();
     _renderer = g_Application->window()->renderer();
@@ -161,11 +161,11 @@ int session::init (char const *cmdline)
 
     write_message( "Welcome to Tanks! Press F1 or LSHLDR for help." );
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
-int session::shutdown()
+result session::shutdown()
 {
     stop_client( );
     shutdown_client();
@@ -173,11 +173,11 @@ int session::shutdown()
     _world.shutdown( );
     _menu.shutdown( );
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
-int session::run_frame(time_delta time)
+result session::run_frame(time_delta time)
 {
     rand( );
 
@@ -220,7 +220,7 @@ int session::run_frame(time_delta time)
         restart();
     }
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
@@ -979,7 +979,7 @@ void session::spawn_player(int num)
 }
 
 //------------------------------------------------------------------------------
-int session::message(char const* format, ...)
+result session::message(char const* format, ...)
 {
     va_list list;
     char    string[MAX_STRING];
@@ -993,7 +993,7 @@ int session::message(char const* format, ...)
 
     _num_messages = (_num_messages+1)%MAX_MESSAGES;
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------

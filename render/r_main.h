@@ -83,8 +83,8 @@ public:
         , _view{}
     {}
 
-    int init();
-    int shutdown();
+    result init();
+    result shutdown();
 
     void begin_frame();
     void end_frame();

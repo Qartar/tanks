@@ -35,7 +35,7 @@ cSound::cSound()
     m_Chain.pNext = m_Chain.pPrev = &m_Chain; Init( );
 }
 
-int cSound::Init ()
+result cSound::Init ()
 {
     gSound = this;
 
@@ -66,10 +66,10 @@ int cSound::Init ()
     else
         m_hHeap = false;
 
-    return ERROR_NONE;
+    return result::success;
 }
 
-int cSound::Shutdown ()
+result cSound::Shutdown ()
 {
     if ( m_hHeap )
     {
@@ -77,7 +77,7 @@ int cSound::Shutdown ()
         m_hHeap = NULL;
     }
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 /*=========================================================

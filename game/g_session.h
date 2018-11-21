@@ -175,15 +175,15 @@ public:
     session();
     ~session() {}
 
-    int init (char const *cmdline);
-    int shutdown ();
+    result init (char const *cmdline);
+    result shutdown ();
 
     void init_client();
     void shutdown_client();
 
-    virtual int message(char const* message, ...);
+    virtual result message(char const* message, ...);
 
-    int run_frame(time_delta time);
+    result run_frame(time_delta time);
 
     void key_event(int key, bool down);
     void cursor_event(vec2 position);

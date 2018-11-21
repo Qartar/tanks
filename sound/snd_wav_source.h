@@ -62,7 +62,7 @@ public:
     virtual char            *getFilename () { return m_szFilename; }
     virtual float           getLoopPosition (float flPosition);
 
-    virtual int     Load (char const *szFilename) = 0;
+    virtual result  Load (char const *szFilename) = 0;
     virtual void    Unload () = 0;
 
 protected:

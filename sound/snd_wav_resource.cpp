@@ -23,7 +23,7 @@ static const struct { int iResource; char const* szResource; } resources[] =
     { IDR_WAVE9, "assets/sound/missile_flight.wav" },
 };
 
-int cSoundWaveResource::Load (char const *szFilename)
+result cSoundWaveResource::Load (char const *szFilename)
 {
     for ( int i = 0; i < _countof(resources); i++ ) {
         if ( strcmp(szFilename, resources[i].szResource) == 0 ) {
@@ -52,5 +52,5 @@ int cSoundWaveResource::Load (char const *szFilename)
     UnlockResource( m_lpvData );
     FreeResource( m_hResource );
     
-    return (m_numSamples > 0 ? ERROR_NONE : ERROR_FAIL);
+    return (m_numSamples > 0 ? result::success : result::failure);
 }

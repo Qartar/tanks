@@ -113,7 +113,7 @@ window::~window()
 }
 
 //------------------------------------------------------------------------------
-int window::create(int xpos, int ypos, int width, int height, bool fullscreen)
+result window::create(int xpos, int ypos, int width, int height, bool fullscreen)
 {
     SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
@@ -133,7 +133,7 @@ int window::create(int xpos, int ypos, int width, int height, bool fullscreen)
 
     if (!RegisterClassA(&wc)) {
         g_Application->error( "Tanks! Error", "window::m_CreateWindow | RegisterClass failed\n" );
-        return ERROR_FAIL;
+        return result::failure;
     }
 
     // Create the Window
@@ -196,7 +196,7 @@ int window::create(int xpos, int ypos, int width, int height, bool fullscreen)
     if (_hwnd == NULL) {
         g_Application->error( "Tanks! Error", "window::m_CreateWindow | CreateWindow failed\n" );
 
-        return ERROR_FAIL;
+        return result::failure;
     }
 
     if (fullscreen) {
@@ -208,24 +208,24 @@ int window::create(int xpos, int ypos, int width, int height, bool fullscreen)
     UpdateWindow(_hwnd);
 
     // initialize OpenGL
-    if (init_opengl() != ERROR_NONE) {
-        return ERROR_FAIL;
+    if (failed(init_opengl())) {
+        return result::failure;
     }
 
     // initialize framebuffer
-    if (create_framebuffer(_logical_size.x, _logical_size.y) != ERROR_NONE) {
-        return ERROR_FAIL;
+    if (failed(create_framebuffer(_logical_size.x, _logical_size.y))) {
+        return result::failure;
     }
 
     // show the window
     SetForegroundWindow(_hwnd);
     SetFocus(_hwnd);
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
-int window::init_opengl()
+result window::init_opengl()
 {
     int     pixelformat;
     PIXELFORMATDESCRIPTOR pfd = 
@@ -253,29 +253,29 @@ int window::init_opengl()
     // get DC
     if ((_hdc = GetDC(_hwnd)) == NULL) {
         g_Application->error( "Tanks! Error", "window::m_InitGL | GetDC failed");
-        return ERROR_FAIL;
+        return result::failure;
     }
 
     // select pixel format
     if ((pixelformat = ChoosePixelFormat(_hdc, &pfd)) == 0) {
         g_Application->error( "Tanks! Error", "window::m_InitGL | ChoosePixelFormat failed");
-        return ERROR_FAIL;
+        return result::failure;
     }
     if ((SetPixelFormat(_hdc, pixelformat, &pfd)) == FALSE) {
         g_Application->error( "Tanks! Error", "window::m_InitGL | SetPixelFormat failed");
-        return ERROR_FAIL;
+        return result::failure;
     }
 
     // set up context
     if ((_hrc = wglCreateContext(_hdc)) == 0) {
         g_Application->error ( "Tanks! Error", "window::m_InitGL: wglCreateContext failed" );
         shutdown_opengl();
-        return ERROR_FAIL;
+        return result::failure;
     }
     if (!wglMakeCurrent(_hdc, _hrc)) {
         g_Application->error ( "Tanks! Error", "window::m_InitGL: wglMakeCurrent failed" );
         shutdown_opengl();
-        return ERROR_FAIL;
+        return result::failure;
     }
 
     // initialize Renderer
@@ -297,14 +297,14 @@ int window::init_opengl()
         wglSwapIntervalEXT(0);
     }
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
-int window::create_framebuffer(int width, int height)
+result window::create_framebuffer(int width, int height)
 {
     if (!_hrc) {
-        return ERROR_FAIL;
+        return result::failure;
     }
 
     if (_fbo) {
@@ -327,7 +327,7 @@ int window::create_framebuffer(int width, int height)
     _framebuffer_size.x = width;
     _framebuffer_size.y = height;
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
@@ -458,7 +458,7 @@ bool window::toggle_fullscreen()
 }
 
 //------------------------------------------------------------------------------
-int window::activate(bool active, bool minimized)
+result window::activate(bool active, bool minimized)
 {
     if (active && !minimized) {
         if (!_active || _minimized) {
@@ -478,7 +478,7 @@ int window::activate(bool active, bool minimized)
         _active = false;
     }
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 } // namespace render

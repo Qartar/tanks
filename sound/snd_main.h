@@ -72,9 +72,9 @@ public:
     virtual bool        playing () { return m_bPlaying; }
     virtual bool        looping () { return m_bLooping; }
 
-    virtual int         play (sound::asset asset, bool bLooping);
-    virtual int         play (sound::asset asset);
-    virtual int         loop (sound::asset asset);
+    virtual result      play (sound::asset asset, bool bLooping);
+    virtual result      play (sound::asset asset);
+    virtual result      loop (sound::asset asset);
 
     virtual void        stop ();
 
@@ -117,8 +117,8 @@ public:
     cSound ();
     ~cSound () { Shutdown( ); }
 
-    int     Init ();
-    int     Shutdown ();
+    result  Init ();
+    result  Shutdown ();
 
     virtual void    on_create (HWND hWnd);
     virtual void    on_destroy ();

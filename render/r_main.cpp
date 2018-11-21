@@ -8,7 +8,7 @@
 namespace render {
 
 //------------------------------------------------------------------------------
-int system::init()
+result system::init()
 {
     _view.size = vec2(_window->framebuffer_size());
     _view.origin = _view.size * 0.5f;
@@ -22,15 +22,15 @@ int system::init()
         _costbl[ii] = cos(deg2rad<float>(ii));
     }
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
-int system::shutdown()
+result system::shutdown()
 {
     _fonts.clear();
 
-    return ERROR_NONE;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------

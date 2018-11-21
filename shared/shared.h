@@ -45,11 +45,12 @@ using word = std::uint16_t;
 #include "cm_vector.h"
 #include "cm_matrix.h"
 #include "cm_color.h"
+#include "cm_error.h"
 
 class vMain
 {
 public:
-    virtual int message (char const* message, ...) = 0;
+    virtual result message (char const* message, ...) = 0;
 };
 
 extern vMain    *pMain;
