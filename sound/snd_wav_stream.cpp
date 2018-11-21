@@ -89,12 +89,7 @@ int cSoundWaveStream::readData (byte *pOutput, int nStart, int nBytes)
 
     for ( i=0 ; i<fin ; i++ )
     {
-        if ( m_format.bitwidth == 16 )
-        {
-            sample = data::littleshort( ((short *)pOutput)[i] );
-            ((short *)pOutput)[i] = sample;
-        }
-        else
+        if ( m_format.bitwidth == 8 )
         {
             sample = (int)((unsigned char)(pOutput[i]) - 128);
             ((signed char *)pOutput)[i] = sample;

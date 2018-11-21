@@ -56,12 +56,7 @@ void cSoundWaveCache::parseData (riffChunk_t &chunk)
 
     for ( i=0 ; i<m_numSamples ; i++ )
     {
-        if ( m_format.bitwidth == 16 )
-        {
-            sample = data::littleshort( ((short *)m_dataCache)[i] );
-            ((short *)m_dataCache)[i] = sample;
-        }
-        else
+        if ( m_format.bitwidth == 8 )
         {
             sample = (int)((unsigned char)(m_dataCache[i]) - 128);
             ((signed char *)m_dataCache)[i] = sample;

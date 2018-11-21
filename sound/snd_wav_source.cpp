@@ -82,10 +82,10 @@ void cSoundWaveSource::parseFormat (riffChunk_t &chunk)
 
     chunk.readData( (byte *)&wfx, chunk.getSize( ) );
 
-    m_format.format = data::littleshort( wfx.wFormatTag );
-    m_format.channels = data::littleshort( wfx.nChannels );
-    m_format.bitwidth = data::littleshort( wfx.wBitsPerSample );
-    m_format.frequency = data::littlelong( wfx.nSamplesPerSec );
+    m_format.format = wfx.wFormatTag;
+    m_format.channels = wfx.nChannels;
+    m_format.bitwidth = wfx.wBitsPerSample;
+    m_format.frequency = wfx.nSamplesPerSec;
 }
 
 /*=========================================================

@@ -133,11 +133,11 @@ int riffChunk_c::readData (byte *pOutput, int nLength)
 
 int riffChunk_c::readInt ()
 {
-    int     i;
+    int value;
 
-    m_read( &i, 4 );
+    m_read( &value, 4 );
 
-    return data::littlelong( i );
+    return value;
 }
 
 /*=========================================================
