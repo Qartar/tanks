@@ -169,7 +169,7 @@ typedef struct client_state_s
 } client_state_t;
 
 //------------------------------------------------------------------------------
-class session : public vMain
+class session : public log
 {
 public:
     session();
@@ -325,6 +325,9 @@ private:
     network::channel _netchan;
 
     char _clientsay[LONG_STRING];
+
+protected:
+    virtual void print(level /*level*/, char const* msg) override { message(msg); }
 };
 
 } // namespace game

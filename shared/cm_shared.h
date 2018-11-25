@@ -28,14 +28,6 @@ using word = std::uint16_t;
 #pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
 #pragma warning(disable:4267) // conversion from 'size_t' to 'type', possible loss of data
 
-class vMain
-{
-public:
-    virtual result message (char const* message, ...) = 0;
-};
-
-extern vMain    *pMain;
-
 #define MAX_STRING      1024
 #define LONG_STRING     256
 #define SHORT_STRING    32
@@ -85,3 +77,33 @@ template<typename T> constexpr std::size_t countof()
 
 //------------------------------------------------------------------------------
 char const* va (char const *fmt, ...);
+
+//------------------------------------------------------------------------------
+namespace detail {
+
+class log
+{
+public:
+    enum class level {
+        message,
+        warning,
+        error,
+    };
+
+    //! set the logging singleton
+    static void set(log* logger);
+
+    static void message(char const* fmt, ...);
+    static void warning(char const* fmt, ...);
+    static void error(char const* fmt, ...);
+
+protected:
+    virtual void print(level level, char const* message) = 0;
+
+private:
+    static log* _singleton;
+};
+
+} // namespace detail
+
+using namespace detail; // workaround for namespace collision with <cmath>

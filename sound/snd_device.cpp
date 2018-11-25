@@ -15,7 +15,7 @@ cAudioDevice *cAudioDevice::Create (HWND hWnd)
     cAudioDevice    *pDevice;
     device_state_t  devState = device_fail;
 
-    pMain->message( "------ initializing sound ------" );
+    log::message( "------ initializing sound ------" );
 
     //  try directsound
     if ( (pDevice = new cDirectSoundDevice(hWnd)) )
@@ -38,7 +38,7 @@ cAudioDevice *cAudioDevice::Create (HWND hWnd)
 
 void cAudioDevice::Destroy (cAudioDevice *pDevice)
 {
-    pMain->message( "------ shutting down sound ------" );
+    log::message( "------ shutting down sound ------" );
 
     if ( pDevice )
     {

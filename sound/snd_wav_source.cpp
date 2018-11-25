@@ -31,7 +31,7 @@ cSoundSource *cSoundSource::createSound (char const *szFilename)
             pSource = (cSoundSource *)new cSoundWaveCache;
     }
     else
-        pMain->message( "unknown sound format: %s\n", szFilename );
+        log::message( "unknown sound format: %s\n", szFilename );
 
     if ( pSource && succeeded(pSource->Load( szFilename )) )
         return pSource;

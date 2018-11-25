@@ -59,7 +59,7 @@ result cSoundChannel::play (sound::asset asset, bool bLooping)
 
     if ( !m_pSound )
     {
-        pMain->message( "could not play sound %i: does not exist\n", static_cast<int>(asset) - 1 );
+        log::warning( "could not play sound %i: does not exist\n", static_cast<int>(asset) - 1 );
         return result::failure;
     }
 

@@ -14,7 +14,6 @@
 #include <XInput.h>
 
 // global object
-vMain   *pMain;
 game::session* g_Game;
 
 void find_server(bool connect);
@@ -47,8 +46,8 @@ session::session()
     , _server_button_down(false)
     , _client_say(false)
 {
+    log::set(this);
     g_Game = this;
-    pMain = this;
 }
 
 //------------------------------------------------------------------------------
