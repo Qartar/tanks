@@ -253,9 +253,9 @@ void projectile::read_snapshot(network::message const& message)
 //------------------------------------------------------------------------------
 void projectile::write_snapshot(network::message& message) const
 {
-    message.write_long(_owner->spawn_id());
+    message.write_long(narrow_cast<int>(_owner->spawn_id()));
     message.write_float(_damage);
-    message.write_byte(static_cast<int>(_type));
+    message.write_byte(narrow_cast<uint8_t>(_type));
     message.write_vector(get_position());
     message.write_vector(get_linear_velocity());
 }

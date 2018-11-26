@@ -67,10 +67,10 @@ void cSoundWaveCache::parseData (riffChunk_t &chunk)
 /*=========================================================
 =========================================================*/
 
-int cSoundWaveCache::getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping)
+std::size_t cSoundWaveCache::getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping)
 {
-    int     nRemaining, nCompleted = 0;
-    int     nBytes, nStart;
+    std::size_t nRemaining, nCompleted = 0;
+    std::size_t nBytes, nStart;
 
     int     nSampleSize = m_format.channels * m_format.bitwidth / 8;
 

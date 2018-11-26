@@ -51,7 +51,7 @@ public:
     float _track_speed;
 
     float _damage;
-    int _player_index;
+    std::size_t _player_index;
 
     time_value _dead_time;
     time_value _fire_time;

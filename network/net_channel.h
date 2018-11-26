@@ -51,7 +51,7 @@ protected:
     network::socket* _socket; //!< socket used for transmitting data
 
 protected:
-    bool transmit(int length, byte const* data);
+    bool transmit(std::size_t length, byte const* data);
 };
 
 } // namespace network

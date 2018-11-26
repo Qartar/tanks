@@ -41,10 +41,10 @@ void cSoundWaveStream::parseData (riffChunk_t &chunk)
 /*=========================================================
 =========================================================*/
 
-int cSoundWaveStream::getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping)
+std::size_t cSoundWaveStream::getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping)
 {
-    int     nRemaining;
-    int     nBytes, nStart;
+    std::size_t nRemaining;
+    std::size_t nBytes, nStart;
 
     int     nSampleSize = m_format.channels * m_format.bitwidth / 8;
 
@@ -78,21 +78,19 @@ int cSoundWaveStream::getSamples (byte *pOutput, int nSamples, int nOffset, bool
 /*=========================================================
 =========================================================*/
 
-result cSoundWaveStream::readData (byte *pOutput, int nStart, int nBytes)
+result cSoundWaveStream::readData (byte *pOutput, std::size_t nStart, std::size_t nBytes)
 {
-    int         i, fin, sample;
-
     m_reader->setPos( m_dataOffset + nStart );
     m_reader->readData( pOutput, nBytes );
 
-    fin = nBytes / (m_format.bitwidth / 8);
+    std::size_t fin = nBytes / (m_format.bitwidth / 8);
 
-    for ( i=0 ; i<fin ; i++ )
+    for (std::size_t ii = 0; ii < fin; ++ii)
     {
         if ( m_format.bitwidth == 8 )
         {
-            sample = (int)((unsigned char)(pOutput[i]) - 128);
-            ((signed char *)pOutput)[i] = sample;
+            int sample = (int)((unsigned char)(pOutput[ii]) - 128);
+            ((signed char *)pOutput)[ii] = sample;
         }
     }
 

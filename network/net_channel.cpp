@@ -42,7 +42,7 @@ void channel::setup(network::socket* socket, network::address remote, int netpor
 }
 
 //------------------------------------------------------------------------------
-bool channel::transmit(int length, byte const* data)
+bool channel::transmit(std::size_t length, byte const* data)
 {
     network::message_storage netmsg;
 
@@ -68,7 +68,7 @@ bool channel::transmit(int length, byte const* data)
 //------------------------------------------------------------------------------
 bool channel::transmit()
 {
-    int length = bytes_remaining();
+    std::size_t length = bytes_remaining();
     byte const* data = read(length);
 
     return transmit(length, data);

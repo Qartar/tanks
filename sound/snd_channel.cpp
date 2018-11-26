@@ -55,7 +55,7 @@ result cSoundChannel::play (sound::asset asset, bool bLooping)
     if ( asset == sound::asset::invalid )
         return result::failure;
 
-    m_pSound = gSound->getSound( static_cast<int>(asset) - 1 );
+    m_pSound = gSound->getSound( narrow_cast<int>(asset) - 1 );
 
     if ( !m_pSound )
     {
@@ -111,7 +111,7 @@ void cSoundChannel::m_mixMono16 (void *pBuffer, float flRate, int nVolume, int n
     samplepair_t    *output = (samplepair_t *)pBuffer;
     short           *input = (short *)gSound->getChannelBuffer( )->pData;
 
-    int         nSamplesRead;
+    std::size_t nSamplesRead;
     float       nSamplePos;
 
     int     sampleIndex;
@@ -150,7 +150,7 @@ void cSoundChannel::m_mixStereo16 (void *pBuffer, float flRate, int nVolume, int
     samplepair_t    *output = (samplepair_t *)pBuffer;
     stereo16_t      *input = (stereo16_t *)gSound->getChannelBuffer( )->pData;
 
-    int         nSamplesRead;
+    std::size_t nSamplesRead;
     float       nSamplePos;
 
     int     sampleIndex;

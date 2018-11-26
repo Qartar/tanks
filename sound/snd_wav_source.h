@@ -32,28 +32,28 @@ public:
     bool        chunkNext ();
 
     unsigned int    name ();
-    int             getSize ();
+    std::size_t     getSize ();
 
-    int             getPos ();
-    int             setPos (int pos);
+    std::size_t     getPos ();
+    std::size_t     setPos (std::size_t pos);
 
-    int     readChunk (byte *pOutput);
-    int     readData (byte *pOutput, int nLength);
-    int     readInt ();
+    std::size_t readChunk (byte *pOutput);
+    std::size_t readData (byte *pOutput, std::size_t nLength);
+    int readInt ();
 
 private:
     void    chunkSet ();
 
-    int     m_start;
-    int     m_size;
+    std::size_t m_start;
+    std::size_t m_size;
     int     m_name;
-    int     m_pos;
+    std::size_t m_pos;
 
-    int     m_read (void *out, int len);
+    std::size_t m_read (void *out, std::size_t len);
 
     unsigned int    m_chunkName;
-    int             m_chunkSize;
-    int             m_chunkStart;
+    std::size_t     m_chunkSize;
+    std::size_t     m_chunkStart;
 
     file::stream m_riff;
     byte    *m_riffData;
@@ -62,7 +62,7 @@ private:
 class cSoundWaveSource : public cSoundSource
 {
 public:
-    virtual int             getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping) = 0;
+    virtual std::size_t getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping) = 0;
     virtual soundFormat_t   *getFormat () { return &m_format; }
     virtual char            *getFilename () { return m_szFilename; }
     virtual float           getLoopPosition (float flPosition);
@@ -80,6 +80,6 @@ protected:
     soundFormat_t   m_format;
     char            m_szFilename[LONG_STRING];
 
-    int         m_numSamples;
+    std::size_t m_numSamples;
     int         m_loopStart;
 };

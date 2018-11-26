@@ -195,7 +195,7 @@ void cSound::set_listener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp)
 /*=========================================================
 =========================================================*/
 
-void *cSound::alloc (unsigned int size)
+void *cSound::alloc (std::size_t size)
 {
     void    *ptr;
 

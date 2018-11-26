@@ -153,10 +153,10 @@ bool socket::read(network::address& remote, network::message& message)
         return false;
     }
 
-    int len = message.bytes_available();
+    std::size_t len = message.bytes_available();
     char* buf = (char*)message.reserve(len);
 
-    int result = ::recvfrom(_socket, buf, len, 0, (sockaddr*)&from, &fromlen);
+    int result = ::recvfrom(_socket, buf, narrow_cast<int>(len), 0, (sockaddr*)&from, &fromlen);
 
     if (result <= 0) {
         return false;
@@ -184,10 +184,10 @@ bool socket::write(network::address const& remote, network::message const& messa
         return false;
     }
 
-    int len = message.bytes_remaining();
+    std::size_t len = message.bytes_remaining();
     char const* buf = (char const*)message.read(len);
 
-    int result = ::sendto(_socket, buf, len, 0, (sockaddr*)&to, tolen);
+    int result = ::sendto(_socket, buf, narrow_cast<int>(len), 0, (sockaddr*)&to, tolen);
 
     if (result < len) {
         return false;
@@ -203,7 +203,7 @@ bool socket::printf(network::address const& remote, char const* fmt, ...)
 
     va_list va;
 
-    int size = message.bytes_available();
+    std::size_t size = message.bytes_available();
     byte* buf = message.reserve(size);
 
     va_start(va, fmt);

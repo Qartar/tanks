@@ -133,7 +133,7 @@ public:
 
     //  memory
 
-    void        *heapAlloc (unsigned int size) { return alloc(size); }
+    void        *heapAlloc (std::size_t size) { return alloc(size); }
     void        heapFree (void *ptr) { free(ptr); }
 
     //  registration
@@ -171,7 +171,7 @@ private:
     //
 
     HANDLE      m_hHeap;
-    void        *alloc (unsigned int size);
+    void        *alloc (std::size_t size);
     void        free (void *ptr);
 
     //

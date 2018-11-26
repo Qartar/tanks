@@ -194,7 +194,7 @@ public:
     void restart();
     void resume();
 
-    void add_score(int player_index, int score);
+    void add_score(std::size_t player_index, int score);
 
     bool _menu_active;
     bool _dedicated;
@@ -245,7 +245,7 @@ private:
 
     void draw_netgraph();
 
-    void spawn_player(int num);
+    void spawn_player(std::size_t num);
 
     message_t _messages[MAX_MESSAGES];
     int _num_messages;
@@ -255,7 +255,7 @@ private:
     char _shift_keys[256];
 
     config::boolean _net_graph;
-    std::array<int, 256> _net_bytes;
+    std::array<std::size_t, 256> _net_bytes;
 
 public:
     void write_message (char const* message, bool broadcast=true);
@@ -290,24 +290,24 @@ private:
     void write_frame ();
     void send_packets ();
 
-    void broadcast(int len, byte const* data);
+    void broadcast(std::size_t len, byte const* data);
     void broadcast(network::message& message);
     void broadcast_print (char const* message);
 
     void server_connectionless(network::address const& remote, network::message& message);
     void client_connectionless(network::address const& remote, network::message& message);
 
-    void server_packet(network::message& message, int client);
+    void server_packet(network::message& message, std::size_t client);
     void client_packet(network::message& message);
 
     void connect_ack(char const* message_string);
 
     void client_connect(network::address const& remote, char const* message_string);
-    void client_connect(network::address const& remote, char const* message_string, int client);
-    void client_disconnect(int client);
-    void client_command(network::message& message, int client);
+    void client_connect(network::address const& remote, char const* message_string, std::size_t client);
+    void client_disconnect(std::size_t client);
+    void client_command(network::message& message, std::size_t client);
 
-    void read_upgrade(int client, int upgrade);
+    void read_upgrade(std::size_t client, int upgrade);
     void write_upgrade(int upgrade);
 
     void client_send ();
@@ -316,7 +316,7 @@ private:
     void info_get(network::address const& remote, char const* message_string);
 
     void read_info(network::message& message);
-    void write_info(network::message& message, int client);
+    void write_info(network::message& message, std::size_t client);
 
     void read_fail(char const* message_string);
 

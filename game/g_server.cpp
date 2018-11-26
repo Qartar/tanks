@@ -115,7 +115,7 @@ void session::server_connectionless(network::address const& remote, network::mes
 }
 
 //------------------------------------------------------------------------------
-void session::server_packet(network::message& message, int client)
+void session::server_packet(network::message& message, std::size_t client)
 {
     while (message.bytes_remaining()) {
         switch (message.read_byte()) {
@@ -207,7 +207,7 @@ void session::client_connect(network::address const& remote, char const* message
 }
 
 //------------------------------------------------------------------------------
-void session::client_connect(network::address const& remote, char const* message_string, int client)
+void session::client_connect(network::address const& remote, char const* message_string, std::size_t client)
 {
     auto& cl = svs.clients[client];
     int netport, version;
@@ -239,7 +239,7 @@ void session::client_connect(network::address const& remote, char const* message
 }
 
 //------------------------------------------------------------------------------
-void session::client_disconnect(int client)
+void session::client_disconnect(std::size_t client)
 {
     network::message_storage message;
 
@@ -255,7 +255,7 @@ void session::client_disconnect(int client)
 }
 
 //------------------------------------------------------------------------------
-void session::client_command(network::message& message, int client)
+void session::client_command(network::message& message, std::size_t client)
 {
     game::usercmd cmd{};
 
@@ -297,7 +297,7 @@ char const* sz_upgrades[] = {
 };
 
 //------------------------------------------------------------------------------
-void session::read_upgrade(int client, int upgrade)
+void session::read_upgrade(std::size_t client, int upgrade)
 {
     if (_clients[client].upgrades) {
         network::message_storage netmsg;

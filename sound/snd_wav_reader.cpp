@@ -102,11 +102,11 @@ riffChunk_c::riffChunk_c (riffChunk_c &Outer)
 /*=========================================================
 =========================================================*/
 
-int riffChunk_c::m_read (void *out, int len)
+std::size_t riffChunk_c::m_read (void *out, std::size_t len)
 {
     if ( m_riff ) {
 
-        int read = m_riff.read( (byte*)out, len );
+        std::size_t read = m_riff.read( (byte*)out, len );
         m_pos += read;
         return read;
 
@@ -121,12 +121,12 @@ int riffChunk_c::m_read (void *out, int len)
     }
 }
 
-int riffChunk_c::readChunk (byte *pOutput)
+std::size_t riffChunk_c::readChunk (byte *pOutput)
 {
     return m_read( pOutput, m_chunkSize );
 }
 
-int riffChunk_c::readData (byte *pOutput, int nLength)
+std::size_t riffChunk_c::readData (byte *pOutput, std::size_t nLength)
 {
     return m_read( pOutput, nLength );
 }
@@ -143,12 +143,12 @@ int riffChunk_c::readInt ()
 /*=========================================================
 =========================================================*/
 
-int riffChunk_c::getPos ()
+std::size_t riffChunk_c::getPos ()
 {
     return m_pos;
 }
 
-int riffChunk_c::setPos (int pos)
+std::size_t riffChunk_c::setPos (std::size_t pos)
 {
     m_pos = pos;
     if ( m_riff ) {
@@ -165,7 +165,7 @@ unsigned int riffChunk_c::name ()
     return m_chunkName;
 }
 
-int riffChunk_c::getSize ()
+std::size_t riffChunk_c::getSize ()
 {
     return m_chunkSize;
 }
@@ -192,13 +192,13 @@ void riffChunk_c::chunkSet ()
 
 bool riffChunk_c::chunkNext ()
 {
-    int     nextChunk = m_chunkStart + m_chunkSize + 8;
+    std::size_t nextChunk = m_chunkStart + m_chunkSize + 8;
 
     nextChunk += m_chunkSize & 1;
 
     if ( nextChunk > m_start + m_size )
     {
-        m_chunkSize = -1;
+        m_chunkSize = 0;
         m_chunkName = 0;
         return false;
     }

@@ -123,7 +123,7 @@ bool image::upload(HBITMAP bitmap)
 
     std::vector<uint8_t> buffer(bm.bmWidthBytes * bm.bmHeight);
 
-    if (!GetBitmapBits(bitmap, buffer.size(), buffer.data())) {
+    if (!GetBitmapBits(bitmap, narrow_cast<LONG>(buffer.size()), buffer.data())) {
         return false;
     }
 

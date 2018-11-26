@@ -236,7 +236,7 @@ void session::client_send ()
     _netchan.write_byte(clc_command);
     _netchan.write_vector(cmd.move);
     _netchan.write_vector(cmd.look);
-    _netchan.write_byte(static_cast<int>(cmd.action));
+    _netchan.write_byte(narrow_cast<uint8_t>(cmd.action));
 
     // check if user info has been changed
     if (!_menu_active) {

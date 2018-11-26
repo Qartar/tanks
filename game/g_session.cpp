@@ -672,9 +672,9 @@ void session::gamepad_event(int index, gamepad const& pad)
 }
 
 //------------------------------------------------------------------------------
-void session::add_score(int player_index, int score)
+void session::add_score(std::size_t player_index, int score)
 {
-    player_index = clamp(player_index,0,MAX_PLAYERS);
+    player_index = clamp<std::size_t>(player_index,0,MAX_PLAYERS);
 
     _score[player_index] += score;
 
@@ -803,12 +803,12 @@ void session::draw_netgraph()
     float max = 0;
 
     for (size_t ii = 1; ii < _net_bytes.size() && ii < _framenum; ++ii) {
-        int value = _net_bytes[(_framenum - ii) % _net_bytes.size()];
+        std::size_t value = _net_bytes[(_framenum - ii) % _net_bytes.size()];
         sum += value;
         max = std::max<float>(max, value);
     }
 
-    float avg = sum / (std::min<int>(_framenum, _net_bytes.size()) - 1);
+    float avg = sum / (std::min<std::size_t>(_framenum, _net_bytes.size()) - 1);
     float scale = std::min<float>(height / base, height / max);
 
     //
@@ -950,7 +950,7 @@ void session::restart()
 }
 
 //------------------------------------------------------------------------------
-void session::spawn_player(int num)
+void session::spawn_player(std::size_t num)
 {
     //
     //  initialize tank object

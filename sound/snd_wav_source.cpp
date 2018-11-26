@@ -14,8 +14,8 @@ Date    :   04/07/2006
 
 cSoundSource *cSoundSource::createSound (char const *szFilename)
 {
-    int         len = strlen(szFilename);
-    int         filelen;
+    std::size_t len = strlen(szFilename);
+    std::size_t filelen;
 
     cSoundSource    *pSource = NULL;
 

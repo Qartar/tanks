@@ -26,7 +26,6 @@ using word = std::uint16_t;
 #include "cm_error.h"
 
 #pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
-#pragma warning(disable:4267) // conversion from 'size_t' to 'type', possible loss of data
 
 #define MAX_STRING      1024
 #define LONG_STRING     256
@@ -73,6 +72,13 @@ template<typename T, std::size_t size> constexpr std::size_t countof(T const (&)
 template<typename T> constexpr std::size_t countof()
 {
     return countof(T{});
+}
+
+//------------------------------------------------------------------------------
+template<typename T, typename Y> constexpr T narrow_cast(Y value)
+{
+    assert(static_cast<Y>(static_cast<T>(value)) == value);
+    return static_cast<T>(value);
 }
 
 //------------------------------------------------------------------------------

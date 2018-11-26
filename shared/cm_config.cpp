@@ -202,7 +202,7 @@ config::scalar& scalar::operator=(float f)
 
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-int get_config_path(char *path, int size, bool create = false)
+int get_config_path(char *path, std::size_t size, bool create = false)
 {
     PWSTR pszPath;
     WCHAR wPath[1024];
@@ -225,7 +225,7 @@ int get_config_path(char *path, int size, bool create = false)
         wPath,
         -1,
         path,
-        size,
+        narrow_cast<int>(size),
         NULL,
         NULL);
 }

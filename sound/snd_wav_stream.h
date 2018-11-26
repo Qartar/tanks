@@ -13,7 +13,7 @@ Date    :   04/07/2006
 class cSoundWaveStream : public cSoundWaveSource
 {
 public:
-    virtual int             getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping);
+    virtual std::size_t getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping);
 
     virtual result  Load (char const *szFilename);
     virtual void    Unload ();
@@ -21,10 +21,10 @@ public:
 private:
     virtual void    parseData   (riffChunk_t &chunk);
 
-    result          readData (byte *pOutput, int nStart, int nBytes);
+    result          readData (byte *pOutput, std::size_t nStart, std::size_t nBytes);
 
-    int     m_dataOffset;   // data chunk
-    int     m_dataSize;     // in bytes
+    std::size_t m_dataOffset;   // data chunk
+    std::size_t m_dataSize;     // in bytes
 
     riffChunk_t     *m_reader;
 };

@@ -401,7 +401,7 @@ void tank::read_snapshot(network::message const& message)
 //------------------------------------------------------------------------------
 void tank::write_snapshot(network::message& message) const
 {
-    message.write_byte(_player_index);
+    message.write_byte(narrow_cast<uint8_t>(_player_index));
     message.write_float(_color.r);
     message.write_float(_color.g);
     message.write_float(_color.b);

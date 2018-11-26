@@ -258,22 +258,22 @@ void world::write_snapshot(network::message& message) const
     message.write_byte(svc_snapshot);
 
     // write frame
-    message.write_byte(static_cast<int>(message_type::frame));
+    message.write_byte(narrow_cast<uint8_t>(message_type::frame));
     message.write_long(_framenum);
     message.write_vector(_mins);
     message.write_vector(_maxs);
 
     // write active objects
     for (auto const& obj : _objects) {
-        message.write_long(obj->_spawn_id);
-        message.write_byte(static_cast<int>(obj->_type));
+        message.write_long(narrow_cast<int>(obj->_spawn_id));
+        message.write_byte(narrow_cast<uint8_t>(obj->_type));
         obj->write_snapshot(message);
     }
     message.write_long(0);
 
     // write sounds and effects
     message.write(_message);
-    message.write_byte(static_cast<int>(message_type::none));
+    message.write_byte(narrow_cast<uint8_t>(message_type::none));
 
     _message.rewind();
 }
@@ -281,8 +281,8 @@ void world::write_snapshot(network::message& message) const
 //------------------------------------------------------------------------------
 void world::write_sound(sound::asset sound_asset, vec2 position, float volume)
 {
-    _message.write_byte(static_cast<int>(message_type::sound));
-    _message.write_long(static_cast<int>(sound_asset));
+    _message.write_byte(narrow_cast<uint8_t>(message_type::sound));
+    _message.write_long(narrow_cast<int>(sound_asset));
     _message.write_vector(position);
     _message.write_float(volume);
 }
@@ -290,8 +290,8 @@ void world::write_sound(sound::asset sound_asset, vec2 position, float volume)
 //------------------------------------------------------------------------------
 void world::write_effect(effect_type type, vec2 position, vec2 direction, float strength)
 {
-    _message.write_byte(static_cast<int>(message_type::effect));
-    _message.write_byte(static_cast<int>(type));
+    _message.write_byte(narrow_cast<uint8_t>(message_type::effect));
+    _message.write_byte(narrow_cast<uint8_t>(type));
     _message.write_vector(position);
     _message.write_vector(direction);
     _message.write_float(strength);
@@ -326,7 +326,7 @@ game::object* world::spawn_snapshot(std::size_t spawn_id, object_type type)
 }
 
 //------------------------------------------------------------------------------
-game::tank* world::spawn_player(int player_index)
+game::tank* world::spawn_player(std::size_t player_index)
 {
     assert(_players[player_index] == nullptr);
     _players[player_index] = spawn<game::tank>();
@@ -335,7 +335,7 @@ game::tank* world::spawn_player(int player_index)
 }
 
 //------------------------------------------------------------------------------
-void world::remove_player(int player_index)
+void world::remove_player(std::size_t player_index)
 {
     assert(_players[player_index]);
     remove(_players[player_index]);

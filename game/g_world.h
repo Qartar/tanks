@@ -76,8 +76,8 @@ public:
 
     void remove(object* object);
 
-    game::tank* spawn_player(int player_index);
-    void remove_player(int player_index);
+    game::tank* spawn_player(std::size_t player_index);
+    void remove_player(std::size_t player_index);
 
     void add_sound(sound::asset sound_asset, vec2 position, float volume = 1.0f);
     void add_effect(effect_type type, vec2 position, vec2 direction = vec2(0,0), float strength = 1);
@@ -91,7 +91,7 @@ public:
     int framenum() const { return _framenum; }
     time_value frametime() const { return time_value(_framenum * FRAMETIME); }
 
-    game::tank* player( int index ) { return _players[ index ]; }
+    game::tank* player( std::size_t index ) { return _players[ index ]; }
 
 private:
     //! Active objects in the world

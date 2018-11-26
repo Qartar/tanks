@@ -24,7 +24,7 @@ public:
     static cSoundSource *createSound (char const *szFilename);
     static void         destroySound (cSoundSource *pSound);
 
-    virtual int             getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping) = 0;
+    virtual std::size_t getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping) = 0;
     virtual soundFormat_t   *getFormat () = 0;
     virtual char            *getFilename () = 0;
     virtual float           getLoopPosition (float flPosition) = 0;

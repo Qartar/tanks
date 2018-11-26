@@ -93,7 +93,7 @@ void session::get_packets ()
 }
 
 //------------------------------------------------------------------------------
-void session::broadcast(int len, byte const* data)
+void session::broadcast(std::size_t len, byte const* data)
 {
     for (auto& cl : svs.clients) {
         if (!cl.local && cl.active) {
@@ -105,7 +105,7 @@ void session::broadcast(int len, byte const* data)
 //------------------------------------------------------------------------------
 void session::broadcast(network::message& message)
 {
-    int length = message.bytes_remaining();
+    std::size_t length = message.bytes_remaining();
     byte const* data = message.read(length);
 
     broadcast(length, data);
@@ -156,10 +156,10 @@ void session::read_fail(char const* message_string)
 }
 
 //------------------------------------------------------------------------------
-void session::write_info(network::message& message, int client)
+void session::write_info(network::message& message, std::size_t client)
 {
     message.write_byte( svc_info );
-    message.write_byte( client );
+    message.write_byte( narrow_cast<uint8_t>(client) );
     message.write_byte( svs.clients[client].active );
     message.write_string( svs.clients[client].info.name.data() );
 
@@ -167,7 +167,7 @@ void session::write_info(network::message& message, int client)
     message.write_float( svs.clients[client].info.color.g );
     message.write_float( svs.clients[client].info.color.b );
 
-    message.write_byte( static_cast<int>(svs.clients[client].info.weapon ) );
+    message.write_byte( narrow_cast<uint8_t>(svs.clients[client].info.weapon ) );
 
     //  write extra shit
 
@@ -180,8 +180,8 @@ void session::write_info(network::message& message, int client)
     // also write score
 
     message.write_byte( svc_score );
-    message.write_byte( client );
-    message.write_byte( _score[client] );
+    message.write_byte( narrow_cast<uint8_t>(client) );
+    message.write_byte( narrow_cast<uint8_t>(_score[client]) );
 }
 
 //------------------------------------------------------------------------------
