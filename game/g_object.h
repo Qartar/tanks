@@ -98,6 +98,7 @@ protected:
     object* _owner;
 
     std::size_t _spawn_id;
+    time_value _spawn_time;
 
     physics::rigid_body _rigid_body;
 

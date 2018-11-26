@@ -173,6 +173,7 @@ T* world::spawn(Args&& ...args)
     T* obj = static_cast<T*>(_pending.back().get());
     obj->_world = this;
     obj->_spawn_id = ++_spawn_id;
+    obj->_spawn_time = frametime();
     obj->spawn();
     return obj;
 }
