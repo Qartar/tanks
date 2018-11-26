@@ -46,6 +46,9 @@ protected:
     sound::asset _sound_blaster_impact;
     sound::asset _sound_missile_flight;
 
+    static constexpr time_delta fuse_time = time_delta::from_seconds(5.f);
+    static constexpr time_delta fade_time = time_delta::from_seconds(1.f);
+
 protected:
     void update_homing();
     void update_effects();

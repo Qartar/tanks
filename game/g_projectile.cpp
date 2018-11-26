@@ -39,6 +39,11 @@ projectile::~projectile()
 //------------------------------------------------------------------------------
 void projectile::think()
 {
+    if (_world->frametime() - _spawn_time > fuse_time) {
+        _world->remove(this);
+        return;
+    }
+
     if (_type == weapon_type::missile) {
         update_homing();
     }
@@ -84,13 +89,15 @@ void projectile::update_homing()
 //------------------------------------------------------------------------------
 void projectile::update_effects()
 {
+    float a = min(1.f, (_spawn_time + fuse_time - _world->frametime()) / fade_time);
+
     if (_type == weapon_type::missile) {
         _world->add_trail_effect(
             effect_type::missile_trail,
             get_position(),
             _old_position,
             get_linear_velocity() * -0.5f,
-            4 );
+            4.f * a );
     }
 }
 
@@ -213,21 +220,22 @@ bool projectile::touch(object *other, physics::collision const* collision)
 void projectile::draw(render::system* renderer, time_value time) const
 {
     float lerp = (time - _world->frametime()) / FRAMETIME;
+    float a = min(1.f, (_spawn_time + fuse_time - time) / fade_time);
 
     vec2 p1 = get_position(lerp);
     vec2 p2 = get_position(lerp + 0.4f);
 
     switch (_type) {
         case weapon_type::cannon:
-            renderer->draw_line(p2, p1, color4(1,0.5,0,1), color4(1,0.5,0,0));
+            renderer->draw_line(p2, p1, color4(1,0.5,0,a), color4(1,0.5,0,0));
             break;
 
         case weapon_type::missile:
-            renderer->draw_line(p2, p1, color4(1,1,1,1), color4(0,0,0,0));
+            renderer->draw_line(p2, p1, color4(1,1,1,a), color4(0,0,0,0));
             break;
 
         case weapon_type::blaster:
-            renderer->draw_line(p2, p1, color4(1,0.1f,0,1), color4(1,0.7f,0,0));
+            renderer->draw_line(p2, p1, color4(1,0.1f,0,a), color4(1,0.7f,0,0));
             break;
 
         default:
