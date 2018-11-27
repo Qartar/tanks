@@ -15,6 +15,8 @@ Date    :   04/01/2006
 #include "snd_device.h"
 #include "snd_files.h"
 
+#pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
+
 /*=========================================================
 =========================================================*/
 

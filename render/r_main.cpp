@@ -18,8 +18,8 @@ result system::init()
     set_default_state();
 
     for (int ii = 0; ii < 360 ; ++ii) {
-        _sintbl[ii] = sin(math::deg2rad<float>(ii));
-        _costbl[ii] = cos(math::deg2rad<float>(ii));
+        _sintbl[ii] = std::sin(math::deg2rad(static_cast<float>(ii)));
+        _costbl[ii] = std::cos(math::deg2rad(static_cast<float>(ii)));
     }
 
     return result::success;
@@ -62,7 +62,7 @@ void system::resize()
 //------------------------------------------------------------------------------
 void system::create_default_font()
 {
-    int size = 12 * (float(_window->framebuffer_size().y) / float(DEFAULT_H));
+    int size = static_cast<int>(12.f / float(DEFAULT_H) * float(_window->framebuffer_size().y));
 
     if (!_default_font || !_default_font->compare("Tahoma", size)) {
         _default_font = std::make_unique<render::font>("Tahoma", size);

@@ -76,7 +76,7 @@ result application::init(HINSTANCE hInstance, LPSTR szCmdLine)
     QueryPerformanceFrequency(&_timer_frequency);
     QueryPerformanceCounter(&_timer_base);
 
-    srand(_timer_base.QuadPart);
+    srand(static_cast<unsigned int>(_timer_base.QuadPart));
 
     _config.init();
 
@@ -147,8 +147,9 @@ time_value application::time() const
     LARGE_INTEGER counter;
     QueryPerformanceCounter(&counter);
 
-    LONGLONG ticks = counter.QuadPart - _timer_base.QuadPart;
-    return time_value::from_microseconds(ticks * (1e6 / _timer_frequency.QuadPart));
+    double num = static_cast<double>(counter.QuadPart - _timer_base.QuadPart);
+    double den = 1e-6 * static_cast<double>(_timer_frequency.QuadPart); 
+    return time_value::from_microseconds(static_cast<uint64_t>(num / den));
 }
 
 //------------------------------------------------------------------------------
@@ -179,9 +180,11 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     case WM_RBUTTONUP:
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
-    case WM_MOUSEMOVE:
-        g_Application->mouse_event(wParam, vec2((int16_t)LOWORD(lParam), (int16_t)HIWORD(lParam)));
+    case WM_MOUSEMOVE: {
+        POINT P{(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
+        g_Application->mouse_event(wParam, vec2i(P.x, P.y));
         break;
+    }
 
     case WM_SYSKEYDOWN:
     case WM_KEYDOWN:
@@ -221,10 +224,10 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
 }
 
 //------------------------------------------------------------------------------
-void application::key_event(int param, bool down)
+void application::key_event(LPARAM param, bool down)
 {
     int result;
-    int modified = ( param >> 16 ) & 255;
+    LPARAM modified = ( param >> 16 ) & 255;
     bool is_extended = false;
 
     if ( modified > 127) {
@@ -290,20 +293,20 @@ void application::key_event(int param, bool down)
 }
 
 //------------------------------------------------------------------------------
-void application::mouse_event(int mouse_state, vec2 position)
+void application::mouse_event(WPARAM mouse_state, vec2i position)
 {
     for (int ii = 0; ii < 3; ++ii) {
-        if ((mouse_state & (1<<ii)) && !(_mouse_state & (1<<ii))) {
+        if ((mouse_state & (1LL << ii)) && !(_mouse_state & (1LL << ii))) {
             _game.key_event (K_MOUSE1 + ii, true);
         }
 
-        if (!(mouse_state & (1<<ii)) && (_mouse_state & (1<<ii))) {
+        if (!(mouse_state & (1LL << ii)) && (_mouse_state & (1LL << ii))) {
             _game.key_event (K_MOUSE1 + ii, false);
         }
     }
 
     _mouse_state = mouse_state;
-    _game.cursor_event(position);
+    _game.cursor_event(vec2(position));
 }
 
 //------------------------------------------------------------------------------

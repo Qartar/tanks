@@ -64,23 +64,20 @@ void button::draw_text(render::system* renderer, rect const& rect, std::string c
     vec2 size = renderer->string_size(text.c_str());
 
     if (flags & halign_left) {
-        position.x -= rect.size().x * 0.5f - margin;
+        position.x -= static_cast<int>(rect.size().x * 0.5f - margin);
     } else if (flags & halign_right) {
-        position.x += rect.size().x * 0.5f - size.x - margin;
+        position.x += static_cast<int>(rect.size().x * 0.5f - size.x - margin);
     } else {
-        position.x -= size.x * 0.5f;
+        position.x -= static_cast<int>(size.x * 0.5f);
     }
 
     if (flags & valign_top) {
-        position.y -= rect.size().y * 0.5f - size.y - margin;
+        position.y -= static_cast<int>(rect.size().y * 0.5f - size.y - margin);
     } else if (flags & valign_bottom) {
-        position.y += rect.size().y * 0.5f - margin;
+        position.y += static_cast<int>(rect.size().y * 0.5f - margin);
     } else {
-        position.y += size.y * 0.5f;
+        position.y += static_cast<int>(size.y * 0.5f);
     }
-
-    position.x = std::floor(position.x + 0.5f);
-    position.y = std::floor(position.y + 0.5f);
 
     renderer->draw_string(text.c_str(), vec2(position), color);
 }
@@ -168,7 +165,7 @@ void weapon_button::draw(render::system* renderer) const
 ////////////////////////////////////////////////////////////////////////////////
 client_button::client_button(char const* text, vec2i position, vec2i size, color3* color_ptr)
     : button(text, position, size)
-    , _text_rectangle(rect::from_center(position + vec2i(0, size.y / 2.0f - 12.0f), vec2i(size.x - 16.0f, 14.0f)))
+    , _text_rectangle(rect::from_center(position + vec2i(0, size.y / 2 - 12), vec2i(size.x - 16, 14)))
     , _color_ptr(color_ptr)
     , _color_index(0)
     , _text_down(false)
@@ -252,7 +249,7 @@ void client_button::draw(render::system* renderer) const
 ////////////////////////////////////////////////////////////////////////////////
 server_button::server_button(vec2i position, vec2i size, char const* name_ptr, time_delta const* ping_ptr, std::function<void()>&& op_click)
     : button("", position, size, std::move(op_click))
-    , _join_rectangle(rect::from_center(position + vec2i(size.x * 0.5f - 18.0f, 0), vec2i(32, size.y - 4.0f)))
+    , _join_rectangle(rect::from_center(position + vec2i(size.x / 2 - 18, 0), vec2i(32, size.y - 4)))
     , _text_rectangle(rect::from_center(position - vec2i(17, 0), size - vec2i(38, 4)))
     , _name_ptr(name_ptr)
     , _ping_ptr(ping_ptr)
@@ -308,7 +305,7 @@ void server_button::draw(render::system* renderer) const
 ////////////////////////////////////////////////////////////////////////////////
 host_button::host_button(vec2i position, vec2i size, std::function<void()>&& op_click)
     : button("Host", position, size, std::move(op_click))
-    , _create_rectangle(rect::from_center(position + vec2i(size.x * 0.5f - 18.0f, 0), vec2i(32, size.y - 4.0f)))
+    , _create_rectangle(rect::from_center(position + vec2i(size.x / 2 - 18, 0), vec2i(32, size.y - 4)))
     , _text_rectangle(rect::from_center(position - vec2i(17, 0), size - vec2i(38, 4)))
     , _create_down(false)
     , _text_down(false)

@@ -18,10 +18,10 @@ public:
     constexpr static int prefix = -1;
 
 public:
-    channel(int netport = 0);
+    channel(word netport = 0);
 
     //! set up channel with the remote address over the given network socket
-    void setup(network::socket* socket, network::address remote, int netport = 0);
+    void setup(network::socket* socket, network::address remote, word netport = 0);
 
     //! transmit accumulated message to remote address
     bool transmit();

@@ -25,8 +25,6 @@ using word = std::uint16_t;
 #include "cm_color.h"
 #include "cm_error.h"
 
-#pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
-
 #define MAX_STRING      1024
 #define LONG_STRING     256
 #define SHORT_STRING    32

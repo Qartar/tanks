@@ -172,10 +172,10 @@ void session::write_info(network::message& message, std::size_t client)
     //  write extra shit
 
     message.write_byte( _clients[client].upgrades );
-    message.write_byte( _clients[client].armor_mod * 10 );
-    message.write_byte( _clients[client].damage_mod * 10 );
-    message.write_byte( _clients[client].refire_mod * 10 );
-    message.write_byte( _clients[client].speed_mod * 10 );
+    message.write_byte( narrow_cast<uint8_t>(_clients[client].armor_mod * 10) );
+    message.write_byte( narrow_cast<uint8_t>(_clients[client].damage_mod * 10) );
+    message.write_byte( narrow_cast<uint8_t>(_clients[client].refire_mod * 10) );
+    message.write_byte( narrow_cast<uint8_t>(_clients[client].speed_mod * 10) );
 
     // also write score
 

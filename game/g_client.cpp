@@ -154,7 +154,7 @@ void session::connect_to_server (int index)
     stop_client( );
     stop_server( );
 
-    for (int ii = 0; ii < 16; ++ii) {
+    for (word ii = 0; ii < 16; ++ii) {
         if (cls.socket.open(network::socket_type::ipv6, PORT_CLIENT+ii)) {
             break;
         }
@@ -177,7 +177,7 @@ void session::connect_to_server (char const* address)
     stop_client( );
     stop_server( );
 
-    for (int ii = 0; ii < 16; ++ii) {
+    for (word ii = 0; ii < 16; ++ii) {
         if (cls.socket.open(network::socket_type::ipv6, PORT_CLIENT+ii)) {
             break;
         }
@@ -268,7 +268,7 @@ void session::info_ask ()
     stop_client( );
     stop_server( );
 
-    for (int ii = 0; ii < 16; ++ii) {
+    for (word ii = 0; ii < 16; ++ii) {
         if (cls.socket.open(network::socket_type::ipv6, PORT_CLIENT+ii)) {
             break;
         }

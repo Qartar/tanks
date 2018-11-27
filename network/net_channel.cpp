@@ -10,7 +10,7 @@
 namespace network {
 
 //------------------------------------------------------------------------------
-channel::channel(int netport)
+channel::channel(word netport)
     : _address{}
     , _last_sent{}
     , _last_received{}
@@ -28,7 +28,7 @@ channel::channel(int netport)
 }
 
 //------------------------------------------------------------------------------
-void channel::setup(network::socket* socket, network::address remote, int netport)
+void channel::setup(network::socket* socket, network::address remote, word netport)
 {
     if (netport) {
         _netport = netport;

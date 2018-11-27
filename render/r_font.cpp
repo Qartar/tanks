@@ -122,10 +122,10 @@ void font::draw(char const* string, vec2 position, color4 color) const
 
     int xoffs = 0;
 
-    int r = color.r * 255;
-    int g = color.g * 255;
-    int b = color.b * 255;
-    int a = color.a * 255;
+    int r = static_cast<int>(color.r * 255.f);
+    int g = static_cast<int>(color.g * 255.f);
+    int b = static_cast<int>(color.b * 255.f);
+    int a = static_cast<int>(color.a * 255.f);
 
     char const* cursor = string;
 
@@ -138,9 +138,9 @@ void font::draw(char const* string, vec2 position, color4 color) const
         if (_strnicmp(cursor, "\\c", 2) == 0) {
             cursor += 2;    // skip past marker
             if (_strnicmp(cursor, "x", 1) == 0) {
-                r = color.r * 255;
-                g = color.g * 255;
-                b = color.b * 255;
+                r = static_cast<int>(color.r * 255.f);
+                g = static_cast<int>(color.g * 255.f);
+                b = static_cast<int>(color.b * 255.f);
                 cursor++;
             } else {
                 sscanf(cursor, "%02x%02x%02x", &r, &g, &b);
@@ -148,9 +148,12 @@ void font::draw(char const* string, vec2 position, color4 color) const
             }
         }
 
-        glColor4ub(r, g, b, a);
+        glColor4ub(narrow_cast<uint8_t>(r),
+                   narrow_cast<uint8_t>(g),
+                   narrow_cast<uint8_t>(b),
+                   narrow_cast<uint8_t>(a));
         glRasterPos2f(position.x + xoffs, position.y);
-        glCallLists(next - cursor, GL_UNSIGNED_BYTE, cursor);
+        glCallLists(static_cast<GLsizei>(next - cursor), GL_UNSIGNED_BYTE, cursor);
 
         while (cursor < next) {
             xoffs += _char_width[*cursor++];
@@ -161,7 +164,7 @@ void font::draw(char const* string, vec2 position, color4 color) const
 //------------------------------------------------------------------------------
 vec2 font::size(char const* string) const
 {
-    vec2 size(0, _size);
+    vec2i size(0, _size);
     char const* cursor = string;
 
     while (*cursor) {
@@ -184,7 +187,7 @@ vec2 font::size(char const* string) const
         }
     }
 
-    return size;
+    return vec2(size);
 }
 
 } // namespace render

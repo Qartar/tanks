@@ -121,9 +121,9 @@ result session::init (char const *cmdline)
     }
 
     for (int i=0 ; i<256 ; i++)
-        _shift_keys[i] = i;
+        _shift_keys[i] = narrow_cast<unsigned char>(i);
     for (int i='a' ; i<='z' ; i++)
-        _shift_keys[i] = i - 'a' + 'A';
+        _shift_keys[i] = narrow_cast<char>(i - 'a' + 'A');
     _shift_keys['1'] = '!';
     _shift_keys['2'] = '@';
     _shift_keys['3'] = '#';
@@ -328,7 +328,7 @@ void session::key_event(int key, bool down)
                 return;
             } else if (len < 13) {
                 cls.info.name[len+1] = 0;
-                cls.info.name[len] = key;
+                cls.info.name[len] = narrow_cast<char>(key);
             }
 
             return;
@@ -358,7 +358,7 @@ void session::key_event(int key, bool down)
                 return;
             } else if (len < countof(svs.name)) {
                 svs.name[len+1] = 0;
-                svs.name[len] = key;
+                svs.name[len] = narrow_cast<char>(key);
             }
 
             return;
@@ -499,7 +499,7 @@ void session::key_event(int key, bool down)
             else if ( strlen(_clientsay) < LONG_STRING )
             {
                 _clientsay[strlen(_clientsay)+1] = 0;
-                _clientsay[strlen(_clientsay)] = key;
+                _clientsay[strlen(_clientsay)] = narrow_cast<char>(key);
             }
 
             return;
@@ -651,8 +651,8 @@ void session::key_event(int key, bool down)
 void session::cursor_event(vec2 position)
 {
     vec2i size = g_Application->window()->size();
-    _cursor.x = position.x * 640 / size.x;
-    _cursor.y = position.y * 480 / size.y;
+    _cursor.x = static_cast<int>(position.x * 640 / size.x);
+    _cursor.y = static_cast<int>(position.y * 480 / size.y);
 
     if (_menu_active) {
         _menu.cursor_event(_cursor);
@@ -697,14 +697,14 @@ void session::add_score(std::size_t player_index, int score)
 //------------------------------------------------------------------------------
 void session::draw_score ()
 {
-    int width = _renderer->view().size.x;
-    int height = _renderer->view().size.y;
+    int width = static_cast<int>(_renderer->view().size.x);
+    int height = static_cast<int>(_renderer->view().size.y);
 
     // draw console/chat box
 
     if (_client_say) {
-        _renderer->draw_string("say:", vec2(width/4,height-16), menu::colors[7]);
-        _renderer->draw_string(_clientsay, vec2(width/4+32,height-16), menu::colors[7]);
+        _renderer->draw_string("say:", vec2(vec2i(width/4,height-16)), menu::colors[7]);
+        _renderer->draw_string(_clientsay, vec2(vec2i(width/4+32,height-16)), menu::colors[7]);
     }
 
     // don't draw score if menu is active
@@ -734,7 +734,7 @@ void session::draw_score ()
     if (svs.active || cls.active) {
         for (auto const& cl : svs.clients) {
             if (cl.active) {
-                int cl_width = _renderer->string_size(cl.info.name.data()).x;
+                int cl_width = static_cast<int>(_renderer->string_size(cl.info.name.data()).x);
                 panel_width = std::max<int>(panel_width, cl_width + 40);
                 active_count++;
             }
@@ -746,13 +746,13 @@ void session::draw_score ()
     // draw the score panel
 
     _renderer->draw_box(
-        vec2(panel_width, active_count*12 + 8),
-        vec2(width - panel_width/2 - 16, active_count*6 + 20),
+        vec2(vec2i(panel_width, active_count*12 + 8)),
+        vec2(vec2i(width - panel_width/2 - 16, active_count*6 + 20)),
         menu::colors[4]);
 
     _renderer->draw_box(
-        vec2(panel_width - 2, active_count*12 + 8 - 2),
-        vec2(width - panel_width/2 - 16, active_count*6 + 20),
+        vec2(vec2i(panel_width - 2, active_count*12 + 8 - 2)),
+        vec2(vec2i(width - panel_width/2 - 16, active_count*6 + 20)),
         menu::colors[5]);
 
     // sort players by score
@@ -771,11 +771,11 @@ void session::draw_score ()
         }
 
         std::string score = va("%d", _score[sort[ii]]);
-        int score_width = _renderer->string_size(score.c_str()).x;
+        int score_width = static_cast<int>(_renderer->string_size(score.c_str()).x);
 
-        _renderer->draw_box(vec2(7,7), vec2(width - panel_width - 8, n*12 + 26), color4(svs.clients[sort[ii]].info.color));
-        _renderer->draw_string(svs.clients[sort[ii]].info.name.data(), vec2(width - panel_width - 2, n*12 + 30), menu::colors[7]);
-        _renderer->draw_string(score.c_str(), vec2(width - score_width - 20, n*12 + 30), menu::colors[7]);
+        _renderer->draw_box(vec2(7,7), vec2(vec2i(width - panel_width - 8, n*12 + 26)), color4(svs.clients[sort[ii]].info.color));
+        _renderer->draw_string(svs.clients[sort[ii]].info.name.data(), vec2(vec2i(width - panel_width - 2, n*12 + 30)), menu::colors[7]);
+        _renderer->draw_string(score.c_str(), vec2(vec2i(width - score_width - 20, n*12 + 30)), menu::colors[7]);
 
         n++;
     }
@@ -783,8 +783,8 @@ void session::draw_score ()
     // draw restart timer
 
     if (_restart_time > _frametime) {
-        int nTime = (_restart_time - _frametime).to_microseconds() / 1000;
-        _renderer->draw_string(va("Restart in... %i", nTime), vec2(width/2-48,16+13), menu::colors[7]);
+        int nTime = static_cast<int>((_restart_time - _frametime).to_microseconds() / 1000);
+        _renderer->draw_string(va("Restart in... %i", nTime), vec2(vec2i(width/2-48,16+13)), menu::colors[7]);
     }
 }
 
@@ -805,7 +805,7 @@ void session::draw_netgraph()
     for (size_t ii = 1; ii < _net_bytes.size() && ii < _framenum; ++ii) {
         std::size_t value = _net_bytes[(_framenum - ii) % _net_bytes.size()];
         sum += value;
-        max = std::max<float>(max, value);
+        max = std::max(max, static_cast<float>(value));
     }
 
     float avg = sum / (std::min<std::size_t>(_framenum, _net_bytes.size()) - 1);
@@ -1012,14 +1012,14 @@ void session::write_message (char const* message, bool broadcast)
 //------------------------------------------------------------------------------
 void session::draw_messages ()
 {
-    int         ypos;
+    float       ypos;
     float       alpha;
 
     time_value time = g_Application->time();
     constexpr time_delta view_time = time_delta::from_seconds(15);
     constexpr time_delta fade_time = time_delta::from_seconds(3);
 
-    ypos = DEFAULT_H - 36;
+    ypos = DEFAULT_H - 36.f;
 
     for (int ii = _num_messages-1; ii != _num_messages; ii = (ii <= 0 ? MAX_MESSAGES-1 : ii-1)) {
         if (ii < 0) {
@@ -1029,9 +1029,9 @@ void session::draw_messages ()
         if (_messages[ii].time + view_time > time) {
             alpha = (_messages[ii].time + (view_time - fade_time) > time ? 1.0f : (_messages[ii].time + view_time - time) / fade_time);
 
-            _renderer->draw_string(_messages[ii].string, vec2(8,ypos), color4(1,1,1,alpha));
+            _renderer->draw_string(_messages[ii].string, vec2(8.f,ypos), color4(1,1,1,alpha));
 
-            ypos -= 12;
+            ypos -= 12.f;
         }
     }
 }

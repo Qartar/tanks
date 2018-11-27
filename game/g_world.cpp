@@ -57,11 +57,11 @@ void world::shutdown()
 void world::reset()
 {
     _mins = vec2(0,0);
-    _maxs = vec2(_arena_width, _arena_height);
+    _maxs = vec2(vec2i(_arena_width, _arena_height));
     _framenum = 0;
 
-    _border_shapes[0] = physics::box_shape(vec2(_border_thickness + _arena_width, _border_thickness));
-    _border_shapes[1] = physics::box_shape(vec2(_border_thickness, _border_thickness + _arena_height));
+    _border_shapes[0] = physics::box_shape(vec2(vec2i(_border_thickness + _arena_width, _border_thickness)));
+    _border_shapes[1] = physics::box_shape(vec2(vec2i(_border_thickness, _border_thickness + _arena_height)));
 
     _objects.clear();
     _pending.clear();
@@ -75,8 +75,8 @@ void world::reset()
 
     // Initialize border objects
     {
-        vec2 mins = vec2(-_border_thickness / 2, -_border_thickness / 2);
-        vec2 maxs = vec2(_arena_width, _arena_height) - mins;
+        vec2 mins = vec2(vec2i(-_border_thickness / 2, -_border_thickness / 2));
+        vec2 maxs = vec2(vec2i(_arena_width, _arena_height)) - mins;
 
         vec2 positions[] = {
             {(mins.x+maxs.x)/2,mins.y}, // bottom
@@ -378,7 +378,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
     switch (type) {
         case effect_type::smoke: {
-            int count = strength;
+            int count = static_cast<int>(strength);
             render::particle* p;
 
             for (int ii = 0; ii < count; ++ii) {
@@ -388,12 +388,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 r = frand()*math::pi<float>*2.0f;
                 d = frand();
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
-                p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
+                p->velocity = direction * (0.25f + frand()*0.75f) + vec2(crand()*24,crand()*24);
 
                 p->size = 2.0f + frand()*4.0f;
-                p->size_velocity = 2.0 + frand()*2.0f;
+                p->size_velocity = 2.0f + frand()*2.0f;
 
-                p->color = color4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
                 p->color_velocity = color4(0,0,0,-p->color.a / (1+frand()*1.0f));
 
                 p->drag = 2.5f + frand() * 1.5f;
@@ -416,7 +416,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1,0.5+frand()*0.5,0,strength*(0.5f+frand()));
+                p->color = color4(1,0.5f+frand()*0.5f,0,strength*(0.5f+frand()));
                 p->color_velocity = color4(0,-1.0f,0,-2.0f - frand());
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
@@ -442,7 +442,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->size = 4.0f + frand()*8.0f;
                 p->size_velocity = 2.0;
 
-                p->color = color4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
                 p->color_velocity = color4(0,0,0,-p->color.a / (2+frand()*1.5f));
 
                 p->drag = 0.5f + frand() * 2.0f;
@@ -466,7 +466,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
             p->color = color4(1.0f,1.0f,0.5f,0.5f);
             p->color_velocity = -p->color * color4(0,1,3,3);
-            p->size = 12.0 * scale;
+            p->size = 12.0f * scale;
             p->size_velocity = 192.0f * scale;
             p->flags = render::particle::invert;
 
@@ -488,9 +488,9 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity += direction * d * 0.5f;
 
                 p->size = (4.0f + frand()*8.0f) * scale;
-                p->size_velocity = 2.0 * strength;
+                p->size_velocity = 2.0f * strength;
 
-                p->color = color4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
                 p->color_velocity = color4(0,0,0,-p->color.a / (2+frand()*1.5f));
 
                 p->drag = (3.0f + frand() * 1.0f) * scale;
@@ -514,8 +514,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity += direction * d * 0.5f;
 
                 p->color = color4(1.0f,frand(),0.0f,0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a/(0.5+frand()*frand()*2.5f));
-                p->size = (8.0 + frand()*16.0f) * scale;
+                p->color_velocity = color4(0,0,0,-p->color.a/(0.5f+frand()*frand()*2.5f));
+                p->size = (8.0f + frand()*16.0f) * scale;
                 p->size_velocity = 1.0f * strength;
 
                 p->drag = (2.0f + frand() * 2.0f) * scale;
@@ -538,7 +538,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1,0.5+frand()*0.5,0,1);
+                p->color = color4(1,0.5f+frand()*0.5f,0,1);
                 p->color_velocity = color4(0,0,0,-1.5f-frand());
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
@@ -584,7 +584,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
                 p->color = color4(1.0f,0.5f*frand(),0.0f,0.1f);
                 p->color_velocity = color4(0,0,0,-p->color.a/(0.25f+frand()*frand()));
-                p->size = 2.0 + frand()*4.0f;
+                p->size = 2.0f + frand()*4.0f;
                 p->size_velocity = 0.5f;
                 p->flags = render::particle::invert;
 
@@ -630,7 +630,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
                 p->acceleration = vec2(cos(r), sin(r))*d;
 
-                p->color = color4(1,frand()*0.5,0,1);
+                p->color = color4(1,frand()*0.5f,0,1);
                 p->color_velocity = color4(0,0,0,-1.5f-2.0f*frand());
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
@@ -668,7 +668,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
             p->color = color4(1.0f,0.25f,0.0f,0.5f);
             p->color_velocity = -p->color * color4(0,1,3,3);
-            p->size = 12.0 * scale;
+            p->size = 12.0f * scale;
             p->size_velocity = 192.0f * scale;
             p->flags = render::particle::invert;
 
@@ -690,9 +690,9 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity += direction * d * 0.5f;
 
                 p->size = (4.0f + frand()*8.0f) * scale;
-                p->size_velocity = 2.0 * strength;
+                p->size_velocity = 2.0f * strength;
 
-                p->color = color4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
                 p->color_velocity = color4(0,0,0,-p->color.a / (2+frand()*1.5f));
 
                 p->drag = (3.0f + frand() * 1.0f) * scale;
@@ -716,8 +716,8 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity += direction * d * 0.5f;
 
                 p->color = color4(1.0f,0.5f*frand(),0.0f,0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a/(0.5+frand()*frand()*1.5f));
-                p->size = (8.0 + frand()*16.0f) * scale;
+                p->color_velocity = color4(0,0,0,-p->color.a/(0.5f+frand()*frand()*1.5f));
+                p->size = (8.0f + frand()*16.0f) * scale;
                 p->size_velocity = 1.0f * strength;
 
                 p->drag = (2.0f + frand() * 2.0f) * scale;
@@ -740,7 +740,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1,frand()*0.5,0,1);
+                p->color = color4(1,frand()*0.5f,0,1);
                 p->color_velocity = color4(0,0,0,-1.5f-frand());
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
@@ -764,7 +764,7 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
 
     switch (type) {
         case effect_type::missile_trail: {
-            int count = strength;
+            int count = static_cast<int>(strength);
             render::particle* p;
 
             // smoke
@@ -775,13 +775,13 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
 
                 r = frand()*math::pi<float>*2.0f;
                 d = frand();
-                p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * ii / count;
-                p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
+                p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * float(ii) / float(count);
+                p->velocity = direction * (0.25f + frand()*0.75f) + vec2(crand()*24,crand()*24);
 
                 p->size = 2.0f + frand()*4.0f;
-                p->size_velocity = 2.0 + frand()*2.0f;
+                p->size_velocity = 2.0f + frand()*2.0f;
 
-                p->color = color4(0.5,0.5,0.5,0.1+frand()*0.1f);
+                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
                 p->color_velocity = color4(0,0,0,-p->color.a / (1+frand()*1.0f));
 
                 p->drag = 2.5f + frand() * 1.5f;
@@ -796,14 +796,14 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
 
                 r = frand()*math::pi<float>*2.0f;
                 d = frand();
-                p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * ii / count;
-                p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
+                p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * float(ii) / float(count);
+                p->velocity = direction * (0.25f + frand()*0.75f) + vec2(crand()*24,crand()*24);
 
                 p->size = 4.0f + frand()*2.0f;
-                p->size_velocity = 4.0 + frand()*4.0f;
+                p->size_velocity = 4.0f + frand()*4.0f;
 
                 p->color = color4(1.0f,0.5f+0.5f*frand(),0.0f,0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a/(0.15+0.15f*frand()));
+                p->color_velocity = color4(0,0,0,-p->color.a/(0.15f+0.15f*frand()));
 
                 p->drag = (1.5f + frand() * 1.0f);
                 p->time += FRAMETIME * ii / count;
@@ -818,14 +818,14 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
                 r = frand()*math::pi<float>*2.0f;
                 d = frand();
 
-                p->position = position + vec2(cos(r),sin(r))*d + lerp * ii / count;
+                p->position = position + vec2(cos(r),sin(r))*d + lerp * float(ii) / float(count);
 
                 r = frand()*math::pi<float>*2.0f;
                 d = frand() * 64.0f;
 
-                p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*48,crand()*48);
+                p->velocity = direction * (0.25f + frand()*0.75f) + vec2(crand()*48,crand()*48);
 
-                p->color = color4(1,0.5+frand()*0.5,0,1);
+                p->color = color4(1,0.5f+frand()*0.5f,0,1);
                 p->color_velocity = color4(0,0,0,-3.0f-15.0f*(1.0f-square(frand())));
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;

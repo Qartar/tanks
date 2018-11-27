@@ -21,8 +21,8 @@ public:
     static constexpr constant<INT64_MIN> min{};
     static constexpr constant<INT64_MAX> max{};
 
-    static constexpr T from_seconds(float seconds) {
-        return T(static_cast<double>(seconds) * 1e6);
+    static constexpr T from_seconds(double seconds) {
+        return T(static_cast<int64_t>(seconds * 1e6));
     }
 
     static constexpr T from_milliseconds(int64_t milliseconds) {
@@ -45,13 +45,13 @@ public:
         return _value;
     }
 
-    T& operator*=(float s) {
-        _value *= static_cast<double>(s);
+    T& operator*=(double s) {
+        _value *= s;
         return *this;
     }
 
-    T& operator/=(float s) {
-        _value /= static_cast<double>(s);
+    T& operator/=(double s) {
+        _value /= s;
         return *this;
     }
 
@@ -89,27 +89,29 @@ protected:
 };
 
 //------------------------------------------------------------------------------
-template<typename T> constexpr T operator*(time_base<T> lhs, float rhs)
+template<typename T> constexpr T operator*(time_base<T> lhs, double rhs)
 {
-    return T::from_microseconds(lhs.to_microseconds() * static_cast<double>(rhs));
+    return T::from_microseconds(static_cast<int64_t>(lhs.to_microseconds() * rhs));
 }
 
 //------------------------------------------------------------------------------
-template<typename T> constexpr T operator*(float lhs, time_base<T> rhs)
+template<typename T> constexpr T operator*(double lhs, time_base<T> rhs)
 {
-    return T::from_microseconds(static_cast<double>(lhs) * rhs.to_microseconds());
+    return T::from_microseconds(static_cast<int64_t>(lhs * rhs.to_microseconds()));
 }
 
 //------------------------------------------------------------------------------
-template<typename T> constexpr T operator/(time_base<T> lhs, float rhs)
+template<typename T> constexpr T operator/(time_base<T> lhs, double rhs)
 {
-    return T::from_microseconds(lhs.to_microseconds() / static_cast<double>(rhs));
+    return T::from_microseconds(static_cast<int64_t>(lhs.to_microseconds() / rhs));
 }
 
 //------------------------------------------------------------------------------
 template<typename T> constexpr float operator/(time_base<T> lhs, time_base<T> rhs)
 {
-    return static_cast<double>(lhs.to_microseconds()) / static_cast<double>(rhs.to_microseconds());
+    double num = static_cast<double>(lhs.to_microseconds());
+    double den = static_cast<double>(rhs.to_microseconds());
+    return static_cast<float>(num / den);
 }
 
 //------------------------------------------------------------------------------
@@ -118,8 +120,8 @@ class time_delta : public time_base<time_delta>
 public:
     time_delta() = default;
 
-    static constexpr time_delta from_hertz(float hertz) {
-        return time_delta(1.f / hertz);
+    static constexpr time_delta from_hertz(double hertz) {
+        return time_delta::from_seconds(1.0 / hertz);
     }
 
     time_delta& operator+=(time_delta delta) {
@@ -206,7 +208,9 @@ constexpr time_delta operator-(time_value lhs, time_value rhs)
 //------------------------------------------------------------------------------
 constexpr float operator/(time_value lhs, time_delta rhs)
 {
-    return static_cast<double>(lhs.to_microseconds()) / static_cast<double>(rhs.to_microseconds());
+    double num = static_cast<double>(lhs.to_microseconds());
+    double den = static_cast<double>(rhs.to_microseconds());
+    return static_cast<float>(num / den);
 }
 
 //------------------------------------------------------------------------------

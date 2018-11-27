@@ -214,7 +214,7 @@ void tank::think()
 
     if (_damage >= 1.0f)
     {
-        vec2 vVel = vec2(speed * 0.98 * (1-FRAMETIME.to_seconds()),0);
+        vec2 vVel = vec2(speed * 0.98f * (1-FRAMETIME.to_seconds()),0);
 
         set_linear_velocity(rotate(vVel,get_rotation()));
         set_angular_velocity(get_angular_velocity() * 0.9f);
@@ -230,7 +230,7 @@ void tank::think()
     }
     else
     {
-        float new_speed = _track_speed * 0.9 * (1 - FRAMETIME.to_seconds()) + _usercmd.move[1] * 192 * _client->speed_mod * FRAMETIME.to_seconds();
+        float new_speed = _track_speed * 0.9f * (1 - FRAMETIME.to_seconds()) + _usercmd.move[1] * 192 * _client->speed_mod * FRAMETIME.to_seconds();
         new_speed = clamp(new_speed, -32 * _client->speed_mod, 48 * _client->speed_mod);
 
         set_linear_velocity(get_linear_velocity() + forward * (new_speed - _track_speed));

@@ -128,7 +128,7 @@ bool variable::get_boolean() const
 //------------------------------------------------------------------------------
 float variable::get_scalar() const
 {
-    return atof(_base->_value.c_str());
+    return static_cast<float>(std::atof(_base->_value.c_str()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

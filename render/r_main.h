@@ -35,7 +35,7 @@ private:
     HFONT _handle;
     unsigned int _list_base;
 
-    byte _char_width[kNumChars];
+    short _char_width[kNumChars];
 
     static HFONT _system_font;
     static HFONT _active_font;

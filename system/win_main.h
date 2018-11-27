@@ -32,7 +32,7 @@ protected:
     HINSTANCE _hinstance;
     int _exit_code;
 
-    int _mouse_state;
+    WPARAM _mouse_state;
 
     char const* _init_string;
 
@@ -47,8 +47,8 @@ protected:
     result init(HINSTANCE hInstance, LPSTR szCmdLine);
     int shutdown();
 
-    void key_event(int param, bool down);
-    void mouse_event(int mouse_state, vec2 position);
+    void key_event(LPARAM param, bool down);
+    void mouse_event(WPARAM mouse_state, vec2i position);
 
     void generate_gamepad_events();
 

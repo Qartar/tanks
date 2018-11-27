@@ -219,7 +219,7 @@ void session::client_connect(network::address const& remote, char const* message
     } else {
         cl.active = true;
         cl.local = false;
-        cl.netchan.setup(&svs.socket, remote, netport);
+        cl.netchan.setup(&svs.socket, remote, narrow_cast<word>(netport));
 
         svs.socket.printf(cl.netchan.address(), va("connect %i %lld", client, _worldtime.to_microseconds()));
 
