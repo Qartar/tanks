@@ -385,7 +385,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand();
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
                 p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
@@ -410,7 +410,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
                 p->position = position + vec2(crand()*2,crand()*2);
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*128;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
@@ -428,12 +428,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*24;
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*24;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
@@ -476,12 +476,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*12 * scale;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = sqrt(frand()) * 128.0f * strength;
 
                 p->velocity = vec2(cos(r),sin(r)) * d;
@@ -502,12 +502,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*8 * scale;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = sqrt(frand()) * 128.0f * strength;
 
                 p->velocity = vec2(cos(r),sin(r))*d;
@@ -527,12 +527,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*2 * scale;
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*128 * scale;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
@@ -571,12 +571,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*4;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = sqrt(frand()) * 32.0f;
 
                 p->velocity = vec2(cos(r),sin(r))*d;
@@ -614,18 +614,18 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*0.5f;
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*64.0f;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * frand() * 96.0f;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = 64.0f + frand()*64.0f;
 
                 p->acceleration = vec2(cos(r), sin(r))*d;
@@ -678,12 +678,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*12 * scale;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = sqrt(frand()) * 128.0f * strength;
 
                 p->velocity = vec2(cos(r),sin(r)) * d;
@@ -704,12 +704,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*16 * scale;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = sqrt(frand()) * 128.0f * strength;
 
                 p->velocity = vec2(cos(r),sin(r))*d;
@@ -729,12 +729,12 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*2 * scale;
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand()*128 * scale;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
@@ -773,7 +773,7 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand();
                 p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * ii / count;
                 p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
@@ -794,7 +794,7 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand();
                 p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * ii / count;
                 p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*24,crand()*24);
@@ -815,12 +815,12 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand();
 
                 p->position = position + vec2(cos(r),sin(r))*d + lerp * ii / count;
 
-                r = frand()*M_PI*2.0f;
+                r = frand()*math::pi<float>*2.0f;
                 d = frand() * 64.0f;
 
                 p->velocity = direction * (0.25 + frand()*0.75) + vec2(crand()*48,crand()*48);

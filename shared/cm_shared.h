@@ -32,25 +32,19 @@ using word = std::uint16_t;
 #define SHORT_STRING    32
 
 //------------------------------------------------------------------------------
-#ifndef M_LN2
-#define M_LN2   0.693147180559945309417
-#endif
+namespace math {
 
-#ifndef M_PI
-#define M_PI    3.14159265358979323846
-#endif
+template<typename T> constexpr T ln2 = T(0.693147180559945309417);
 
-#ifndef M_SQRT2
-#define M_SQRT2    1.41421356237309504880
-#endif
+template<typename T> constexpr T pi = T(3.14159265358979323846);
 
-#ifndef M_SQRT1_2
-#define M_SQRT1_2  0.707106781186547524401
-#endif
+template<typename T> constexpr T sqrt2 = T(1.41421356237309504880);
 
-//------------------------------------------------------------------------------
-template<typename T> constexpr T deg2rad(T value) { return value * T(M_PI / 180.0); }
-template<typename T> constexpr T rad2deg(T value) { return value * T(180.0 / M_PI); }
+template<typename T> constexpr T deg2rad(T value) { return value * pi<T> / T(180.0); }
+
+template<typename T> constexpr T rad2deg(T value) { return value * T(180.0) / pi<T>; }
+
+} // namespace math
 
 __forceinline float frand() { return ((float)((rand()&32767)*(1.0f/32767.0f))); }
 __forceinline float crand() { return ((float)((rand()&32767)*(2.0f/32767.0f)-1.0f)); }

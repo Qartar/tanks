@@ -52,7 +52,7 @@ void projectile::update_homing()
 {
     vec2 direction = get_linear_velocity();
     float speed = direction.normalize_length();
-    float bestValue = float(M_SQRT1_2);
+    float bestValue = .5f * math::sqrt2<float>;
     game::object* bestTarget = nullptr;
 
     for (auto& obj : _world->objects()) {
@@ -153,9 +153,9 @@ bool projectile::touch(object *other, physics::contact const* contact)
         if (_type == weapon_type::cannon) {
             float surface_angle = impact_normal.dot(-direction);
             damage = 1.2f * damage * surface_angle;
-            if (impact_angle > M_SQRT1_2) {
+            if (impact_angle > .5f * math::sqrt2<float>) {
                 other_tank->_damage += damage * DAMAGE_FRONT;
-            } else if (impact_angle > -M_SQRT1_2) {
+            } else if (impact_angle > -.5f * math::sqrt2<float>) {
                 other_tank->_damage += damage * DAMAGE_SIDE;
             } else {
                 other_tank->_damage += damage * DAMAGE_REAR;
@@ -163,9 +163,9 @@ bool projectile::touch(object *other, physics::contact const* contact)
         } else if (_type == weapon_type::missile) {
             other_tank->_damage += damage * DAMAGE_SIDE;
         } else if (_type == weapon_type::blaster) {
-            if (impact_angle > M_SQRT1_2) {
+            if (impact_angle > .5f * math::sqrt2<float>) {
                 other_tank->_damage += damage * DAMAGE_FRONT / 1.25f;
-            } else if (impact_angle > -M_SQRT1_2) {
+            } else if (impact_angle > -.5f * math::sqrt2<float>) {
                 other_tank->_damage += damage * DAMAGE_SIDE * 1.25f;
             } else {
                 other_tank->_damage += damage * DAMAGE_REAR * 1.5f;

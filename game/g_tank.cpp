@@ -151,9 +151,9 @@ void tank::collide(tank* other, physics::contact const* contact)
     vec2 forward = rotate(vec2(1,0), other->get_rotation());
     float impact_angle = direction.dot(forward);
 
-    if (impact_angle > M_SQRT1_2) {
+    if (impact_angle > .5f * math::sqrt2<float>) {
         base_damage *= DAMAGE_FRONT;
-    } else if (impact_angle > -M_SQRT1_2) {
+    } else if (impact_angle > -.5f * math::sqrt2<float>) {
         base_damage *= DAMAGE_SIDE;
     } else {
         base_damage *= DAMAGE_REAR;
@@ -181,7 +181,7 @@ void tank::respawn()
     _dead_time = time_value::zero;
 
     set_position(spawn_pos, true);
-    set_rotation(frand()*2.0f*M_PI, true);
+    set_rotation(frand()*2.f*math::pi<float>, true);
     set_turret_rotation(get_rotation(), true);
 
     set_linear_velocity(vec2_zero);
@@ -236,8 +236,8 @@ void tank::think()
         set_linear_velocity(get_linear_velocity() + forward * (new_speed - _track_speed));
         _track_speed = new_speed;
 
-        set_angular_velocity(deg2rad(_usercmd.move[0] * 90));
-        _turret_velocity = deg2rad(_usercmd.look[0] * 90);
+        set_angular_velocity(math::deg2rad(_usercmd.move[0] * 90));
+        _turret_velocity = math::deg2rad(_usercmd.look[0] * 90);
     }
 
     // update position here because Move doesn't
@@ -265,7 +265,7 @@ void tank::launch_projectile()
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod, weapon_type::cannon);
 
-                float launch_rotation = _turret_rotation + crand() * M_PI / 180.f;
+                float launch_rotation = _turret_rotation + crand() * math::pi<float> / 180.f;
                 vec2 launch_direction = rotate(vec2(1, 0), launch_rotation);
                 vec2 launch_position = get_position() + rotate(effect_origin, _turret_rotation);
 
@@ -306,7 +306,7 @@ void tank::launch_projectile()
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod * 0.1f, weapon_type::blaster);
 
-                float launch_rotation = _turret_rotation + crand() * M_PI / 180.f;
+                float launch_rotation = _turret_rotation + crand() * math::pi<float> / 180.f;
                 vec2 launch_direction = rotate(vec2(1, 0), launch_rotation);
                 vec2 launch_position = get_position() + rotate(effect_origin, _turret_rotation);
 
@@ -457,7 +457,7 @@ void tank::update_sound()
 
     // tread noise
     if (_channels[1]) {
-        if (get_linear_velocity().length_sqr() > 1.0f || fabs(get_angular_velocity()) > deg2rad(1.0f)) {
+        if (get_linear_velocity().length_sqr() > 1.0f || fabs(get_angular_velocity()) > math::deg2rad(1.0f)) {
             if (!_channels[1]->playing()) {
                 _channels[1]->loop(_sound_move);
             }
@@ -472,7 +472,7 @@ void tank::update_sound()
 
     // turret noise
     if (_channels[2]) {
-        if (fabs(get_angular_velocity() - _turret_velocity) > deg2rad(1.0f)) {
+        if (fabs(get_angular_velocity() - _turret_velocity) > math::deg2rad(1.0f)) {
             if (!_channels[2]->playing()) {
                 _channels[2]->loop(_sound_turret_move);
             }

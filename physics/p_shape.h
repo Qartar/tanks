@@ -5,10 +5,8 @@
 
 #include "cm_bounds.h"
 #include "cm_vector.h"
-
-#ifndef M_SQRT2
-#define M_SQRT2    1.41421356237309504880
-#endif
+#include "cm_matrix.h"
+#include "cm_shared.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace physics {
@@ -57,7 +55,7 @@ public:
     }
 
     virtual bounds calculate_bounds(vec2 position, float /*rotation*/) const {
-        return bounds(position - _half_size * float(M_SQRT2), position + _half_size * float(M_SQRT2));
+        return bounds(position - _half_size * math::sqrt2<float>, position + _half_size * math::sqrt2<float>);
     }
 
 protected:

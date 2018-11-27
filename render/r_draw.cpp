@@ -69,7 +69,7 @@ void system::draw_particles(time_value time, render::particle const* particles, 
         glBegin(GL_TRIANGLE_FAN);
 
         // Number of circle segments, approximation for pi / acos(1 - 1/2x)
-        int n = 1 + M_PI * sqrtf(radius * view_scale - 0.25f);
+        int n = 1 + math::pi<float> * sqrtf(max(0.f, radius * view_scale - 0.25f));
         int k = std::max<int>(1, 360 / n);
 
         glColor4fv(color_in);

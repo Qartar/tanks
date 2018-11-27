@@ -18,8 +18,8 @@ result system::init()
     set_default_state();
 
     for (int ii = 0; ii < 360 ; ++ii) {
-        _sintbl[ii] = sin(deg2rad<float>(ii));
-        _costbl[ii] = cos(deg2rad<float>(ii));
+        _sintbl[ii] = sin(math::deg2rad<float>(ii));
+        _costbl[ii] = cos(math::deg2rad<float>(ii));
     }
 
     return result::success;

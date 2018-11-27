@@ -55,7 +55,7 @@ void model::draw(vec2 position, float rotation, color4 color) const
     glPushMatrix();
 
     glTranslatef(position.x, position.y, 0);
-    glRotatef(rad2deg(rotation), 0, 0, 1);  // YAW
+    glRotatef(math::rad2deg(rotation), 0, 0, 1);  // YAW
 
     glBegin(GL_QUADS);
 
