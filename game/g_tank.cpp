@@ -176,12 +176,12 @@ void tank::collide(tank* other, physics::collision const* collision)
 void tank::respawn()
 {
     vec2 spawn_size = _world->maxs() - _world->mins() - vec2(SPAWN_BUFFER) * 2.0f;
-    vec2 spawn_pos = _world->mins() + spawn_size * mat2::scale(frand(), frand()) + vec2(SPAWN_BUFFER);
+    vec2 spawn_pos = _world->mins() + spawn_size * mat2::scale(_random.uniform_real(), _random.uniform_real()) + vec2(SPAWN_BUFFER);
 
     _dead_time = time_value::zero;
 
     set_position(spawn_pos, true);
-    set_rotation(frand()*2.f*math::pi<float>, true);
+    set_rotation(_random.uniform_real(2.f * math::pi<float>), true);
     set_turret_rotation(get_rotation(), true);
 
     set_linear_velocity(vec2_zero);
@@ -265,7 +265,7 @@ void tank::launch_projectile()
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod, weapon_type::cannon);
 
-                float launch_rotation = _turret_rotation + crand() * math::pi<float> / 180.f;
+                float launch_rotation = _turret_rotation + _random.uniform_real(-1.f, 1.f) * math::pi<float> / 180.f;
                 vec2 launch_direction = rotate(vec2(1, 0), launch_rotation);
                 vec2 launch_position = get_position() + rotate(effect_origin, _turret_rotation);
 
@@ -306,7 +306,7 @@ void tank::launch_projectile()
 
                 projectile* proj = _world->spawn<projectile>(this, _client->damage_mod * 0.1f, weapon_type::blaster);
 
-                float launch_rotation = _turret_rotation + crand() * math::pi<float> / 180.f;
+                float launch_rotation = _turret_rotation + _random.uniform_real(-1.f, 1.f) * math::pi<float> / 180.f;
                 vec2 launch_direction = rotate(vec2(1, 0), launch_rotation);
                 vec2 launch_position = get_position() + rotate(effect_origin, _turret_rotation);
 

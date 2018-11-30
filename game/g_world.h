@@ -74,6 +74,8 @@ public:
 
     game::object* find_object(std::size_t spawn_id) const;
 
+    random& get_random() { return _random; }
+
     void remove(object* object);
 
     game::tank* spawn_player(std::size_t player_index);
@@ -108,6 +110,9 @@ private:
 
     physics::world _physics;
     std::map<physics::rigid_body const*, game::object*> _physics_objects;
+
+    //! Random number generator
+    random _random;
 
     bool physics_filter_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b);
     bool physics_collide_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b, physics::collision const& collision);

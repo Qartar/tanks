@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_random.h"
 #include "cm_time.h"
 #include "p_material.h"
 #include "p_rigidbody.h"
@@ -99,6 +100,8 @@ protected:
 
     std::size_t _spawn_id;
     time_value _spawn_time;
+
+    random _random;
 
     physics::rigid_body _rigid_body;
 

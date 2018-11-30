@@ -44,9 +44,6 @@ template<typename T> constexpr T rad2deg(T value) { return value * T(180.0) / pi
 
 } // namespace math
 
-__forceinline float frand() { return ((float)((rand()&32767)*(1.0f/32767.0f))); }
-__forceinline float crand() { return ((float)((rand()&32767)*(2.0f/32767.0f)-1.0f)); }
-
 template<typename T> constexpr T square(T value) { return value * value; }
 
 template<typename T> constexpr T clamp(T value, T min, T max) { return (value < min) ? min : (value > max) ? max : value; }

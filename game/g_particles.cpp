@@ -64,18 +64,19 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand();
-                p->position = position + vec2(cos(r)*d,sin(r)*d);
-                p->velocity = direction * (0.25f + frand()*0.75f) + vec2(crand()*24,crand()*24);
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real();
+                p->position = position + vec2(std::cos(r)*d,std::sin(r)*d);
+                p->velocity = direction * _random.uniform_real(0.25f, 1.f)
+                            + vec2(_random.uniform_real(-24.f, 24.f), _random.uniform_real(-24.f, 24.f));
 
-                p->size = 2.0f + frand()*4.0f;
-                p->size_velocity = 2.0f + frand()*2.0f;
+                p->size = _random.uniform_real(2.f, 6.f);
+                p->size_velocity = _random.uniform_real(2.f, 4.f);
 
-                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a / (1+frand()*1.0f));
+                p->color = color4(0.5f,0.5f,0.5f,_random.uniform_real(.1f, .2f));
+                p->color_velocity = color4(0,0,0,-p->color.a / _random.uniform_real(1.f, 2.f));
 
-                p->drag = 2.5f + frand() * 1.5f;
+                p->drag = _random.uniform_real(2.5f, 4.f);
             }
             break;
         }
@@ -87,19 +88,19 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                p->position = position + vec2(crand()*2,crand()*2);
+                p->position = position + vec2(_random.uniform_real(-2.f, 2.f),_random.uniform_real(-2.f, 2.f));
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*128;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(128.f);
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1,0.5f+frand()*0.5f,0,strength*(0.5f+frand()));
-                p->color_velocity = color4(0,-1.0f,0,-2.0f - frand());
+                p->color = color4(1,_random.uniform_real(.5f, 1.f),0,strength*_random.uniform_real(.5f, 1.5f));
+                p->color_velocity = color4(0,-1.0f,0,_random.uniform_real(-3.f, -2.f));
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
-                p->drag = 0.5f + frand() * 0.5f;
+                p->drag = _random.uniform_real(.5f, 1.f);
                 p->flags = render::particle::tail;
             }
 
@@ -107,24 +108,24 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*24;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(24.f);
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*24;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(24.f);
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->size = 4.0f + frand()*8.0f;
+                p->size = _random.uniform_real(4.f, 12.f);
                 p->size_velocity = 2.0;
 
-                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a / (2+frand()*1.5f));
+                p->color = color4(0.5f,0.5f,0.5f,_random.uniform_real(.1f, .2f));
+                p->color_velocity = color4(0,0,0,-p->color.a / _random.uniform_real(2.f, 3.5f));
 
-                p->drag = 0.5f + frand() * 2.0f;
+                p->drag = _random.uniform_real(.5f, 2.5f);
             }
             break;
         }
@@ -155,24 +156,24 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*12 * scale;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(12.f * scale);
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = sqrt(frand()) * 128.0f * strength;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = sqrt(_random.uniform_real()) * 128.f * strength;
 
                 p->velocity = vec2(cos(r),sin(r)) * d;
                 p->velocity += direction * d * 0.5f;
 
-                p->size = (4.0f + frand()*8.0f) * scale;
+                p->size = _random.uniform_real(4.f, 12.f) * scale;
                 p->size_velocity = 2.0f * strength;
 
-                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a / (2+frand()*1.5f));
+                p->color = color4(0.5f,0.5f,0.5f,_random.uniform_real(.1f, .2f));
+                p->color_velocity = color4(0,0,0,-p->color.a / _random.uniform_real(2.f, 3.5f));
 
-                p->drag = (3.0f + frand() * 1.0f) * scale;
+                p->drag = _random.uniform_real(3.f, 4.f) * scale;
             }
 
             // fire
@@ -181,23 +182,23 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*8 * scale;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(8.f) * scale;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = sqrt(frand()) * 128.0f * strength;
+                r = _random.uniform_real()*math::pi<float>*2.0f;
+                d = sqrt(_random.uniform_real()) * 128.0f * strength;
 
                 p->velocity = vec2(cos(r),sin(r))*d;
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1.0f,frand(),0.0f,0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a/(0.5f+frand()*frand()*2.5f));
-                p->size = (8.0f + frand()*16.0f) * scale;
+                p->color = color4(1.0f,_random.uniform_real(),0.0f,0.1f);
+                p->color_velocity = color4(0,0,0,-p->color.a/(0.5f+square(_random.uniform_real())*2.5f));
+                p->size = _random.uniform_real(8.f, 24.f) * scale;
                 p->size_velocity = 1.0f * strength;
 
-                p->drag = (2.0f + frand() * 2.0f) * scale;
+                p->drag = _random.uniform_real(2.f, 4.f) * scale;
             }
 
             // debris
@@ -206,22 +207,22 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*2 * scale;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(2.f * scale);
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*128 * scale;
+                r = _random.uniform_real(math::pi<float>*2.0f);
+                d = _random.uniform_real(128.f) * scale;
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1,0.5f+frand()*0.5f,0,1);
-                p->color_velocity = color4(0,0,0,-1.5f-frand());
+                p->color = color4(1,_random.uniform_real(.5f, 1.f),0,1);
+                p->color_velocity = color4(0,0,0,-1.5f-_random.uniform_real());
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
-                p->drag = 0.5f + frand() * 0.5f;
+                p->drag = _random.uniform_real(.5f, 1.f);
                 p->flags = render::particle::tail;
             }
             break;
@@ -250,24 +251,24 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*4;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(4.f);
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = sqrt(frand()) * 32.0f;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = sqrt(_random.uniform_real()) * 32.f;
 
                 p->velocity = vec2(cos(r),sin(r))*d;
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1.0f,0.5f*frand(),0.0f,0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a/(0.25f+frand()*frand()));
-                p->size = 2.0f + frand()*4.0f;
+                p->color = color4(1.0f,_random.uniform_real(.5f),0.0f,0.1f);
+                p->color_velocity = color4(0,0,0,-p->color.a/(0.25f+square(_random.uniform_real())));
+                p->size = _random.uniform_real(2.f, 6.f);
                 p->size_velocity = 0.5f;
                 p->flags = render::particle::invert;
 
-                p->drag = 3.0f + frand() * 3.0f;
+                p->drag = _random.uniform_real(3.f, 6.f);
 
                 // vortex
 
@@ -293,27 +294,27 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*0.5f;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(.5f);
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*64.0f;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(64.f);
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
-                p->velocity += direction * frand() * 96.0f;
+                p->velocity += direction * _random.uniform_real(96.f);
 
-                r = frand()*math::pi<float>*2.0f;
-                d = 64.0f + frand()*64.0f;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(64.f, 128.f);
 
                 p->acceleration = vec2(cos(r), sin(r))*d;
 
-                p->color = color4(1,frand()*0.5f,0,1);
-                p->color_velocity = color4(0,0,0,-1.5f-2.0f*frand());
+                p->color = color4(1,_random.uniform_real(.5f),0,1);
+                p->color_velocity = color4(0,0,0,_random.uniform_real(-3.5f, -1.5f));
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
-                p->drag = 2.0f + frand() * 2.0f;
+                p->drag = _random.uniform_real(2.f, 4.f);
                 p->flags = render::particle::tail;
             }
             break;
@@ -357,24 +358,24 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*12 * scale;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(12.f) * scale;
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = sqrt(frand()) * 128.0f * strength;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = sqrt(_random.uniform_real()) * 128.0f * strength;
 
                 p->velocity = vec2(cos(r),sin(r)) * d;
                 p->velocity += direction * d * 0.5f;
 
-                p->size = (4.0f + frand()*8.0f) * scale;
+                p->size = _random.uniform_real(4.f, 12.f) * scale;
                 p->size_velocity = 2.0f * strength;
 
-                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a / (2+frand()*1.5f));
+                p->color = color4(0.5f,0.5f,0.5f,_random.uniform_real(.1f, .2f));
+                p->color_velocity = color4(0,0,0,-p->color.a / _random.uniform_real(2.f, 3.5f));
 
-                p->drag = (3.0f + frand() * 1.0f) * scale;
+                p->drag = _random.uniform_real(3.f, 4.f) * scale;
             }
 
             // fire
@@ -383,23 +384,23 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*16 * scale;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(16.f * scale);
 
                 p->position = position + vec2(cos(r),sin(r))*d;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = sqrt(frand()) * 128.0f * strength;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = sqrt(_random.uniform_real()) * 128.f * strength;
 
                 p->velocity = vec2(cos(r),sin(r))*d;
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1.0f,0.5f*frand(),0.0f,0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a/(0.5f+frand()*frand()*1.5f));
-                p->size = (8.0f + frand()*16.0f) * scale;
+                p->color = color4(1.0f,_random.uniform_real(.5f),0.0f,0.1f);
+                p->color_velocity = color4(0,0,0,-p->color.a/(0.5f+square(_random.uniform_real())*1.5f));
+                p->size = _random.uniform_real(8.f, 24.f) * scale;
                 p->size_velocity = 1.0f * strength;
 
-                p->drag = (2.0f + frand() * 2.0f) * scale;
+                p->drag = _random.uniform_real(2.f, 4.f) * scale;
             }
 
             // debris
@@ -408,22 +409,22 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*2 * scale;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(2.f * scale);
 
                 p->position = position + vec2(cos(r)*d,sin(r)*d);
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand()*128 * scale;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(128.f * scale);
 
                 p->velocity = vec2(cos(r)*d,sin(r)*d);
                 p->velocity += direction * d * 0.5f;
 
-                p->color = color4(1,frand()*0.5f,0,1);
-                p->color_velocity = color4(0,0,0,-1.5f-frand());
+                p->color = color4(1,_random.uniform_real(.5f),0,1);
+                p->color_velocity = color4(0,0,0,_random.uniform_real(-2.5f, -1.5f));
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
-                p->drag = 0.5f + frand() * 0.5f;
+                p->drag = _random.uniform_real(.5f, 1.f);
                 p->flags = render::particle::tail;
             }
             break;
@@ -452,18 +453,18 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand();
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real();
                 p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * float(ii) / float(count);
-                p->velocity = direction * (0.25f + frand()*0.75f) + vec2(crand()*24,crand()*24);
+                p->velocity = direction * (_random.uniform_real(0.25f, 0.75f)) + vec2(_random.uniform_real(-24.f, 24.f), _random.uniform_real(-24.f, 24.f));
 
-                p->size = 2.0f + frand()*4.0f;
-                p->size_velocity = 2.0f + frand()*2.0f;
+                p->size = _random.uniform_real(2.f, 4.f);
+                p->size_velocity = _random.uniform_real(2.f, 4.f);
 
-                p->color = color4(0.5f,0.5f,0.5f,0.1f+frand()*0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a / (1+frand()*1.0f));
+                p->color = color4(0.5f,0.5f,0.5f,_random.uniform_real(0.1f, 0.2f));
+                p->color_velocity = color4(0,0,0,-p->color.a / _random.uniform_real(1.f, 2.f));
 
-                p->drag = 2.5f + frand() * 1.5f;
+                p->drag = _random.uniform_real(2.5f, 4.f);
                 p->time += FRAMETIME * ii / count;
             }
 
@@ -473,18 +474,18 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand();
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real();
                 p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * float(ii) / float(count);
-                p->velocity = direction * (0.25f + frand()*0.75f) + vec2(crand()*24,crand()*24);
+                p->velocity = direction * (_random.uniform_real(0.25f, 0.75f)) + vec2(_random.uniform_real(-24.f, 24.f), _random.uniform_real(-24.f, 24.f));
 
-                p->size = 4.0f + frand()*2.0f;
-                p->size_velocity = 4.0f + frand()*4.0f;
+                p->size = _random.uniform_real(4.f, 6.f);
+                p->size_velocity = _random.uniform_real(4.f, 8.f);
 
-                p->color = color4(1.0f,0.5f+0.5f*frand(),0.0f,0.1f);
-                p->color_velocity = color4(0,0,0,-p->color.a/(0.15f+0.15f*frand()));
+                p->color = color4(1.0f,_random.uniform_real(.5f, 1.f),0.0f,0.1f);
+                p->color_velocity = color4(0,0,0,-p->color.a/_random.uniform_real(.15f, .3f));
 
-                p->drag = (1.5f + frand() * 1.0f);
+                p->drag = _random.uniform_real(1.5f, 2.5f);
                 p->time += FRAMETIME * ii / count;
             }
 
@@ -494,21 +495,21 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
                 if ( (p = add_particle()) == NULL )
                     return;
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand();
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real();
 
                 p->position = position + vec2(cos(r),sin(r))*d + lerp * float(ii) / float(count);
 
-                r = frand()*math::pi<float>*2.0f;
-                d = frand() * 64.0f;
+                r = _random.uniform_real(2.f * math::pi<float>);
+                d = _random.uniform_real(64.f);
 
-                p->velocity = direction * (0.25f + frand()*0.75f) + vec2(crand()*48,crand()*48);
+                p->velocity = direction * _random.uniform_real(.25f, 1.f) + vec2(_random.uniform_real(-48.f, 48.f),_random.uniform_real(-48.f, 48.f));
 
-                p->color = color4(1,0.5f+frand()*0.5f,0,1);
-                p->color_velocity = color4(0,0,0,-3.0f-15.0f*(1.0f-square(frand())));
+                p->color = color4(1,_random.uniform_real(.5f, 1.f),0,1);
+                p->color_velocity = color4(0,0,0,-3.0f-15.0f*(1.0f-square(_random.uniform_real())));
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
-                p->drag = 1.5f + frand() * 1.5f;
+                p->drag = _random.uniform_real(1.5f, 3.f);
                 p->time += FRAMETIME * ii / count;
                 p->flags = render::particle::tail;
             }

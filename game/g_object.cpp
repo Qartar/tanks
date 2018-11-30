@@ -29,6 +29,7 @@ object::~object()
 //------------------------------------------------------------------------------
 void object::spawn()
 {
+    _random = random(_world->get_random());
     _world->add_body(this, &_rigid_body);
 }
 

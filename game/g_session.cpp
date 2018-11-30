@@ -161,8 +161,6 @@ result session::shutdown()
 //------------------------------------------------------------------------------
 result session::run_frame(time_delta time)
 {
-    rand( );
-
     get_packets( );
 
     _frametime += time;
