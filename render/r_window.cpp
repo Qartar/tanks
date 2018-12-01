@@ -11,39 +11,11 @@
 namespace {
 
 // additional opengl bindings
-typedef void (APIENTRY* PFNGLBINDRENDERBUFFER)(GLenum target, GLuint renderbuffer);
-typedef void (APIENTRY* PFNGLDELETERENDERBUFFERS)(GLsizei n, const GLuint* renderbuffers);
-typedef void (APIENTRY* PFNGLGENRENDERBUFFERS)(GLsizei n, GLuint* renderbuffers);
-typedef void (APIENTRY* PFNGLRENDERBUFFERSTORAGE)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY* PFNGLBINDFRAMEBUFFER)(GLenum target, GLuint framebuffer);
-typedef void (APIENTRY* PFNGLDELETEFRAMEBUFFERS)(GLsizei n, const GLuint* framebuffers);
-typedef void (APIENTRY* PFNGLGENFRAMEBUFFERS)(GLsizei n, GLuint* framebuffers);
-typedef void (APIENTRY* PFNGLFRAMEBUFFERRENDERBUFFER)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-typedef void (APIENTRY* PFNGLBLITFRAMEBUFFER)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-
 typedef BOOL (APIENTRY* PFNWGLSWAPINTERVALEXT)(GLint interval);
 typedef int (APIENTRY* PFNWGLGETSWAPINTERVALEXT)();
 
-static PFNGLBINDRENDERBUFFER glBindRenderbuffer = NULL;
-static PFNGLDELETERENDERBUFFERS glDeleteRenderbuffers = NULL;
-static PFNGLGENRENDERBUFFERS glGenRenderbuffers = NULL;
-static PFNGLRENDERBUFFERSTORAGE glRenderbufferStorage = NULL;
-static PFNGLBINDFRAMEBUFFER glBindFramebuffer = NULL;
-static PFNGLDELETEFRAMEBUFFERS glDeleteFramebuffers = NULL;
-static PFNGLGENFRAMEBUFFERS glGenFramebuffers = NULL;
-static PFNGLFRAMEBUFFERRENDERBUFFER glFramebufferRenderbuffer = NULL;
-static PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
-
 static PFNWGLSWAPINTERVALEXT wglSwapIntervalEXT = NULL;
 static PFNWGLGETSWAPINTERVALEXT wglGetSwapIntervalEXT = NULL;
-
-#define GL_FRAMEBUFFER                  0x8D40
-#define GL_READ_FRAMEBUFFER             0x8CA8
-#define GL_DRAW_FRAMEBUFFER             0x8CA9
-#define GL_RENDERBUFFER                 0x8D41
-#define GL_COLOR_ATTACHMENT0            0x8CE0
-#define GL_DEPTH_STENCIL_ATTACHMENT     0x821A
-#define GL_DEPTH24_STENCIL8             0x88F0
 
 } // anonymous namespace
 
@@ -61,52 +33,28 @@ window::window(HINSTANCE hInstance, WNDPROC WndProc)
     , _hrc(nullptr)
     , _renderer(this)
     , _current_dpi(USER_DEFAULT_SCREEN_DPI)
-{
-    _fbo       = 0;
-    _rbo[0]    = 0;
-    _rbo[1]    = 0;
-}
+    , _vid_width("vid_width", 1280, config::archive | config::reset, "window width in logical pixels (dpi scaled)")
+    , _vid_height("vid_height", 760, config::archive | config::reset, "window height in logical pixels (dpi scaled)")
+    , _vid_fullscreen("vid_fullscreen", 0, config::archive | config::reset, "fullscreen window (uses desktop dimensions)")
+{}
 
 //------------------------------------------------------------------------------
 void window::create()
 {
-    char const* command;
-    bool fullscreen = DEFAULT_FS;
-
-    if ( (command = strstr( g_Application->init_string(), "fullscreen" )) )
-        fullscreen = ( atoi(command+11) > 0 );
-
-    create(CW_USEDEFAULT, 0, DEFAULT_W, DEFAULT_H, fullscreen);
-
+    create(CW_USEDEFAULT, 0, _vid_width, _vid_height, _vid_fullscreen);
     _renderer.init();
 }
 
 //------------------------------------------------------------------------------
 void window::end_frame ()
 {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-    glDrawBuffer(GL_BACK);
-
-    glBlitFramebuffer(
-        0, 0, _framebuffer_size.x, _framebuffer_size.y,
-        0, 0, _physical_size.x, _physical_size.y,
-        GL_COLOR_BUFFER_BIT, GL_NEAREST
-    );
-
     SwapBuffers(_hdc);
-
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo);
-
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
 }
 
 //------------------------------------------------------------------------------
 window::~window()
 {
-    if (_hwnd)
-    {
+    if (_hwnd) {
         _renderer.shutdown();
         destroy();
     }
@@ -212,11 +160,6 @@ result window::create(int xpos, int ypos, int width, int height, bool fullscreen
         return result::failure;
     }
 
-    // initialize framebuffer
-    if (failed(create_framebuffer(_logical_size.x, _logical_size.y))) {
-        return result::failure;
-    }
-
     // show the window
     SetForegroundWindow(_hwnd);
     SetFocus(_hwnd);
@@ -278,18 +221,6 @@ result window::init_opengl()
         return result::failure;
     }
 
-    // initialize Renderer
-
-    glBindRenderbuffer = (PFNGLBINDRENDERBUFFER )wglGetProcAddress("glBindRenderbuffer");
-    glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERS )wglGetProcAddress("glDeleteRenderbuffers");
-    glGenRenderbuffers = (PFNGLGENRENDERBUFFERS )wglGetProcAddress("glGenRenderbuffers");
-    glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGE )wglGetProcAddress("glRenderbufferStorage");
-    glBindFramebuffer = (PFNGLBINDFRAMEBUFFER )wglGetProcAddress("glBindFramebuffer");
-    glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERS )wglGetProcAddress("glDeleteFramebuffers");
-    glGenFramebuffers = (PFNGLGENFRAMEBUFFERS )wglGetProcAddress("glGenFramebuffers");
-    glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFER )wglGetProcAddress("glFramebufferRenderbuffer");
-    glBlitFramebuffer = (PFNGLBLITFRAMEBUFFER )wglGetProcAddress("glBlitFramebuffer");
-
     wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXT )wglGetProcAddress("wglSwapIntervalEXT");
     wglGetSwapIntervalEXT = (PFNWGLGETSWAPINTERVALEXT )wglGetProcAddress("wglGetSwapIntervalEXT");
 
@@ -301,47 +232,9 @@ result window::init_opengl()
 }
 
 //------------------------------------------------------------------------------
-result window::create_framebuffer(int width, int height)
-{
-    if (!_hrc) {
-        return result::failure;
-    }
-
-    if (_fbo) {
-        destroy_framebuffer();
-    }
-
-    glGenFramebuffers(1, &_fbo);
-    glGenRenderbuffers(2, _rbo);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-
-    glBindRenderbuffer(GL_RENDERBUFFER, _rbo[0]);
-    glRenderbufferStorage( GL_RENDERBUFFER, GL_RGBA, width, height);
-    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _rbo[0]);
-
-    glBindRenderbuffer(GL_RENDERBUFFER, _rbo[1]);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _rbo[1]);
-
-    _framebuffer_size.x = width;
-    _framebuffer_size.y = height;
-
-    return result::success;
-}
-
-//------------------------------------------------------------------------------
-void window::destroy_framebuffer()
-{
-    glDeleteRenderbuffers(2, _rbo);
-    glDeleteFramebuffers(1, &_fbo);
-}
-
-//------------------------------------------------------------------------------
 void window::destroy()
 {
     if (_hwnd) {
-        destroy_framebuffer();
         shutdown_opengl( );
 
         DestroyWindow(_hwnd);
@@ -377,9 +270,7 @@ LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
             _physical_size.x = LOWORD(lParam);
             _physical_size.y = HIWORD(lParam);
             // don't update renderer unless it's been initialized
-            if (_fbo) {
-                _renderer.resize(); // uses params in WndParams
-            }
+            _renderer.resize(_physical_size); // uses params in WndParams
             break;
 
         case WM_MOVE:
@@ -447,7 +338,7 @@ bool window::toggle_fullscreen()
             AdjustWindowRectExForDpi(&border, windowed_style, FALSE, 0, GetDpiForWindow(_hwnd));
             _physical_size.x = rect.right - rect.left - (border.right - border.left);
             _physical_size.y = rect.bottom - rect.top - (border.bottom - border.top);
-            _renderer.resize(); // uses params in WndParams
+            _renderer.resize(_physical_size);
         }
     } else {
         SetWindowLongA(_hwnd, GWL_STYLE, fullscreen_style | WS_VISIBLE);

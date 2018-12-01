@@ -887,7 +887,7 @@ void session::draw_messages ()
     constexpr time_delta view_time = time_delta::from_seconds(15);
     constexpr time_delta fade_time = time_delta::from_seconds(3);
 
-    ypos = DEFAULT_H - 36.f;
+    ypos = _renderer->view().size.y - 36.f;
 
     for (int ii = _num_messages-1; ii != _num_messages; ii = (ii <= 0 ? MAX_MESSAGES-1 : ii-1)) {
         if (ii < 0) {

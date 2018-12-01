@@ -3,14 +3,10 @@
 
 #pragma once
 
+#include "cm_config.h"
+
 #include <gl/gl.h>
 #include <gl/glu.h>
-
-// default size and position
-#define DEFAULT_W   640
-#define DEFAULT_H   480
-#define DEFAULT_FS  1       // fullscreen
-#define DEFAULT_MS  1       // multisampling
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
@@ -35,7 +31,6 @@ public:
     bool active() const { return _active; }
     vec2i position() const { return _position; }
     vec2i size() const { return _physical_size; }
-    vec2i framebuffer_size() const { return _framebuffer_size; }
     int width() const { return _physical_size.x; }
     int height() const { return _physical_size.y; }
     bool fullscreen() const { return _fullscreen; }
@@ -44,8 +39,6 @@ public:
 
 private:
     result create(int xpos, int ypos, int width, int height, bool fullscreen);
-    result create_framebuffer(int width, int height);
-    void destroy_framebuffer();
 
     result init_opengl();
     void shutdown_opengl();
@@ -62,6 +55,10 @@ private:
     vec2i _logical_size;
     vec2i _physical_size;
 
+    config::integer _vid_width;
+    config::integer _vid_height;
+    config::boolean _vid_fullscreen;
+
     render::system _renderer;
 
     HINSTANCE _hinst;
@@ -70,11 +67,6 @@ private:
     HWND _hwnd;
     HDC _hdc;
     HGLRC _hrc;
-
-    // framebuffer objects
-    GLuint _fbo;
-    GLuint _rbo[2];
-    vec2i _framebuffer_size;
 };
 
 } // namespace render

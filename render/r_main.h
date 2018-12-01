@@ -3,12 +3,15 @@
 
 #pragma once
 
+#include "cm_config.h"
 #include "cm_time.h"
 
 #ifndef _WINDOWS_
 typedef struct HFONT__* HFONT;
 typedef struct HBITMAP__* HBITMAP;
 #endif // _WINDOWS_
+
+typedef unsigned int GLuint;
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
@@ -78,10 +81,7 @@ struct view
 class system
 {
 public:
-    system(render::window* window)
-        : _window(window)
-        , _view{}
-    {}
+    system(render::window* window);
 
     result init();
     result shutdown();
@@ -89,7 +89,7 @@ public:
     void begin_frame();
     void end_frame();
 
-    void resize();
+    void resize(vec2i size);
     render::window const* window() const { return _window; }
 
     render::view const& view() const { return _view; }
@@ -129,10 +129,21 @@ private:
 
     // Internal stuff
 
+    config::integer _framebuffer_width;
+    config::integer _framebuffer_height;
+    config::scalar _framebuffer_scale;
+    config::integer _framebuffer_samples;
+
+    GLuint _fbo;
+    GLuint _rbo[2];
+    vec2i _framebuffer_size;
+
     render::window* _window;
 
     void create_default_font();
     void set_default_state();
+    void create_framebuffer(vec2i size, int samples);
+    void destroy_framebuffer();
 
     render::view _view;
 
