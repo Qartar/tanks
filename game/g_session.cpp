@@ -4,9 +4,9 @@
 #include "precompiled.h"
 #pragma hdrstop
 
+#include "cm_keys.h"
 #include "g_tank.h"
 
-#include "keys.h"
 #include "resource.h"
 
 #include <numeric>

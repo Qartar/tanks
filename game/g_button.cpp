@@ -4,7 +4,7 @@
 #include "precompiled.h"
 #pragma hdrstop
 
-#include "keys.h"
+#include "cm_keys.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace menu {

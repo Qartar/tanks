@@ -6,6 +6,7 @@ set(SHARED_SOURCES
     cm_error.h
     cm_filesystem.cpp
     cm_filesystem.h
+    cm_keys.h
     cm_matrix.h
     cm_parser.cpp
     cm_parser.h

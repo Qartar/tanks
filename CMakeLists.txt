@@ -55,7 +55,6 @@ set(TANKS_SOURCES
     render/r_particle.h
     render/r_window.cpp
     render/r_window.h
-    system/keys.h
     system/resource.rc
     system/resource.h
     system/win_main.cpp
