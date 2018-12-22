@@ -39,6 +39,8 @@ public:
     //! seek to the given offset within the stream
     bool seek(std::intptr_t offset, file::seek origin);
 
+    //! print formatted string into the stream
+    std::size_t printf(char const* fmt, ...);
     //! write data from the given buffer into the stream
     std::size_t write(byte const* data, std::size_t size);
     //! read data from the stream into the given buffer

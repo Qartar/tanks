@@ -4,6 +4,7 @@
 #include "cm_filesystem.h"
 
 #include <cassert>
+#include <cstdarg>
 #include <cstdio>
 #include <utility>
 
@@ -133,6 +134,18 @@ std::size_t stream::size() const
 #endif
     fsetpos(_handle, &pos);
     return end - start;
+}
+
+//------------------------------------------------------------------------------
+std::size_t stream::printf(char const* fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    int len = vfprintf(_handle, fmt, ap);
+    va_end(ap);
+
+    return len > 0 ? len : 0;
 }
 
 //------------------------------------------------------------------------------
