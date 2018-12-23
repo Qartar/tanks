@@ -43,6 +43,7 @@ public:
     std::string const& value() const { return _value; }
     int flags() const { return _flags; }
     value_type type() const { return _type; }
+    void set(char const* value) { _value = value; }
 
 protected:
     friend system;
@@ -64,6 +65,7 @@ public:
     std::string const& value() const { _base->value(); }
     int flags() const { return _base->flags(); }
     value_type type() const { return _base->type(); }
+    void set(char const* value) { _base->set(value); }
 
 protected:
     friend system;
@@ -156,6 +158,8 @@ public:
     bool set(char const* name, char const* value);
 
     void list() const;
+
+    static system* singleton() { return _singleton; }
 
 protected:
     friend variable;

@@ -5,12 +5,24 @@
 
 #include <cstdlib>
 #include <array>
+#include <functional>
+#include <map>
 #include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace file {
 class stream;
-};
+}
+
+namespace parser {
+class text;
+}
+
+namespace config {
+class system;
+}
+
+class console;
 
 //------------------------------------------------------------------------------
 class console_buffer
@@ -76,4 +88,71 @@ protected:
     std::size_t _length;
     std::size_t _cursor;
     bool _control;
+};
+
+//------------------------------------------------------------------------------
+class console_command
+{
+public:
+    using callback_type = std::function<void(parser::text const& args)>;
+
+public:
+    console_command(char const* name, callback_type callback);
+    template<typename T>
+    console_command(char const* name, T* obj, void(T::*callback)(parser::text const&))
+        : console_command(name, [obj, callback](parser::text const& args){ (obj->*callback)(args); })
+    {}
+
+    void execute(parser::text const& args) const;
+
+protected:
+    friend console;
+
+    std::string _name;
+    callback_type _func;
+
+    console_command* _next;
+    static console_command* _head;
+};
+
+//------------------------------------------------------------------------------
+class console
+{
+public:
+    console();
+    ~console();
+
+    void printf(char const* fmt, ...);
+    void resize(std::size_t num_columns);
+    bool char_event(int key);
+    bool key_event(int key, bool down);
+
+    float height() const { return _height; }
+    std::size_t scroll() const { return _scroll_offset; }
+    bool active() const { return _height > 0.f; }
+
+    std::size_t num_rows() const { return _buffer.num_rows(); }
+    char const* get_row(std::size_t index) const { return _buffer.get_row(index); }
+
+    console_input const& input() const { return _input; }
+
+protected:
+    friend class console_command;
+
+    console_buffer _buffer;
+    console_input _input;
+
+    float _height;
+    std::size_t _scroll_offset;
+    bool _control;
+
+    std::map<std::string, console_command*> _commands;
+
+    console_command _command_set;
+
+    static console* _singleton;
+
+protected:
+    void execute(char const* begin, char const* end);
+    static void command_set(parser::text const& args);
 };

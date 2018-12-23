@@ -400,7 +400,7 @@ bool system::set(char const* name, char const* value)
 {
     auto it = _variables.find(name);
     if (it != _variables.end()) {
-        it->second->_value = value;
+        it->second->set(value);
         return true;
     } else {
         return false;

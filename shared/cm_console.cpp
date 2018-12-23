@@ -2,12 +2,15 @@
 //
 
 #include "cm_console.h"
+#include "cm_config.h"
 #include "cm_filesystem.h"
+#include "cm_parser.h"
+#include "cm_keys.h"
+#include "cm_shared.h"
 
 #include <cassert>
 #include <cstdarg>
 
-#include "cm_keys.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 console_buffer::console_buffer()
@@ -292,4 +295,186 @@ bool console_input::key_event(int key, bool down)
 
     assert(_cursor <= _length);
     return consumed;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+console_command* console_command::_head = nullptr;
+
+//------------------------------------------------------------------------------
+console_command::console_command(char const* name, callback_type callback)
+    : _name(name)
+    , _next(_head)
+    , _func(callback)
+{
+    if (console::_singleton) {
+        assert(_head == nullptr);
+        console::_singleton->_commands[_name] = this;
+    } else {
+        _head = this;
+    }
+}
+
+//------------------------------------------------------------------------------
+void console_command::execute(parser::text const& args) const
+{
+    if (_func) {
+        _func(args);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+console* console::_singleton = nullptr;
+
+//------------------------------------------------------------------------------
+console::console()
+    : _command_set("set", &console::command_set)
+    , _height(0)
+    , _scroll_offset(0)
+    , _control(false)
+{
+    assert(_singleton == nullptr);
+    _singleton = this;
+
+    console_command* command = console_command::_head;
+    while (command) {
+        _commands[command->_name] = command;
+        command = command->_next;
+    }
+    console_command::_head = nullptr;
+}
+
+//------------------------------------------------------------------------------
+console::~console()
+{
+    assert(_singleton == this);
+    _singleton = nullptr;
+}
+
+//------------------------------------------------------------------------------
+void console::resize(std::size_t num_columns)
+{
+    _buffer.resize(num_columns);
+}
+
+//------------------------------------------------------------------------------
+void console::printf(char const* fmt, ...)
+{
+    constexpr int msg_size = 1024;
+    char msg[msg_size];
+    va_list ap;
+
+    va_start(ap, fmt);
+    int len = vsnprintf(msg, msg_size, fmt, ap);
+    va_end(ap);
+
+    if (len > 0) {
+        _buffer.append(msg, msg + len);
+    }
+}
+
+//------------------------------------------------------------------------------
+bool console::char_event(int key)
+{
+    if (key == '`') {
+        if (_height) {
+            _height = .0f;
+        } else {
+            _height = .5f;
+        }
+        return true;
+    } else if (!active()) {
+        return false;
+    } else if (key == K_ENTER) {
+        log::message("]%s\n", _input.begin());
+        execute(_input.begin(), _input.end());
+        _input.clear();
+        return true;
+    } else {
+        return _input.char_event(key);
+    }
+}
+
+//------------------------------------------------------------------------------
+bool console::key_event(int key, bool down)
+{
+    if (key == K_CTRL) {
+        _control = down;
+    }
+
+    if (!active()) {
+        return false;
+    } else if (down && _control && key == K_HOME) {
+        _scroll_offset = _buffer.num_rows();
+        return true;
+    } else if (down && _control && key == K_END) {
+        _scroll_offset = 0;
+        return true;
+    } else if (down && key == K_PGUP) {
+        std::size_t n = _control ? 10 : 1;
+        if (_scroll_offset + n < _buffer.num_rows()) {
+            _scroll_offset += n;
+        } else {
+            _scroll_offset = _buffer.num_rows();
+        }
+        return true;
+    } else if (down && key == K_PGDN) {
+        std::size_t n = _control ? 10 : 1;
+        if (_scroll_offset > n) {
+            _scroll_offset -= n;
+        } else {
+            _scroll_offset = 0;
+        }
+        return true;
+    } else {
+        return _input.key_event(key, down);
+    }
+}
+
+//------------------------------------------------------------------------------
+void console::execute(char const* begin, char const* end)
+{
+    parser::text args(begin, end);
+    if (!args.tokens().size()) {
+        return;
+    }
+
+    // check for console commands
+    auto command = _commands.find(args.tokens()[0]);
+    if (command != _commands.cend()) {
+        return command->second->execute(args);
+    }
+
+    // check for config variables
+    config::system* config = config::system::singleton();
+    config::variable_base* variable = config ? config->find(args.tokens()[0]) : nullptr;
+    if (variable) {
+        return command_set(args);
+    }
+
+    log::message("unknown variable or command: '%s'\n", args.tokens()[0]);
+}
+
+//------------------------------------------------------------------------------
+void console::command_set(parser::text const& args)
+{
+    assert(args.tokens().size());
+    assert(config::system::singleton());
+    std::size_t first = _stricmp(args.tokens()[0], "set") ? 0 : 1;
+    std::size_t nargs = args.tokens().size() - first;
+
+    if (!nargs || nargs > 2) {
+        log::message("usage: set <variable> [value]\n");
+        return;
+    }
+
+    config::system* config = config::system::singleton();
+    config::variable_base* variable = config->find(args.tokens()[first]);
+    if (!variable) {
+        log::message("unknown variable: '%s'\n", args.tokens()[first]);
+        return;
+    } else if (nargs == 1) {
+        log::message("%s = '%s'\n", variable->name(), variable->value().c_str());
+    } else if (nargs == 2) {
+        variable->set(args.tokens()[first + 1]);
+    }
 }

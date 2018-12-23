@@ -223,6 +223,8 @@ void session::update_screen()
 
     draw_messages();
 
+    draw_console();
+
     draw_netgraph();
 
     _renderer->end_frame();
@@ -264,6 +266,10 @@ void session::draw_menu()
 //------------------------------------------------------------------------------
 void session::char_event(int key)
 {
+    if (_console.char_event(key) || _console.active()) {
+        return;
+    }
+
     if (_client_button_down) {
         if (_menu_active) {
             std::size_t len = strnlen(cls.info.name.data(), cls.info.name.size());
@@ -417,6 +423,10 @@ void session::char_event(int key)
 //------------------------------------------------------------------------------
 void session::key_event(int key, bool down)
 {
+    if (_console.key_event(key, down) || _console.active()) {
+        return;
+    }
+
     if (_menu_active) {
         if (_menu.key_event(key, down)) {
             return;
@@ -939,6 +949,57 @@ void session::draw_messages ()
             ypos -= 12.f;
         }
     }
+}
+
+//------------------------------------------------------------------------------
+void session::draw_console()
+{
+    if (!_console.height()) {
+        return;
+    }
+
+    int width = static_cast<int>(_renderer->view().size.x);
+    int height = static_cast<int>(_renderer->view().size.y);
+
+    int yoffset = int(height * _console.height());
+    _renderer->draw_box(
+        vec2(vec2i(width, yoffset)),
+        vec2(vec2i(width, yoffset) / 2),
+        color4(.1f,.1f,.1f,.8f));
+
+    int ystep = int(_renderer->monospace_size(" ").y);
+
+    // draw input text
+    {
+        char buf[260] = "]";
+        console_input const& input = _console.input();
+        strncpy(buf + 1, input.begin(), input.end() - input.begin());
+        _renderer->draw_monospace(buf, vec2(vec2i(8, yoffset - 8)), menu::colors[7]);
+        // draw input cursor
+        if ((int)(_frametime.to_seconds() * 2.5f) % 2 == 0) {
+            buf[input.cursor() - input.begin() + 1] = '_';
+            buf[input.cursor() - input.begin() + 2] = '\0';
+            _renderer->draw_monospace(buf, vec2(vec2i(8, yoffset - 8)), menu::colors[7]);
+        }
+    }
+
+    // draw console rows
+    std::size_t num_rows = _console.num_rows();
+    for (std::size_t ii = 0; ii + _console.scroll() < num_rows; ++ii) {
+        int y = yoffset - narrow_cast<int>(ii + 1) * ystep - 8;
+        if (y < 0) {
+            break;
+        }
+        _renderer->draw_monospace(_console.get_row(ii + _console.scroll()),
+                               vec2(vec2i(8, y)),
+                               menu::colors[7]);
+    }
+}
+
+//------------------------------------------------------------------------------
+void session::print(level /*level*/, char const* msg)
+{
+    _console.printf("%s", msg);
 }
 
 } // namespace game

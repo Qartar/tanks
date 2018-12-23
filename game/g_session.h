@@ -6,6 +6,7 @@
 #include "cm_time.h"
 #include "net_channel.h"
 #include "net_socket.h"
+#include "cm_console.h"
 
 namespace render {
 class image;
@@ -224,6 +225,8 @@ private:
     config::string _cl_color;
     config::integer _cl_weapon;
 
+    console _console;
+
     game_mode _mode;
 
     time_value _restart_time;
@@ -252,6 +255,7 @@ private:
     int _num_messages;
 
     void draw_messages ();
+    void draw_console();
 
     config::boolean _net_graph;
     std::array<std::size_t, 256> _net_bytes;
@@ -326,7 +330,7 @@ private:
     char _clientsay[LONG_STRING];
 
 protected:
-    virtual void print(level /*level*/, char const* msg) override { message(msg); }
+    virtual void print(level /*level*/, char const* msg) override;
 };
 
 } // namespace game
