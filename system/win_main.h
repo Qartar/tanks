@@ -47,6 +47,7 @@ protected:
     result init(HINSTANCE hInstance, LPSTR szCmdLine);
     int shutdown();
 
+    void char_event(WPARAM key, LPARAM state);
     void key_event(LPARAM param, bool down);
     void mouse_event(WPARAM mouse_state, vec2i position);
 

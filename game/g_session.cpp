@@ -120,32 +120,6 @@ result session::init (char const *cmdline)
         start_server( );
     }
 
-    for (int i=0 ; i<256 ; i++)
-        _shift_keys[i] = narrow_cast<unsigned char>(i);
-    for (int i='a' ; i<='z' ; i++)
-        _shift_keys[i] = narrow_cast<char>(i - 'a' + 'A');
-    _shift_keys['1'] = '!';
-    _shift_keys['2'] = '@';
-    _shift_keys['3'] = '#';
-    _shift_keys['4'] = '$';
-    _shift_keys['5'] = '%';
-    _shift_keys['6'] = '^';
-    _shift_keys['7'] = '&';
-    _shift_keys['8'] = '*';
-    _shift_keys['9'] = '(';
-    _shift_keys['0'] = ')';
-    _shift_keys['-'] = '_';
-    _shift_keys['='] = '+';
-    _shift_keys[','] = '<';
-    _shift_keys['.'] = '>';
-    _shift_keys['/'] = '?';
-    _shift_keys[';'] = ':';
-    _shift_keys['\''] = '"';
-    _shift_keys['['] = '{';
-    _shift_keys[']'] = '}';
-    _shift_keys['`'] = '~';
-    _shift_keys['\\'] = '|';
-
     // sound indices are shared over the network so sounds
     // need to be registed in the same order on all clients
     pSound->load_sound("assets/sound/tank_move.wav");
@@ -288,38 +262,14 @@ void session::draw_menu()
 }
 
 //------------------------------------------------------------------------------
-void session::key_event(int key, bool down)
+void session::char_event(int key)
 {
-    static bool shift = false;
-    static bool ctrl = false;
-
-    // mouse commands
-
-    if (_menu_active) {
-        if (_menu.key_event(key, down)) {
-            return;
-        }
-    }
-
-    if (key == K_SHIFT)
-        shift = down;
-    if (key == K_CTRL)
-        ctrl = down;
-
-    if ( _client_button_down )
-    {
-        if ( _menu_active )
-        {
-            if ( !down )
-                return;
-
-            if ( shift && key < countof(_shift_keys) )
-                key = _shift_keys[key];
-
+    if (_client_button_down) {
+        if (_menu_active) {
             std::size_t len = strnlen(cls.info.name.data(), cls.info.name.size());
 
             if (key == K_BACKSPACE && len) {
-                cls.info.name[len-1] = 0;
+                cls.info.name[len - 1] = 0;
             } else if (key == K_ENTER) {
                 _client_button_down = false;
             } else if (key <= K_SPACE) {
@@ -327,29 +277,19 @@ void session::key_event(int key, bool down)
             } else if (key >= K_BACKSPACE) {
                 return;
             } else if (len < 13) {
-                cls.info.name[len+1] = 0;
+                cls.info.name[len + 1] = 0;
                 cls.info.name[len] = narrow_cast<char>(key);
             }
-
             return;
-        }
-        else
+        } else {
             _client_button_down = false;
-    }
-    else if ( _server_button_down )
-    {
-        if ( _menu_active )
-        {
-            if ( !down )
-                return;
-
-            if ( shift && key < countof(_shift_keys) )
-                key = _shift_keys[key];
-
+        }
+    } else if (_server_button_down) {
+        if (_menu_active) {
             std::size_t len = strnlen(svs.name, countof(svs.name));
 
             if (key == K_BACKSPACE && len) {
-                svs.name[strlen(svs.name)-1] = 0;
+                svs.name[strlen(svs.name) - 1] = 0;
             } else if (key == K_ENTER) {
                 _server_button_down = false;
             } else if (key < K_SPACE) {
@@ -357,179 +297,143 @@ void session::key_event(int key, bool down)
             } else if (key >= K_BACKSPACE) {
                 return;
             } else if (len < countof(svs.name)) {
-                svs.name[len+1] = 0;
+                svs.name[len + 1] = 0;
                 svs.name[len] = narrow_cast<char>(key);
             }
 
             return;
-        }
-        else
+        } else {
             _server_button_down = false;
-    }
-    else if ( _client_say )
-    {
-        if ( true )
-        {
-            if ( !down )
-                return;
-
-            if ( ctrl && key == 'v' ) {
-                std::string s = g_Application->clipboard();
-
-                if (s.length()) {
-                    strcat(_clientsay, s.c_str());
-                    _clientsay[strlen(_clientsay)] = 0;
-                }
+        }
+    } else if (_client_say) {
+        if (key == K_BACKSPACE) {
+            _clientsay[strlen(_clientsay) - 1] = 0;
+        } else if (key == K_ENTER && strlen(_clientsay)) {
+            if (!_clientsay[0]) {
                 return;
             }
 
-            if ( shift && key < countof(_shift_keys) )
-                key = _shift_keys[key];
+            if (_clientsay[0] == '/') {
+                char    *command;
 
-            if ( key == K_BACKSPACE )
-                _clientsay[strlen(_clientsay)-1] = 0;
-            else if ( key == K_ENTER && strlen(_clientsay) )
-            {
-                if ( !_clientsay[0] )
-                    return;
-
-                if ( _clientsay[0] == '/' )
-                {
-                    char    *command;
-
-                    // command, parse it
-                    if ( (command = strstr( _clientsay, "quit" )) )
-                        PostQuitMessage( 0 );
-                    else if ( (command = strstr( _clientsay, "disconnect" )) )
-                    {
-                        stop_client( );
-                        stop_server( );
+                // command, parse it
+                if ((command = strstr(_clientsay, "quit"))) {
+                    PostQuitMessage(0);
+                } else if ((command = strstr(_clientsay, "disconnect"))) {
+                    stop_client();
+                    stop_server();
+                } else if ((command = strstr(_clientsay, "connect"))) {
+                    if (strlen(command) > 8) {
+                        connect_to_server(command + 8);
+                    } else {
+                        connect_to_server(-1);
                     }
-                    else if ( (command = strstr( _clientsay, "connect" )) )
-                    {
-                        if ( strlen( command ) > 8 )
-                        {
-                            connect_to_server(command + 8);
-                        }
-                        else
-                        {
-                            connect_to_server( -1 );
-                        }
-                    }
-                    else if ( (command = strstr( _clientsay, "set" )) )
-                    {
-                        if ( strlen( command ) > 4 ) {
-                            char    cmdbuf[ 256 ];
-                            char    *arg;
+                } else if ((command = strstr(_clientsay, "set"))) {
+                    if (strlen(command) > 4) {
+                        char    cmdbuf[256];
+                        char    *arg;
 
-                            config::variable_base* variable;
+                        config::variable_base* variable;
 
-                            strncpy( cmdbuf, command + 4, 256 );
+                        strncpy(cmdbuf, command + 4, 256);
 
-                            //  find next arg
-                            for( arg = cmdbuf ; *arg ; arg++ ) {
-                                if ( *arg == ' ' ) {
-                                    *arg++ = '\0';
-                                    break;
-                                }
+                        //  find next arg
+                        for (arg = cmdbuf; *arg; arg++) {
+                            if (*arg == ' ') {
+                                *arg++ = '\0';
+                                break;
                             }
+                        }
 
-                            if ( !*arg ) {
-                                write_message_client( "usage: set [variable] [value]" );
-                            } else if ( (variable = _config->find(cmdbuf)) ) {
-                                _config->set(cmdbuf, arg);
-                                if (variable->flags() & config::flags::server) {
-                                    write_message(va("\'%s\' set to \'%s\'", variable->name(), variable->value().c_str()));
-                                } else {
-                                    write_message_client(va("\'%s\' set to \'%s\'", variable->name(), variable->value().c_str()));
-                                }
+                        if (!*arg) {
+                            write_message_client("usage: set [variable] [value]");
+                        } else if ((variable = _config->find(cmdbuf))) {
+                            _config->set(cmdbuf, arg);
+                            if (variable->flags() & config::flags::server) {
+                                write_message(va("\'%s\' set to \'%s\'", variable->name(), variable->value().c_str()));
                             } else {
-                                write_message_client( va("unrecognized variable: %s", cmdbuf ) );
+                                write_message_client(va("\'%s\' set to \'%s\'", variable->name(), variable->value().c_str()));
                             }
                         } else {
-                            write_message_client( "usage: set [variable] [value]" );
+                            write_message_client(va("unrecognized variable: %s", cmdbuf));
                         }
-
+                    } else {
+                        write_message_client("usage: set [variable] [value]");
                     }
-                    else if ( (command = strstr( _clientsay, "dedicated" )) )
-                    {
-                        _dedicated = true;
 
-                        stop_client( );
-                        start_server( );
-                    }
-                    else
-                        write_message_client( va("unrecognized command: %s", _clientsay+1) );
+                } else if ((command = strstr(_clientsay, "dedicated"))) {
+                    _dedicated = true;
+
+                    stop_client();
+                    start_server();
+                } else {
+                    write_message_client(va("unrecognized command: %s", _clientsay + 1));
                 }
-                else if (svs.active || cls.active)
-                {
-                    // say it
-                    _netchan.write_byte(clc_say);
-                    _netchan.write_string(_clientsay);
+            } else if (svs.active || cls.active) {
+                // say it
+                _netchan.write_byte(clc_say);
+                _netchan.write_string(_clientsay);
 
-                    if (svs.active && !svs.local) {
-                        if ( _dedicated )
-                            write_message( va( "[Server]: %s", _clientsay ) );
-                        else {
-                            write_message( va( "\\c%02x%02x%02x%s\\cx: %s",
-                                (int )(cls.info.color.r * 255),
-                                (int )(cls.info.color.g * 255),
-                                (int )(cls.info.color.b * 255),
-                                cls.info.name.data(), _clientsay ) );
-                        }
+                if (svs.active && !svs.local) {
+                    if (_dedicated) {
+                        write_message(va("[Server]: %s", _clientsay));
+                    } else {
+                        write_message(va("\\c%02x%02x%02x%s\\cx: %s",
+                            (int)(cls.info.color.r * 255),
+                            (int)(cls.info.color.g * 255),
+                            (int)(cls.info.color.b * 255),
+                            cls.info.name.data(), _clientsay));
                     }
                 }
-
-                memset( _clientsay, 0, LONG_STRING );
-
-                _client_say = false;
-            }
-            else if ( key == K_ENTER )
-                _client_say = false;
-            else if ( key == K_ESCAPE )
-            {
-                memset( _clientsay, 0, LONG_STRING );
-
-                _client_say = false;
-            }
-            else if ( key < K_SPACE )
-                return;
-            else if ( key > K_BACKSPACE )
-                return;
-            else if ( strlen(_clientsay) < LONG_STRING )
-            {
-                _clientsay[strlen(_clientsay)+1] = 0;
-                _clientsay[strlen(_clientsay)] = narrow_cast<char>(key);
             }
 
-            return;
-        }
-        else
+            memset(_clientsay, 0, LONG_STRING);
             _client_say = false;
-    }
-    else if ( key == K_ENTER && down )
-    {
+        } else if (key == K_ENTER) {
+            _client_say = false;
+        } else if (key == K_ESCAPE) {
+            memset(_clientsay, 0, LONG_STRING);
+            _client_say = false;
+        } else if (key < K_SPACE) {
+            return;
+        } else if (key > K_BACKSPACE) {
+            return;
+        } else if (strlen(_clientsay) < LONG_STRING) {
+            _clientsay[strlen(_clientsay) + 1] = 0;
+            _clientsay[strlen(_clientsay)] = narrow_cast<char>(key);
+        }
+
+        return;
+    } else if (key == K_ENTER) {
         _client_say = true;
         return;
-    }
-    else if ( key == '/' && down )
-    {
+    } else if (key == '/') {
         _client_say = true;
         _clientsay[0] = '/';
         return;
     }
-    else if ( key == K_PGDN && down )
-    {
+}
+
+//------------------------------------------------------------------------------
+void session::key_event(int key, bool down)
+{
+    if (_menu_active) {
+        if (_menu.key_event(key, down)) {
+            return;
+        }
+    }
+
+    if (key == K_PGDN && down) {
         time_value time = g_Application->time();
 
-        for ( int i=0 ; i<MAX_MESSAGES ; i++ )
+        for (int i = 0; i < MAX_MESSAGES; i++) {
             _messages[i].time = time;
+        }
     }
 
     // user commands here
 
-    if ( ! _dedicated )
-    {
+    if (!_dedicated) {
         for (int ii = 0; ii < MAX_PLAYERS; ++ii) {
             game::tank* player = _world.player(ii);
             if (player && _clients[ii].input.key_event(key, down)) {
@@ -538,93 +442,95 @@ void session::key_event(int key, bool down)
         }
     }
 
-    if ( down )
-    {
-        switch ( key )
-        {
+    if (down) {
+        switch (key) {
+            case K_F1:
+            case VK_PAD_LSHOULDER:
+                write_message_client("");
+                write_message_client("----- TANKS HELP -----");
+                write_message_client("note: pressing PGDN will refresh the message log");
+                write_message_client("");
+                write_message_client("  Each player commands an entire tank using the keyboard.");
+                write_message_client("The following keys are using in multiplayer mode: ");
+                write_message_client("W - Forward");
+                write_message_client("S - Backward");
+                write_message_client("A - Turns tank left");
+                write_message_client("D - Turns tank right");
+                write_message_client("J - Turns turret left");
+                write_message_client("L - Turns turret right");
+                write_message_client("K - Fire main gun");
+                write_message_client("  Shots struck in the rear will do full damage (one shot");
+                write_message_client("kill with no upgrades), the sides will do 1/2 damage, and");
+                write_message_client("shots to the front will do 1/3 normal damage.");
+                write_message_client("  You can change your nick and the color of your tank in");
+                write_message_client("the Game Options menu. You can toggle the menu at any");
+                write_message_client("time by pressing the ESC key.");
+                write_message_client("  Every 10 kills you achieve in multiplayer you will be");
+                write_message_client("prompted to upgrade your tank, you can see more about");
+                write_message_client("upgrades by pressing F9 or RSHLDR");
+                write_message_client("");
+                break;
 
-        case K_F1:
-        case VK_PAD_LSHOULDER:
-            write_message_client( "" );
-            write_message_client( "----- TANKS HELP -----" );
-            write_message_client( "note: pressing PGDN will refresh the message log" );
-            write_message_client( "" );
-            write_message_client( "  Each player commands an entire tank using the keyboard." );
-            write_message_client( "The following keys are using in multiplayer mode: " );
-            write_message_client( "W - Forward" );
-            write_message_client( "S - Backward" );
-            write_message_client( "A - Turns tank left" );
-            write_message_client( "D - Turns tank right" );
-            write_message_client( "J - Turns turret left" );
-            write_message_client( "L - Turns turret right" );
-            write_message_client( "K - Fire main gun" );
-            write_message_client( "  Shots struck in the rear will do full damage (one shot" );
-            write_message_client( "kill with no upgrades), the sides will do 1/2 damage, and" );
-            write_message_client( "shots to the front will do 1/3 normal damage." );
-            write_message_client( "  You can change your nick and the color of your tank in" );
-            write_message_client( "the Game Options menu. You can toggle the menu at any" );
-            write_message_client( "time by pressing the ESC key." );
-            write_message_client( "  Every 10 kills you achieve in multiplayer you will be" );
-            write_message_client( "prompted to upgrade your tank, you can see more about" );
-            write_message_client( "upgrades by pressing F9 or RSHLDR" );
-            write_message_client( "" );
-            break;
+                //
+                //  upgrades bullshit
+                //
 
-        //
-        //  upgrades bullshit
-        //
+            case '1':
+            case VK_PAD_A:
+                if (_clients[cls.number].upgrades) {
+                    write_upgrade(0);
+                }
+                break;
 
-        case '1':
-        case VK_PAD_A:
-            if ( _clients[cls.number].upgrades )
-                write_upgrade( 0 );
-            break;
+            case '2':
+            case VK_PAD_B:
+                if (_clients[cls.number].upgrades) {
+                    write_upgrade(1);
+                }
+                break;
 
-        case '2':
-        case VK_PAD_B:
-            if ( _clients[cls.number].upgrades )
-                write_upgrade( 1 );
-            break;
+            case '3':
+            case VK_PAD_X:
+                if (_clients[cls.number].upgrades) {
+                    write_upgrade(2);
+                }
+                break;
 
-        case '3':
-        case VK_PAD_X:
-            if ( _clients[cls.number].upgrades )
-                write_upgrade( 2 );
-            break;
+            case '4':
+            case VK_PAD_Y:
+                if (_clients[cls.number].upgrades) {
+                    write_upgrade(3);
+                }
+                break;
 
-        case '4':
-        case VK_PAD_Y:
-            if ( _clients[cls.number].upgrades )
-                write_upgrade( 3 );
-            break;
+            case K_F9:
+            case VK_PAD_RSHOULDER:
+                write_message_client("");
+                write_message_client("---- UPGRADES HELP ----");
+                write_message_client("  Upgrades are given every ten kills you achieve. The");
+                write_message_client("categories you can upgrade in are the following: ");
+                write_message_client("(1)(\\c7fff7fA\\cx) Damage - weapon damage");
+                write_message_client("(2)(\\cff3f3fB\\cx) Armor - damage absorption");
+                write_message_client("(3)(\\c3f3fffX\\cx) Gunnery - fire rate");
+                write_message_client("(4)(\\cffff00Y\\cx) Speed - tank speed");
+                write_message_client("  To upgrade your tank, press the number associated with");
+                write_message_client("the upgrade when you have upgrades available to you. You");
+                write_message_client("should note that when you upgrade your tank a penalty");
+                write_message_client("will be taken from a complementary category. Damage");
+                write_message_client("goes with Gunnery, and Speed with Armor. However, when");
+                write_message_client("you upgrade you will see a net increase in your tanks");
+                write_message_client("performance.");
+                write_message_client("");
+                break;
 
-        case K_F9:
-        case VK_PAD_RSHOULDER:
-            write_message_client( "" );
-            write_message_client( "---- UPGRADES HELP ----" );
-            write_message_client( "  Upgrades are given every ten kills you achieve. The" );
-            write_message_client( "categories you can upgrade in are the following: ");
-            write_message_client( "(1)(\\c7fff7fA\\cx) Damage - weapon damage" );
-            write_message_client( "(2)(\\cff3f3fB\\cx) Armor - damage absorption" );
-            write_message_client( "(3)(\\c3f3fffX\\cx) Gunnery - fire rate" );
-            write_message_client( "(4)(\\cffff00Y\\cx) Speed - tank speed" );
-            write_message_client( "  To upgrade your tank, press the number associated with" );
-            write_message_client( "the upgrade when you have upgrades available to you. You" );
-            write_message_client( "should note that when you upgrade your tank a penalty" );
-            write_message_client( "will be taken from a complementary category. Damage" );
-            write_message_client( "goes with Gunnery, and Speed with Armor. However, when" );
-            write_message_client( "you upgrade you will see a net increase in your tanks" );
-            write_message_client( "performance." );
-            write_message_client( "" );
-            break;
-
-        default:
-            break;
+            default:
+                break;
         }
     }
 
-    if ( ! down )
+    if (!down) {
         return;
+    }
 
     // menu commands
 
@@ -633,15 +539,14 @@ void session::key_event(int key, bool down)
         return;
     }
 
-    if (key == K_F2)
-    {
-        byte    msg[ 2 ];
+    if (key == K_F2) {
+        byte    msg[2];
 
-        msg[ 0 ] = svc_restart;
-        msg[ 1 ] = 5;
+        msg[0] = svc_restart;
+        msg[1] = 5;
 
-        broadcast( 2, msg );
-        
+        broadcast(2, msg);
+
         _restart_time = _frametime + RESTART_TIME;
         return;
     }

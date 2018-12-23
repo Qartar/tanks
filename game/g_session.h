@@ -185,6 +185,7 @@ public:
 
     result run_frame(time_delta time);
 
+    void char_event(int key);
     void key_event(int key, bool down);
     void cursor_event(vec2 position);
     void gamepad_event(int index, gamepad const& pad);
@@ -251,8 +252,6 @@ private:
     int _num_messages;
 
     void draw_messages ();
-
-    char _shift_keys[256];
 
     config::boolean _net_graph;
     std::array<std::size_t, 256> _net_bytes;

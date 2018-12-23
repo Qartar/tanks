@@ -205,6 +205,7 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
             g_Application->_window.toggle_fullscreen();
             return 0;
         }
+        g_Application->char_event(wParam, lParam);
         break;
 
     // glWnd Messages
@@ -221,6 +222,12 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     }
 
     return DefWindowProcA(hWnd, nCmd, wParam, lParam);
+}
+
+//------------------------------------------------------------------------------
+void application::char_event(WPARAM key, LPARAM /*state*/)
+{
+    _game.char_event(narrow_cast<int>(key));
 }
 
 //------------------------------------------------------------------------------
