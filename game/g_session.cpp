@@ -5,6 +5,7 @@
 #pragma hdrstop
 
 #include "cm_keys.h"
+#include "cm_parser.h"
 #include "g_tank.h"
 
 #include "resource.h"
@@ -45,6 +46,9 @@ session::session()
     , _client_button_down(false)
     , _server_button_down(false)
     , _client_say(false)
+    , _command_quit("quit", &session::command_quit)
+    , _command_disconnect("disconnect", this, &session::command_disconnect)
+    , _command_connect("connect", this, &session::command_connect)
 {
     log::set(this);
     g_Game = this;
@@ -53,7 +57,6 @@ session::session()
 //------------------------------------------------------------------------------
 result session::init (char const *cmdline)
 {
-    _config = g_Application->config();
     _renderer = g_Application->window()->renderer();
     {
         float num = _renderer->view().size.x * ((640.f - 8.f) / 640.f);
@@ -324,63 +327,7 @@ void session::char_event(int key)
                 return;
             }
 
-            if (_clientsay[0] == '/') {
-                char    *command;
-
-                // command, parse it
-                if ((command = strstr(_clientsay, "quit"))) {
-                    PostQuitMessage(0);
-                } else if ((command = strstr(_clientsay, "disconnect"))) {
-                    stop_client();
-                    stop_server();
-                } else if ((command = strstr(_clientsay, "connect"))) {
-                    if (strlen(command) > 8) {
-                        connect_to_server(command + 8);
-                    } else {
-                        connect_to_server(-1);
-                    }
-                } else if ((command = strstr(_clientsay, "set"))) {
-                    if (strlen(command) > 4) {
-                        char    cmdbuf[256];
-                        char    *arg;
-
-                        config::variable_base* variable;
-
-                        strncpy(cmdbuf, command + 4, 256);
-
-                        //  find next arg
-                        for (arg = cmdbuf; *arg; arg++) {
-                            if (*arg == ' ') {
-                                *arg++ = '\0';
-                                break;
-                            }
-                        }
-
-                        if (!*arg) {
-                            write_message_client("usage: set [variable] [value]");
-                        } else if ((variable = _config->find(cmdbuf))) {
-                            _config->set(cmdbuf, arg);
-                            if (variable->flags() & config::flags::server) {
-                                write_message(va("\'%s\' set to \'%s\'", variable->name(), variable->value().c_str()));
-                            } else {
-                                write_message_client(va("\'%s\' set to \'%s\'", variable->name(), variable->value().c_str()));
-                            }
-                        } else {
-                            write_message_client(va("unrecognized variable: %s", cmdbuf));
-                        }
-                    } else {
-                        write_message_client("usage: set [variable] [value]");
-                    }
-
-                } else if ((command = strstr(_clientsay, "dedicated"))) {
-                    _dedicated = true;
-
-                    stop_client();
-                    start_server();
-                } else {
-                    write_message_client(va("unrecognized command: %s", _clientsay + 1));
-                }
-            } else if (svs.active || cls.active) {
+            if (svs.active || cls.active) {
                 // say it
                 _netchan.write_byte(clc_say);
                 _netchan.write_string(_clientsay);
@@ -998,6 +945,30 @@ void session::draw_console()
         _renderer->draw_monospace(_console.get_row(ii + _console.scroll()),
                                   vec2(vec2i(4, y)),
                                   menu::colors[7]);
+    }
+}
+
+//------------------------------------------------------------------------------
+void session::command_quit(parser::text const&)
+{
+    PostQuitMessage(0);
+}
+
+//------------------------------------------------------------------------------
+void session::command_disconnect(parser::text const&)
+{
+    stop_client();
+    stop_server();
+}
+
+//------------------------------------------------------------------------------
+void session::command_connect(parser::text const& args)
+{
+    if (args.tokens().size() > 2) {
+    } else if (args.tokens().size() == 2) {
+        connect_to_server(args.tokens()[1]);
+    } else {
+        connect_to_server(-1);
     }
 }
 

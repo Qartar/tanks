@@ -207,8 +207,6 @@ private:
     menu::window _menu;
     game::world _world;
 
-    config::system* _config;
-
     render::system* _renderer;
 
     render::image const* _menu_image;
@@ -287,7 +285,15 @@ public:
     bool _server_button_down;
     bool _client_say;
 
+    console_command _command_quit;
+    console_command _command_disconnect;
+    console_command _command_connect;
+
 private:
+    static void command_quit(parser::text const& args);
+    void command_disconnect(parser::text const& args);
+    void command_connect(parser::text const& args);
+
     void get_packets ();
     void read_snapshot(network::message& message);
     void write_frame ();
