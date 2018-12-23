@@ -107,6 +107,9 @@ public:
     void draw_string(char const* string, vec2 position, color4 color);
     vec2 string_size(char const* string) const;
 
+    void draw_monospace(char const* string, vec2 position, color4 color);
+    vec2 monospace_size(char const* string) const;
+
     void draw_line(vec2 start, vec2 end, color4 start_color, color4 end_color);
     void draw_box(vec2 size, vec2 position, color4 color);
     void draw_particles(time_value time, render::particle const* particles, std::size_t num_particles);
@@ -118,6 +121,7 @@ private:
     // More font stuff (r_font.cpp)
 
     std::unique_ptr<render::font> _default_font;
+    std::unique_ptr<render::font> _monospace_font;
 
     std::vector<std::unique_ptr<render::font>> _fonts;
 
