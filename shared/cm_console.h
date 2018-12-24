@@ -146,7 +146,13 @@ protected:
     std::size_t _scroll_offset;
     bool _control;
 
-    std::map<std::string, console_command*> _commands;
+    struct insensitive_compare {
+        bool operator()(std::string const& lhs, std::string const& rhs) const {
+            return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+        }
+    };
+
+    std::map<std::string, console_command*, insensitive_compare> _commands;
 
     console_command _command_set;
 

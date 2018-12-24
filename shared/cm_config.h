@@ -164,7 +164,13 @@ public:
 protected:
     friend variable;
 
-    std::map<std::string, std::shared_ptr<variable_base>> _variables;
+    struct insensitive_compare {
+        bool operator()(std::string const& lhs, std::string const& rhs) const {
+            return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+        }
+    };
+
+    std::map<std::string, std::shared_ptr<variable_base>, insensitive_compare> _variables;
 
     static system* _singleton;
 
