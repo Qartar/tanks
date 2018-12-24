@@ -341,11 +341,10 @@ void system::shutdown()
 }
 
 //------------------------------------------------------------------------------
-void system::list() const
+void system::command_list(parser::text const& /*args*/)
 {
-    printf("listing active variables...\n");
-    for (auto it : _variables) {
-        printf(print(it.second.get(), 4));
+    for (auto it : _singleton->_variables) {
+        log::message(_singleton->print(it.second.get(), 4));
     }
 }
 

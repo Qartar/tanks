@@ -155,10 +155,13 @@ protected:
     std::map<std::string, console_command*, insensitive_compare> _commands;
 
     console_command _command_set;
+    console_command _command_list;
+    console_command _command_list_vars;
 
     static console* _singleton;
 
 protected:
     void execute(char const* begin, char const* end);
     static void command_set(parser::text const& args);
+    static void command_list(parser::text const& args);
 };

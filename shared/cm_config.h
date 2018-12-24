@@ -10,6 +10,11 @@
 #include <map>
 
 ////////////////////////////////////////////////////////////////////////////////
+namespace parser {
+class text;
+}
+
+//------------------------------------------------------------------------------
 namespace config {
 
 class system;
@@ -157,7 +162,7 @@ public:
     char const* get(char const* name);
     bool set(char const* name, char const* value);
 
-    void list() const;
+    static void command_list(parser::text const& args);
 
     static system* singleton() { return _singleton; }
 

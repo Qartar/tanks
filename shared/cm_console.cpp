@@ -328,6 +328,8 @@ console* console::_singleton = nullptr;
 //------------------------------------------------------------------------------
 console::console()
     : _command_set("set", &console::command_set)
+    , _command_list("listCmds", &console::command_list)
+    , _command_list_vars("listVars", &config::system::command_list)
     , _height(0)
     , _scroll_offset(0)
     , _control(false)
@@ -476,5 +478,13 @@ void console::command_set(parser::text const& args)
         log::message("%s = '%s'\n", variable->name(), variable->value().c_str());
     } else if (nargs == 2) {
         variable->set(args.tokens()[first + 1]);
+    }
+}
+
+//------------------------------------------------------------------------------
+void console::command_list(parser::text const& /*args*/)
+{
+    for (auto it : _singleton->_commands) {
+        log::message("%s\n", it.first.c_str());
     }
 }
