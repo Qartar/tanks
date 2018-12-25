@@ -926,12 +926,12 @@ void session::draw_console()
         char buf[260] = "]";
         console_input const& input = _console.input();
         strncpy(buf + 1, input.begin(), input.end() - input.begin());
-        _renderer->draw_monospace(buf, vec2(vec2i(4, yoffset - 8)), menu::colors[7]);
+        _renderer->draw_monospace(buf, vec2(vec2i(4, yoffset - 8)), menu::colors[6]);
         // draw input cursor
         if ((int)(_frametime.to_seconds() * 2.5f) % 2 == 0) {
             buf[input.cursor() - input.begin() + 1] = '_';
             buf[input.cursor() - input.begin() + 2] = '\0';
-            _renderer->draw_monospace(buf, vec2(vec2i(4, yoffset - 8)), menu::colors[7]);
+            _renderer->draw_monospace(buf, vec2(vec2i(4, yoffset - 8)), menu::colors[6]);
         }
     }
 
@@ -944,7 +944,7 @@ void session::draw_console()
         }
         _renderer->draw_monospace(_console.get_row(ii + _console.scroll()),
                                   vec2(vec2i(4, y)),
-                                  menu::colors[7]);
+                                  menu::colors[6]);
     }
 }
 

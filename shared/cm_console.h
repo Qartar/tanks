@@ -60,7 +60,7 @@ protected:
 
 protected:
     void append_row(char const* begin, char const* end);
-    void append_endline();
+    void append_endline(bool keep_color);
 
     std::size_t num_columns(char const* begin, char const* end) const;
     char const* advance_columns(std::size_t columns, char const* begin, char const* end) const;

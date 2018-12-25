@@ -67,7 +67,7 @@ void console_buffer::append(char const* begin, char const* end)
                 break;
 
             case '\n':
-                append_endline();
+                append_endline(false);
                 row_begin++;
                 break;
 
@@ -105,7 +105,7 @@ void console_buffer::append_row(char const* begin, char const* end)
         std::size_t row_columns = num_columns(row_begin, row_end);
 
         if (_row_columns == _max_columns) {
-            append_endline();
+            append_endline(true);
         }
 
         // word wrap
@@ -127,7 +127,7 @@ void console_buffer::append_row(char const* begin, char const* end)
                 row_columns = _max_columns - _row_columns;
                 row_end = advance_columns(row_columns, row_begin, end);
             } else if (next_columns + _row_columns > _max_columns) {
-                append_endline();
+                append_endline(true);
                 while (row_begin < end && isspace(*row_begin)) {
                     ++row_begin;
                 }
@@ -150,7 +150,7 @@ void console_buffer::append_row(char const* begin, char const* end)
 }
 
 //------------------------------------------------------------------------------
-void console_buffer::append_endline()
+void console_buffer::append_endline(bool keep_color)
 {
     _buffer[_offset % buffer_size] = '\0';
     _offset += 1;
@@ -158,19 +158,62 @@ void console_buffer::append_endline()
     _rows[_rows_begin & _rows_mask] = _offset;
     _row_offset = 0;
     _row_columns = 0;
+
+    if (keep_color) {
+        std::size_t prev_row = _rows[(_rows_begin - 1) & _rows_mask];
+        char const* s = &_buffer[prev_row & buffer_mask];
+
+        char const* prev_color = nullptr;
+        while (s = strstr(s, "\\c")) {
+            prev_color = s++;
+        }
+
+        if (prev_color && prev_color[3] != 'x') {
+            append_row(prev_color, prev_color + 8);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
 std::size_t console_buffer::num_columns(char const* begin, char const* end) const
 {
-    // FIXME: ignore special characters and color codes for now
-    return end - begin;
+    std::size_t len = 0;
+    char const* prev = begin;
+    while (char const* next = strstr(prev, "\\c")) {
+        if (next >= end) {
+            break;
+        }
+        len += next - prev;
+        if (next[3] == 'x') {
+            prev = next + 3; // "\cx"
+        } else {
+            prev = next + 8; // "\cffffff"
+        }
+    }
+    len += end - prev;
+    return len;
 }
-
 //------------------------------------------------------------------------------
 char const* console_buffer::advance_columns(std::size_t columns, char const* begin, char const* end) const
 {
-    return begin + std::min<std::size_t>(columns, end - begin);
+    std::size_t len = 0;
+    char const* prev = begin;
+    while (char const* next = strstr(prev, "\\c")) {
+        if (next - prev >= ptrdiff_t(columns - len)) {
+            break;
+        }
+        len += next - prev;
+        if (next[3] == 'x') {
+            prev = next + 3; // "\cx"
+        } else {
+            prev = next + 8; // "\cffffff"
+        }
+    }
+    if (end - prev >= ptrdiff_t(columns - len)) {
+        return end - (end - prev) + (columns - len);
+    } else {
+        return end;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -453,7 +496,7 @@ void console::execute(char const* begin, char const* end)
         return command_set(args);
     }
 
-    log::message("unknown variable or command: '%s'\n", args.tokens()[0]);
+    log::message("unknown variable or command: '\\cffffff%s\\cx'\n", args.tokens()[0]);
 }
 
 //------------------------------------------------------------------------------
@@ -465,17 +508,17 @@ void console::command_set(parser::text const& args)
     std::size_t nargs = args.tokens().size() - first;
 
     if (!nargs || nargs > 2) {
-        log::message("usage: set <variable> [value]\n");
+        log::message("usage: set <\\cffffffvariable\\cx> [\\cffffffvalue\\cx]\n");
         return;
     }
 
     config::system* config = config::system::singleton();
     config::variable_base* variable = config->find(args.tokens()[first]);
     if (!variable) {
-        log::message("unknown variable: '%s'\n", args.tokens()[first]);
+        log::message("unknown variable: '\\cffffff%s\\cx'\n", args.tokens()[first]);
         return;
     } else if (nargs == 1) {
-        log::message("%s = '%s'\n", variable->name(), variable->value().c_str());
+        log::message("\\cffffff%s\\cx = '\\cffffff%s\\cx'\n", variable->name(), variable->value().c_str());
     } else if (nargs == 2) {
         variable->set(args.tokens()[first + 1]);
     }
