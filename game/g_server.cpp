@@ -129,10 +129,10 @@ void session::server_packet(network::message& message, std::size_t client)
                 break;
 
             case clc_say:
-                write_message(va( "\\c%02x%02x%02x%s\\cx: %s",
-                    (int )(svs.clients[client].info.color.r * 255),
-                    (int )(svs.clients[client].info.color.g * 255),
-                    (int )(svs.clients[client].info.color.b * 255),
+                write_message(va( "^%x%x%x%s^xxx: %s",
+                    (int )(svs.clients[client].info.color.r * 15.5f),
+                    (int )(svs.clients[client].info.color.g * 15.5f),
+                    (int )(svs.clients[client].info.color.b * 15.5f),
                     svs.clients[client].info.name.data(), message.read_string()));
                 break;
 
@@ -329,10 +329,10 @@ void session::read_upgrade(std::size_t client, int upgrade)
             }
         }
 
-        write_message( va( "\\c%02x%02x%02x%s\\cx has upgraded their %s!",
-            (int )(svs.clients[client].info.color.r * 255),
-            (int )(svs.clients[client].info.color.g * 255),
-            (int )(svs.clients[client].info.color.b * 255),
+        write_message( va( "^%x%x%x%s^xxx has upgraded their %s!",
+            (int )(svs.clients[client].info.color.r * 15.5f),
+            (int )(svs.clients[client].info.color.g * 15.5f),
+            (int )(svs.clients[client].info.color.b * 15.5f),
             svs.clients[client].info.name.data(), sz_upgrades[upgrade] ) );
 
         write_info(netmsg, client);

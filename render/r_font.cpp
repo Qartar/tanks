@@ -105,7 +105,7 @@ bool font::compare(char const* name, int size) const
 }
 
 //------------------------------------------------------------------------------
-void font::draw(char const* string, vec2 position, color4 color) const
+void font::draw(char const* string, vec2 position, color4 color, vec2 scale) const
 {
     // activate font if it isn't already
     if (_active_font != _handle) {
@@ -122,72 +122,65 @@ void font::draw(char const* string, vec2 position, color4 color) const
 
     int xoffs = 0;
 
-    int r = static_cast<int>(color.r * 255.f);
-    int g = static_cast<int>(color.g * 255.f);
-    int b = static_cast<int>(color.b * 255.f);
-    int a = static_cast<int>(color.a * 255.f);
+    int r = static_cast<int>(color.r * 255.5f);
+    int g = static_cast<int>(color.g * 255.5f);
+    int b = static_cast<int>(color.b * 255.5f);
+    int a = static_cast<int>(color.a * 255.5f);
 
     char const* cursor = string;
+    char const* end = string + strlen(string);
 
-    while (*cursor) {
-        char const* next = strstr(cursor+1, "\\c");
+    while (cursor < end) {
+        char const* next = find_color(cursor, end);
         if (!next) {
-            next = cursor + strlen(cursor);
-        }
-
-        if (_strnicmp(cursor, "\\c", 2) == 0) {
-            cursor += 2;    // skip past marker
-            if (_strnicmp(cursor, "x", 1) == 0) {
-                r = static_cast<int>(color.r * 255.f);
-                g = static_cast<int>(color.g * 255.f);
-                b = static_cast<int>(color.b * 255.f);
-                cursor++;
-            } else {
-                sscanf(cursor, "%02x%02x%02x", &r, &g, &b);
-                cursor += 6;    // skip past color
-            }
+            next = end;
         }
 
         glColor4ub(narrow_cast<uint8_t>(r),
                    narrow_cast<uint8_t>(g),
                    narrow_cast<uint8_t>(b),
                    narrow_cast<uint8_t>(a));
-        glRasterPos2f(position.x + xoffs, position.y);
+        glRasterPos2f(position.x + xoffs * scale.x, position.y);
         glCallLists(static_cast<GLsizei>(next - cursor), GL_UNSIGNED_BYTE, cursor);
 
         while (cursor < next) {
-            xoffs += _char_width[*cursor++];
+            xoffs += _char_width[(uint8_t)*cursor++];
+        }
+
+        if (cursor < end) {
+            if (!get_color(cursor, r, g, b)) {
+                r = static_cast<int>(color.r * 255.5f);
+                g = static_cast<int>(color.g * 255.5f);
+                b = static_cast<int>(color.b * 255.5f);
+            }
+            cursor += 4;
         }
     }
 }
 
 //------------------------------------------------------------------------------
-vec2 font::size(char const* string) const
+vec2 font::size(char const* string, vec2 scale) const
 {
     vec2i size(0, _size);
     char const* cursor = string;
+    char const* end = string + strlen(string);
 
-    while (*cursor) {
-        char const* next = strstr(cursor+1, "\\c");
+    while (cursor < end) {
+        char const* next = find_color(cursor, end);
         if (!next) {
-            next = cursor + strlen(cursor);
-        }
-
-        if (_strnicmp(cursor, "\\c", 2) == 0) {
-            cursor += 2;    // skip past marker
-            if (_strnicmp(cursor, "x", 1) == 0) {
-                cursor++;
-            } else {
-                cursor += 6;    // skip past color
-            }
+            next = end;
         }
 
         while (cursor < next) {
-            size.x += _char_width[*cursor++];
+            size.x += _char_width[(uint8_t)*cursor++];
+        }
+
+        if (cursor < end) {
+            cursor += 4;
         }
     }
 
-    return vec2(size);
+    return vec2(size) * scale;
 }
 
 } // namespace render

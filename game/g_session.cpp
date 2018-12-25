@@ -336,10 +336,10 @@ void session::char_event(int key)
                     if (_dedicated) {
                         write_message(va("[Server]: %s", _clientsay));
                     } else {
-                        write_message(va("\\c%02x%02x%02x%s\\cx: %s",
-                            (int)(cls.info.color.r * 255),
-                            (int)(cls.info.color.g * 255),
-                            (int)(cls.info.color.b * 255),
+                        write_message(va("^%x%x%x%s^xxx: %s",
+                            (int)(cls.info.color.r * 15.5f),
+                            (int)(cls.info.color.g * 15.5f),
+                            (int)(cls.info.color.b * 15.5f),
                             cls.info.name.data(), _clientsay));
                     }
                 }
@@ -471,10 +471,10 @@ void session::key_event(int key, bool down)
                 write_message_client("---- UPGRADES HELP ----");
                 write_message_client("  Upgrades are given every ten kills you achieve. The");
                 write_message_client("categories you can upgrade in are the following: ");
-                write_message_client("(1)(\\c7fff7fA\\cx) Damage - weapon damage");
-                write_message_client("(2)(\\cff3f3fB\\cx) Armor - damage absorption");
-                write_message_client("(3)(\\c3f3fffX\\cx) Gunnery - fire rate");
-                write_message_client("(4)(\\cffff00Y\\cx) Speed - tank speed");
+                write_message_client("(1)(^8f8A^xxx) Damage - weapon damage");
+                write_message_client("(2)(^d4dB^xxx) Armor - damage absorption");
+                write_message_client("(3)(^44fX^xxx) Gunnery - fire rate");
+                write_message_client("(4)(^ff0Y^xxx) Speed - tank speed");
                 write_message_client("  To upgrade your tank, press the number associated with");
                 write_message_client("the upgrade when you have upgrades available to you. You");
                 write_message_client("should note that when you upgrade your tank a penalty");

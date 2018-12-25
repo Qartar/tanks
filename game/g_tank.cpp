@@ -489,10 +489,10 @@ void tank::update_sound()
 //------------------------------------------------------------------------------
 char const* tank::player_name() const
 {
-    return va("\\c%02x%02x%02x%s\\cx",
-              int(_color.r * 255),
-              int(_color.g * 255),
-              int(_color.b * 255),
+    return va("^%x%x%x%s^xxx",
+              int(_color.r * 15.5f),
+              int(_color.g * 15.5f),
+              int(_color.b * 15.5f),
               g_Game->svs.clients[_player_index].info.name.data());
 }
 
