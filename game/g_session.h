@@ -336,7 +336,7 @@ private:
     char _clientsay[LONG_STRING];
 
 protected:
-    virtual void print(level /*level*/, char const* msg) override;
+    virtual void print(log::level level, char const* msg) override;
 };
 
 } // namespace game

@@ -973,9 +973,21 @@ void session::command_connect(parser::text const& args)
 }
 
 //------------------------------------------------------------------------------
-void session::print(level /*level*/, char const* msg)
+void session::print(log::level level, char const* msg)
 {
-    _console.printf("%s", msg);
+    switch (level) {
+        case log::level::message:
+            _console.printf("%s", msg);
+            break;
+
+        case log::level::warning:
+            _console.printf("^ff0warning^xxx: %s", msg);
+            break;
+
+        case log::level::error:
+            _console.printf("^f00error^xxx: %s", msg);
+            break;
+    }
 }
 
 } // namespace game
