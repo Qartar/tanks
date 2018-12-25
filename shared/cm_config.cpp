@@ -38,58 +38,88 @@ variable_base::variable_base(char const *name, char const* value, char const* ty
     , _description(description)
 {}
 
-////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-variable::variable(char const* name, char const* value, value_type type, int flags, char const* description)
+void variable_base::set(char const* value)
 {
-    if (system::_singleton) {
-        _base = system::_singleton->create(name, value, type, flags, description);
-        _next = nullptr;
-    } else {
-        _base = std::make_shared<variable_base>(name, value, type, flags, description);
-        _next = _head;
-        _head = this;
+    char* end = nullptr;
+
+    switch (type()) {
+        case value_type::string: {
+            set_string(value);
+            break;
+        }
+
+        case value_type::integer: {
+            long d = strtol(value, &end, 0);
+            if (end != value) {
+                set_integer(d);
+            } else {
+                log::message("cannot set variable '^fff%s^xxx' to non-integer value '^fff%s^xxx'\n", name(), value);
+            }
+            break;
+        }
+
+        case value_type::boolean: {
+            if (!_stricmp(value, "true") || !strcmp(value, "1")) {
+                set_boolean(true);
+            } else if (!_stricmp(value, "false") || !strcmp(value, "0")) {
+                set_boolean(false);
+            } else {
+                log::message("cannot set variable '^fff%s^xxx' to non-boolean value '^fff%s^xxx'\n", name(), value);
+            }
+            break;
+        }
+
+        case value_type::scalar: {
+            float f = strtof(value, &end);
+            if (end != value) {
+                set_scalar(f);
+            } else {
+                log::message("cannot set variable '^fff%s^xxx' to non-scalar value '^fff%s^xxx'\n", name(), value);
+            }
+            break;
+        }
     }
 }
 
 //------------------------------------------------------------------------------
-void variable::set_string(std::string const& s)
+void variable_base::set_string(std::string const& s)
 {
-    _base->_value = s;
+    _value = s;
 }
 
 //------------------------------------------------------------------------------
-void variable::set_integer(int i)
+void variable_base::set_integer(int i)
 {
-    _base->_value = to_string(i);
+    set_string(to_string(i));
 }
 
 //------------------------------------------------------------------------------
-void variable::set_boolean(bool b)
+void variable_base::set_boolean(bool b)
 {
-    _base->_value = to_string(b);
+    set_string(to_string(b));
 }
 
 //------------------------------------------------------------------------------
-void variable::set_scalar(float f)
+void variable_base::set_scalar(float f)
 {
-    _base->_value = to_string(f);
+    set_string(to_string(f));
 }
 
 //------------------------------------------------------------------------------
-std::string variable::to_string(int i) const
+std::string variable_base::to_string(int i) const
 {
     return va("%d", i);
 }
 
 //------------------------------------------------------------------------------
-std::string variable::to_string(bool b) const
+std::string variable_base::to_string(bool b) const
 {
     return b ? "true" : "false";
 }
 
 //------------------------------------------------------------------------------
-std::string variable::to_string(float f) const
+std::string variable_base::to_string(float f) const
 {
     std::string s = va("%f", f);
     if (s.find('.') != 0) {
@@ -106,29 +136,43 @@ std::string variable::to_string(float f) const
 }
 
 //------------------------------------------------------------------------------
-std::string& variable::get_string() const
+std::string const& variable_base::get_string() const
 {
-    return _base->_value;
+    return _value;
 }
 
 //------------------------------------------------------------------------------
-int variable::get_integer() const
+int variable_base::get_integer() const
 {
-    return atoi(_base->_value.c_str());
+    return atoi(_value.c_str());
 }
 
 //------------------------------------------------------------------------------
-bool variable::get_boolean() const
+bool variable_base::get_boolean() const
 {
-    return _base->_value == "true" ? true
-        : _base->_value == "false" ? false
-        : atoi(_base->_value.c_str()) != 0; 
+    return _value == "true" ? true
+        : _value == "false" ? false
+        : atoi(_value.c_str()) != 0; 
 }
 
 //------------------------------------------------------------------------------
-float variable::get_scalar() const
+float variable_base::get_scalar() const
 {
-    return static_cast<float>(std::atof(_base->_value.c_str()));
+    return static_cast<float>(std::atof(_value.c_str()));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+variable::variable(char const* name, char const* value, value_type type, int flags, char const* description)
+{
+    if (system::_singleton) {
+        _base = system::_singleton->create(name, value, type, flags, description);
+        _next = nullptr;
+    } else {
+        _base = std::make_shared<variable_base>(name, value, type, flags, description);
+        _next = _head;
+        _head = this;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -303,7 +347,7 @@ void system::init()
                 // update existing variable
                 auto type = type_from_string(text.tokens()[2]);
                 if (type != it->second->_type) {
-                    printf("archived variable '%s' has wrong type, reverting to default\n", text.tokens()[0]);
+                    log::warning("archived variable '^fff%s^xxx' has wrong type, reverting to default\n", text.tokens()[0]);
                 } else {
                     it->second->_value = text.tokens()[1];
                 }

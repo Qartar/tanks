@@ -48,7 +48,7 @@ public:
     std::string const& value() const { return _value; }
     int flags() const { return _flags; }
     value_type type() const { return _type; }
-    void set(char const* value) { _value = value; }
+    void set(char const* value);
 
 protected:
     friend system;
@@ -59,31 +59,9 @@ protected:
     std::string _value;
     int _flags;
     value_type _type;
-};
-
-//------------------------------------------------------------------------------
-class variable
-{
-public:
-    char const* name() const { return _base->name(); }
-    char const* description() const { return _base->description(); }
-    std::string const& value() const { _base->value(); }
-    int flags() const { return _base->flags(); }
-    value_type type() const { return _base->type(); }
-    void set(char const* value) { _base->set(value); }
 
 protected:
-    friend system;
-
-    std::shared_ptr<variable_base> _base;
-
-    variable* _next;
-    static variable* _head;
-
-protected:
-    variable(char const* name, char const* value, value_type type, int flags, char const* description);
-
-    std::string& get_string() const;
+    std::string const& get_string() const;
     int get_integer() const;
     bool get_boolean() const;
     float get_scalar() const;
@@ -96,6 +74,43 @@ protected:
     std::string to_string(int i) const;
     std::string to_string(bool b) const;
     std::string to_string(float f) const;
+};
+
+//------------------------------------------------------------------------------
+class variable
+{
+public:
+    char const* name() const { return _base->name(); }
+    char const* description() const { return _base->description(); }
+    std::string const& value() const { _base->value(); }
+    int flags() const { return _base->flags(); }
+    value_type type() const { return _base->type(); }
+    void set(char const* value);
+
+protected:
+    friend system;
+
+    std::shared_ptr<variable_base> _base;
+
+    variable* _next;
+    static variable* _head;
+
+protected:
+    variable(char const* name, char const* value, value_type type, int flags, char const* description);
+
+    std::string const& get_string() const { return _base->get_string(); }
+    int get_integer() const { return _base->get_integer(); }
+    bool get_boolean() const { return _base->get_boolean(); }
+    float get_scalar() const { return _base->get_scalar(); }
+
+    void set_string(std::string const& s) { _base->set_string(s); }
+    void set_integer(int i) { _base->set_integer(i); }
+    void set_boolean(bool b) { _base->set_boolean(b); }
+    void set_scalar(float f) { _base->set_scalar(f); }
+
+    std::string to_string(int i) const { return _base->to_string(i); }
+    std::string to_string(bool b) const { return _base->to_string(b); }
+    std::string to_string(float f) const { return _base->to_string(f); }
 };
 
 //------------------------------------------------------------------------------
