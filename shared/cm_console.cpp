@@ -227,6 +227,14 @@ void console_input::clear()
 }
 
 //------------------------------------------------------------------------------
+void console_input::replace(char const* text)
+{
+    strncpy(_buffer.data(), text, buffer_size);
+    _length = strlen(text);
+    _cursor = _length;
+}
+
+//------------------------------------------------------------------------------
 bool console_input::char_event(int key)
 {
     if (key >= K_SPACE && key < K_BACKSPACE) {
@@ -334,6 +342,24 @@ bool console_input::key_event(int key, bool down)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+console_history::console_history()
+    : _size(0)
+{}
+
+//------------------------------------------------------------------------------
+void console_history::insert(char const* text)
+{
+    strncpy(_buffer[_size++ & buffer_mask].data(), text, element_size);
+}
+
+//------------------------------------------------------------------------------
+char const* console_history::operator[](std::size_t index) const
+{
+    assert(index < _size);
+    return _buffer[(_size - index - 1) & buffer_mask].data();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 console_command* console_command::_head = nullptr;
 
 //------------------------------------------------------------------------------
@@ -368,6 +394,7 @@ console::console()
     , _command_list_vars("listVars", &config::system::command_list)
     , _height(0)
     , _scroll_offset(0)
+    , _history_offset(0)
     , _control(false)
 {
     assert(_singleton == nullptr);
@@ -424,6 +451,8 @@ bool console::char_event(int key)
         return false;
     } else if (key == K_ENTER) {
         log::message("]%s\n", _input.begin());
+        _history.insert(_input.begin());
+        _history_offset = 0;
         execute(_input.begin(), _input.end());
         _input.clear();
         return true;
@@ -441,6 +470,23 @@ bool console::key_event(int key, bool down)
 
     if (!active()) {
         return false;
+    } else if (down && key == K_UPARROW) {
+        if (_history_offset < _history.size()) {
+            if (!_history_offset++) {
+                _saved = _input;
+            }
+            _input.replace(_history[_history_offset - 1]);
+        }
+        return true;
+    } else if (down && key == K_DOWNARROW) {
+        if (_history_offset) {
+            if (--_history_offset) {
+                _input.replace(_history[_history_offset - 1]);
+            } else {
+                _input.replace(_saved.begin());
+            }
+        }
+        return true;
     } else if (down && _control && key == K_HOME) {
         _scroll_offset = _buffer.num_rows();
         return true;

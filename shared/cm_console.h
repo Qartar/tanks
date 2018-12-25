@@ -73,6 +73,7 @@ public:
     console_input();
 
     void clear();
+    void replace(char const* text);
 
     bool char_event(int key);
     bool key_event(int key, bool down);
@@ -88,6 +89,27 @@ protected:
     std::size_t _length;
     std::size_t _cursor;
     bool _control;
+};
+
+//------------------------------------------------------------------------------
+class console_history
+{
+public:
+    console_history();
+
+    void insert(char const* text);
+    std::size_t size() const { return std::min(_size, buffer_size); }
+    char const* operator[](std::size_t index) const;
+
+protected:
+    constexpr static std::size_t element_size = 1 << 8;
+    using element_type = std::array<char, element_size>;
+
+    constexpr static std::size_t buffer_size = 1 << 8;
+    constexpr static std::size_t buffer_mask = buffer_size - 1;
+    std::array<element_type, buffer_size> _buffer;
+
+    std::size_t _size;
 };
 
 //------------------------------------------------------------------------------
@@ -141,9 +163,12 @@ protected:
 
     console_buffer _buffer;
     console_input _input;
+    console_input _saved;
+    console_history _history;
 
     float _height;
     std::size_t _scroll_offset;
+    std::size_t _history_offset;
     bool _control;
 
     struct insensitive_compare {
