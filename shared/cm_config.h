@@ -25,6 +25,7 @@ enum flags
     archive     = 1 << 0,
     server      = 1 << 1,
     reset       = 1 << 2,
+    modified    = 1 << 3,
 };
 
 enum class value_type { string, integer, boolean, scalar };
@@ -48,6 +49,8 @@ public:
     std::string const& value() const { return _value; }
     int flags() const { return _flags; }
     value_type type() const { return _type; }
+    bool modified() const { return _flags & flags::modified; }
+    void reset() { _flags &= ~flags::modified; }
     void set(char const* value);
 
 protected:
@@ -85,6 +88,8 @@ public:
     std::string const& value() const { _base->value(); }
     int flags() const { return _base->flags(); }
     value_type type() const { return _base->type(); }
+    bool modified() const { return _base->modified(); }
+    void reset() { _base->reset(); }
     void set(char const* value);
 
 protected:

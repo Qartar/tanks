@@ -86,6 +86,7 @@ void variable_base::set(char const* value)
 void variable_base::set_string(std::string const& s)
 {
     _value = s;
+    _flags |= flags::modified;
 }
 
 //------------------------------------------------------------------------------
