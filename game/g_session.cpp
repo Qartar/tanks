@@ -36,6 +36,7 @@ session::session()
     , _cl_name("ui_name", "", config::archive, "user info: name")
     , _cl_color("ui_color", "255 0 0", config::archive, "user info: color")
     , _cl_weapon("ui_weapon", 0, config::archive, "user info: weapon")
+    , _timescale("timescale", 1.f, config::server, "")
     , _restart_time(time_value::zero)
     , _worldtime(time_value::zero)
     , _frametime(time_value::zero)
@@ -177,7 +178,7 @@ result session::run_frame(time_delta time)
 
     if (!_menu_active || svs.active) {
         // clamp world step size
-        _worldtime += std::min(time, FRAMETIME);
+        _worldtime += std::min(time, FRAMETIME) * _timescale;
 
         if (_worldtime > time_value((1 + _world.framenum()) * FRAMETIME) && svs.active) {
             _world.run_frame();
