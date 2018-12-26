@@ -55,6 +55,11 @@ result session::init (char const *cmdline)
 {
     _config = g_Application->config();
     _renderer = g_Application->window()->renderer();
+    {
+        float num = _renderer->view().size.x * ((640.f - 8.f) / 640.f);
+        float den = _renderer->monospace_size(" ").x;
+        _console.resize(static_cast<std::size_t>(num / den));
+    }
 
     _menu_image = _renderer->load_image(MAKEINTRESOURCE(IDB_BITMAP1));
 
@@ -974,12 +979,12 @@ void session::draw_console()
         char buf[260] = "]";
         console_input const& input = _console.input();
         strncpy(buf + 1, input.begin(), input.end() - input.begin());
-        _renderer->draw_monospace(buf, vec2(vec2i(8, yoffset - 8)), menu::colors[7]);
+        _renderer->draw_monospace(buf, vec2(vec2i(4, yoffset - 8)), menu::colors[7]);
         // draw input cursor
         if ((int)(_frametime.to_seconds() * 2.5f) % 2 == 0) {
             buf[input.cursor() - input.begin() + 1] = '_';
             buf[input.cursor() - input.begin() + 2] = '\0';
-            _renderer->draw_monospace(buf, vec2(vec2i(8, yoffset - 8)), menu::colors[7]);
+            _renderer->draw_monospace(buf, vec2(vec2i(4, yoffset - 8)), menu::colors[7]);
         }
     }
 
@@ -991,8 +996,8 @@ void session::draw_console()
             break;
         }
         _renderer->draw_monospace(_console.get_row(ii + _console.scroll()),
-                               vec2(vec2i(8, y)),
-                               menu::colors[7]);
+                                  vec2(vec2i(4, y)),
+                                  menu::colors[7]);
     }
 }
 
