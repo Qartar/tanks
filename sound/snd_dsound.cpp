@@ -21,7 +21,7 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
 {
     HRESULT         hResult;
 
-    log::message( "attempting to use DirectSound..." );
+    log::message("attempting to use DirectSound...\n");
 
     pDirectSound = NULL;
     pSoundBuffer = NULL;
@@ -31,51 +31,50 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
 
     m_State = device_fail;
 
-    log::message( "...linking dsound.dll: " );
+    log::message("...linking dsound.dll: ");
 
-    if ( (hDirectSound = LoadLibrary( "dsound.dll" )) == NULL )
-    {
-        log::message( "failed" );
+    if ((hDirectSound = LoadLibrary("dsound.dll")) == NULL) {
+        log::message("failed\n");
+        return;
+    } else {
+        log::message("ok\n");
+    }
+
+    if ((pDirectSoundCreate = (HRESULT (__stdcall *)(GUID *, LPDIRECTSOUND8 *, IUnknown *))GetProcAddress(hDirectSound, "DirectSoundCreate8")) == NULL) {
+        log::message("...GetProcAddress failed\n");
         return;
     }
 
-    if ( (pDirectSoundCreate = (HRESULT (__stdcall *)(GUID *, LPDIRECTSOUND8 *, IUnknown *))GetProcAddress( hDirectSound, "DirectSoundCreate8" )) == NULL )
-    {
-        log::message( "...GetProcAddress failed" );
-        return;
-    }
-
-    log::message( "...creating DirectSound object: " );
-    if ( ( hResult = pDirectSoundCreate( NULL, &pDirectSound, NULL )) != DS_OK )
-    {
-        if ( hResult == DSERR_ALLOCATED )
-        {
-            log::message( "failed, device in use" );
+    log::message("...creating DirectSound object: ");
+    if ((hResult = pDirectSoundCreate(NULL, &pDirectSound, NULL)) != DS_OK) {
+        if (hResult == DSERR_ALLOCATED) {
+            log::message("failed, device in use\n");
             m_State = device_abort;
+        } else {
+            log::message("failed\n");
         }
-        else
-            log::message( "failed" );
 
         return;
+    } else {
+        log::message("ok\n");
     }
 
     m_DeviceCaps.dwSize = sizeof(DSCAPS);
-    if ( pDirectSound->GetCaps( &m_DeviceCaps ) != DS_OK )
-    {
-        log::message( "...GetCaps failed" );
+    if (pDirectSound->GetCaps(&m_DeviceCaps) != DS_OK) {
+        log::message("...GetCaps failed\n");
         return;
     }
 
-    if ( m_DeviceCaps.dwFlags & DSCAPS_EMULDRIVER )
-    {
-        log::message( "...sound drivers not present" );
+    if (m_DeviceCaps.dwFlags & DSCAPS_EMULDRIVER) {
+        log::message("...sound drivers not present\n");
         return;
     }
 
-    if ( failed( CreateBuffers() ) )
+    if (failed(CreateBuffers())) {
         return;
+    }
 
-    log::message( "...completed successfully" );
+    log::message("...completed successfully\n");
     m_State = device_ready;
 }
 
@@ -84,24 +83,23 @@ cDirectSoundDevice::cDirectSoundDevice (HWND hWnd)
 
 void cDirectSoundDevice::Destroy ()
 {
-    log::message( "shutting down DirectSound..." );
+    log::message("shutting down DirectSound...\n");
 
-    if ( pSoundBuffer )
-        DestroyBuffers( );
+    if (pSoundBuffer) {
+        DestroyBuffers();
+    }
 
-    if ( pDirectSound )
-    {
-        log::message( "...releasing DirectSound object" );
+    if (pDirectSound) {
+        log::message("...releasing DirectSound object\n");
 
-        pDirectSound->Release( );
+        pDirectSound->Release();
         pDirectSound = NULL;
     }
 
-    if ( hDirectSound )
-    {
-        log::message( "...releasing dsound.dll" );
+    if (hDirectSound) {
+        log::message("...releasing dsound.dll\n");
 
-        FreeLibrary( hDirectSound );
+        FreeLibrary(hDirectSound);
         hDirectSound = NULL;
     }
 }
@@ -115,100 +113,98 @@ result cDirectSoundDevice::CreateBuffers ()
     WAVEFORMATEX        wfx;
     bool                primary_set = false;
 
-    log::message( "creating DirectSound buffers..." );
+    log::message("creating DirectSound buffers...\n");
 
-    log::message( "...setting coop level to exclusive: " );
-    if ( pDirectSound->SetCooperativeLevel( m_hWnd, DSSCL_EXCLUSIVE ) != DS_OK )
-    {
-        log::message( "failed" );
+    log::message("...setting coop level to exclusive: ");
+    if (pDirectSound->SetCooperativeLevel(m_hWnd, DSSCL_EXCLUSIVE) != DS_OK) {
+        log::message("failed\n");
         return result::failure;
+    } else {
+        log::message("ok\n");
     }
 
-    memset( &wfx, 0, sizeof(wfx) );
+    memset(&wfx, 0, sizeof(wfx));
     wfx.wFormatTag = WAVE_FORMAT_PCM;
     wfx.nChannels = 2;
     wfx.wBitsPerSample = 16;
-    wfx.nSamplesPerSec = clamp<int>( snd_frequency, 11025, 44100 );
+    wfx.nSamplesPerSec = clamp<int>(snd_frequency, 11025, 44100);
     wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
     wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
     wfx.cbSize = 0;
 
-    memset( &dsbd, 0, sizeof(DSBUFFERDESC) );
+    memset(&dsbd, 0, sizeof(DSBUFFERDESC));
     dsbd.dwSize = sizeof(DSBUFFERDESC);
     dsbd.dwFlags = DSBCAPS_PRIMARYBUFFER;
     dsbd.dwBufferBytes = 0;
     dsbd.lpwfxFormat = 0;
 
-    memset( &m_BufferCaps, 0, sizeof(DSBCAPS) );
+    memset(&m_BufferCaps, 0, sizeof(DSBCAPS));
     m_BufferCaps.dwSize = sizeof(DSBCAPS);
 
-    log::message( "...creating primary buffer: " );
-    if ( pDirectSound->CreateSoundBuffer( &dsbd, &pPrimaryBuffer, 0 ) == DS_OK )
-    {
+    log::message("...creating primary buffer: ");
+    if (pDirectSound->CreateSoundBuffer(&dsbd, &pPrimaryBuffer, 0) == DS_OK) {
+        log::message("ok\n");
 
         m_BufferFormat = wfx;
-        if ( pPrimaryBuffer->SetFormat( &m_BufferFormat ) != DS_OK )
-            log::message( "...setting primary format: failed" );
-        else
-        {
-            log::message( "...setting primary format: ok" );
+        if (pPrimaryBuffer->SetFormat(&m_BufferFormat) != DS_OK) {
+            log::message("...setting primary format: failed\n");
+        } else {
+            log::message("...setting primary format: ok\n");
             primary_set = true;
         }
+    } else {
+        log::message("failed\n");
     }
-    else
-        log::message( "failed" );
 
-    if ( !primary_set || !snd_primary )
+    if (!primary_set || !snd_primary)
     {
         m_BufferFormat = wfx;
 
-        memset( &dsbd, 0, sizeof(DSBUFFERDESC) );
+        memset(&dsbd, 0, sizeof(DSBUFFERDESC));
         dsbd.dwSize = sizeof(DSBUFFERDESC);
-        dsbd.dwFlags = DSBCAPS_CTRLFREQUENCY|DSBCAPS_LOCSOFTWARE;
+        dsbd.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCSOFTWARE;
         dsbd.dwBufferBytes = DEFAULT_BUFFER_SIZE;
         dsbd.lpwfxFormat = &m_BufferFormat;
 
-        if ( snd_dsfocus )
+        if (snd_dsfocus)
             dsbd.dwFlags |= DSBCAPS_STICKYFOCUS;
 
-        log::message( "...creating secondary buffer: " );
-        if ( pDirectSound->CreateSoundBuffer( &dsbd, &pSoundBuffer, 0 ) != DS_OK )
-        {
-            log::message( "failed" );
+        log::message("...creating secondary buffer: ");
+        if (pDirectSound->CreateSoundBuffer(&dsbd, &pSoundBuffer, 0) != DS_OK) {
+            log::message("failed\n");
+            return result::failure;
+        } else {
+            log::message("ok\n");
+        }
+
+        if (pSoundBuffer->GetCaps(&m_BufferCaps) != DS_OK) {
+            log::message("...GetCaps failed\n");
             return result::failure;
         }
 
-        if ( pSoundBuffer->GetCaps( &m_BufferCaps ) != DS_OK )
-        {
-            log::message( "...GetCaps failed" );
+        log::message("...using secondary buffer\n");
+    } else {
+        log::message("...setting coop level to writeprimary: ");
+        if (pDirectSound->SetCooperativeLevel(m_hWnd, DSSCL_WRITEPRIMARY) != DS_OK) {
+            log::message("failed\n");
             return result::failure;
+        } else {
+            log::message("ok\n");
         }
 
-        log::message( "...using secondary buffer" );
-    }
-    else
-    {
-        log::message( "...setting coop level to writeprimary: " );
-        if ( pDirectSound->SetCooperativeLevel( m_hWnd, DSSCL_WRITEPRIMARY ) != DS_OK )
-        {
-            log::message( "failed\n" );
-            return result::failure;
-        }
-
-        if ( pPrimaryBuffer->GetCaps( &m_BufferCaps ) != DS_OK )
-        {
-            log::message( "...GetCaps failed\n" );
+        if (pPrimaryBuffer->GetCaps(&m_BufferCaps) != DS_OK) {
+            log::message("...GetCaps failed\n");
             return result::failure;
         }
 
         pSoundBuffer = pPrimaryBuffer;
-        log::message( "...using primary buffer" );
+        log::message("...using primary buffer\n");
     }
 
-    log::message( "output buffer format:" );
-    log::message( "...channels:  %i", m_BufferFormat.nChannels );
-    log::message( "...bit width: %i", m_BufferFormat.wBitsPerSample );
-    log::message( "...frequency: %i", m_BufferFormat.nSamplesPerSec );
+    log::message("output buffer format:\n");
+    log::message("...channels:  %d\n", m_BufferFormat.nChannels);
+    log::message("...bit width: %d\n", m_BufferFormat.wBitsPerSample);
+    log::message("...frequency: %d\n", m_BufferFormat.nSamplesPerSec);
 
     pSoundBuffer->Play( 0, 0, DSBPLAY_LOOPING );
     m_nOffset = 0;
@@ -219,37 +215,32 @@ result cDirectSoundDevice::CreateBuffers ()
 /*=========================================================
 =========================================================*/
 
-void cDirectSoundDevice::DestroyBuffers ( )
+void cDirectSoundDevice::DestroyBuffers ()
 {
-    log::message( "destroying DirectSound buffers..." );
+    log::message("destroying DirectSound buffers...\n");
 
-    if ( pDirectSound )
-    {
-        log::message( "...setting coop level to normal" );
-        pDirectSound->SetCooperativeLevel( m_hWnd, DSSCL_NORMAL );
+    if (pDirectSound) {
+        log::message("...setting coop level to normal\n");
+        pDirectSound->SetCooperativeLevel(m_hWnd, DSSCL_NORMAL);
     }
 
-    if ( pSoundBuffer && pSoundBuffer != pPrimaryBuffer )
-    {
-        log::message( "...releasing secondary buffer" );
-        pSoundBuffer->Stop( );
-        pSoundBuffer->Release( );
+    if (pSoundBuffer && pSoundBuffer != pPrimaryBuffer) {
+        log::message("...releasing secondary buffer\n");
+        pSoundBuffer->Stop();
+        pSoundBuffer->Release();
 
-        if ( pPrimaryBuffer )
-        {
-            log::message( "...releasing primary buffer" );
-            pPrimaryBuffer->Release( );
+        if (pPrimaryBuffer) {
+            log::message("...releasing primary buffer\n");
+            pPrimaryBuffer->Release();
         }
 
         pPrimaryBuffer = NULL;
         pSoundBuffer = NULL;
-    }
-    else if ( pSoundBuffer )
-    {
-        log::message( "...releasing primary buffer" );
+    } else if (pSoundBuffer) {
+        log::message("...releasing primary buffer\n");
 
-        pSoundBuffer->Stop( );
-        pSoundBuffer->Release( );
+        pSoundBuffer->Stop();
+        pSoundBuffer->Release();
         pPrimaryBuffer = NULL;
         pSoundBuffer = NULL;
     }
@@ -266,8 +257,8 @@ buffer_info_t cDirectSoundDevice::getBufferInfo ()
     info.bitwidth = m_BufferFormat.wBitsPerSample;
     info.frequency = m_BufferFormat.nSamplesPerSec;
     info.size = m_BufferCaps.dwBufferBytes;
-    
-    pSoundBuffer->GetCurrentPosition( (LPDWORD )&info.read, (LPDWORD )&info.write );
+
+    pSoundBuffer->GetCurrentPosition((LPDWORD)&info.read, (LPDWORD)&info.write);
 
     info.write = m_nOffset;
 
@@ -285,21 +276,23 @@ void cDirectSoundDevice::writeToBuffer (byte *pAudioData, int nBytes)
 
     DWORD       dwStatus;
 
-    pSoundBuffer->GetStatus( &dwStatus );
-    if ( dwStatus & DSBSTATUS_BUFFERLOST )
-        pSoundBuffer->Restore( );
-    if ( !(dwStatus & DSBSTATUS_PLAYING) )
-        pSoundBuffer->Play( 0, 0, DSBPLAY_LOOPING );
-    
-    pSoundBuffer->Lock( m_nOffset, nBytes, &pBuffer1, (LPDWORD )&nBytes1, &pBuffer2, (LPDWORD )&nBytes2, 0 );
+    pSoundBuffer->GetStatus(&dwStatus);
+    if (dwStatus & DSBSTATUS_BUFFERLOST) {
+        pSoundBuffer->Restore();
+    }
+    if (!(dwStatus & DSBSTATUS_PLAYING)) {
+        pSoundBuffer->Play(0, 0, DSBPLAY_LOOPING);
+    }
+
+    pSoundBuffer->Lock(m_nOffset, nBytes, &pBuffer1, (LPDWORD)&nBytes1, &pBuffer2, (LPDWORD)&nBytes2, 0);
 
     nSamples1 = nBytes1 / (m_BufferFormat.nChannels * m_BufferFormat.wBitsPerSample / 8);
     nSamples2 = nBytes2 / (m_BufferFormat.nChannels * m_BufferFormat.wBitsPerSample / 8);
 
-    gSound->mixStereo16( (samplepair_t *)pAudioData, (stereo16_t *)pBuffer1, nSamples1, 255 );
-    gSound->mixStereo16( (samplepair_t *)(pAudioData+nBytes1*2), (stereo16_t *)pBuffer2, nSamples2, 255 );
+    gSound->mixStereo16((samplepair_t *)pAudioData, (stereo16_t *)pBuffer1, nSamples1, 255);
+    gSound->mixStereo16((samplepair_t *)(pAudioData + nBytes1 * 2), (stereo16_t *)pBuffer2, nSamples2, 255);
 
-    pSoundBuffer->Unlock( pBuffer1, nBytes1, pBuffer2, nBytes2 );
+    pSoundBuffer->Unlock(pBuffer1, nBytes1, pBuffer2, nBytes2);
 
-    m_nOffset = (m_nOffset + nBytes1 + nBytes2)%m_BufferCaps.dwBufferBytes;
+    m_nOffset = (m_nOffset + nBytes1 + nBytes2) % m_BufferCaps.dwBufferBytes;
 }
