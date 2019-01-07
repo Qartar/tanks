@@ -10,105 +10,35 @@
 namespace physics {
 
 //------------------------------------------------------------------------------
-collide::collide(rigid_body const* body_a, rigid_body const* body_b)
-    : _body{body_a, body_b}
+collide::motion_data::motion_data(motion const& motion)
+    : physics::motion(motion)
 {
-    vec3 position, direction = vec3(body_b->get_position() - body_a->get_position());
+    local_to_world = mat3::transform(_position, _rotation);
+    world_to_local = mat3::inverse_transform(_position, _rotation);
+}
 
-    if (direction == vec3_zero) {
-        _has_contact = false;
-        _contact.distance = 0;
-        _contact.point = vec2(0,0);
-        _contact.normal = vec2(0,0);
-        _contact.impulse = vec2(0,0);
-        return;
-    }
+//------------------------------------------------------------------------------
+collide::collide(motion const& motion_a, motion const& motion_b)
+    : _motion{motion_a, motion_b}
+{
+    vec3 position = vec3_zero;
+    vec3 direction = vec3(_motion[1].get_position() - _motion[0].get_position());
 
     float distance = minimum_distance(position, direction);
 
     // Calculate the relative velocity of the bodies at the contact point
-    vec3 relative_velocity = vec3(_body[1]->get_linear_velocity(position.to_vec2()))
-                           - vec3(_body[0]->get_linear_velocity(position.to_vec2()));
+    vec3 relative_velocity = vec3(_motion[1].get_linear_velocity(position.to_vec2()))
+                           - vec3(_motion[0].get_linear_velocity(position.to_vec2()));
 
-    // Simple collision response for penetrating bodies
-    if (distance < 0.0f && relative_velocity.dot(direction) < -0.f) {
-        vec3 tangent = (relative_velocity - direction * relative_velocity.dot(direction)).normalize();
-
-        // Use the geometric mean of both bodies' coefficient of restitution
-        float restitution = sqrt(_body[0]->get_material()->restitution()
-                               * _body[1]->get_material()->restitution());
-
-        // Use the geometric mean of both bodies' coefficient of friction
-        float mu = sqrt(_body[0]->get_material()->contact_friction()
-                      * _body[1]->get_material()->contact_friction());
-
-        // Calculate the inverse reduced mass of both bodies
-        float inverse_reduced_mass = _body[0]->get_inverse_mass()
-                                   + _body[1]->get_inverse_mass();
-
-        vec3 ra = position - vec3(_body[0]->get_position());
-        vec3 rb = position - vec3(_body[1]->get_position());
-
-        // Change in normal velocity per change in momentum along normal
-        float gx = inverse_reduced_mass
-                 + _body[0]->get_inverse_inertia() * ra.cross(direction).length_sqr()
-                 + _body[1]->get_inverse_inertia() * rb.cross(direction).length_sqr();
-
-        // Change in tangent velocity per change in momentum along normal
-        float gy = _body[0]->get_inverse_inertia() * ra.cross(direction).cross(ra).dot(-tangent)
-                 + _body[1]->get_inverse_inertia() * rb.cross(direction).cross(rb).dot(-tangent);
-
-        // Change in normal velocity per change in momentum along tangent
-        float hx = _body[0]->get_inverse_inertia() * ra.cross(-tangent).cross(ra).dot(direction)
-                 + _body[1]->get_inverse_inertia() * rb.cross(-tangent).cross(rb).dot(direction);
-
-        // Change in tangent velocity per change in momentum along tangent
-        float hy = inverse_reduced_mass
-                 + _body[0]->get_inverse_inertia() * ra.cross(-tangent).length_sqr()
-                 + _body[1]->get_inverse_inertia() * rb.cross(-tangent).length_sqr();
-
-        float dvx = -(1.0f + restitution) * relative_velocity.dot(direction);
-        float dvy = -relative_velocity.dot(-tangent);
-
-        // Solve the vector equation:
-        //
-        //             | Gx  Hx |
-        // dV = M dP = |        | dP
-        //             | Gy  Hy |
-
-        // Inverting the response matrix gives:
-        //
-        //           1      |  Hy  -Hx |
-        // M' = ----------- |          |
-        //      GxHy - HxGy | -Gy   Gx |
-
-        float inv_det = 1.0f / (gx * hy - hx * gy);
-
-        float dpx = inv_det * ( hy * dvx - hx * dvy);
-        float dpy = inv_det * (-gy * dvx + gx * dvy);
-
-        // Clamp friction impulse by friction coefficient
-        if (abs(dpy) > mu * abs(dpx)) {
-            // Find clamped vy using the original vector equation with dpy := mu * dpx
-            float dvy0 = (gy + mu * hy) / (gx + mu * hx) * dvx;
-
-            // Recalculate impulse using clamped friction
-            dpx = inv_det * ( hy * dvx - hx * dvy0);
-            dpy = inv_det * (-gy * dvx + gx * dvy0);
-        }
-
+    if (distance < 0.0f && relative_velocity.dot(direction) < 0.f) {
         _has_contact = true;
-        _contact.distance = distance;
-        _contact.point = position.to_vec2();
-        _contact.normal = direction.to_vec2();
-        _contact.impulse = (direction * dpx - tangent * dpy).to_vec2();
     } else {
         _has_contact = false;
-        _contact.distance = distance;
-        _contact.point = position.to_vec2();
-        _contact.normal = direction.to_vec2();
-        _contact.impulse = vec2(0,0);
     }
+
+    _contact.distance = distance;
+    _contact.point = position.to_vec2();
+    _contact.normal = direction.to_vec2();
 }
 
 //------------------------------------------------------------------------------
@@ -162,19 +92,17 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
 //------------------------------------------------------------------------------
 collide::support_vertex collide::supporting_vertex(vec3 direction) const
 {
-    vec3 a = body_supporting_vertex(_body[0],  direction);
-    vec3 b = body_supporting_vertex(_body[1], -direction);
+    vec3 a = motion_supporting_vertex(_motion[0],  direction);
+    vec3 b = motion_supporting_vertex(_motion[1], -direction);
     return {a, b, a - b};
 }
 
 //------------------------------------------------------------------------------
-vec3 collide::body_supporting_vertex(rigid_body const* body, vec3 direction) const
+vec3 collide::motion_supporting_vertex(motion_data const& motion, vec3 direction) const
 {
-    mat3 world_to_local = mat3::rotate<2>(-body->get_rotation());
-    mat3 local_to_world = mat3::rotate<2>( body->get_rotation());
-
-    vec2 v = body->get_shape()->supporting_vertex((direction * world_to_local).to_vec2());
-    return vec3(v) * local_to_world + vec3(body->get_position());
+    vec2 local_direction = (direction * motion.world_to_local).to_vec2();
+    vec2 local_vertex = motion.get_shape()->supporting_vertex(local_direction);
+    return vec3(local_vertex, 1) * motion.local_to_world;
 }
 
 //------------------------------------------------------------------------------

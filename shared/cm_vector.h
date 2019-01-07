@@ -64,6 +64,7 @@ public:
 
     constexpr float dot(const vec2 &V) const { return x*V.x + y*V.y; }
     constexpr vec2 cross(float V) const { return vec2(y*V, -x*V); }
+    constexpr float cross(const vec2 &V) const { return x*V.y - y*V.x; }
 };
 
 //------------------------------------------------------------------------------

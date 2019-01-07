@@ -110,7 +110,7 @@ private:
     std::map<physics::rigid_body const*, game::object*> _physics_objects;
 
     bool physics_filter_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b);
-    bool physics_collide_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b, physics::contact const& contact);
+    bool physics_collide_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b, physics::collision const& collision);
 
     game::object* spawn_snapshot(std::size_t spawn_id, object_type type);
 

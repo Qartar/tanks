@@ -13,7 +13,7 @@ class message;
 } // namespace network
 
 namespace physics {
-struct contact;
+struct collision;
 } // namespace physics
 
 namespace render {
@@ -46,7 +46,7 @@ public:
     std::size_t spawn_id() const { return _spawn_id; }
 
     virtual void draw(render::system* renderer, time_value time) const;
-    virtual bool touch(object *other, physics::contact const* contact);
+    virtual bool touch(object *other, physics::collision const* collision);
     virtual void think();
 
     virtual void read_snapshot(network::message const& message);

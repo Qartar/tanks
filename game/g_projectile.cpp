@@ -112,7 +112,7 @@ void projectile::update_sound()
 }
 
 //------------------------------------------------------------------------------
-bool projectile::touch(object *other, physics::contact const* contact)
+bool projectile::touch(object *other, physics::collision const* collision)
 {
     auto sound = _type == weapon_type::cannon ? _sound_cannon_impact :
                  _type == weapon_type::missile ? _sound_cannon_impact :
@@ -122,13 +122,13 @@ bool projectile::touch(object *other, physics::contact const* contact)
                   _type == weapon_type::missile ? effect_type::missile_impact :
                   _type == weapon_type::blaster ? effect_type::blaster_impact : effect_type::smoke;
 
-    if (other && other->_type != object_type::projectile && !other->touch(this, contact)) {
+    if (other && other->_type != object_type::projectile && !other->touch(this, collision)) {
         return false;
     }
 
-    if (contact) {
-        _world->add_sound(sound, contact->point);
-        _world->add_effect(effect, contact->point, -contact->normal, 0.5f * _damage);
+    if (collision) {
+        _world->add_sound(sound, collision->point);
+        _world->add_effect(effect, collision->point, -collision->normal, 0.5f * _damage);
     } else {
         _world->add_sound(sound, get_position());
         _world->add_effect(effect, get_position(), vec2_zero, 0.5f * _damage);
@@ -145,7 +145,7 @@ bool projectile::touch(object *other, physics::contact const* contact)
         }
 
         vec2 direction = get_linear_velocity().normalize();
-        vec2 impact_normal = contact ? -contact->normal : -direction;
+        vec2 impact_normal = collision ? -collision->normal : -direction;
         vec2 forward = rotate(vec2(1,0), other->get_rotation());
         float impact_angle = impact_normal.dot(forward);
         float damage = _damage / other_tank->_client->armor_mod;

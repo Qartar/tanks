@@ -33,7 +33,7 @@ void object::spawn()
 }
 
 //------------------------------------------------------------------------------
-bool object::touch(object* /*other*/, physics::contact const* /*contact*/)
+bool object::touch(object* /*other*/, physics::collision const* /*collision*/)
 {
     return true;
 }

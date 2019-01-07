@@ -4,12 +4,13 @@
 #pragma once
 
 #include "cm_vector.h"
+#include "p_motion.h"
 #include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace physics {
 
-class rigid_body;
+class shape;
 
 //------------------------------------------------------------------------------
 struct contact
@@ -17,14 +18,13 @@ struct contact
     float distance; //!< Contact distance, negative for penetration
     vec2 point; //!< Contact point in world space
     vec2 normal; //!< Contact normal in world space
-    vec2 impulse; //!< Impulse that should be applied to body_b to resolve the collision.
 };
 
 //------------------------------------------------------------------------------
 class collide
 {
 public:
-    collide(rigid_body const* body_a, rigid_body const* body_b);
+    collide(motion const& motion_a, motion const& motion_b);
 
     bool has_contact() const {
         return _has_contact;
@@ -38,6 +38,13 @@ protected:
     bool _has_contact;
 
     contact _contact;
+
+    struct motion_data : motion
+    {
+        motion_data(motion const&);
+        mat3 local_to_world;
+        mat3 world_to_local;
+    };
 
     constexpr static int max_iterations = 64;
     constexpr static int max_vertices = 64;
@@ -58,7 +65,7 @@ protected:
 
     support_vertex supporting_vertex(vec3 direction) const;
 
-    vec3 body_supporting_vertex(rigid_body const* body, vec3 direction) const;
+    vec3 motion_supporting_vertex(motion_data const& motion, vec3 direction) const;
 
     vec3 nearest_difference(support_vertex a, support_vertex b) const;
 
@@ -75,7 +82,7 @@ protected:
     int nearest_edge_index(vec3 normal, std::vector<support_vertex> const& vertices, vec3& direction) const;
 
 protected:
-    rigid_body const* _body[2];
+    motion_data _motion[2];
 };
 
 } // namespace physics

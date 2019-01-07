@@ -21,7 +21,7 @@ public:
     ~tank();
 
     virtual void draw(render::system* renderer, time_value time) const override;
-    virtual bool touch(object *other, physics::contact const* contact) override;
+    virtual bool touch(object *other, physics::collision const* collision) override;
     virtual void think() override;
 
     virtual void read_snapshot(network::message const& message) override;
@@ -64,7 +64,7 @@ public:
     weapon_type _weapon;
 
 protected:
-    void collide(tank* other, physics::contact const* contact);
+    void collide(tank* other, physics::collision const* collision);
 
     void launch_projectile();
 

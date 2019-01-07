@@ -876,12 +876,12 @@ bool world::physics_filter_callback(physics::rigid_body const* body_a, physics::
 }
 
 //------------------------------------------------------------------------------
-bool world::physics_collide_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b, physics::contact const& contact)
+bool world::physics_collide_callback(physics::rigid_body const* body_a, physics::rigid_body const* body_b, physics::collision const& collision)
 {
     game::object* obj_a = _physics_objects[body_a];
     game::object* obj_b = _physics_objects[body_b];
 
-    return obj_a->touch(obj_b, &contact);
+    return obj_a->touch(obj_b, &collision);
 }
 
 } // namespace game

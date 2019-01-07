@@ -115,15 +115,15 @@ void tank::draw(render::system* renderer, time_value time) const
 }
 
 //------------------------------------------------------------------------------
-bool tank::touch(object *other, physics::contact const* contact)
+bool tank::touch(object *other, physics::collision const* collision)
 {
-    if (!other || !contact) {
+    if (!other || !collision) {
         return false;
     }
 
-    float impulse = contact->impulse.length();
+    float impulse = collision->impulse.length();
     float strength = clamp((impulse - 5.0f) / 5.0f, 0.0f, 1.0f);
-    _world->add_effect(effect_type::sparks, contact->point, -contact->normal, strength);
+    _world->add_effect(effect_type::sparks, collision->point, -collision->normal, strength);
 
     if (other->_type == object_type::projectile) {
         return true;
@@ -133,21 +133,21 @@ bool tank::touch(object *other, physics::contact const* contact)
 
     tank* other_tank = static_cast<tank*>(other);
 
-    this->collide(other_tank, contact);
-    other_tank->collide(this, contact);
+    this->collide(other_tank, collision);
+    other_tank->collide(this, collision);
     return true;
 }
 
 //------------------------------------------------------------------------------
-void tank::collide(tank* other, physics::contact const* contact)
+void tank::collide(tank* other, physics::collision const* collision)
 {
     if (other->_damage >= 1.0f) {
         return;
     }
 
-    float base_damage = std::max<float>(0, contact->impulse.dot(contact->normal) - 10.0f) / 2.0f * FRAMETIME.to_seconds();
+    float base_damage = std::max<float>(0, collision->impulse.dot(collision->normal) - 10.0f) / 2.0f * FRAMETIME.to_seconds();
 
-    vec2 direction = (contact->point - other->get_position()).normalize();
+    vec2 direction = (collision->point - other->get_position()).normalize();
     vec2 forward = rotate(vec2(1,0), other->get_rotation());
     float impact_angle = direction.dot(forward);
 

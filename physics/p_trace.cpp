@@ -12,18 +12,18 @@ namespace physics {
 //------------------------------------------------------------------------------
 trace::trace(rigid_body const* body, vec2 start, vec2 end)
 {
-    physics::material material(0,0);
+    physics::motion body_motion = body->get_motion();
     physics::circle_shape shape(0);
-    physics::rigid_body point_body(&shape, &material, 0);
+    physics::motion point_motion{&shape};
 
     vec2 direction = end - start;
     float fraction = 0.0f;
 
     for (int num_iterations = 0; num_iterations < max_iterations && fraction < 1.0f; ++num_iterations) {
-        point_body.set_position(start + direction * fraction);
-        _contact = physics::collide(&point_body, body).get_contact();
+        point_motion.set_position(start + direction * fraction);
+        _contact = physics::collide(point_motion, body_motion).get_contact();
 
-        if (_contact.normal.dot(direction) < 0.0f) {
+        if (_contact.normal.dot(direction) <= 0.0f) {
             _fraction = 1.0f;
             return;
         }
@@ -41,8 +41,8 @@ trace::trace(rigid_body const* body, vec2 start, vec2 end)
 //------------------------------------------------------------------------------
 trace::trace(rigid_body const* body_a, rigid_body const* body_b, float delta_time)
 {
-    physics::rigid_body proxy_a = *body_a;
-    physics::rigid_body proxy_b = *body_b;
+    physics::motion motion_a = body_a->get_motion();
+    physics::motion motion_b = body_b->get_motion();
 
     vec2 p0_a = body_a->get_position();
     vec2 p0_b = body_b->get_position();
@@ -73,17 +73,17 @@ trace::trace(rigid_body const* body_a, rigid_body const* body_b, float delta_tim
     }
 
     for (int num_iterations = 0; num_iterations < max_iterations && fraction < 1.0f; ++num_iterations) {
-        proxy_a.set_position(p0_a + dp_a * fraction);
-        proxy_a.set_rotation(r0_a + dr_a * fraction);
-        proxy_b.set_position(p0_b + dp_b * fraction);
-        proxy_b.set_rotation(r0_b + dr_b * fraction);
+        motion_a.set_position(p0_a + dp_a * fraction);
+        motion_a.set_rotation(r0_a + dr_a * fraction);
+        motion_b.set_position(p0_b + dp_b * fraction);
+        motion_b.set_rotation(r0_b + dr_b * fraction);
 
-        _contact = physics::collide(&proxy_a, &proxy_b).get_contact();
+        _contact = physics::collide(motion_a, motion_b).get_contact();
 
-        direction = proxy_b.get_linear_velocity(_contact.point) * delta_time
-                  - proxy_a.get_linear_velocity(_contact.point) * delta_time;
+        direction = motion_b.get_linear_velocity(_contact.point) * delta_time
+                  - motion_a.get_linear_velocity(_contact.point) * delta_time;
 
-        if (_contact.normal.dot(direction) > 0.0f) {
+        if (_contact.normal.dot(direction) >= 0.0f) {
             _fraction = 1.0f;
             return;
         }
