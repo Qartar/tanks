@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <Type Name="bounds">
+    <DisplayString>{{{_mins}, {_maxs}}}</DisplayString>
+  </Type>
+
+  <!-- color types -->
+  <Type Name="color3">
+    <DisplayString>{{{r}, {g}, {b}}}</DisplayString>
+  </Type>
+  <Type Name="color4">
+    <DisplayString>{{{r}, {g}, {b}, {a}}}</DisplayString>
+  </Type>
+
+  <!-- matrix types -->
+  <Type Name="mat2">
+    <DisplayString>{{{_rows[0]}, {_rows[1]}}}</DisplayString>
+    <Expand>
+      <ExpandedItem>_rows</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="mat3">
+    <DisplayString>{{{_rows[0]}, {_rows[1]}, {_rows[2]}}}</DisplayString>
+    <Expand>
+      <ExpandedItem>_rows</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="mat4">
+    <DisplayString>{{{_rows[0]}, {_rows[1]}, {_rows[2]}, {_rows[3]}}}</DisplayString>
+    <Expand>
+      <ExpandedItem>_rows</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <!-- vector types -->
+  <Type Name="vec2">
+    <DisplayString>{{{x}, {y}}}</DisplayString>
+  </Type>
+  <Type Name="vec3">
+    <DisplayString>{{{x}, {y}, {z}}}</DisplayString>
+  </Type>
+  <Type Name="vec4">
+    <DisplayString>{{{x}, {y}, {z}, {w}}}</DisplayString>
+  </Type>
+  <Type Name="vec2i">
+    <DisplayString>{{{x}, {y}}}</DisplayString>
+  </Type>
+  <Type Name="rect">
+    <DisplayString>{{{_mins}, {_maxs}}}</DisplayString>
+  </Type>
+
+  <!-- time_base<T> -->
+  <Type Name="time_base&lt;*&gt;">
+    <DisplayString Condition="_value == -9223372036854775808">-inf</DisplayString>
+    <DisplayString Condition="_value == 9223372036854775807">inf</DisplayString>
+    <DisplayString Condition="_value &gt;= 3600000000">
+      {_value / 3600000000, d} h {(_value % 3600000000) / 60000000, d} m {(_value % 1000000) / 1000000.0, f} s
+    </DisplayString>
+    <DisplayString Condition="_value &gt;= 60000000 &amp;&amp; _value &lt; 3600000000">
+      {_value / 60000000, d} m {(_value % 60000000) / 1000000.0, f} s
+    </DisplayString>
+    <DisplayString Condition="_value &gt;= 100000 &amp;&amp; _value &lt; 60000000">
+      {_value / 1000000.0, f} s
+    </DisplayString>
+    <DisplayString Condition="_value &lt; 100000">
+      {_value / 1000.0, f} ms
+    </DisplayString>
+  </Type>
+</AutoVisualizer>

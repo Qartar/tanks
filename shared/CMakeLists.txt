@@ -17,6 +17,8 @@ set(SHARED_SOURCES
     cm_sound.h
     cm_time.h
     cm_vector.h
+
+    shared.natvis
 )
 
 add_library(shared STATIC ${SHARED_SOURCES})
