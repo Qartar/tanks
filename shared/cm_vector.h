@@ -26,9 +26,9 @@ public:
     constexpr vec2(float X, float Y) : x(X), y(Y) {}
     explicit constexpr vec2(float S) : x(S), y(S) {}
 
-    vec2& operator=(const vec2 &V) {x=V.x; y=V.y; return *this;}
-    bool operator==(const vec2 &V) const { return x == V.x && y == V.y; }
-    bool operator!=(const vec2 &V) const { return x != V.x || y != V.y; }
+    vec2& operator=(vec2 const& V) {x=V.x; y=V.y; return *this;}
+    bool operator==(vec2 const& V) const { return x == V.x && y == V.y; }
+    bool operator!=(vec2 const& V) const { return x != V.x || y != V.y; }
     constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
     float& operator[](std::size_t idx) { return (&x)[idx]; }
     operator float*() { return &x; }
@@ -62,9 +62,9 @@ public:
     float normalize_length() { float len = length(); *this /= len; return len; }
     void clear() { x=0.0f; y=0.0f; }
 
-    constexpr float dot(const vec2 &V) const { return x*V.x + y*V.y; }
+    constexpr float dot(vec2 const& V) const { return x*V.x + y*V.y; }
     constexpr vec2 cross(float V) const { return vec2(y*V, -x*V); }
-    constexpr float cross(const vec2 &V) const { return x*V.y - y*V.x; }
+    constexpr float cross(vec2 const& V) const { return x*V.y - y*V.x; }
 };
 
 //------------------------------------------------------------------------------
@@ -82,9 +82,9 @@ public:
     constexpr explicit vec3(float S) : x(S), y(S), z(S) {}
     constexpr explicit vec3(vec2 const& V, float Z = 0) :x(V.x), y(V.y), z(Z) {}
 
-    vec3& operator=(const vec3 &V) {x=V.x; y=V.y; z=V.z; return *this; }
-    bool operator==(const vec3 &V) const {return x == V.x && y == V.y && z == V.z; }
-    bool operator!=(const vec3 &V) const {return x != V.x || y != V.y || z != V.z; }
+    vec3& operator=(vec3 const& V) {x=V.x; y=V.y; z=V.z; return *this; }
+    bool operator==(vec3 const& V) const {return x == V.x && y == V.y && z == V.z; }
+    bool operator!=(vec3 const& V) const {return x != V.x || y != V.y || z != V.z; }
     constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
     float& operator[](std::size_t idx) { return (&x)[idx]; }
     operator float*() { return &x; }
@@ -140,9 +140,9 @@ public:
     constexpr explicit vec4(float S) : x(S), y(S), z(S), w(S) {}
     constexpr explicit vec4(vec3 const& V, float W = 1) : x(V.x), y(V.y), z(V.z), w(W) {}
 
-    vec4& operator=(const vec4 &V) { x=V.x; y=V.y; z=V.z; w=V.w; return *this; }
-    bool operator==(const vec4 &V) const { return x==V.x && y==V.y && z==V.z && w==V.w; }
-    bool operator!=(const vec4 &V) const { return x!=V.x || y!=V.y || z!=V.z || w!=V.w; }
+    vec4& operator=(vec4 const& V) { x=V.x; y=V.y; z=V.z; w=V.w; return *this; }
+    bool operator==(vec4 const& V) const { return x==V.x && y==V.y && z==V.z && w==V.w; }
+    bool operator!=(vec4 const& V) const { return x!=V.x || y!=V.y || z!=V.z || w!=V.w; }
     constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
     float& operator[](std::size_t idx) { return (&x)[idx]; }
     operator float*() { return &x; }
@@ -198,9 +198,9 @@ public:
     constexpr vec2i(int X, int Y) : x(X), y(Y) {}
     explicit constexpr vec2i(int S) : x(S), y(S) {}
 
-    vec2i& operator=(const vec2i &V) {x=V.x; y=V.y; return *this;}
-    bool operator==(const vec2i &V) const { return x == V.x && y == V.y; }
-    bool operator!=(const vec2i &V) const { return x != V.x || y != V.y; }
+    vec2i& operator=(vec2i const& V) {x=V.x; y=V.y; return *this;}
+    bool operator==(vec2i const& V) const { return x == V.x && y == V.y; }
+    bool operator!=(vec2i const& V) const { return x != V.x || y != V.y; }
     constexpr int operator[](std::size_t idx) const { return (&x)[idx]; }
     int& operator[](std::size_t idx) { return (&x)[idx]; }
     operator int*() { return &x; }
@@ -231,7 +231,7 @@ public:
     int length_sqr() const { return x*x + y*y; }
     void clear() { x=0; y=0; }
 
-    constexpr int dot(const vec2i &V) const { return x*V.x + y*V.y; }
+    constexpr int dot(vec2i const& V) const { return x*V.x + y*V.y; }
     constexpr vec2i cross(int V) const { return vec2i(y*V, -x*V); }
     explicit constexpr operator vec2() const { return vec2((float)x, (float)y); }
 };
@@ -260,9 +260,9 @@ public:
     constexpr rect(int X, int Y, int W, int H) : _mins(X, Y), _maxs(W, H) {}
     constexpr rect(vec2i mins, vec2i maxs) : _mins(mins), _maxs(maxs) {}
 
-    rect& operator=(const rect &R) { _mins=R._mins; _maxs=R._maxs; return *this; }
-    bool operator==(const rect &R) const { return _mins == R._mins && _maxs == R._maxs; }
-    bool operator!=(const rect &R) const { return _mins != R._mins || _maxs != R._maxs; }
+    rect& operator=(rect const& R) { _mins=R._mins; _maxs=R._maxs; return *this; }
+    bool operator==(rect const& R) const { return _mins == R._mins && _maxs == R._maxs; }
+    bool operator!=(rect const& R) const { return _mins != R._mins || _maxs != R._maxs; }
     vec2i operator[](std::size_t idx) const { return (&_mins)[idx]; }
     vec2i& operator[](std::size_t idx) { return (&_mins)[idx]; }
 

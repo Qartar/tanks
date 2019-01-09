@@ -12,7 +12,7 @@
 namespace render {
 
 //------------------------------------------------------------------------------
-render::image const* system::load_image(const char *name)
+render::image const* system::load_image(char const* name)
 {
     _images.push_back(std::make_unique<render::image>(name));
     return _images.back().get();

@@ -87,7 +87,7 @@ std::uintptr_t socket::open_socket(socket_type type, word port) const
 
     // enable broadcasting
     if (type == socket_type::ipv4) {
-        if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (const char *)&args, sizeof(args) ) == SOCKET_ERROR) {
+        if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, (char const*)&args, sizeof(args) ) == SOCKET_ERROR) {
             ::closesocket(newsocket);
             return 0;
         }
