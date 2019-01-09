@@ -10,6 +10,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
 
+class system;
+
 //------------------------------------------------------------------------------
 class model
 {
@@ -26,10 +28,12 @@ public:
         : model(rects, Size)
     {}
 
-    void draw(vec2 position, float rotation, color4 color) const;
-
 protected:
-    std::vector<rect> _list;
+    friend system;
+
+    std::vector<vec2> _vertices;
+    std::vector<color3> _colors;
+    std::vector<uint16_t> _indices;
     vec2 _mins;
     vec2 _maxs;
 

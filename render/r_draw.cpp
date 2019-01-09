@@ -4,6 +4,15 @@
 #include "precompiled.h"
 #pragma hdrstop
 
+typedef void (APIENTRY* PFNGLBLENDCOLOR)(GLfloat red, GLfloat greed, GLfloat blue, GLfloat alpha);
+
+PFNGLBLENDCOLOR glBlendColor = NULL;
+
+#define GL_CONSTANT_COLOR               0x8001
+#define GL_ONE_MINUS_CONSTANT_COLOR     0x8002
+#define GL_CONSTANT_ALPHA               0x8003
+#define GL_ONE_MINUS_CONSTANT_ALPHA     0x8004
+
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
 
@@ -154,6 +163,38 @@ void system::draw_line(vec2 start, vec2 end, color4 start_color, color4 end_colo
         glColor4fv(end_color);
         glVertex2fv(end);
     glEnd();
+}
+
+//------------------------------------------------------------------------------
+void system::draw_model(render::model const* model, mat3 tx, color4 color)
+{
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+
+    // Convert mat3 homogenous transform to mat4
+    mat4 m(tx[0][0], tx[0][1], 0, tx[0][2],
+           tx[1][0], tx[1][1], 0, tx[1][2],
+           0,        0,        1, 0,
+           tx[2][0], tx[2][1], 0, tx[2][2]);
+
+    glMultMatrixf((float const*)&m);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    glBlendFunc(GL_CONSTANT_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendColor(color.r, color.g, color.b, color.a);
+
+    glVertexPointer(2, GL_FLOAT, 0, model->_vertices.data());
+    glColorPointer(3, GL_FLOAT, 0, model->_colors.data());
+    glDrawElements(GL_TRIANGLES, (GLsizei)model->_indices.size(), GL_UNSIGNED_SHORT, model->_indices.data());
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+
+    glPopMatrix();
 }
 
 } // namespace render

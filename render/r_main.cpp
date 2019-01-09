@@ -17,6 +17,7 @@ typedef void (APIENTRY* PFNGLDELETEFRAMEBUFFERS)(GLsizei n, GLuint const* frameb
 typedef void (APIENTRY* PFNGLGENFRAMEBUFFERS)(GLsizei n, GLuint* framebuffers);
 typedef void (APIENTRY* PFNGLFRAMEBUFFERRENDERBUFFER)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 typedef void (APIENTRY* PFNGLBLITFRAMEBUFFER)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+typedef void (APIENTRY* PFNGLBLENDCOLOR)(GLfloat red, GLfloat greed, GLfloat blue, GLfloat alpha);
 
 static PFNGLBINDRENDERBUFFER glBindRenderbuffer = NULL;
 static PFNGLDELETERENDERBUFFERS glDeleteRenderbuffers = NULL;
@@ -39,6 +40,8 @@ static PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
 #define GL_DEPTH24_STENCIL8             0x88F0
 
 } // anonymous namespace
+
+extern PFNGLBLENDCOLOR glBlendColor; // r_draw.cpp
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
@@ -68,6 +71,7 @@ result system::init()
     glGenFramebuffers = (PFNGLGENFRAMEBUFFERS )wglGetProcAddress("glGenFramebuffers");
     glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFER )wglGetProcAddress("glFramebufferRenderbuffer");
     glBlitFramebuffer = (PFNGLBLITFRAMEBUFFER )wglGetProcAddress("glBlitFramebuffer");
+    glBlendColor = (PFNGLBLENDCOLOR )wglGetProcAddress("glBlendColor");
 
     _view.size = vec2(_window->size());
     _view.origin = _view.size * 0.5f;

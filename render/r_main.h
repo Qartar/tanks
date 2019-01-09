@@ -113,6 +113,7 @@ public:
     void draw_line(vec2 start, vec2 end, color4 start_color, color4 end_color);
     void draw_box(vec2 size, vec2 position, color4 color);
     void draw_particles(time_value time, render::particle const* particles, std::size_t num_particles);
+    void draw_model(render::model const* model, mat3 transform, color4 color);
 
     void set_view(render::view const& view);
 

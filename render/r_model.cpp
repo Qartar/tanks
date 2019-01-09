@@ -28,51 +28,40 @@ namespace render {
 
 //------------------------------------------------------------------------------
 model::model(model::rect const* rects, std::size_t num_rects)
-    : _list(rects, rects + num_rects)
-    , _mins(0,0)
+    : _mins(0,0)
     , _maxs(0,0)
 {
-    // calculate absolute mins/maxs
-    for (auto const& r : _list) {
-        vec2 mins = r.center - r.size * 0.5f;
-        vec2 maxs = r.center + r.size * 0.5f;
+    for (std::size_t ii = 0; ii < num_rects; ++ii) {
+        _indices.push_back(narrow_cast<uint16_t>(_vertices.size() + 0));
+        _indices.push_back(narrow_cast<uint16_t>(_vertices.size() + 1));
+        _indices.push_back(narrow_cast<uint16_t>(_vertices.size() + 2));
+        _indices.push_back(narrow_cast<uint16_t>(_vertices.size() + 1));
+        _indices.push_back(narrow_cast<uint16_t>(_vertices.size() + 3));
+        _indices.push_back(narrow_cast<uint16_t>(_vertices.size() + 2));
 
-        for (int ii = 0; ii < 2; ++ii) {
-            if (_mins[ii] > mins[ii]) {
-                _mins[ii] = mins[ii];
+        vec2 mins = rects[ii].center - rects[ii].size * 0.5f;
+        vec2 maxs = rects[ii].center + rects[ii].size * 0.5f;
+
+        _vertices.emplace_back(mins.x, mins.y);
+        _vertices.emplace_back(maxs.x, mins.y);
+        _vertices.emplace_back(mins.x, maxs.y);
+        _vertices.emplace_back(maxs.x, maxs.y);
+
+        _colors.emplace_back(rects[ii].gamma, rects[ii].gamma, rects[ii].gamma);
+        _colors.emplace_back(rects[ii].gamma, rects[ii].gamma, rects[ii].gamma);
+        _colors.emplace_back(rects[ii].gamma, rects[ii].gamma, rects[ii].gamma);
+        _colors.emplace_back(rects[ii].gamma, rects[ii].gamma, rects[ii].gamma);
+
+        // calculate absolute mins/maxs
+        for (int jj = 0; jj < 2; ++jj) {
+            if (_mins[jj] > mins[jj]) {
+                _mins[jj] = mins[jj];
             }
-            if (_maxs[ii] < maxs[ii]) {
-                _maxs[ii] = maxs[ii];
+            if (_maxs[jj] < maxs[jj]) {
+                _maxs[jj] = maxs[jj];
             }
         }
     }
-}
-
-//------------------------------------------------------------------------------
-void model::draw(vec2 position, float rotation, color4 color) const
-{
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-
-    glTranslatef(position.x, position.y, 0);
-    glRotatef(math::rad2deg(rotation), 0, 0, 1);  // YAW
-
-    glBegin(GL_QUADS);
-
-    for (auto const& rect : _list) {
-        vec2 rmin = rect.center - rect.size * 0.5f;
-        vec2 rmax = rect.center + rect.size * 0.5f;
-        color4 rcolor = color * rect.gamma;
-
-        glColor4f(rcolor.r, rcolor.g, rcolor.b, 1.0f);
-        glVertex2f(rmin.x, rmin.y);
-        glVertex2f(rmax.x, rmin.y);
-        glVertex2f(rmax.x, rmax.y);
-        glVertex2f(rmin.x, rmax.y);
-    }
-
-    glEnd();
-    glPopMatrix();
 }
 
 } // namespace render

@@ -96,8 +96,8 @@ void tank::draw(render::system* renderer, time_value time) const
 
     if (_damage >= 1.0f)
     {
-        _model->draw(pos, angle, color4(0.3f,0.3f,0.3f,1));
-        _turret_model->draw(pos, tangle, color4(0.3f,0.3f,0.3f,1));
+        renderer->draw_model(_model, mat3::transform(pos, angle), color4(0.3f,0.3f,0.3f,1));
+        renderer->draw_model(_turret_model, mat3::transform(pos, tangle), color4(0.3f,0.3f,0.3f,1));
         return;
     }
 
@@ -110,8 +110,8 @@ void tank::draw(render::system* renderer, time_value time) const
 
     // actual body
 
-    _model->draw(pos, angle, _color);
-    _turret_model->draw(pos, tangle, _color);
+    renderer->draw_model(_model, mat3::transform(pos, angle), _color);
+    renderer->draw_model(_turret_model, mat3::transform(pos, tangle), _color);
 }
 
 //------------------------------------------------------------------------------

@@ -238,8 +238,8 @@ void client_button::draw(render::system* renderer) const
     draw_rectangle(renderer, _text_rectangle, menu::colors[text_button_color], menu::colors[text_border_color]);
     draw_text(renderer, _text_rectangle, g_Game->cls.info.name.data(), menu::colors[7], valign_bottom|halign_left);
 
-    tank_body_model.draw(vec2(_rectangle.center()), 0, color4(*_color_ptr));
-    tank_turret_model.draw(vec2(_rectangle.center()), 0, color4(*_color_ptr));
+    renderer->draw_model(&tank_body_model, mat3::transform(vec2(_rectangle.center()), 0), color4(*_color_ptr));
+    renderer->draw_model(&tank_turret_model, mat3::transform(vec2(_rectangle.center()), 0), color4(*_color_ptr));
 
     for (auto const& button : _weapons) {
         button.draw(renderer);
