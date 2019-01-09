@@ -1,4 +1,4 @@
-add_library(sound STATIC
+set(SOUND_SOURCES
     snd_channel.cpp
     snd_device.cpp
     snd_device.h
@@ -19,4 +19,6 @@ add_library(sound STATIC
     snd_wav_resource.h
 )
 
+add_library(sound STATIC ${SOUND_SOURCES})
 target_link_libraries(sound PUBLIC shared)
+source_group("\\" FILES ${SOUND_SOURCES})

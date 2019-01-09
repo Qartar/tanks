@@ -17,47 +17,47 @@ add_subdirectory(shared)
 add_subdirectory(sound)
 add_subdirectory(physics)
 
-set(tanks-sources
-    g_button.cpp
-    g_client.cpp
-    g_menu.cpp
-    g_menu.h
-    g_network.cpp
-    g_object.cpp
-    g_particles.cpp
-    g_server.cpp
-    g_session.cpp
-    g_session.h
-    g_tank.cpp
-    g_usercmd.cpp
-    g_usercmd.h
-    g_world.cpp
-    g_world.h
-    keys.h
-    net_chan.cpp
-    net_main.cpp
-    net_main.h
-    net_msg.cpp
-    net_sock.cpp
-    r_draw.cpp
-    r_font.cpp
-    r_image.cpp
-    r_main.cpp
-    r_main.h
-    r_model.cpp
-    r_model.h
-    r_particle.h
-    r_window.cpp
-    r_window.h
-    resource.rc
-    resource.h
-    win_main.cpp
-    win_main.h
-    win_include.h
+set(TANKS_SOURCES
+    game/g_button.cpp
+    game/g_client.cpp
+    game/g_menu.cpp
+    game/g_menu.h
+    game/g_network.cpp
+    game/g_object.cpp
+    game/g_particles.cpp
+    game/g_server.cpp
+    game/g_session.cpp
+    game/g_session.h
+    game/g_tank.cpp
+    game/g_usercmd.cpp
+    game/g_usercmd.h
+    game/g_world.cpp
+    game/g_world.h
+    network/net_chan.cpp
+    network/net_main.cpp
+    network/net_main.h
+    network/net_msg.cpp
+    network/net_sock.cpp
+    render/r_draw.cpp
+    render/r_font.cpp
+    render/r_image.cpp
+    render/r_main.cpp
+    render/r_main.h
+    render/r_model.cpp
+    render/r_model.h
+    render/r_particle.h
+    render/r_window.cpp
+    render/r_window.h
+    system/keys.h
+    system/resource.rc
+    system/resource.h
+    system/win_main.cpp
+    system/win_main.h
+    system/win_include.h
 )
 
 add_executable(tanks WIN32
-    ${tanks-sources}
+    ${TANKS_SOURCES}
 
     precompiled.cpp
     precompiled.h
@@ -76,8 +76,20 @@ target_link_libraries(tanks
     Xinput
 )
 
+target_include_directories(tanks
+    PRIVATE
+        .
+        game
+        network
+        render
+        system
+)
+
 # Set up precompiled header
 set_source_files_properties(precompiled.cpp PROPERTIES COMPILE_FLAGS /Ycprecompiled.h)
-set_source_files_properties(${tanks-sources} PROPERTIES COMPILE_FLAGS /Yuprecompiled.h)
+set_source_files_properties(${TANKS_SOURCES} PROPERTIES COMPILE_FLAGS /Yuprecompiled.h)
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TANKS_SOURCES} precompiled.cpp precompiled.h)
+source_group("\\" FILES precompiled.cpp precompiled.h)
 
 set_target_properties(tanks PROPERTIES OUTPUT_NAME "Tanks!")

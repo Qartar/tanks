@@ -1,4 +1,4 @@
-add_library(shared STATIC
+set(SHARED_SOURCES
     cm_color.h
     cm_config.cpp
     cm_config.h
@@ -14,4 +14,6 @@ add_library(shared STATIC
     shared.h
 )
 
+add_library(shared STATIC ${SHARED_SOURCES})
 target_include_directories(shared PUBLIC .)
+source_group("\\" FILES ${SHARED_SOURCES})

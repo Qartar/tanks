@@ -5,7 +5,7 @@ Date    :   10/14/2016
 
 #include "snd_main.h"
 #include "snd_wav_resource.h"
-#include "../resource.h"
+#include "../system/resource.h"
 
 /*=========================================================
 =========================================================*/
