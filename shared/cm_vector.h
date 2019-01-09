@@ -26,7 +26,6 @@ public:
     constexpr vec2(float X, float Y) : x(X), y(Y) {}
     explicit constexpr vec2(float S) : x(S), y(S) {}
 
-    vec2& operator=(vec2 const& V) {x=V.x; y=V.y; return *this;}
     bool operator==(vec2 const& V) const { return x == V.x && y == V.y; }
     bool operator!=(vec2 const& V) const { return x != V.x || y != V.y; }
     constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
@@ -82,7 +81,6 @@ public:
     constexpr explicit vec3(float S) : x(S), y(S), z(S) {}
     constexpr explicit vec3(vec2 const& V, float Z = 0) :x(V.x), y(V.y), z(Z) {}
 
-    vec3& operator=(vec3 const& V) {x=V.x; y=V.y; z=V.z; return *this; }
     bool operator==(vec3 const& V) const {return x == V.x && y == V.y && z == V.z; }
     bool operator!=(vec3 const& V) const {return x != V.x || y != V.y || z != V.z; }
     constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
@@ -140,7 +138,6 @@ public:
     constexpr explicit vec4(float S) : x(S), y(S), z(S), w(S) {}
     constexpr explicit vec4(vec3 const& V, float W = 1) : x(V.x), y(V.y), z(V.z), w(W) {}
 
-    vec4& operator=(vec4 const& V) { x=V.x; y=V.y; z=V.z; w=V.w; return *this; }
     bool operator==(vec4 const& V) const { return x==V.x && y==V.y && z==V.z && w==V.w; }
     bool operator!=(vec4 const& V) const { return x!=V.x || y!=V.y || z!=V.z || w!=V.w; }
     constexpr float operator[](std::size_t idx) const { return (&x)[idx]; }
@@ -198,7 +195,6 @@ public:
     constexpr vec2i(int X, int Y) : x(X), y(Y) {}
     explicit constexpr vec2i(int S) : x(S), y(S) {}
 
-    vec2i& operator=(vec2i const& V) {x=V.x; y=V.y; return *this;}
     bool operator==(vec2i const& V) const { return x == V.x && y == V.y; }
     bool operator!=(vec2i const& V) const { return x != V.x || y != V.y; }
     constexpr int operator[](std::size_t idx) const { return (&x)[idx]; }
@@ -260,7 +256,6 @@ public:
     constexpr rect(int X, int Y, int W, int H) : _mins(X, Y), _maxs(W, H) {}
     constexpr rect(vec2i mins, vec2i maxs) : _mins(mins), _maxs(maxs) {}
 
-    rect& operator=(rect const& R) { _mins=R._mins; _maxs=R._maxs; return *this; }
     bool operator==(rect const& R) const { return _mins == R._mins && _maxs == R._maxs; }
     bool operator!=(rect const& R) const { return _mins != R._mins || _maxs != R._maxs; }
     vec2i operator[](std::size_t idx) const { return (&_mins)[idx]; }

@@ -21,7 +21,6 @@ public:
     constexpr color3(float R, float G, float B) : r(R), g(G), b(B) {}
     constexpr explicit color3(vec3 const& V) : r(V.x), g(V.y), b(V.z) {}
 
-    color3& operator=(color3 const& C) {r=C.r; g=C.g; b=C.b; return *this; }
     bool operator==(color3 const& C) const {return r == C.r && g == C.g && b == C.b; }
     bool operator!=(color3 const& C) const {return r != C.r || g != C.g || b != C.b; }
     float operator[](std::size_t idx) const { return (&r)[idx]; }
@@ -69,7 +68,6 @@ public:
     constexpr explicit color4(color3 const& C, float A = 1) : r(C.r), g(C.g), b(C.b), a(A) {}
     constexpr explicit color4(vec4 const& V) : r(V.x), g(V.y), b(V.z), a(V.w) {}
 
-    color4& operator=(color4 const& C) { r=C.r; g=C.g; b=C.b; a=C.a; return *this; }
     bool operator==(color4 const& C) const { return r==C.r && g==C.g && b==C.b && a==C.a; }
     bool operator!=(color4 const& C) const { return r!=C.r || g!=C.g || b!=C.b || a!=C.a; }
     float operator[](std::size_t idx) const { return (&r)[idx]; }

@@ -25,7 +25,6 @@ public:
         : _rows{r1, r2}
     {}
 
-    mat2& operator=(mat2 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; return *this;}
     bool operator==(mat2 const& M) const { return _rows[0] == M[0] && _rows[1] == M[1]; }
     bool operator!=(mat2 const& M) const { return _rows[0] != M[0] || _rows[1] != M[1]; }
     constexpr vec2 operator[](std::size_t idx) const { return _rows[idx]; }
@@ -103,7 +102,6 @@ public:
         : _rows{r1, r2, r3}
     {}
 
-    mat3& operator=(mat3 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; _rows[2]=M[2]; return *this;}
     bool operator==(mat3 const& M) const { return _rows[0] == M[0] && _rows[1] == M[1] && _rows[2] == M[2]; }
     bool operator!=(mat3 const& M) const { return _rows[0] != M[0] || _rows[1] != M[1] || _rows[2] != M[2]; }
     constexpr vec3 operator[](std::size_t idx) const { return _rows[idx]; }
@@ -217,7 +215,6 @@ public:
         : _rows{r1, r2, r3, r4}
     {}
 
-    mat4& operator=(mat4 const& M) {_rows[0]=M[0]; _rows[1]=M[1]; _rows[2]=M[2]; _rows[3]=M[3]; return *this;}
     bool operator==(mat4 const& M) const { return _rows[0] == M[0] && _rows[1] == M[1] && _rows[2] == M[2] && _rows[3] == M[3]; }
     bool operator!=(mat4 const& M) const { return _rows[0] != M[0] || _rows[1] != M[1] || _rows[2] != M[2] || _rows[3] != M[3]; }
     constexpr vec4 operator[](std::size_t idx) const { return _rows[idx]; }

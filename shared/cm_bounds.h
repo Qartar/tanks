@@ -18,7 +18,6 @@ public:
     bounds() = default;
     constexpr bounds(vec2 mins, vec2 maxs) : _mins(mins), _maxs(maxs) {}
 
-    bounds& operator=(bounds const& R) { _mins=R._mins; _maxs=R._maxs; return *this; }
     bool operator==(bounds const& R) const { return _mins == R._mins && _maxs == R._maxs; }
     bool operator!=(bounds const& R) const { return _mins != R._mins || _maxs != R._maxs; }
     vec2 operator[](std::size_t idx) const { return (&_mins)[idx]; }
