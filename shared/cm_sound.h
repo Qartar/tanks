@@ -7,11 +7,6 @@
 typedef struct HWND__ *HWND;
 #endif // _WINDOWS_
 
-#define ATTN_STATIC     0.0f
-
-#define MAX_SOUNDS      256
-#define MAX_CHANNELS    64
-
 ////////////////////////////////////////////////////////////////////////////////
 namespace sound {
 
@@ -24,8 +19,8 @@ enum class asset
 class channel
 {
 public:
-    virtual bool playing() = 0;
-    virtual bool looping() = 0;
+    virtual bool playing() const = 0;
+    virtual bool looping() const = 0;
 
     virtual result play(sound::asset asset) = 0;
     virtual result loop(sound::asset asset) = 0;

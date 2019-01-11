@@ -1,30 +1,26 @@
-/*=========================================================
-Name    :   snd_wav_stream.h
-Date    :   04/07/2006
-=========================================================*/
+// snd_wav_stream.h
+//
 
 #pragma once
 
 #include "snd_wav_source.h"
 
-/*=========================================================
-=========================================================*/
-
+//------------------------------------------------------------------------------
 class cSoundWaveStream : public cSoundWaveSource
 {
 public:
-    virtual std::size_t getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping);
+    virtual std::size_t get_samples(byte* samples, int num_samples, int sample_offset, bool looping) override;
 
-    virtual result  Load (char const *szFilename);
-    virtual void    Unload ();
+    virtual result load(char const* filename) override;
+    virtual void free() override;
 
 private:
-    virtual void    parseData   (riffChunk_t &chunk);
+    virtual bool parse_data(chunk_file& chunk) override;
 
-    result          readData (byte *pOutput, std::size_t nStart, std::size_t nBytes);
+    result read(byte* data, std::size_t start, std::size_t size);
 
-    std::size_t m_dataOffset;   // data chunk
-    std::size_t m_dataSize;     // in bytes
+    std::size_t _data_offset; // data chunk
+    std::size_t _data_size; // in bytes
 
-    riffChunk_t     *m_reader;
+    std::unique_ptr<chunk_file> _reader;
 };

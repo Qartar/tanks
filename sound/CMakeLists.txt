@@ -7,7 +7,6 @@ set(SOUND_SOURCES
     snd_files.h
     snd_main.cpp
     snd_main.h
-    snd_mix.cpp
     snd_wav_cache.cpp
     snd_wav_cache.h
     snd_wav_reader.cpp

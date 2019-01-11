@@ -1,7 +1,5 @@
-/*=========================================================
-Name    :   snd_wav_source.cpp
-Date    :   04/07/2006
-=========================================================*/
+// snd_wav_source.cpp
+//
 
 #include "snd_main.h"
 #include "snd_wav_source.h"
@@ -9,92 +7,84 @@ Date    :   04/07/2006
 #include "snd_wav_stream.h"
 #include "snd_wav_resource.h"
 
-/*=========================================================
-=========================================================*/
-
-cSoundSource *cSoundSource::createSound (char const *szFilename)
+//------------------------------------------------------------------------------
+cSoundSource* cSoundSource::create(char const* filename)
 {
-    std::size_t len = strlen(szFilename);
+    std::size_t len = strlen(filename);
     std::size_t filelen;
 
-    cSoundSource    *pSource = NULL;
+    cSoundSource* source = nullptr;
 
-    if ( strcmp( szFilename+len-4, ".wav" ) == 0 )
-    {
-        filelen = file::open( szFilename, file::mode::read ).size();
+    if (strcmp(filename + len - 4, ".wav") == 0) {
+        filelen = file::open(filename, file::mode::read).size();
 
-        if ( filelen == 0 )
-            pSource = (cSoundSource *)new cSoundWaveResource;
-        else if ( filelen > STREAM_THRESHOLD )
-            pSource = (cSoundSource *)new cSoundWaveStream;
-        else
-            pSource = (cSoundSource *)new cSoundWaveCache;
+        if (filelen == 0) {
+            source = (cSoundSource *)new cSoundWaveResource;
+        } else if (filelen > STREAM_THRESHOLD) {
+            source = (cSoundSource *)new cSoundWaveStream;
+        } else {
+            source = (cSoundSource *)new cSoundWaveCache;
+        }
+    } else {
+        log::message("unknown sound format: %s\n", filename);
     }
-    else
-        log::message( "unknown sound format: %s\n", szFilename );
 
-    if ( pSource && succeeded(pSource->Load( szFilename )) )
-        return pSource;
-    else if ( pSource )
-        delete pSource;
-    
-    return NULL;
+    if (source && succeeded(source->load(filename))) {
+        return source;
+    } else {
+        if (source) {
+            delete source;
+        }
+        return nullptr;
+    }
 }
 
-void cSoundSource::destroySound (cSoundSource *source)
+//------------------------------------------------------------------------------
+void cSoundSource::destroy(cSoundSource* source)
 {
     if (source) {
-        source->Unload();
+        source->free();
         delete source;
     }
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSoundWaveSource::parseChunk (riffChunk_t &chunk)
+//------------------------------------------------------------------------------
+bool cSoundWaveSource::parse_chunk(chunk_file &chunk)
 {
-    switch ( chunk.name( ) )
-    {
-    case CHUNK_FMT:
-        parseFormat( chunk );
-        break;
+    switch (chunk.id()) {
+        case CHUNK_FMT:
+            return parse_format(chunk);
 
-    case CHUNK_CUE:
-        parseCue( chunk );
-        break;
+        case CHUNK_CUE:
+            return parse_cue(chunk);
 
-    case CHUNK_DATA:
-        parseData( chunk );
-        break;
+        case CHUNK_DATA:
+            return parse_data(chunk);
 
-    default:
-        break;
+        default:
+            return false;
     }
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSoundWaveSource::parseFormat (riffChunk_t &chunk)
+//------------------------------------------------------------------------------
+bool cSoundWaveSource::parse_format(chunk_file &chunk)
 {
     WAVEFORMATEX        wfx;
 
-    chunk.readData( (byte *)&wfx, chunk.getSize( ) );
+    chunk.read((byte *)&wfx, chunk.size());
 
-    m_format.format = wfx.wFormatTag;
-    m_format.channels = wfx.nChannels;
-    m_format.bitwidth = wfx.wBitsPerSample;
-    m_format.frequency = wfx.nSamplesPerSec;
+    _format.format = wfx.wFormatTag;
+    _format.channels = wfx.nChannels;
+    _format.bitwidth = wfx.wBitsPerSample;
+    _format.frequency = wfx.nSamplesPerSec;
+
+    return true;
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSoundWaveSource::parseCue (riffChunk_t &chunk)
+//------------------------------------------------------------------------------
+bool cSoundWaveSource::parse_cue(chunk_file &chunk)
 {
-    struct cuePoint_s
-    {
+    struct cuePoint_s {
         int     cueID;
         int     cuePos;
         int     chunkID;
@@ -103,21 +93,17 @@ void cSoundWaveSource::parseCue (riffChunk_t &chunk)
         int     sampleOffset;
     } cue_point;
 
-    /*int cue_count =*/ chunk.readInt( );
+    /*int cue_count =*/ chunk.read_int();
 
-    chunk.readData( (byte *)&cue_point, sizeof(cue_point) );
-    m_loopStart = cue_point.sampleOffset;
+    chunk.read((byte *)&cue_point, sizeof(cue_point));
+    _loop_start = cue_point.sampleOffset;
 
     // dont care about the rest
+    return true;
 }
 
-/*=========================================================
-=========================================================*/
-
-float cSoundWaveSource::getLoopPosition (float flPosition)
+//------------------------------------------------------------------------------
+float cSoundWaveSource::get_position(float position) const
 {
-    while ( flPosition > m_numSamples )
-        flPosition -= m_numSamples;
-
-    return flPosition;
+    return std::fmod(position, _num_samples);
 }

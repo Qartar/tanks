@@ -1,49 +1,43 @@
-/*=========================================================
-Name    :   snd_device.h
-Date    :   04/04/2006
-=========================================================*/
+// snd_device.cpp
+//
 
 #include "snd_main.h"
 #include "snd_device.h"
 #include "snd_dsound.h"
 
-/*=========================================================
-=========================================================*/
-
-cAudioDevice *cAudioDevice::Create (HWND hWnd)
+//------------------------------------------------------------------------------
+cAudioDevice *cAudioDevice::create(HWND hwnd)
 {
-    cAudioDevice    *pDevice;
-    device_state_t  devState = device_fail;
+    cAudioDevice* device;
+    device_state_t state = device_fail;
 
-    log::message( "------ initializing sound ------\n" );
+    log::message("------ initializing sound ------\n");
 
     //  try directsound
-    if ( (pDevice = new cDirectSoundDevice(hWnd)) )
-    {
-        if ( (devState = pDevice->getState( )) == device_ready )
-            return pDevice;
+    if ((device = new cDirectSoundDevice(hwnd))) {
+        if ((state = device->get_state()) == device_ready) {
+            return device;
+        }
 
-        pDevice->Destroy( );
-        delete pDevice;
+        device->destroy();
+        delete device;
 
-        if ( devState == device_abort )
+        if (state == device_abort) {
             return NULL;
+        }
     }
 
     return NULL;
 }
 
-/*=========================================================
-=========================================================*/
-
-void cAudioDevice::Destroy (cAudioDevice *pDevice)
+//------------------------------------------------------------------------------
+void cAudioDevice::destroy(cAudioDevice* device)
 {
-    log::message( "------ shutting down sound ------\n" );
+    log::message("------ shutting down sound ------\n");
 
-    if ( pDevice )
-    {
-        pDevice->Destroy( );
-        delete pDevice;
+    if (device) {
+        device->destroy();
+        delete device;
     }
 
     return;

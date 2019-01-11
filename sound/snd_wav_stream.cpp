@@ -1,96 +1,82 @@
-/*=========================================================
-Name    :   snd_wav_stream.cpp
-Date    :   04/07/2006
-=========================================================*/
+// snd_wav_stream.cpp
+//
 
 #include "snd_main.h"
 #include "snd_wav_stream.h"
 
-/*=========================================================
-=========================================================*/
-
-result cSoundWaveStream::Load (char const *szFilename)
+//------------------------------------------------------------------------------
+result cSoundWaveStream::load(char const* filename)
 {
-    m_reader = new riffChunk_c( szFilename );
+    _reader = std::make_unique<chunk_file>(filename);
 
-    while ( m_reader->name( ) )
-    {
-        parseChunk( *m_reader );
-        m_reader->chunkNext( );
+    while (_reader->id()) {
+        parse_chunk(*_reader);
+        _reader->next();
     }
 
-    return (m_numSamples > 0 ? result::success : result::failure);
+    return (_num_samples > 0 ? result::success : result::failure);
 }
 
-void cSoundWaveStream::Unload ()
+//------------------------------------------------------------------------------
+void cSoundWaveStream::free ()
 {
-    delete m_reader;
+    _reader = nullptr;
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSoundWaveStream::parseData (riffChunk_t &chunk)
+//------------------------------------------------------------------------------
+bool cSoundWaveStream::parse_data(chunk_file& chunk)
 {
-    m_dataOffset = chunk.getPos( );
-    m_dataSize = chunk.getSize( );
+    _data_offset = chunk.tell();
+    _data_size = chunk.size();
 
-    m_numSamples = m_dataSize / (m_format.channels * m_format.bitwidth / 8);
+    _num_samples = _data_size / (_format.channels * _format.bitwidth / 8);
+
+    return true;
 }
 
-/*=========================================================
-=========================================================*/
-
-std::size_t cSoundWaveStream::getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping)
+//------------------------------------------------------------------------------
+std::size_t cSoundWaveStream::get_samples(byte* samples, int num_samples, int sample_offset, bool looping)
 {
-    std::size_t nRemaining;
-    std::size_t nBytes, nStart;
+    std::size_t sample_size = _format.channels * _format.bitwidth / 8;
 
-    int     nSampleSize = m_format.channels * m_format.bitwidth / 8;
+    std::size_t num_bytes = num_samples * sample_size;
+    std::size_t offset_bytes = sample_offset * sample_size;
 
-    nBytes = nSamples * nSampleSize;
-    nStart = nOffset * nSampleSize;
+    std::size_t bytes_remaining = num_bytes;
 
-    nRemaining = nBytes;
+    if (num_bytes + offset_bytes > _data_size) {
+        num_bytes = _data_size - offset_bytes;
+    }
 
-    if ( nBytes + nStart > m_dataSize )
-        nBytes = m_dataSize - nStart;
+    read(samples, offset_bytes, num_bytes);
+    bytes_remaining -= num_bytes;
 
-    readData( pOutput, nStart, nBytes );
-    nRemaining -= nBytes;
-
-    if ( nRemaining && bLooping )
-    {
-        if ( m_loopStart )
-        {
-            int loopBytes = m_loopStart * nSampleSize;
-            readData( pOutput+nBytes, loopBytes, nRemaining );
+    if (bytes_remaining && looping) {
+        if (_loop_start) {
+            std::size_t loop_bytes = _loop_start * sample_size;
+            read(samples + num_bytes, loop_bytes, bytes_remaining);
+        } else {
+            read(samples + num_bytes, 0, bytes_remaining);
         }
-        else
-            readData( pOutput+nBytes, 0, nRemaining );
 
-        return (nBytes + nRemaining) / nSampleSize;
+        return (num_bytes + bytes_remaining) / sample_size;
     }
 
-    return nBytes / nSampleSize;
+    return num_bytes / sample_size;
 }
 
-/*=========================================================
-=========================================================*/
-
-result cSoundWaveStream::readData (byte *pOutput, std::size_t nStart, std::size_t nBytes)
+//------------------------------------------------------------------------------
+result cSoundWaveStream::read(byte *data, std::size_t start, std::size_t size)
 {
-    m_reader->setPos( m_dataOffset + nStart );
-    m_reader->readData( pOutput, nBytes );
+    _reader->seek(_data_offset + start);
+    _reader->read(data, size);
 
-    std::size_t fin = nBytes / (m_format.bitwidth / 8);
+    std::size_t fin = size / (_format.bitwidth / 8);
 
-    for (std::size_t ii = 0; ii < fin; ++ii)
-    {
-        if ( m_format.bitwidth == 8 )
-        {
-            int sample = (int)((unsigned char)(pOutput[ii]) - 128);
-            ((signed char *)pOutput)[ii] = sample;
+    for (std::size_t ii = 0; ii < fin; ++ii) {
+        if (_format.bitwidth == 8) {
+            int sample = (int)((unsigned char)(data[ii]) - 128);
+            ((signed char *)data)[ii] = sample;
         }
     }
 

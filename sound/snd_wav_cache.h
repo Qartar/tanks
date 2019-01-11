@@ -1,26 +1,22 @@
-/*=========================================================
-Name    :   snd_wav_cache.h
-Date    :   04/07/2006
-=========================================================*/
+// snd_wav_cache.h
+//
 
 #pragma once
 
 #include "snd_wav_source.h"
 
-/*=========================================================
-=========================================================*/
-
+//------------------------------------------------------------------------------
 class cSoundWaveCache : public cSoundWaveSource
 {
 public:
-    virtual std::size_t getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping);
+    virtual std::size_t get_samples(byte* samples, int num_samples, int sample_offset, bool looping) override;
 
-    virtual result  Load (char const *szFilename);
-    virtual void    Unload ();
+    virtual result load(char const* filename) override;
+    virtual void free() override;
 
 protected:
-    virtual void    parseData   (riffChunk_t &chunk);
+    virtual bool parse_data(chunk_file& chunk) override;
 
-    byte    *m_dataCache;   // data chunk
-    std::size_t m_cacheSize;    // in bytes
+    byte* _data; // data chunk
+    std::size_t _data_size; // in bytes
 };

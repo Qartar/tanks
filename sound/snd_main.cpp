@@ -1,327 +1,284 @@
-/*=========================================================
-Name    :   snd_main.cpp
-Date    :   04/01/2006
-=========================================================*/
+// snd_main.cpp
+//
 
 #include "snd_main.h"
 
+////////////////////////////////////////////////////////////////////////////////
 cSound  *gSound;
 
 sound::system* pSound = nullptr;
 
+//------------------------------------------------------------------------------
 void sound::system::create()
 {
     pSound = new cSound;
 }
 
+//------------------------------------------------------------------------------
 void sound::system::destroy()
 {
     delete pSound;
     pSound = nullptr;
 }
 
-/*=========================================================
-=========================================================*/
-
+//------------------------------------------------------------------------------
 cSound::cSound()
     : snd_disable("snd_disable", false, config::archive, "disables sound playback")
     , snd_volume("snd_volume", 0.5f, config::archive, "sound volume")
     , snd_frequency("snd_frequency", 22050, config::archive, "sound playback speed")
     , snd_mixahead("snd_mixahead", 0.1f, config::archive, "sound mix ahead time, in seconds")
     , snd_primary("snd_primary", false, config::archive, "use primary sound buffer")
-    , m_bInitialized(false)
-    , pAudioDevice(nullptr)
+    , _initialized(false)
+    , _audio_device(nullptr)
 {
-    m_Chain.pNext = m_Chain.pPrev = &m_Chain; Init( );
+    _chain.next = _chain.prev = &_chain; init();
 }
 
-result cSound::Init ()
+//------------------------------------------------------------------------------
+result cSound::init()
 {
     gSound = this;
 
-    m_bInitialized = false;
+    _initialized = false;
 
-    m_paintBuffer.pData = NULL;
-    m_paintBuffer.nSize = 0;
+    _paint_buffer.data = nullptr;
+    _paint_buffer.size = 0;
 
-    m_channelBuffer.pData = NULL;
-    m_channelBuffer.nSize = 0;
+    _channel_buffer.data = nullptr;
+    _channel_buffer.size = 0;
 
-    memset( m_Sounds, 0, sizeof(m_Sounds) );
-    for ( int i=0 ; i<MAX_CHANNELS ; i++ )
-    {
-        m_Channels[i].setReserved( false );
-        m_Channels[i].stop( );
-    }
-
-    if ( !snd_disable )
-    {
-        SYSTEM_INFO sysinfo;
-
-        GetSystemInfo( &sysinfo );
-
-        if ( (m_hHeap = HeapCreate( 0, sysinfo.dwPageSize, 0 )) == NULL )
-            log::message( "sound heap allocation failed\n" );
-    }
-    else
-        m_hHeap = false;
-
-    return result::success;
-}
-
-result cSound::Shutdown ()
-{
-    if ( m_hHeap )
-    {
-        HeapDestroy( m_hHeap );
-        m_hHeap = NULL;
+    memset(_sounds, 0, sizeof(_sounds));
+    for (int ii = 0; ii < MAX_CHANNELS; ++ii) {
+        _channels[ii].set_reserved(false);
+        _channels[ii].stop();
     }
 
     return result::success;
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSound::on_create (HWND hWnd)
+//------------------------------------------------------------------------------
+result cSound::shutdown()
 {
-    if ( snd_disable )
+    return result::success;
+}
+
+//------------------------------------------------------------------------------
+void cSound::on_create(HWND hwnd)
+{
+    if (snd_disable) {
         return;
+    }
 
-    pAudioDevice = cAudioDevice::Create( hWnd );
+    _audio_device = cAudioDevice::create(hwnd);
 }
 
-void cSound::on_destroy ()
+//------------------------------------------------------------------------------
+void cSound::on_destroy()
 {
     // clear sound chain
-    while ( m_Chain.pNext != &m_Chain )
-        Delete( m_Chain.pNext );
-
-    if ( m_paintBuffer.pData )
-    {
-        free( m_paintBuffer.pData );
-        free( m_channelBuffer.pData );
-
-        m_paintBuffer.pData = NULL;
-        m_paintBuffer.nSize = 0;
-
-        m_channelBuffer.pData = NULL;
-        m_channelBuffer.nSize = 0;
+    while (_chain.next != &_chain) {
+        free(_chain.next);
     }
 
-    for ( int i=0 ; i<MAX_CHANNELS ; i++ )
-        free_channel( m_Channels + i );
+    if (_paint_buffer.data) {
+        delete [] _paint_buffer.data;
+        delete [] _channel_buffer.data;
 
-    cAudioDevice::Destroy( pAudioDevice );
-    pAudioDevice = NULL;
+        _paint_buffer.data = NULL;
+        _paint_buffer.size = 0;
+
+        _channel_buffer.data = NULL;
+        _channel_buffer.size = 0;
+    }
+
+    for (int ii = 0; ii < MAX_CHANNELS; ++ii) {
+        free_channel(_channels + ii);
+    }
+
+    cAudioDevice::destroy(_audio_device);
+    _audio_device = NULL;
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSound::update ()
+//------------------------------------------------------------------------------
+void cSound::update()
 {
-    paintbuffer_t   *pBuffer;
-    int             nBytes;
-    buffer_info_t   info;
-    int             nSamples, nWritten;
-
-    if ( !pAudioDevice )
+    if (!_audio_device) {
         return;
+    }
 
-    info = pAudioDevice->getBufferInfo( );
+    buffer_info_t info = _audio_device->get_buffer_info();
+    int num_samples = snd_mixahead * info.frequency;
+    paintbuffer_t* buffer = get_paint_buffer(num_samples * info.channels * PAINTBUFFER_BYTES);
 
-    nSamples = snd_mixahead * info.frequency;
-    pBuffer = getPaintBuffer( nSamples * info.channels * PAINTBUFFER_BYTES );
+    buffer->frequency = info.frequency;
+    buffer->channels = info.channels;
+    buffer->volume = snd_volume * 255;
 
-    pBuffer->nFrequency = info.frequency;
-    pBuffer->nChannels = info.channels;
-    pBuffer->nVolume = snd_volume * 255;
+    int num_written = info.write - info.read;
+    if (num_written < 0) {
+        num_written += info.size;
+    }
 
-    nWritten = info.write - info.read;
-    if ( nWritten < 0 )
-        nWritten += info.size;
+    if (num_samples > info.size) {
+        num_samples = info.size;
+    }
 
-    if ( nSamples > info.size )
-        nSamples = info.size;
+    num_samples -= num_written / (info.channels * info.bitwidth / 8);
 
-    nSamples -= nWritten / (info.channels * info.bitwidth / 8);
-
-    if ( nSamples < 0 )
+    if (num_samples < 0) {
         return;
-
-    m_mixChannels( pBuffer, nSamples );
-
-    nBytes = nSamples * info.channels * info.bitwidth / 8;
-
-    pAudioDevice->writeToBuffer( pBuffer->pData, nBytes );
-}
-
-paintbuffer_t *cSound::getPaintBuffer (int nBytes)
-{
-    if ( !m_paintBuffer.pData )
-    {
-        m_paintBuffer.pData = (byte *)alloc( nBytes );
-        m_paintBuffer.nSize = nBytes;
-
-        m_channelBuffer.pData = (byte *)alloc( nBytes );
-        m_channelBuffer.nSize = nBytes;
-    }
-    else if ( nBytes != m_paintBuffer.nSize )
-    {
-        free( m_paintBuffer.pData );
-        free( m_channelBuffer.pData );
-
-        m_paintBuffer.pData = (byte *)alloc( nBytes );
-        m_paintBuffer.nSize = nBytes;
-
-        m_channelBuffer.pData = (byte *)alloc( nBytes );
-        m_channelBuffer.nSize = nBytes;
     }
 
-    memset( m_paintBuffer.pData, 0, m_paintBuffer.nSize );
-    return &m_paintBuffer;
+    mix_channels(buffer, num_samples);
+
+    int num_bytes = num_samples * info.channels * info.bitwidth / 8;
+
+    _audio_device->write(buffer->data, num_bytes);
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSound::set_listener (vec3 vOrigin, vec3 vForward, vec3 vRight, vec3 vUp)
+//------------------------------------------------------------------------------
+void cSound::mix_stereo16(samplepair_t* input, stereo16_t* output, int num_samples, int volume)
 {
-    _origin = vOrigin;
-    _axis = mat3(vForward, vRight, vUp);
+    for (int ii = 0; ii < num_samples; ++ii) {
+        int left = (input[ii].left * volume) >> 8;
+        output[ii].left = clamp<int>(left, INT16_MIN, INT16_MAX);
+
+        int right = (input[ii].right * volume) >> 8;
+        output[ii].right = clamp<int>(right, INT16_MIN, INT16_MAX);
+    }
 }
 
-/*=========================================================
-=========================================================*/
-
-void *cSound::alloc (std::size_t size)
+//------------------------------------------------------------------------------
+paintbuffer_t* cSound::get_paint_buffer(int num_bytes)
 {
-    void    *ptr;
+    if (!_paint_buffer.data) {
+        _paint_buffer.data = new byte[num_bytes];
+        _paint_buffer.size = num_bytes;
 
-    if ( !m_hHeap || (ptr = HeapAlloc( m_hHeap, 0, size )) == NULL)
-        return malloc( size );
-    return ptr;
+        _channel_buffer.data = new byte[num_bytes];
+        _channel_buffer.size = num_bytes;
+    } else if (num_bytes != _paint_buffer.size) {
+        delete [] _paint_buffer.data;
+        delete [] _channel_buffer.data;
+
+        _paint_buffer.data = new byte[num_bytes];
+        _paint_buffer.size = num_bytes;
+
+        _channel_buffer.data = new byte[num_bytes];
+        _channel_buffer.size = num_bytes;
+    }
+
+    memset(_paint_buffer.data, 0, _paint_buffer.size);
+    return &_paint_buffer;
 }
 
-void cSound::free (void *ptr)
+//------------------------------------------------------------------------------
+void cSound::set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up)
 {
-    if ( m_hHeap )
-        HeapFree( m_hHeap, 0, ptr );
-    else
-        ::free( ptr );
+    _origin = origin;
+    _axis = mat3(forward, right, up);
 }
 
-/*=========================================================
-=========================================================*/
-
-snd_link_t *cSound::Create (char const *szFilename)
+//------------------------------------------------------------------------------
+snd_link_t *cSound::create(char const* filename)
 {
-    snd_link_t      *pLink, *next;
-    cSoundSource    *pSource;
+    snd_link_t* link = nullptr;
+    snd_link_s* next = nullptr;
+    cSoundSource* source;
 
-    pSource = cSoundSource::createSound( szFilename );
-    if (!pSource) {
+    source = cSoundSource::create(filename);
+    if (!source) {
         return nullptr;
     }
 
-    pLink = (snd_link_t *)alloc( sizeof(snd_link_t) );
+    link = new snd_link_t;
 
     // alphabetize
-    for ( next = m_Chain.pNext ; (next != &m_Chain) && (_stricmp(next->filename.c_str(), szFilename)<0) ; next = next->pNext );
+    for (next = _chain.next; (next != &_chain) && (_stricmp(next->filename.c_str(), filename) < 0); next = next->next);
 
-    pLink->pNext = next;
-    pLink->pPrev = next->pPrev;
+    link->next = next;
+    link->prev = next->prev;
 
-    pLink->pNext->pPrev = pLink;
-    pLink->pPrev->pNext = pLink;
+    link->next->prev = link;
+    link->prev->next = link;
 
     for (int ii = 0; ii < MAX_SOUNDS; ++ii) {
-        if (m_Sounds[ii] == nullptr) {
-            m_Sounds[ii] = pLink;
-            pLink->nNumber = ii;
+        if (_sounds[ii] == nullptr) {
+            _sounds[ii] = link;
+            link->number = ii;
 
-            pLink->filename = szFilename;
-            pLink->nSequence = 0;
-            pLink->pSource = pSource;
+            link->filename = filename;
+            link->sequence = 0;
+            link->source = source;
 
-            return pLink;
+            return link;
         }
     }
 
-    pLink->nNumber = MAX_SOUNDS;
-    Delete( pLink );
+    link->number = MAX_SOUNDS;
+    free(link);
 
-    log::message( "could not load %s: out of room\n", szFilename );
+    log::message("could not load %s: out of room\n", filename);
     return nullptr;
 }
 
-/*=========================================================
-=========================================================*/
-
-snd_link_t *cSound::Find (char const *szFilename)
+//---------------------------------- --------------------------------------------
+snd_link_t *cSound::find(char const* filename)
 {
-    snd_link_t  *pLink;
-    int         cmp;
-
-    for ( pLink = m_Chain.pNext ; pLink != &m_Chain ; pLink = pLink->pNext )
-    {
-        cmp = strcmp( szFilename, pLink->filename.c_str() );
-        if ( cmp == 0 )
-            return pLink;
-        else if ( cmp < 0 ) // passed it, does not exit
+    for (snd_link_t* link = _chain.next; link != &_chain; link = link->next) {
+        int cmp = strcmp(filename, link->filename.c_str());
+        if (cmp == 0) {
+            return link;
+        } else if (cmp < 0) { // passed it, does not exit
             return NULL;
+        }
     }
     return NULL;
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSound::Delete (snd_link_t *pLink)
+//------------------------------------------------------------------------------
+void cSound::free(snd_link_t* link)
 {
-    pLink->pNext->pPrev = pLink->pPrev;
-    pLink->pPrev->pNext = pLink->pNext;
+    link->next->prev = link->prev;
+    link->prev->next = link->next;
 
-    if ( pLink->nNumber < MAX_SOUNDS )
-        m_Sounds[pLink->nNumber] = NULL;
+    if (link->number < MAX_SOUNDS) {
+        _sounds[link->number] = NULL;
+    }
 
-    cSoundSource::destroySound( pLink->pSource );
+    cSoundSource::destroy(link->source);
 
-    free( pLink );
+    delete link;
 }
 
-/*=========================================================
-=========================================================*/
-
-sound::asset cSound::load_sound (char const *szFilename)
+//------------------------------------------------------------------------------
+sound::asset cSound::load_sound(char const* filename)
 {
-    snd_link_t  *pLink;
+    snd_link_t* link;
 
-    if ( pLink = Find( szFilename ) )
-        pLink->nSequence = 0;
-    else
-        pLink = Create( szFilename );
+    if (link = find(filename)) {
+        link->sequence = 0;
+    } else {
+        link = create(filename);
+    }
 
-    if ( pLink )
-        return static_cast<sound::asset>(pLink->nNumber + 1);
+    if (link) {
+        return static_cast<sound::asset>(link->number + 1);
+    }
     return sound::asset::invalid;
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSound::play (sound::asset asset, vec3 vOrigin, float flVolume, float flAttenuation)
+//------------------------------------------------------------------------------
+void cSound::play(sound::asset asset, vec3 origin, float volume, float attenuation)
 {
-    sound::channel   *pChannel = m_allocChan( false );
+    sound::channel* ch = alloc_channel(false);
 
-    if ( pChannel )
-    {
-        pChannel->set_volume( flVolume );
-        pChannel->set_origin( vOrigin );
-        pChannel->set_frequency( 1.0f );
-        pChannel->set_attenuation( flAttenuation );
-        
-        pChannel->play( asset );
+    if (ch) {
+        ch->set_volume(volume);
+        ch->set_origin(origin);
+        ch->set_frequency(1.0f);
+        ch->set_attenuation(attenuation);
+
+        ch->play(asset);
     }
 }

@@ -1,15 +1,11 @@
-/*=========================================================
-Name    :   snd_wav_resource.cpp
-Date    :   10/14/2016
-=========================================================*/
+// snd_wav_resource.cpp
+//
 
 #include "snd_main.h"
 #include "snd_wav_resource.h"
 #include "../system/resource.h"
 
-/*=========================================================
-=========================================================*/
-
+////////////////////////////////////////////////////////////////////////////////
 static const struct { int iResource; char const* szResource; } resources[] =
 {
     { IDR_WAVE1, "assets/sound/cannon_impact.wav" },
@@ -23,34 +19,34 @@ static const struct { int iResource; char const* szResource; } resources[] =
     { IDR_WAVE9, "assets/sound/missile_flight.wav" },
 };
 
-result cSoundWaveResource::Load (char const *szFilename)
+//------------------------------------------------------------------------------
+result cSoundWaveResource::load(char const* filename)
 {
-    for ( int i = 0; i < _countof(resources); i++ ) {
-        if ( strcmp(szFilename, resources[i].szResource) == 0 ) {
-            szFilename = MAKEINTRESOURCE( resources[i].iResource );
+    for (int i = 0; i < countof(resources); i++) {
+        if (strcmp(filename, resources[i].szResource) == 0) {
+            filename = MAKEINTRESOURCE(resources[i].iResource);
             break;
         }
     }
 
-    HMODULE hInstance = GetModuleHandle( NULL );
-    HANDLE hInfo = FindResource( hInstance, szFilename, "WAVE" );
-    DWORD dwSize = SizeofResource( hInstance, (HRSRC )hInfo );
-    m_hResource = LoadResource( hInstance, (HRSRC )hInfo );
-    m_lpvData = LockResource( m_hResource );
+    HMODULE hinstance = GetModuleHandleA(NULL);
+    HANDLE hinfo = FindResourceA(hinstance, filename, "WAVE");
+    DWORD size = SizeofResource(hinstance, (HRSRC)hinfo);
+    HANDLE resource = LoadResource(hinstance, (HRSRC)hinfo);
+    LPVOID resource_data = LockResource(resource);
 
     // read wave data
     {
-        riffChunk_t reader( (byte *)m_lpvData, dwSize );
+        chunk_file reader((byte *)resource_data, size);
 
-        while ( reader.name( ) )
-        {
-            parseChunk( reader );
-            reader.chunkNext( );
+        while (reader.id()) {
+            parse_chunk(reader);
+            reader.next();
         }
     }
 
-    UnlockResource( m_lpvData );
-    FreeResource( m_hResource );
-    
-    return (m_numSamples > 0 ? result::success : result::failure);
+    UnlockResource(resource_data);
+    FreeResource(resource);
+
+    return (_num_samples > 0 ? result::success : result::failure);
 }

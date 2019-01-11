@@ -1,38 +1,31 @@
-/*=========================================================
-Name    :   snd_files.h
-Date    :   04/07/2006
-=========================================================*/
+// snd_files.h
+//
 
 #pragma once
 
 #include "cm_sound.h"
 
-/*=========================================================
-=========================================================*/
-
-typedef struct soundFormat_s
-{
+//------------------------------------------------------------------------------
+struct sound_format {
     int     format;
     int     channels;
     int     bitwidth;
     int     frequency;
-} soundFormat_t;
+};
 
+//------------------------------------------------------------------------------
 class cSoundSource
 {
 public:
-    static cSoundSource *createSound (char const *szFilename);
-    static void         destroySound (cSoundSource *pSound);
+    static cSoundSource* create(char const* filename);
+    static void destroy(cSoundSource* sound);
 
-    virtual std::size_t getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping) = 0;
-    virtual soundFormat_t   *getFormat () = 0;
-    virtual char            *getFilename () = 0;
-    virtual float           getLoopPosition (float flPosition) = 0;
+    virtual std::size_t get_samples(byte* samples, int num_samples, int sample_offset, bool looping) = 0;
+    virtual sound_format const* get_format() const = 0;
+    virtual char const* get_filename() const = 0;
+    virtual float get_position(float position) const = 0;
 
 private:
-    virtual result  Load (char const *szFilename) = 0;
-    virtual void    Unload () = 0;
+    virtual result load(char const* filename) = 0;
+    virtual void free() = 0;
 };
-
-/*=========================================================
-=========================================================*/

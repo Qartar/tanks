@@ -1,117 +1,101 @@
-/*=========================================================
-Name    :   snd_wav_cache.cpp
-Date    :   04/07/2006
-=========================================================*/
+// snd_wav_cache.cpp
+//
 
 #include "snd_main.h"
 #include "snd_wav_cache.h"
 
-/*=========================================================
-=========================================================*/
-
-result cSoundWaveCache::Load (char const *szFilename)
+//------------------------------------------------------------------------------
+result cSoundWaveCache::load(char const* filename)
 {
-    riffChunk_t *pReader = new riffChunk_t( szFilename );
+    chunk_file reader(filename);
 
-    while ( pReader->name( ) )
-    {
-        parseChunk( *pReader );
-        pReader->chunkNext( );
+    while (reader.id()) {
+        parse_chunk(reader);
+        reader.next();
     }
 
-    delete pReader;
-
-    return (m_numSamples > 0 ? result::success : result::failure);
+    return (_num_samples > 0 ? result::success : result::failure);
 }
 
-void cSoundWaveCache::Unload ()
+//------------------------------------------------------------------------------
+void cSoundWaveCache::free()
 {
-    gSound->heapFree( m_dataCache );
-    
-    m_dataCache = NULL;
-    m_cacheSize = 0;
+    delete[] _data;
+    _data = nullptr;
+    _data_size = 0;
 }
 
-/*=========================================================
-=========================================================*/
-
-void cSoundWaveCache::parseData (riffChunk_t &chunk)
+//------------------------------------------------------------------------------
+bool cSoundWaveCache::parse_data(chunk_file& chunk)
 {
-    int         i, sample;
+    _data_size = chunk.size();
+    _data = new byte[_data_size];
 
-    m_dataCache = (byte *)gSound->heapAlloc( chunk.getSize( ) );
-    m_cacheSize = chunk.getSize( );
-
-    m_numSamples = m_cacheSize / (m_format.channels * m_format.bitwidth / 8);
+    _num_samples = _data_size / (_format.channels * _format.bitwidth / 8);
 
     //
     //  read
     //
 
-    chunk.readChunk( m_dataCache );
+    chunk.read(_data, _data_size);
 
     //
     //  convert
     //
 
-    for ( i=0 ; i<m_numSamples ; i++ )
-    {
-        if ( m_format.bitwidth == 8 )
-        {
-            sample = (int)((unsigned char)(m_dataCache[i]) - 128);
-            ((signed char *)m_dataCache)[i] = sample;
+    for (std::size_t ii = 0; ii < _num_samples; ++ii) {
+        if (_format.bitwidth == 8) {
+            int sample = (int)((unsigned char)(_data[ii]) - 128);
+            ((signed char *)_data)[ii] = sample;
         }
     }
+
+    return true;
 }
 
-/*=========================================================
-=========================================================*/
-
-std::size_t cSoundWaveCache::getSamples (byte *pOutput, int nSamples, int nOffset, bool bLooping)
+//------------------------------------------------------------------------------
+std::size_t cSoundWaveCache::get_samples(byte* samples, int num_samples, int sample_offset, bool looping)
 {
-    std::size_t nRemaining, nCompleted = 0;
-    std::size_t nBytes, nStart;
+    std::size_t sample_size = _format.channels * _format.bitwidth / 8;
 
-    int     nSampleSize = m_format.channels * m_format.bitwidth / 8;
+    std::size_t num_bytes = num_samples * sample_size;
+    std::size_t offset_bytes = sample_offset * sample_size;
 
-    nBytes = nSamples * nSampleSize;
-    nStart = nOffset * nSampleSize;
+    std::size_t bytes_remaining = num_bytes;
+    std::size_t bytes_read = 0;
 
-    nRemaining = nBytes;
+    if (offset_bytes + num_bytes > _data_size) {
+        num_bytes = _data_size - offset_bytes;
+    }
 
-    if ( nStart + nBytes > m_cacheSize )
-        nBytes = m_cacheSize - nStart;
+    memcpy(samples, _data + offset_bytes, num_bytes);
 
-    memcpy( (void *)pOutput, (void *)(m_dataCache+nStart), nBytes );
+    bytes_remaining -= num_bytes;
+    bytes_read += num_bytes;
 
-    nRemaining -= nBytes;
-    nCompleted += nBytes;
+    while (bytes_remaining && looping) {
+        num_bytes = bytes_remaining;
 
-    while ( nRemaining && bLooping )
-    {
-        nBytes = nRemaining;
+        if (_loop_start > 0) {
+            std::size_t loop_bytes = _loop_start * sample_size;
 
-        if ( m_loopStart > 0 )
-        {
-            int loopBytes = m_loopStart * nSampleSize;
+            if (loop_bytes + num_bytes > _data_size) {
+                num_bytes = _data_size - loop_bytes;
+            }
 
-            if ( loopBytes + nBytes > m_cacheSize )
-                nBytes = m_cacheSize - loopBytes;
+            memcpy(samples + bytes_read, _data + loop_bytes, num_bytes);
+            bytes_remaining -= num_bytes;
+            bytes_read += num_bytes;
+        } else {
+            if (num_bytes > _data_size) {
+                num_bytes = _data_size;
+            }
 
-            memcpy( (void *)(pOutput+nCompleted), (void *)(m_dataCache+loopBytes), nBytes );
-            nRemaining -= nBytes;
-            nCompleted += nBytes;
-        }
-        else
-        {
-            if ( nBytes > m_cacheSize )
-                nBytes = m_cacheSize;
-
-            memcpy( (void *)(pOutput+nCompleted), (void *)m_dataCache, nBytes );
-            nRemaining -= nBytes;
-            nCompleted += nBytes;
+            memcpy(samples + bytes_read, _data, num_bytes);
+            bytes_remaining -= num_bytes;
+            bytes_read += num_bytes;
         }
     }
 
-    return nCompleted / nSampleSize;
+    return bytes_read / sample_size;
 }

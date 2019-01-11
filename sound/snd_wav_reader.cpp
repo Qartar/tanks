@@ -1,211 +1,159 @@
-/*=========================================================
-Name    :   snd_wav_reader.cpp
-Date    :   04/07/2006
-=========================================================*/
+// snd_wav_reader.cpp
+//
 
 #include "snd_main.h"
 #include "snd_wav_source.h"
 
-/*=========================================================
-=========================================================*/
+////////////////////////////////////////////////////////////////////////////////
+constexpr int RIFF_ID = make_id('R', 'I', 'F', 'F');
+constexpr int WAVE_ID = make_id('W', 'A', 'V', 'E');
 
-constexpr int RIFF_ID = make_id('R','I','F','F');
-constexpr int WAVE_ID = make_id('W','A','V','E');
-
-riffChunk_c::riffChunk_c (char const *szFilename)
+//------------------------------------------------------------------------------
+chunk_file::chunk_file(char const* filename)
+    : _buffer(nullptr)
+    , _buffer_size(0)
+    , _start(0)
+    , _size(0)
+    , _id(0)
+    , _pos(0)
+    , _chunk_id(0)
+    , _chunk_size(0)
+    , _chunk_start(0)
 {
-    int     name;
-
-    m_pos = 0;
-    m_riff = file::open(szFilename, file::mode::read);
-    if ( !m_riff )
-    {
-        m_chunkName = NULL;
-        m_chunkSize = NULL;
+    _stream = file::open(filename, file::mode::read);
+    if (!_stream) {
         return;
     }
 
-    name = readInt( );
-    if ( name != RIFF_ID )
-    {
-        m_chunkName = NULL;
-        m_chunkSize = NULL;
-        return;
-    }
-    else
-    {
-        m_size = readInt( );
-        m_name = readInt( );
+    if (read_int() == RIFF_ID) {
+        _start = _pos;
+        _size = read_int();
+        _id = read_int();
 
-        m_start = m_pos;
-
-        if ( m_name != WAVE_ID )
-        {
-            m_chunkName = NULL;
-            m_chunkSize = NULL;
+        if (_id != WAVE_ID) {
+            _chunk_id = 0;
+            _chunk_size = 0;
         }
-    }
 
-    chunkSet( );
+        read_chunk();
+    }
 }
 
-riffChunk_c::riffChunk_c (byte* pChunkData, int /*nChunkSize*/)
+//------------------------------------------------------------------------------
+chunk_file::chunk_file(byte const* buffer, std::size_t buffer_size)
+    : _buffer(buffer)
+    , _buffer_size(buffer_size)
+    , _start(0)
+    , _size(0)
+    , _id(0)
+    , _pos(0)
+    , _chunk_id(0)
+    , _chunk_size(0)
+    , _chunk_start(0)
 {
-    int     name;
-
-    m_pos = 0;
-
-    m_riffData = pChunkData;
-
-    if ( !m_riffData )
-    {
-        m_chunkName = NULL;
-        m_chunkSize = NULL;
+    if (!_buffer) {
         return;
     }
 
-    name = readInt( );
-    if ( name != RIFF_ID )
-    {
-        m_chunkName = NULL;
-        m_chunkSize = NULL;
-        return;
-    }
-    else
-    {
-        m_size = readInt( );
-        m_name = readInt( );
+    if (read_int() == RIFF_ID) {
+        _start = _pos;
+        _size = read_int();
+        _id = read_int();
 
-        m_start = m_pos;
-
-        if ( m_name != WAVE_ID )
-        {
-            m_chunkName = NULL;
-            m_chunkSize = NULL;
+        if (_id != WAVE_ID) {
+            _chunk_id = 0;
+            _chunk_size = 0;
         }
+
+        read_chunk();
     }
-
-    chunkSet( );
 }
 
-riffChunk_c::riffChunk_c (riffChunk_c &Outer)
+//------------------------------------------------------------------------------
+std::size_t chunk_file::read(byte* buffer, std::size_t buffer_size)
 {
-    m_size = Outer.m_size;
-    m_name = Outer.m_name;
-    m_start = Outer.m_start;
-
-    m_pos = Outer.m_chunkStart + 8;
-
-    chunkSet( );
-}
-
-/*=========================================================
-=========================================================*/
-
-std::size_t riffChunk_c::m_read (void *out, std::size_t len)
-{
-    if ( m_riff ) {
-
-        std::size_t read = m_riff.read( (byte*)out, len );
-        m_pos += read;
+    if (_stream) {
+        std::size_t read = _stream.read(buffer, buffer_size);
+        _pos += read;
         return read;
-
-    } else if ( m_riffData ) {
-
-        memcpy( out, m_riffData + m_pos, len );
-        m_pos += len;
-        return len;
-
+    } else if (_buffer && _pos + buffer_size <= _buffer_size) {
+        memcpy(buffer, _buffer + _pos, buffer_size);
+        _pos += buffer_size;
+        return buffer_size;
     } else {
         return 0;
     }
 }
 
-std::size_t riffChunk_c::readChunk (byte *pOutput)
+//------------------------------------------------------------------------------
+int chunk_file::read_int()
 {
-    return m_read( pOutput, m_chunkSize );
+    uint8_t bytes[4];
+    read(bytes, 4);
+
+    // return little-endian
+    return (bytes[0] <<  0)
+         | (bytes[1] <<  8)
+         | (bytes[2] << 16)
+         | (bytes[3] << 24);
 }
 
-std::size_t riffChunk_c::readData (byte *pOutput, std::size_t nLength)
+//------------------------------------------------------------------------------
+std::size_t chunk_file::tell() const
 {
-    return m_read( pOutput, nLength );
+    return _pos;
 }
 
-int riffChunk_c::readInt ()
+//------------------------------------------------------------------------------
+std::size_t chunk_file::seek(std::size_t pos)
 {
-    int value;
-
-    m_read( &value, 4 );
-
-    return value;
-}
-
-/*=========================================================
-=========================================================*/
-
-std::size_t riffChunk_c::getPos ()
-{
-    return m_pos;
-}
-
-std::size_t riffChunk_c::setPos (std::size_t pos)
-{
-    m_pos = pos;
-    if ( m_riff ) {
-        m_riff.seek( pos, file::seek::set );
+    _pos = pos;
+    if (_stream) {
+        _stream.seek(pos, file::seek::set);
     }
-    return m_pos;
+    return _pos;
 }
 
-/*=========================================================
-=========================================================*/
-
-unsigned int riffChunk_c::name ()
+//------------------------------------------------------------------------------
+uint32_t chunk_file::id() const
 {
-    return m_chunkName;
+    return _chunk_id;
 }
 
-std::size_t riffChunk_c::getSize ()
+//------------------------------------------------------------------------------
+std::size_t chunk_file::size() const
 {
-    return m_chunkSize;
+    return _chunk_size;
 }
 
-/*=========================================================
-=========================================================*/
-
-void riffChunk_c::chunkSet ()
+//------------------------------------------------------------------------------
+bool chunk_file::read_chunk()
 {
-    if ( m_pos < 0 || m_pos > m_start + m_size )
-    {
-        m_chunkName = 0;
-        m_chunkSize = 0;
-        return;
+    if (_pos < 0 || _pos > _start + _size) {
+        _chunk_id = 0;
+        _chunk_size = 0;
+        return false;
+    } else {
+        _chunk_start = _pos;
+        _chunk_id = read_int();
+        _chunk_size = read_int();
+        return true;
     }
-    m_chunkStart = m_pos;
-
-    m_chunkName = readInt( );
-    m_chunkSize = readInt( );
 }
 
-/*=========================================================
-=========================================================*/
-
-bool riffChunk_c::chunkNext ()
+//------------------------------------------------------------------------------
+bool chunk_file::next()
 {
-    std::size_t nextChunk = m_chunkStart + m_chunkSize + 8;
+    std::size_t next_chunk = _chunk_start + _chunk_size + 8;
 
-    nextChunk += m_chunkSize & 1;
+    next_chunk += _chunk_size & 1;
 
-    if ( nextChunk > m_start + m_size )
-    {
-        m_chunkSize = 0;
-        m_chunkName = 0;
+    if (next_chunk > _start + _size) {
+        _chunk_size = 0;
+        _chunk_id = 0;
         return false;
     }
 
-    setPos( nextChunk );
-
-    chunkSet( );
-
-    return true;
+    seek(next_chunk);
+    return read_chunk();
 }

@@ -1,15 +1,11 @@
-/*=========================================================
-Name    :   snd_device.h
-Date    :   04/04/2006
-=========================================================*/
+// snd_device.h
+//
 
 #pragma once
 
 #include "cm_sound.h"
 
-/*=========================================================
-=========================================================*/
-
+//------------------------------------------------------------------------------
 typedef struct buffer_info_s
 {
     int     channels;
@@ -20,6 +16,7 @@ typedef struct buffer_info_s
     int     size;
 } buffer_info_t;
 
+//------------------------------------------------------------------------------
 typedef enum device_state_s
 {
     device_ready,
@@ -27,16 +24,17 @@ typedef enum device_state_s
     device_abort
 } device_state_t;
 
+//------------------------------------------------------------------------------
 class cAudioDevice
 {
 public:
-    static cAudioDevice *Create (HWND hWnd);
-    static void         Destroy (cAudioDevice *pDevice);
+    static cAudioDevice *create (HWND hwnd);
+    static void destroy(cAudioDevice* device);
 
-    virtual void        Destroy () = 0;
+    virtual void destroy() = 0;
 
-    virtual device_state_t  getState () = 0;
-    virtual buffer_info_t   getBufferInfo () = 0;
+    virtual device_state_t get_state() = 0;
+    virtual buffer_info_t get_buffer_info() = 0;
 
-    virtual void        writeToBuffer (byte *pAudioData, int nBytes) = 0;
+    virtual void write(byte* data, int size) = 0;
 };
