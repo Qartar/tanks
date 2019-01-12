@@ -72,12 +72,12 @@ void cSound::update()
     }
 
     buffer_info_t info = _audio_device->get_buffer_info();
-    int num_samples = snd_mixahead * info.frequency;
+    int num_samples = static_cast<int>(snd_mixahead * info.frequency);
     paintbuffer_t* buffer = get_paint_buffer(num_samples * info.channels * PAINTBUFFER_BYTES);
 
     buffer->frequency = info.frequency;
     buffer->channels = info.channels;
-    buffer->volume = snd_volume * 255;
+    buffer->volume = static_cast<int>(snd_volume * 255.f);
 
     int num_written = info.write - info.read;
     if (num_written < 0) {
@@ -115,10 +115,10 @@ void cSound::mix_stereo16(samplepair_t* input, stereo16_t* output, int num_sampl
 {
     for (int ii = 0; ii < num_samples; ++ii) {
         int left = (input[ii].left * volume) >> 8;
-        output[ii].left = clamp<int>(left, INT16_MIN, INT16_MAX);
+        output[ii].left = clamp<short>(left, INT16_MIN, INT16_MAX);
 
         int right = (input[ii].right * volume) >> 8;
-        output[ii].right = clamp<int>(right, INT16_MIN, INT16_MAX);
+        output[ii].right = clamp<short>(right, INT16_MIN, INT16_MAX);
     }
 }
 

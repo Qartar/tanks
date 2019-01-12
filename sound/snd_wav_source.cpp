@@ -96,5 +96,5 @@ bool cSoundWaveSource::parse_cue(chunk_file &chunk)
 //------------------------------------------------------------------------------
 float cSoundWaveSource::get_position(float position) const
 {
-    return std::fmod(position, _num_samples);
+    return std::fmod(position, static_cast<float>(_num_samples));
 }

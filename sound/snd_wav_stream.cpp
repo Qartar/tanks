@@ -76,7 +76,7 @@ result cSoundWaveStream::read(byte *data, std::size_t start, std::size_t size)
     for (std::size_t ii = 0; ii < fin; ++ii) {
         if (_format.bitwidth == 8) {
             int sample = (int)((unsigned char)(data[ii]) - 128);
-            ((signed char *)data)[ii] = sample;
+            ((signed char *)data)[ii] = narrow_cast<char>(sample);
         }
     }
 

@@ -46,7 +46,7 @@ bool cSoundWaveCache::parse_data(chunk_file& chunk)
     for (std::size_t ii = 0; ii < _num_samples; ++ii) {
         if (_format.bitwidth == 8) {
             int sample = (int)((unsigned char)(_data[ii]) - 128);
-            ((signed char *)_data)[ii] = sample;
+            ((signed char *)_data)[ii] = narrow_cast<char>(sample);
         }
     }
 

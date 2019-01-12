@@ -15,8 +15,6 @@
 
 #include <memory>
 #include <vector>
- 
-#pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
 
 #define ATTN_STATIC     0.0f
 
