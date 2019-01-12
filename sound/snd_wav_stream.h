@@ -9,6 +9,8 @@
 class cSoundWaveStream : public cSoundWaveSource
 {
 public:
+    virtual ~cSoundWaveStream() { free(); }
+
     virtual std::size_t get_samples(byte* samples, int num_samples, int sample_offset, bool looping) override;
 
     virtual result load(char const* filename) override;

@@ -30,36 +30,10 @@ cSound::cSound()
     , snd_primary("snd_primary", false, config::archive, "use primary sound buffer")
     , _initialized(false)
     , _audio_device(nullptr)
-{
-    _chain.next = _chain.prev = &_chain; init();
-}
-
-//------------------------------------------------------------------------------
-result cSound::init()
+    , _paint_buffer{}
+    , _channel_buffer{}
 {
     gSound = this;
-
-    _initialized = false;
-
-    _paint_buffer.data = nullptr;
-    _paint_buffer.size = 0;
-
-    _channel_buffer.data = nullptr;
-    _channel_buffer.size = 0;
-
-    memset(_sounds, 0, sizeof(_sounds));
-    for (int ii = 0; ii < MAX_CHANNELS; ++ii) {
-        _channels[ii].set_reserved(false);
-        _channels[ii].stop();
-    }
-
-    return result::success;
-}
-
-//------------------------------------------------------------------------------
-result cSound::shutdown()
-{
-    return result::success;
 }
 
 //------------------------------------------------------------------------------
@@ -75,11 +49,6 @@ void cSound::on_create(HWND hwnd)
 //------------------------------------------------------------------------------
 void cSound::on_destroy()
 {
-    // clear sound chain
-    while (_chain.next != &_chain) {
-        free(_chain.next);
-    }
-
     if (_paint_buffer.data) {
         delete [] _paint_buffer.data;
         delete [] _channel_buffer.data;
@@ -89,10 +58,6 @@ void cSound::on_destroy()
 
         _channel_buffer.data = NULL;
         _channel_buffer.size = 0;
-    }
-
-    for (int ii = 0; ii < MAX_CHANNELS; ++ii) {
-        free_channel(_channels + ii);
     }
 
     cAudioDevice::destroy(_audio_device);
@@ -134,6 +99,15 @@ void cSound::update()
     int num_bytes = num_samples * info.channels * info.bitwidth / 8;
 
     _audio_device->write(buffer->data, num_bytes);
+
+    // free one-shot channels
+    for (std::size_t ii = 0; ii < _channels.size(); ++ii) {
+        while (ii < _channels.size()
+               && !_channels[ii]->playing()
+               && !_channels[ii]->is_reserved()) {
+            free_channel_index(ii);
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -180,92 +154,33 @@ void cSound::set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up)
 }
 
 //------------------------------------------------------------------------------
-snd_link_t *cSound::create(char const* filename)
-{
-    snd_link_t* link = nullptr;
-    snd_link_s* next = nullptr;
-    cSoundSource* source;
-
-    source = cSoundSource::create(filename);
-    if (!source) {
-        return nullptr;
-    }
-
-    link = new snd_link_t;
-
-    // alphabetize
-    for (next = _chain.next; (next != &_chain) && (_stricmp(next->filename.c_str(), filename) < 0); next = next->next);
-
-    link->next = next;
-    link->prev = next->prev;
-
-    link->next->prev = link;
-    link->prev->next = link;
-
-    for (int ii = 0; ii < MAX_SOUNDS; ++ii) {
-        if (_sounds[ii] == nullptr) {
-            _sounds[ii] = link;
-            link->number = ii;
-
-            link->filename = filename;
-            link->sequence = 0;
-            link->source = source;
-
-            return link;
-        }
-    }
-
-    link->number = MAX_SOUNDS;
-    free(link);
-
-    log::message("could not load %s: out of room\n", filename);
-    return nullptr;
-}
-
-//---------------------------------- --------------------------------------------
-snd_link_t *cSound::find(char const* filename)
-{
-    for (snd_link_t* link = _chain.next; link != &_chain; link = link->next) {
-        int cmp = strcmp(filename, link->filename.c_str());
-        if (cmp == 0) {
-            return link;
-        } else if (cmp < 0) { // passed it, does not exit
-            return NULL;
-        }
-    }
-    return NULL;
-}
-
-//------------------------------------------------------------------------------
-void cSound::free(snd_link_t* link)
-{
-    link->next->prev = link->prev;
-    link->prev->next = link->next;
-
-    if (link->number < MAX_SOUNDS) {
-        _sounds[link->number] = NULL;
-    }
-
-    cSoundSource::destroy(link->source);
-
-    delete link;
-}
-
-//------------------------------------------------------------------------------
 sound::asset cSound::load_sound(char const* filename)
 {
-    snd_link_t* link;
+    auto it = _sounds_by_name.find(filename);
+    if (it != _sounds_by_name.cend()) {
+        return it->second;
+    }
 
-    if (link = find(filename)) {
-        link->sequence = 0;
+    cSoundSource* sound = cSoundSource::create(filename);
+    if (sound) {
+        auto asset = static_cast<sound::asset>(_sounds.size() + 1);
+        _sounds.emplace_back(sound);
+        _sounds_by_name[filename] = asset;
+        return asset;
     } else {
-        link = create(filename);
+        return sound::asset::invalid;
     }
+}
 
-    if (link) {
-        return static_cast<sound::asset>(link->number + 1);
+//------------------------------------------------------------------------------
+cSoundSource* cSound::get_sound(sound::asset asset)
+{
+    std::size_t index = static_cast<std::size_t>(asset) - 1;
+    if (index < _sounds.size()) {
+        return _sounds[index].get();
+    } else {
+        return nullptr;
     }
-    return sound::asset::invalid;
 }
 
 //------------------------------------------------------------------------------
@@ -281,4 +196,46 @@ void cSound::play(sound::asset asset, vec3 origin, float volume, float attenuati
 
         ch->play(asset);
     }
+}
+
+//------------------------------------------------------------------------------
+sound::channel* cSound::allocate_channel()
+{
+    if (!_audio_device) {
+        return nullptr;
+    } else {
+        return alloc_channel(true);
+    }
+}
+
+//------------------------------------------------------------------------------
+cSoundChannel *cSound::alloc_channel(bool reserve)
+{
+    if (_free_channels.size()) {
+        _channels.push_back(std::move(_free_channels.back()));
+        _free_channels.pop_back();
+    } else {
+        _channels.push_back(std::make_unique<cSoundChannel>());
+    }
+    _channels.back()->set_reserved(reserve);
+    return _channels.back().get();
+}
+
+//------------------------------------------------------------------------------
+void cSound::free_channel(sound::channel* chan)
+{
+    auto it = std::find_if(_channels.begin(), _channels.end(),
+        [chan](std::unique_ptr<cSoundChannel> const& elem) {
+            return elem.get() == chan;
+        });
+    free_channel_index(std::distance(_channels.begin(), it));
+}
+
+//------------------------------------------------------------------------------
+void cSound::free_channel_index(std::size_t index)
+{
+    assert(index < _channels.size());
+    _channels[index]->stop();
+    _free_channels.push_back(std::move(_channels[index]));
+    _channels.erase(_channels.begin() + index);
 }

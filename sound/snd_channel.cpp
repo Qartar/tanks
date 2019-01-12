@@ -4,46 +4,11 @@
 #include "snd_main.h"
 
 //------------------------------------------------------------------------------
-sound::channel *cSound::alloc_channel(bool reserve)
-{
-    if (!_audio_device) {
-        return nullptr;
-    }
-
-    for (int ii = 0; ii < MAX_CHANNELS; ++ii) {
-        if (_channels[ii].playing()) {
-            continue;
-        }
-
-        if (_channels[ii].is_reserved()) {
-            continue;
-        }
-
-        if (reserve) {
-            _channels[ii].set_reserved(true);
-        }
-
-        return (sound::channel *)&_channels[ii];
-    }
-
-    return nullptr;
-}
-
-//------------------------------------------------------------------------------
-void cSound::free_channel(sound::channel* chan)
-{
-    cSoundChannel* channel = (cSoundChannel *)chan;
-
-    channel->stop();
-    channel->set_reserved(false);
-}
-
-//------------------------------------------------------------------------------
 void cSound::mix_channels(paintbuffer_t* buffer, int num_samples)
 {
-    for (int ii = 0; ii < MAX_CHANNELS; ++ii) {
-        if (_channels[ii].playing()) {
-            _channels[ii].mix(buffer, num_samples);
+    for (auto& channel : _channels) {
+        if (channel->playing()) {
+            channel->mix(buffer, num_samples);
         }
     }
 }
@@ -55,10 +20,10 @@ result cSoundChannel::play(sound::asset asset, bool looping)
         return result::failure;
     }
 
-    _sound = gSound->get_sound(narrow_cast<int>(asset) - 1);
+    _sound = gSound->get_sound(asset);
 
     if (!_sound) {
-        log::warning("could not play sound %i: does not exist\n", static_cast<int>(asset) - 1);
+        log::warning("could not play sound %z: does not exist\n", asset);
         return result::failure;
     }
 

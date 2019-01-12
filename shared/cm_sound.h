@@ -39,7 +39,9 @@ public:
     static void create ();
     static void destroy ();
 
-    virtual void on_create(HWND hWnd) = 0;
+    virtual ~system() {}
+
+    virtual void on_create(HWND hwnd) = 0;
     virtual void on_destroy() = 0;
 
     virtual void update() = 0;
@@ -49,7 +51,7 @@ public:
     virtual void play(sound::asset asset, vec3 origin, float volume, float attenuation) = 0;
 
     virtual sound::channel* allocate_channel() = 0;
-    virtual void free_channel(sound::channel *channel) = 0;
+    virtual void free_channel(sound::channel* channel) = 0;
 
     virtual sound::asset load_sound (char const* filename) = 0;
 };

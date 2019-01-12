@@ -40,15 +40,6 @@ cSoundSource* cSoundSource::create(char const* filename)
 }
 
 //------------------------------------------------------------------------------
-void cSoundSource::destroy(cSoundSource* source)
-{
-    if (source) {
-        source->free();
-        delete source;
-    }
-}
-
-//------------------------------------------------------------------------------
 bool cSoundWaveSource::parse_chunk(chunk_file &chunk)
 {
     switch (chunk.id()) {

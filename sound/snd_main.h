@@ -13,12 +13,12 @@
 #include "snd_device.h"
 #include "snd_files.h"
 
+#include <memory>
+#include <vector>
+ 
 #pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
 
 #define ATTN_STATIC     0.0f
-
-#define MAX_SOUNDS      256
-#define MAX_CHANNELS    64
 
 //------------------------------------------------------------------------------
 typedef struct samplepair_s {
@@ -37,17 +37,6 @@ typedef struct stereo8_s {
     byte left;
     byte right;
 } stereo8_t;
-
-//------------------------------------------------------------------------------
-typedef struct snd_link_s {
-    snd_link_s* next;
-    snd_link_s* prev;
-    int sequence; // registration sequence
-    std::string filename;
-    int number;
-
-    cSoundSource *source;
-} snd_link_t;
 
 #define PAINTBUFFER_BYTES   4
 
@@ -121,27 +110,24 @@ class cSound : public sound::system
 {
 public:
     cSound();
-    ~cSound() { shutdown(); }
+    ~cSound() {}
 
-    result init();
-    result shutdown();
+    virtual void on_create(HWND hWnd) override;
+    virtual void on_destroy() override;
 
-    virtual void on_create(HWND hWnd);
-    virtual void on_destroy();
+    virtual void update() override;
 
-    virtual void update();
+    virtual void set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up) override;
 
-    virtual void set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up);
+    virtual void play(sound::asset asset, vec3 origin, float volume, float attenuation) override;
 
-    virtual void play(sound::asset asset, vec3 origin, float volume, float attenuation);
-
-    virtual sound::channel* allocate_channel() { return alloc_channel(true); }
-    virtual void free_channel(sound::channel *pChan);
+    virtual sound::channel* allocate_channel() override;
+    virtual void free_channel(sound::channel* channel) override;
 
     //  registration
 
     sound::asset load_sound(char const* filename);
-    cSoundSource* get_sound(int nSound) { if (_sounds[nSound]) return _sounds[nSound]->source; return NULL; }
+    cSoundSource* get_sound(sound::asset asset);
 
     //  mixing
 
@@ -172,21 +158,19 @@ private:
     //  sounds
     //
 
-    snd_link_t _chain;
-    snd_link_t* _sounds[MAX_SOUNDS];
-
-    snd_link_t* create(char const* filename);
-    snd_link_t* find(char const* filename);
-    void free(snd_link_t* link);
+    std::vector<std::unique_ptr<cSoundSource>> _sounds;
+    std::map<std::string, sound::asset> _sounds_by_name;
 
     //
     //  channels
     //
 
-    sound::channel* alloc_channel(bool reserve);
+    cSoundChannel* alloc_channel(bool reserve);
+    void free_channel_index(std::size_t index);
 
     void mix_channels(paintbuffer_t* buffer, int num_samples);
-    cSoundChannel _channels[MAX_CHANNELS];
+    std::vector<std::unique_ptr<cSoundChannel>> _channels;
+    std::vector<std::unique_ptr<cSoundChannel>> _free_channels;
 };
 
 extern cSound* gSound;

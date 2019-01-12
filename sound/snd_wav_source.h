@@ -57,6 +57,8 @@ protected:
 class cSoundWaveSource : public cSoundSource
 {
 public:
+    virtual ~cSoundWaveSource() = 0 {};
+
     virtual std::size_t get_samples(byte* samples, int num_samples, int sample_offset, bool looping) override = 0;
     virtual sound_format const* get_format() const override { return &_format; }
     virtual char const* get_filename() const override { return _filename.c_str(); }
