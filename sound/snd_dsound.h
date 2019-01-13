@@ -45,4 +45,6 @@ private:
 private:
     result create_buffers();
     void destroy_buffers();
+
+    void mix_stereo16(samplepair_t* input, stereo16_t* output, int num_samples, int volume);
 };

@@ -4,8 +4,6 @@
 #include "snd_main.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-cSound  *gSound;
-
 sound::system* pSound = nullptr;
 
 //------------------------------------------------------------------------------
@@ -33,7 +31,6 @@ cSound::cSound()
     , _paint_buffer{}
     , _channel_buffer{}
 {
-    gSound = this;
 }
 
 //------------------------------------------------------------------------------
@@ -107,18 +104,6 @@ void cSound::update()
                && !_channels[ii]->is_reserved()) {
             free_channel_index(ii);
         }
-    }
-}
-
-//------------------------------------------------------------------------------
-void cSound::mix_stereo16(samplepair_t* input, stereo16_t* output, int num_samples, int volume)
-{
-    for (int ii = 0; ii < num_samples; ++ii) {
-        int left = (input[ii].left * volume) >> 8;
-        output[ii].left = clamp<short>(left, INT16_MIN, INT16_MAX);
-
-        int right = (input[ii].right * volume) >> 8;
-        output[ii].right = clamp<short>(right, INT16_MIN, INT16_MAX);
     }
 }
 
@@ -215,7 +200,7 @@ cSoundChannel *cSound::alloc_channel(bool reserve)
         _channels.push_back(std::move(_free_channels.back()));
         _free_channels.pop_back();
     } else {
-        _channels.push_back(std::make_unique<cSoundChannel>());
+        _channels.push_back(std::make_unique<cSoundChannel>(this));
     }
     _channels.back()->set_reserved(reserve);
     return _channels.back().get();

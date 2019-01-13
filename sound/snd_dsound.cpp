@@ -274,10 +274,22 @@ void cDirectSoundDevice::write(byte* data, int num_bytes)
     samples[0] = bytes[0] / (_buffer_format.nChannels * _buffer_format.wBitsPerSample / 8);
     samples[1] = bytes[1] / (_buffer_format.nChannels * _buffer_format.wBitsPerSample / 8);
 
-    gSound->mix_stereo16((samplepair_t *)data, (stereo16_t *)buffer[0], samples[0], 255);
-    gSound->mix_stereo16((samplepair_t *)(data + bytes[0] * 2), (stereo16_t *)buffer[1], samples[1], 255);
+    mix_stereo16((samplepair_t *)data, (stereo16_t *)buffer[0], samples[0], 255);
+    mix_stereo16((samplepair_t *)(data + bytes[0] * 2), (stereo16_t *)buffer[1], samples[1], 255);
 
     _submix_buffer->Unlock(buffer[0], bytes[0], buffer[1], bytes[1]);
 
     _buffer_offset = (_buffer_offset + bytes[0] + bytes[1]) % _buffer_caps.dwBufferBytes;
+}
+
+//------------------------------------------------------------------------------
+void cDirectSoundDevice::mix_stereo16(samplepair_t* input, stereo16_t* output, int num_samples, int volume)
+{
+    for (int ii = 0; ii < num_samples; ++ii) {
+        int left = (input[ii].left * volume) >> 8;
+        output[ii].left = clamp<short>(left, INT16_MIN, INT16_MAX);
+
+        int right = (input[ii].right * volume) >> 8;
+        output[ii].right = clamp<short>(right, INT16_MIN, INT16_MAX);
+    }
 }

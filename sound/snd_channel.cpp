@@ -20,9 +20,9 @@ result cSoundChannel::play(sound::asset asset, bool looping)
         return result::failure;
     }
 
-    _sound = gSound->get_sound(asset);
+    _source = _sound->get_sound(asset);
 
-    if (!_sound) {
+    if (!_source) {
         log::warning("could not play sound %z: does not exist\n", asset);
         return result::failure;
     }
@@ -58,7 +58,7 @@ void cSoundChannel::mix(paintbuffer_t* buffer, int samples)
 {
     int     volume = (int)(_volume * buffer->volume * 255) >> 8;
 
-    sound_format const* format = _sound->get_format();
+    sound_format const* format = _source->get_format();
 
     float   rate = _frequency * (float)format->frequency / (float)buffer->frequency;
 
@@ -76,7 +76,7 @@ void cSoundChannel::mix(paintbuffer_t* buffer, int samples)
 void cSoundChannel::_mix_mono16(void* buffer, float rate, int volume, int num_samples)
 {
     samplepair_t* output = (samplepair_t *)buffer;
-    short* input = (short *)gSound->get_channel_buffer()->data;
+    short* input = (short *)_sound->get_channel_buffer()->data;
 
     int spatial_vol[2];
 
@@ -85,7 +85,7 @@ void cSoundChannel::_mix_mono16(void* buffer, float rate, int volume, int num_sa
     int actual_samples = static_cast<int>(num_samples * rate);
     int actual_offset = static_cast<int>(_sample_pos);
 
-    std::size_t samples_read = _sound->get_samples((byte *)input, actual_samples, actual_offset, _is_looping);
+    std::size_t samples_read = _source->get_samples((byte *)input, actual_samples, actual_offset, _is_looping);
     float sample_pos = _sample_pos - floor(_sample_pos);
 
     for (int ii = 0; sample_pos < samples_read; ++ii) {
@@ -102,7 +102,7 @@ void cSoundChannel::_mix_mono16(void* buffer, float rate, int volume, int num_sa
         _is_playing = false;
     }
 
-    _sample_pos = _sound->get_position(_sample_pos + rate * samples_read);
+    _sample_pos = _source->get_position(_sample_pos + rate * samples_read);
 }
 
 #undef SAMPLE
@@ -113,7 +113,7 @@ void cSoundChannel::_mix_mono16(void* buffer, float rate, int volume, int num_sa
 void cSoundChannel::_mix_stereo16(void* buffer, float rate, int volume, int num_samples)
 {
     samplepair_t* output = (samplepair_t *)buffer;
-    stereo16_t* input = (stereo16_t *)gSound->get_channel_buffer()->data;
+    stereo16_t* input = (stereo16_t *)_sound->get_channel_buffer()->data;
 
     int spatial_vol[2];
 
@@ -122,7 +122,7 @@ void cSoundChannel::_mix_stereo16(void* buffer, float rate, int volume, int num_
     int actual_samples = static_cast<int>(num_samples * rate);
     int actual_offset = static_cast<int>(_sample_pos);
 
-    std::size_t samples_read = _sound->get_samples((byte *)input, actual_samples, actual_offset, _is_looping);
+    std::size_t samples_read = _source->get_samples((byte *)input, actual_samples, actual_offset, _is_looping);
     float sample_pos = _sample_pos - floor(_sample_pos);
 
     for (int ii = 0; sample_pos < samples_read; ++ii) {
@@ -139,7 +139,7 @@ void cSoundChannel::_mix_stereo16(void* buffer, float rate, int volume, int num_
         _is_playing = false;
     }
 
-    _sample_pos = _sound->get_position(_sample_pos + rate * samples_read);
+    _sample_pos = _source->get_position(_sample_pos + rate * samples_read);
 }
 
 #undef SAMPLE
@@ -152,7 +152,7 @@ void cSoundChannel::_spatialize_mono(int in, int *out)
     if (_attenuation == ATTN_STATIC) {
         out[0] = in;
     } else {
-        float dist = (_origin - gSound->_origin).length();
+        float dist = (_origin - _sound->_origin).length();
         float attn = clamp(powf(ATTN_LEN / dist, _attenuation), 0.0f, 1.0f);
 
         out[0] = static_cast<int>(in * attn);
@@ -162,9 +162,9 @@ void cSoundChannel::_spatialize_mono(int in, int *out)
 //------------------------------------------------------------------------------
 void cSoundChannel::_spatialize_stereo(int in, int out[2])
 {
-    vec3 dir = _origin - gSound->_origin;
+    vec3 dir = _origin - _sound->_origin;
     float dist = dir.normalize_length();
-    float dp = dir.dot(gSound->_axis[1]);
+    float dp = dir.dot(_sound->_axis[1]);
 
     if (_attenuation == ATTN_STATIC) {
         out[0] = static_cast<int>(in * 0.5f * (1.0f - dp));

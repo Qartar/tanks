@@ -18,6 +18,8 @@
 
 #define ATTN_STATIC     0.0f
 
+class cSound;
+
 //------------------------------------------------------------------------------
 typedef struct samplepair_s {
     int  left;
@@ -51,8 +53,9 @@ typedef struct paintbuffer_s {
 class cSoundChannel : public sound::channel
 {
 public:
-    cSoundChannel()
-        : _sound(nullptr)
+    cSoundChannel(cSound* sound)
+        : _sound(sound)
+        , _source(nullptr)
         , _origin(vec3_zero)
         , _is_playing(false)
         , _is_looping(false)
@@ -83,7 +86,8 @@ public:
     void mix(paintbuffer_t* buffer, int samples);
 
 private:
-    cSoundSource* _sound;
+    cSound* _sound;
+    cSoundSource* _source;
 
     vec3 _origin;
     
@@ -129,7 +133,6 @@ public:
 
     //  mixing
 
-    void mix_stereo16(samplepair_t* input, stereo16_t* output, int num_samples, int volume);
     paintbuffer_t* get_channel_buffer() { return &_channel_buffer; }
 
     //  spatialization
@@ -170,5 +173,3 @@ private:
     std::vector<std::unique_ptr<cSoundChannel>> _channels;
     std::vector<std::unique_ptr<cSoundChannel>> _free_channels;
 };
-
-extern cSound* gSound;
