@@ -24,7 +24,7 @@ public:
     vec2& operator[](std::size_t idx) { return (&_mins)[idx]; }
 
     vec2& mins() { return _mins; }
-    vec2& maxs() { return _mins; }
+    vec2& maxs() { return _maxs; }
     vec2 mins() const { return _mins; }
     vec2 maxs() const { return _maxs; }
 
