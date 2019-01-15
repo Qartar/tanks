@@ -48,6 +48,12 @@ protected:
     vec2 collision_impulse(physics::rigid_body const* body_a,
                            physics::rigid_body const* body_b,
                            physics::contact const& contact) const;
+
+    using overlap = std::pair<std::size_t, std::size_t>;
+
+    //! Return a lexicographically sorted list of all pairs of bodies which
+    //! overlap during the next `delta_time` step, including permutations.
+    std::vector<overlap> generate_overlaps(float delta_time) const;
 };
 
 } // namespace physics

@@ -6,8 +6,10 @@
 #include "p_material.h"
 #include "p_rigidbody.h"
 #include "p_trace.h"
-#include <algorithm>
+
 #include <cassert>
+#include <algorithm>
+#include <numeric>
 #include <queue>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -47,20 +49,16 @@ void world::step(float delta_time)
         }
     };
 
-    for (std::size_t ii = 0; ii < _bodies.size(); ++ii) {
+    // calculate all overlapping body pairs, including permutations
+    std::vector<overlap> overlaps = generate_overlaps(delta_time);
+
+    for (std::size_t idx = 0; idx < overlaps.size();) {
+        std::size_t ii = overlaps[idx].first;
+
         std::priority_queue<candidate> candidates;
-
-        // check all pairs, including permutations
-        for (std::size_t jj = 0; jj < _bodies.size(); ++jj) {
-            // cannot collide with itself
-            if (ii == jj) {
-                continue;
-            }
-
-            // check collision filter
-            if (_filter_callback && !_filter_callback(_bodies[ii], _bodies[jj])) {
-                continue;
-            }
+        // check all bodies overlapping with body index `ii`
+        for (; idx < overlaps.size() && overlaps[idx].first == ii; ++idx) {
+            std::size_t jj = overlaps[idx].second;
 
             // check collision
             physics::trace tr(_bodies[ii], _bodies[jj], delta_time);
@@ -190,6 +188,57 @@ vec2 world::collision_impulse(
     }
 
     return (direction * dpx - tangent * dpy).to_vec2();
+}
+
+//------------------------------------------------------------------------------
+std::vector<world::overlap> world::generate_overlaps(float delta_time) const
+{
+    std::vector<bounds> swept_bounds(_bodies.size());
+    for (std::size_t ii = 0, sz = _bodies.size(); ii < sz; ++ii) {
+        // todo: include rotation
+        swept_bounds[ii] = bounds::from_translation(_bodies[ii]->get_bounds(),
+                                                    _bodies[ii]->get_linear_velocity() * delta_time);
+    }
+
+    std::vector<overlap> axis_overlaps[2];
+    std::vector<size_t> sorted(_bodies.size());
+    std::iota(sorted.begin(), sorted.end(), 0);
+
+    for (int axis = 0; axis < 2; ++axis) {
+        // sort bounds on the current axis
+        std::sort(sorted.begin(), sorted.end(),
+            [&swept_bounds, axis](std::size_t lhs, std::size_t rhs) {
+                return swept_bounds[lhs][0][axis] < swept_bounds[rhs][0][axis];
+            });
+
+        // generate overlaps on the current axis
+        for (std::size_t ii = 0, sz = _bodies.size(); ii < sz; ++ii) {
+            bounds b = swept_bounds[sorted[ii]];
+            for (std::size_t jj = ii + 1; jj < sz; ++jj) {
+                if (b[1][axis] < swept_bounds[sorted[jj]][0][axis]) {
+                    break;
+                }
+
+                // check collision filter, note: filter is not necessarily symmetric
+                if (!_filter_callback || _filter_callback(_bodies[sorted[ii]], _bodies[sorted[jj]])) {
+                    axis_overlaps[axis].push_back({sorted[ii], sorted[jj]});
+                }
+                if (!_filter_callback || _filter_callback(_bodies[sorted[jj]], _bodies[sorted[ii]])) {
+                    axis_overlaps[axis].push_back({sorted[jj], sorted[ii]});
+                }
+            }
+        }
+
+        // sort overlaps on the current axis by body ids
+        std::sort(axis_overlaps[axis].begin(), axis_overlaps[axis].end());
+    }
+
+    // generate the intersection of overlaps on both axes
+    std::vector<overlap> overlaps;
+    std::set_intersection(axis_overlaps[0].begin(), axis_overlaps[0].end(),
+                          axis_overlaps[1].begin(), axis_overlaps[1].end(),
+                          std::back_inserter(overlaps));
+    return overlaps;
 }
 
 } // namespace physics
