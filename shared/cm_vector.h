@@ -56,9 +56,9 @@ public:
 
     float length() const { return std::sqrt(length_sqr()); }
     float length_sqr() const { return x*x + y*y; }
-    vec2 normalize() const { return *this / length(); }
-    void normalize_self() { *this /= length(); }
-    float normalize_length() { float len = length(); *this /= len; return len; }
+    vec2 normalize() const { float len = length(); return len ? *this / len : *this; }
+    void normalize_self() { float len = length(); if (len) { *this /= len; } }
+    float normalize_length() { float len = length(); if (len) { *this /= len; } return len; }
     void clear() { x=0.0f; y=0.0f; }
 
     constexpr float dot(vec2 const& V) const { return x*V.x + y*V.y; }
@@ -111,9 +111,9 @@ public:
 
     float length() const {return std::sqrt(length_sqr()); }
     float length_sqr() const {return x*x + y*y + z*z; }
-    vec3 normalize() const { return *this / length(); }
-    void normalize_self() { *this /= length(); }
-    float normalize_length() { float len = length(); *this /= len; return len; }
+    vec3 normalize() const { float len = length(); return len ? *this / len : *this; }
+    void normalize_self() { float len = length(); if (len) { *this /= len; } }
+    float normalize_length() { float len = length(); if (len) { *this /= len; } return len; }
     void clear() { x=0.0f; y=0.0f; z=0.0f; }
 
     constexpr float dot(vec3 const& V) const { return x*V.x + y*V.y + z*V.z;}
@@ -168,9 +168,9 @@ public:
 
     float length() const { return std::sqrt(length_sqr()); }
     float length_sqr() const { return x*x + y*y + z*z + w*w; }
-    vec4 normalize() const { return *this / length(); }
-    void normalize_self() { *this /= length(); }
-    float normalize_length() { float len = length(); *this /= len; return len; }
+    vec4 normalize() const { float len = length(); return len ? *this / len : *this; }
+    void normalize_self() { float len = length(); if (len) { *this /= len; } }
+    float normalize_length() { float len = length(); if (len) { *this /= len; } return len; }
     void clear() { x=0.0f; y=0.0f; z=0.0f; w=0.0f; }
 
     constexpr float dot(vec4 const& V) const { return x*V.x + y*V.y + z*V.z + w*V.w; }

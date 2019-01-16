@@ -46,29 +46,13 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
 {
     support_vertex simplex[2], candidate;
 
-    simplex[0] = supporting_vertex( direction);
-    simplex[1] = supporting_vertex(-direction);
-
+    simplex[0] = supporting_vertex(direction);
+    simplex[1] = supporting_vertex(-simplex[0].d);
     direction = -nearest_difference(simplex[0], simplex[1]);
+    float distance = direction.length_sqr();
 
     for (int num_iterations = 0; ; ++num_iterations) {
-        // Direction can be zero if two shapes have a coincident feature
-        if (direction == vec3_zero) {
-            point = nearest_point(simplex[0], simplex[1]);
-            return 0.f;
-        }
-
         candidate = supporting_vertex(direction);
-
-        vec3 n = (simplex[1].d - simplex[0].d).cross(candidate.d - simplex[1].d);
-
-        // Check if the candidate point is any closer to the minimum
-        if (n.length_sqr() < epsilon || num_iterations > max_iterations) {
-            point = nearest_point(simplex[0], simplex[1]);
-            float length = direction.length();
-            direction /= length;
-            return length;
-        }
 
         // Check if simplex formed with candidate contains origin
         if (triangle_contains_origin(simplex[0].d, simplex[1].d, candidate.d)) {
@@ -85,6 +69,16 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
         } else {
             simplex[0] = candidate;
             direction = -d1;
+        }
+
+        float d = direction.length_sqr();
+
+        // Check progress
+        if (std::min(distance - d, d) < epsilon || num_iterations >= max_iterations) {
+            point = nearest_point(simplex[0], simplex[1]);
+            return direction.normalize_length();
+        } else {
+            distance = d;
         }
     }
 }
@@ -109,14 +103,17 @@ vec3 collide::motion_supporting_vertex(motion_data const& motion, vec3 direction
 vec3 collide::nearest_difference(support_vertex a, support_vertex b) const
 {
     vec3 v = b.d - a.d;
-    float t = -a.d.dot(v) / v.length_sqr();
+    float num = -a.d.dot(v);
+    float den = v.dot(v);
 
-    if (t > 1.0f) {
+    if (num >= den) {
         return b.d;
-    } else if (t < 0.0f) {
+    } else if (num < 0.0f) {
         return a.d;
     } else {
-        return a.d + v * t;
+        float t = num / den;
+        float s = 1.f - t;
+        return a.d * s + b.d * t;
     }
 }
 
@@ -124,14 +121,17 @@ vec3 collide::nearest_difference(support_vertex a, support_vertex b) const
 vec3 collide::nearest_point(support_vertex a, support_vertex b) const
 {
     vec3 v = b.d - a.d;
-    float t = -a.d.dot(v) / v.length_sqr();
+    float num = -a.d.dot(v);
+    float den = v.dot(v);
 
-    if (t > 1.0f) {
+    if (num >= den) {
         return b.a;
-    } else if (t < 0.0f) {
+    } else if (num < 0.0f) {
         return a.a;
     } else {
-        return a.a + (b.a - a.a) * t;
+        float t = num / den;
+        float s = 1.f - t;
+        return a.a * s + b.a * t;
     }
 }
 
@@ -140,6 +140,9 @@ bool collide::triangle_contains_origin(vec3 a, vec3 b, vec3 c) const
 {
     // Triangle plane normal
     vec3 n = (b - a).cross(c - b);
+    if (n == vec3_zero) {
+        return false;
+    }
 
     // Ensure that the winding is consistent
     if ((c - a).dot(n.cross(b - a)) > 0.0f) {
@@ -183,9 +186,7 @@ float collide::penetration_distance(support_vertex a, support_vertex b, support_
         float delta_sqr = (point_distance - edge_distance) * (point_distance - edge_distance) / direction.length_sqr();
         if (delta_sqr < epsilon || vertices.size() == max_vertices) {
             point = nearest_point(vertices[edge_index], vertices[edge_index-1]);
-            float length = direction.length();
-            direction /= length;
-            return edge_distance / length;
+            return edge_distance / direction.normalize_length();
         }
 
         // Insert candidate point into the convex polygon
