@@ -6,6 +6,9 @@
 #include "p_rigidbody.h"
 #include "p_shape.h"
 
+#include <algorithm>
+#include <array>
+
 ////////////////////////////////////////////////////////////////////////////////
 namespace physics {
 
@@ -163,19 +166,20 @@ bool collide::triangle_contains_origin(vec3 a, vec3 b, vec3 c) const
 //------------------------------------------------------------------------------
 float collide::penetration_distance(support_vertex a, support_vertex b, support_vertex c, vec3& point, vec3& direction) const
 {
-    std::vector<support_vertex> vertices; vertices.reserve(max_vertices);
+    std::array<support_vertex, max_vertices> vertices;
+    std::size_t num_vertices = 0;
     support_vertex candidate;
 
     vec3 n = (b.d - c.d).cross(b.d - a.d);
 
-    vertices.push_back(a);
-    vertices.push_back(b);
-    vertices.push_back(c);
-    vertices.push_back(a); // avoid wrapping
+    vertices[num_vertices++] = a;
+    vertices[num_vertices++] = b;
+    vertices[num_vertices++] = c;
+    vertices[num_vertices++] = a; // avoid wrapping
 
     while (true) {
         // Find the edge nearest to the origin
-        int edge_index = nearest_edge_index(n, vertices, direction);
+        std::size_t edge_index = nearest_edge_index(n, vertices.data(), num_vertices, direction);
 
         // Get the vertex in direction of the edge normal (away from the origin)
         candidate = supporting_vertex(direction);
@@ -190,17 +194,20 @@ float collide::penetration_distance(support_vertex a, support_vertex b, support_
         }
 
         // Insert candidate point into the convex polygon
-        vertices.insert(vertices.begin() + edge_index, candidate);
+        vertices[num_vertices++] = candidate;
+        std::rotate(vertices.data() + edge_index,
+                    vertices.data() + num_vertices - 1,
+                    vertices.data() + num_vertices);
     }
 }
 
 //------------------------------------------------------------------------------
-int collide::nearest_edge_index(vec3 normal, std::vector<support_vertex> const& vertices, vec3& direction) const
+std::size_t collide::nearest_edge_index(vec3 normal, support_vertex const* vertices, std::size_t num_vertices, vec3& direction) const
 {
     float min_dist_sqr = FLT_MAX;
-    int min_index = 1;
+    std::size_t min_index = 1;
 
-    for (int ii = 1; ii < vertices.size(); ++ii) {
+    for (std::size_t ii = 1; ii < num_vertices; ++ii) {
         vec3 edge_normal = normal.cross(vertices[ii-1].d - vertices[ii].d);
         float dot_product = edge_normal.dot(vertices[ii].d);
 

@@ -5,7 +5,6 @@
 
 #include "cm_vector.h"
 #include "p_motion.h"
-#include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace physics {
@@ -79,7 +78,7 @@ protected:
 
     float penetration_distance(support_vertex a, support_vertex b, support_vertex c, vec3& point, vec3& direction) const;
 
-    int nearest_edge_index(vec3 normal, std::vector<support_vertex> const& vertices, vec3& direction) const;
+    std::size_t nearest_edge_index(vec3 normal, support_vertex const* vertices, std::size_t num_vertices, vec3& direction) const;
 
 protected:
     motion_data _motion[2];
