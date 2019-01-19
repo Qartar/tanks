@@ -50,6 +50,37 @@
     <DisplayString>{{{_mins}, {_maxs}}}</DisplayString>
   </Type>
 
+  <!-- string types -->
+  <Type Name="string::view">
+    <Intrinsic Name="length" Expression="_end - _begin"/>
+    <DisplayString>{_begin, [length()]s}</DisplayString>
+    <StringView>_begin, [length()]</StringView>
+    <Expand>
+      <Item Name="size">length()</Item>
+      <Item Name="data">_begin, [length()]</Item>
+    </Expand>
+  </Type>
+  <Type Name="string::literal">
+    <Intrinsic Name="length" Expression="_end - _begin"/>
+    <DisplayString>{_begin, s}</DisplayString>
+    <StringView>_begin, [length()]</StringView>
+    <Expand>
+      <Item Name="size">length()</Item>
+      <Item Name="data">_begin, [length()]</Item>
+    </Expand>
+  </Type>
+  <Type Name="string::buffer">
+    <Intrinsic Name="length" Expression="_end - _begin"/>
+    <Intrinsic Name="capacity" Expression="_capacity - _begin"/>
+    <DisplayString>{_begin, s}</DisplayString>
+    <StringView>_begin, [length()]</StringView>
+    <Expand>
+      <Item Name="size">length()</Item>
+      <Item Name="capacity">capacity()</Item>
+      <Item Name="data">_begin, [length()]</Item>
+    </Expand>
+  </Type>
+
   <!-- time_base<T> -->
   <Type Name="time_base&lt;*&gt;">
     <DisplayString Condition="_value == -9223372036854775808">-inf</DisplayString>

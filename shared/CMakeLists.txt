@@ -16,6 +16,8 @@ set(SHARED_SOURCES
     cm_shared.cpp
     cm_shared.h
     cm_sound.h
+    cm_string.cpp
+    cm_string.h
     cm_time.h
     cm_vector.h
 
