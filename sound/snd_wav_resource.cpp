@@ -6,7 +6,7 @@
 #include "../system/resource.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-static const struct { int iResource; char const* szResource; } resources[] =
+static const struct { int iResource; string::literal szResource; } resources[] =
 {
     { IDR_WAVE1, "assets/sound/cannon_impact.wav" },
     { IDR_WAVE2, "assets/sound/tank_explode.wav" },
@@ -20,17 +20,22 @@ static const struct { int iResource; char const* szResource; } resources[] =
 };
 
 //------------------------------------------------------------------------------
-result cSoundWaveResource::load(char const* filename)
+result cSoundWaveResource::load(string::view filename)
 {
+    char const* resourcename = nullptr;
     for (int i = 0; i < countof(resources); i++) {
         if (strcmp(filename, resources[i].szResource) == 0) {
-            filename = MAKEINTRESOURCE(resources[i].iResource);
+            resourcename = MAKEINTRESOURCE(resources[i].iResource);
             break;
         }
     }
 
+    if (!resourcename) {
+        return result::failure;
+    }
+
     HMODULE hinstance = GetModuleHandleA(NULL);
-    HANDLE hinfo = FindResourceA(hinstance, filename, "WAVE");
+    HANDLE hinfo = FindResourceA(hinstance, resourcename, "WAVE");
     DWORD size = SizeofResource(hinstance, (HRSRC)hinfo);
     HANDLE resource = LoadResource(hinstance, (HRSRC)hinfo);
     LPVOID resource_data = LockResource(resource);

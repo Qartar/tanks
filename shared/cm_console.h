@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "cm_string.h"
+
 #include <cstdlib>
 #include <array>
 #include <functional>
@@ -30,7 +32,7 @@ class console_buffer
 public:
     console_buffer();
 
-    void append(char const* begin, char const* end);
+    void append(string::view text);
     void resize(std::size_t num_columns);
     void write(file::stream& steam) const;
 
@@ -59,11 +61,11 @@ protected:
     std::size_t _max_columns; //!< maximum number of columns in each row
 
 protected:
-    void append_row(char const* begin, char const* end);
+    void append_row(string::view text);
     void append_endline(bool keep_color);
 
-    std::size_t num_columns(char const* begin, char const* end) const;
-    char const* advance_columns(std::size_t columns, char const* begin, char const* end) const;
+    std::size_t num_columns(string::view text) const;
+    string::view advance_columns(std::size_t columns, string::view text) const;
 };
 
 //------------------------------------------------------------------------------
@@ -73,7 +75,7 @@ public:
     console_input();
 
     void clear();
-    void replace(char const* text);
+    void replace(string::view text);
 
     bool char_event(int key);
     bool key_event(int key, bool down);
@@ -97,9 +99,9 @@ class console_history
 public:
     console_history();
 
-    void insert(char const* text);
+    void insert(string::view text);
     std::size_t size() const { return std::min(_size, buffer_size); }
-    char const* operator[](std::size_t index) const;
+    string::view operator[](std::size_t index) const;
 
 protected:
     constexpr static std::size_t element_size = 1 << 8;
@@ -119,9 +121,9 @@ public:
     using callback_type = std::function<void(parser::text const& args)>;
 
 public:
-    console_command(char const* name, callback_type callback);
+    console_command(string::view name, callback_type callback);
     template<typename T>
-    console_command(char const* name, T* obj, void(T::*callback)(parser::text const&))
+    console_command(string::view name, T* obj, void(T::*callback)(parser::text const&))
         : console_command(name, [obj, callback](parser::text const& args){ (obj->*callback)(args); })
     {}
 
@@ -130,7 +132,7 @@ public:
 protected:
     friend console;
 
-    std::string _name;
+    string::buffer _name;
     callback_type _func;
 
     console_command* _next;
@@ -144,7 +146,7 @@ public:
     console();
     ~console();
 
-    void printf(char const* fmt, ...);
+    void printf(string::literal fmt, ...);
     void resize(std::size_t num_columns);
     bool char_event(int key);
     bool key_event(int key, bool down);
@@ -172,12 +174,13 @@ protected:
     bool _control;
 
     struct insensitive_compare {
-        bool operator()(std::string const& lhs, std::string const& rhs) const {
-            return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+        using is_transparent = void;
+        bool operator()(string::view lhs, string::view rhs) const {
+            return stricmp(lhs, rhs) < 0;
         }
     };
 
-    std::map<std::string, console_command*, insensitive_compare> _commands;
+    std::map<string::buffer, console_command*, insensitive_compare> _commands;
 
     console_command _command_set;
     console_command _command_list;
@@ -186,7 +189,7 @@ protected:
     static console* _singleton;
 
 protected:
-    void execute(char const* begin, char const* end);
+    void execute(string::view text);
     static void command_set(parser::text const& args);
     static void command_list(parser::text const& args);
 };

@@ -28,7 +28,7 @@ void session::init_client()
 
     {
         int r = 255, g = 255, b = 255;
-        sscanf_s(_cl_color, "%d %d %d", &r, &g, &b);
+        sscanf(_cl_color, "%d %d %d", &r, &g, &b);
         cls.info.color.r = static_cast<float>(r) * (1.f / 255.f);
         cls.info.color.g = static_cast<float>(g) * (1.f / 255.f);
         cls.info.color.b = static_cast<float>(b) * (1.f / 255.f);
@@ -55,8 +55,8 @@ void session::init_client()
 //------------------------------------------------------------------------------
 void session::shutdown_client()
 {
-    _cl_name = cls.info.name.data();
-    _cl_color = va("%i %i %i", (int )(cls.info.color.r*255), (int )(cls.info.color.g*255), (int )(cls.info.color.b*255) );
+    _cl_name = string::view(cls.info.name.data());
+    _cl_color = string::view(va("%i %i %i", (int )(cls.info.color.r*255), (int )(cls.info.color.g*255), (int )(cls.info.color.b*255) ));
     _cl_weapon = static_cast<int>(cls.info.weapon);
 }
 
@@ -170,7 +170,7 @@ void session::connect_to_server (int index)
 }
 
 //------------------------------------------------------------------------------
-void session::connect_to_server (char const* address)
+void session::connect_to_server (string::view address)
 {
     // ask server for a connection
 

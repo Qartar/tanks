@@ -137,12 +137,12 @@ std::size_t stream::size() const
 }
 
 //------------------------------------------------------------------------------
-std::size_t stream::printf(char const* fmt, ...)
+std::size_t stream::printf(string::literal fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
-    int len = vfprintf(_handle, fmt, ap);
+    int len = vfprintf(_handle, fmt.begin(), ap);
     va_end(ap);
 
     return len > 0 ? len : 0;
@@ -202,15 +202,15 @@ buffer::~buffer()
 }
 
 //------------------------------------------------------------------------------
-stream open(char const* filename, file::mode mode)
+stream open(string::view filename, file::mode mode)
 {
     FILE* f = nullptr;
-    fopen_s(&f, filename, mode_to_native(mode));
+    fopen_s(&f, filename.c_str(), mode_to_native(mode));
     return stream_internal(f);
 }
 
 //------------------------------------------------------------------------------
-buffer read(char const* filename)
+buffer read(string::view filename)
 {
     stream f = open(filename, mode::read);
     if (f) {
@@ -226,7 +226,7 @@ buffer read(char const* filename)
 }
 
 //------------------------------------------------------------------------------
-std::size_t write(char const* filename, byte const* buffer, std::size_t buffer_size)
+std::size_t write(string::view filename, byte const* buffer, std::size_t buffer_size)
 {
     stream f = open(filename, mode::write);
     return f.write(buffer, buffer_size);

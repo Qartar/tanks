@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_string.h"
 #include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -13,17 +14,19 @@ class text
 {
 public:
     text() = default;
-    explicit text(char const* string);
-    text(char const* begin, char const* end);
+    explicit text(string::view string);
+    text(char const* begin, char const* end)
+        : text(string::view{begin, end})
+    {}
     text(text&& other);
 
     text& operator=(text&& other);
 
-    std::vector<char const*> const& tokens() const { return _tokens; }
+    std::vector<string::view> const& tokens() const { return _tokens; }
 
 protected:
     std::vector<char> _buffer;
-    std::vector<char const*> _tokens;
+    std::vector<string::view> _tokens;
 };
 
 } // namespace parser

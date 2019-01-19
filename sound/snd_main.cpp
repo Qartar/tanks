@@ -139,7 +139,7 @@ void cSound::set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up)
 }
 
 //------------------------------------------------------------------------------
-sound::asset cSound::load_sound(char const* filename)
+sound::asset cSound::load_sound(string::view filename)
 {
     auto it = _sounds_by_name.find(filename);
     if (it != _sounds_by_name.cend()) {
@@ -150,7 +150,7 @@ sound::asset cSound::load_sound(char const* filename)
     if (sound) {
         auto asset = static_cast<sound::asset>(_sounds.size() + 1);
         _sounds.emplace_back(sound);
-        _sounds_by_name[filename] = asset;
+        _sounds_by_name[string::buffer(filename)] = asset;
         return asset;
     } else {
         return sound::asset::invalid;

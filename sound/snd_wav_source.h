@@ -5,6 +5,7 @@
 
 #include "snd_files.h"
 #include "cm_filesystem.h"
+#include "cm_string.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 #define STREAM_THRESHOLD    0x10000     // 65k
@@ -22,7 +23,7 @@ constexpr int CHUNK_DATA    = make_id('d','a','t','a');
 class chunk_file
 {
 public:
-    chunk_file(char const* filename);
+    chunk_file(string::view filename);
     chunk_file(byte const* buffer, std::size_t buffer_size);
 
     bool next();
@@ -61,10 +62,10 @@ public:
 
     virtual std::size_t get_samples(byte* samples, int num_samples, int sample_offset, bool looping) override = 0;
     virtual sound_format const* get_format() const override { return &_format; }
-    virtual char const* get_filename() const override { return _filename.c_str(); }
+    virtual string::view get_filename() const override { return _filename; }
     virtual float get_position(float position) const override;
 
-    virtual result load(char const* filename) override = 0;
+    virtual result load(string::view filename) override = 0;
     virtual void free() override = 0;
 
 protected:
@@ -75,7 +76,7 @@ protected:
     virtual bool parse_data(chunk_file& chunk) = 0;
 
     sound_format _format;
-    std::string _filename;
+    string::buffer _filename;
 
     std::size_t _num_samples;
     int _loop_start;

@@ -9,5 +9,5 @@
 class cSoundWaveResource : public cSoundWaveCache
 {
 public:
-    virtual result load(char const* filename) override;
+    virtual result load(string::view filename) override;
 };

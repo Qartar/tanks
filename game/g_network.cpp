@@ -147,7 +147,7 @@ void session::send_packets ()
 //------------------------------------------------------------------------------
 void session::read_fail(char const* message_string)
 {
-    parser::text text(message_string);
+    parser::text text(string::view{message_string});
     if (text.tokens().size() > 1) {
         write_message(va("Failed to connect: %s", text.tokens()[1]));
     } else {

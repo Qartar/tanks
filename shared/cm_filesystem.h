@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "cm_string.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -40,7 +42,7 @@ public:
     bool seek(std::intptr_t offset, file::seek origin);
 
     //! print formatted string into the stream
-    std::size_t printf(char const* fmt, ...);
+    std::size_t printf(string::literal fmt, ...);
     //! write data from the given buffer into the stream
     std::size_t write(byte const* data, std::size_t size);
     //! read data from the stream into the given buffer
@@ -84,12 +86,12 @@ enum class mode
 };
 
 //------------------------------------------------------------------------------
-stream open(char const* filename, file::mode mode);
+stream open(string::view filename, file::mode mode);
 
 //------------------------------------------------------------------------------
-buffer read(char const* filename);
+buffer read(string::view filename);
 
 //------------------------------------------------------------------------------
-std::size_t write(char const* filename, byte const* buffer, std::size_t buffer_size);
+std::size_t write(string::view filename, byte const* buffer, std::size_t buffer_size);
 
 } // namespace file

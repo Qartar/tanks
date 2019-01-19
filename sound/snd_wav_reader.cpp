@@ -9,7 +9,7 @@ constexpr int RIFF_ID = make_id('R', 'I', 'F', 'F');
 constexpr int WAVE_ID = make_id('W', 'A', 'V', 'E');
 
 //------------------------------------------------------------------------------
-chunk_file::chunk_file(char const* filename)
+chunk_file::chunk_file(string::view filename)
     : _buffer(nullptr)
     , _buffer_size(0)
     , _start(0)

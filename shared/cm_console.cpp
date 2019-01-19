@@ -41,13 +41,13 @@ void console_buffer::write(file::stream& stream) const
 }
 
 //------------------------------------------------------------------------------
-void console_buffer::append(char const* begin, char const* end)
+void console_buffer::append(string::view text)
 {
-    char const* row_begin = begin;
-    while (row_begin < end) {
+    char const* row_begin = text.begin();
+    while (row_begin < text.end()) {
         char const* row_end = strpbrk(row_begin, "\r\n\t");
         if (!row_end) {
-            row_end = end;
+            row_end = text.end();
         }
 
         // row would wrap across the end of the buffer
@@ -80,7 +80,7 @@ void console_buffer::append(char const* begin, char const* end)
         }
 
         if (row_begin < row_end) {
-            append_row(row_begin, row_end);
+            append_row({row_begin, row_end});
             row_begin = row_end;
         }
     }
@@ -97,12 +97,12 @@ void console_buffer::append(char const* begin, char const* end)
 }
 
 //------------------------------------------------------------------------------
-void console_buffer::append_row(char const* begin, char const* end)
+void console_buffer::append_row(string::view text)
 {
-    char const* row_begin = begin;
-    char const* row_end = end;
-    while (row_begin < end) {
-        std::size_t row_columns = num_columns(row_begin, row_end);
+    char const* row_begin = text.begin();
+    char const* row_end = text.end();
+    while (row_begin < text.end()) {
+        std::size_t row_columns = num_columns({row_begin, row_end});
 
         if (_row_columns == _max_columns) {
             append_endline(true);
@@ -112,23 +112,23 @@ void console_buffer::append_row(char const* begin, char const* end)
         if (row_columns + _row_columns > _max_columns) {
             char const* prev = row_begin;
 
-            while (prev < end && isspace(*prev)) {
+            while (prev < text.end() && isspace(*prev)) {
                 ++prev;
             }
 
             char const* next = strpbrk(prev, "\r\n\t ");
-            if (next >= end) {
-                next = end;
+            if (next >= text.end()) {
+                next = text.end();
             }
-            std::size_t next_columns = num_columns(row_begin, next);
+            std::size_t next_columns = num_columns({row_begin, next});
 
             if (next_columns > _max_columns) {
                 // print as many characters as possible on the current row
                 row_columns = _max_columns - _row_columns;
-                row_end = advance_columns(row_columns, row_begin, end);
+                row_end = advance_columns(row_columns, {row_begin, text.end()}).begin();
             } else if (next_columns + _row_columns > _max_columns) {
                 append_endline(true);
-                while (row_begin < end && isspace(*row_begin)) {
+                while (row_begin < text.end() && isspace(*row_begin)) {
                     ++row_begin;
                 }
                 continue;
@@ -145,7 +145,7 @@ void console_buffer::append_row(char const* begin, char const* end)
         _row_offset += row_end - row_begin;
         _row_columns += row_columns;
         row_begin = row_end;
-        row_end = end;
+        row_end = text.end();
     }
 }
 
@@ -172,40 +172,40 @@ void console_buffer::append_endline(bool keep_color)
         }
 
         if (prev_color && prev_color[1] != 'x') {
-            append_row(prev_color, prev_color + 4);
+            append_row({prev_color, prev_color + 4});
         }
     }
 }
 
 //------------------------------------------------------------------------------
-std::size_t console_buffer::num_columns(char const* begin, char const* end) const
+std::size_t console_buffer::num_columns(string::view text) const
 {
     std::size_t len = 0;
-    char const* prev = begin;
-    while (char const* next = find_color(prev, end)) {
+    char const* prev = text.begin();
+    while (char const* next = find_color(prev, text.end())) {
         len += next - prev;
         prev = next + 4;
     }
-    len += end - prev;
+    len += text.end() - prev;
     return len;
 }
 
 //------------------------------------------------------------------------------
-char const* console_buffer::advance_columns(std::size_t columns, char const* begin, char const* end) const
+string::view console_buffer::advance_columns(std::size_t columns, string::view text) const
 {
     std::size_t len = 0;
-    char const* prev = begin;
-    while (char const* next = find_color(prev, end)) {
+    char const* prev = text.begin();
+    while (char const* next = find_color(prev, text.end())) {
         if (next - prev >= ptrdiff_t(columns - len)) {
             break;
         }
         len += next - prev;
         prev = next + 4;
     }
-    if (end - prev >= ptrdiff_t(columns - len)) {
-        return end - (end - prev) + (columns - len);
+    if (text.end() - prev >= ptrdiff_t(columns - len)) {
+        return {text.end() - (text.end() - prev) + (columns - len), text.end()};
     } else {
-        return end;
+        return {text.end(), text.end()};
     }
 }
 
@@ -227,10 +227,10 @@ void console_input::clear()
 }
 
 //------------------------------------------------------------------------------
-void console_input::replace(char const* text)
+void console_input::replace(string::view text)
 {
     strncpy(_buffer.data(), text, buffer_size);
-    _length = strlen(text);
+    _length = text.length();
     _cursor = _length;
 }
 
@@ -347,23 +347,23 @@ console_history::console_history()
 {}
 
 //------------------------------------------------------------------------------
-void console_history::insert(char const* text)
+void console_history::insert(string::view text)
 {
     strncpy(_buffer[_size++ & buffer_mask].data(), text, element_size);
 }
 
 //------------------------------------------------------------------------------
-char const* console_history::operator[](std::size_t index) const
+string::view console_history::operator[](std::size_t index) const
 {
     assert(index < _size);
-    return _buffer[(_size - index - 1) & buffer_mask].data();
+    return string::view(_buffer[(_size - index - 1) & buffer_mask].data());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 console_command* console_command::_head = nullptr;
 
 //------------------------------------------------------------------------------
-console_command::console_command(char const* name, callback_type callback)
+console_command::console_command(string::view name, callback_type callback)
     : _name(name)
     , _next(_head)
     , _func(callback)
@@ -422,18 +422,18 @@ void console::resize(std::size_t num_columns)
 }
 
 //------------------------------------------------------------------------------
-void console::printf(char const* fmt, ...)
+void console::printf(string::literal fmt, ...)
 {
     constexpr int msg_size = 1024;
     char msg[msg_size];
     va_list ap;
 
     va_start(ap, fmt);
-    int len = vsnprintf(msg, msg_size, fmt, ap);
+    int len = vsnprintf(msg, msg_size, fmt.c_str(), ap);
     va_end(ap);
 
     if (len > 0) {
-        _buffer.append(msg, msg + len);
+        _buffer.append({msg, msg + len});
     }
 }
 
@@ -451,9 +451,9 @@ bool console::char_event(int key)
         return false;
     } else if (key == K_ENTER) {
         log::message("]%s\n", _input.begin());
-        _history.insert(_input.begin());
+        _history.insert({_input.begin(), _input.end()});
         _history_offset = 0;
-        execute(_input.begin(), _input.end());
+        execute({_input.begin(), _input.end()});
         _input.clear();
         return true;
     } else {
@@ -483,7 +483,7 @@ bool console::key_event(int key, bool down)
             if (--_history_offset) {
                 _input.replace(_history[_history_offset - 1]);
             } else {
-                _input.replace(_saved.begin());
+                _input.replace({_saved.begin(), _saved.end()});
             }
         }
         return true;
@@ -515,9 +515,9 @@ bool console::key_event(int key, bool down)
 }
 
 //------------------------------------------------------------------------------
-void console::execute(char const* begin, char const* end)
+void console::execute(string::view text)
 {
-    parser::text args(begin, end);
+    parser::text args(text);
     if (!args.tokens().size()) {
         return;
     }
@@ -535,7 +535,7 @@ void console::execute(char const* begin, char const* end)
         return command_set(args);
     }
 
-    log::message("unknown variable or command: '^fff%s^xxx'\n", args.tokens()[0]);
+    log::message("unknown variable or command: '^fff%s^xxx'\n", args.tokens()[0].c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -543,7 +543,7 @@ void console::command_set(parser::text const& args)
 {
     assert(args.tokens().size());
     assert(config::system::singleton());
-    std::size_t first = _stricmp(args.tokens()[0], "set") ? 0 : 1;
+    std::size_t first = stricmp(args.tokens()[0], "set") ? 0 : 1;
     std::size_t nargs = args.tokens().size() - first;
 
     if (!nargs || nargs > 2) {
@@ -554,10 +554,10 @@ void console::command_set(parser::text const& args)
     config::system* config = config::system::singleton();
     config::variable_base* variable = config->find(args.tokens()[first]);
     if (!variable) {
-        log::message("unknown variable: '^fff%s^xxx'\n", args.tokens()[first]);
+        log::message("unknown variable: '^fff%s^xxx'\n", args.tokens()[first].c_str());
         return;
     } else if (nargs == 1) {
-        log::message("^fff%s^xxx = '^fff%s^xxx'\n", variable->name(), variable->value().c_str());
+        log::message("^fff%s^xxx = '^fff%s^xxx'\n", variable->name().c_str(), variable->value().c_str());
     } else if (nargs == 2) {
         variable->set(args.tokens()[first + 1]);
     }
