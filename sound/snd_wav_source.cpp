@@ -8,14 +8,13 @@
 #include "snd_wav_resource.h"
 
 //------------------------------------------------------------------------------
-cSoundSource* cSoundSource::create(char const* filename)
+cSoundSource* cSoundSource::create(string::view filename)
 {
-    std::size_t len = strlen(filename);
     std::size_t filelen;
 
     cSoundSource* source = nullptr;
 
-    if (strcmp(filename + len - 4, ".wav") == 0) {
+    if (strncmp(filename.begin() + filename.length() - 4, ".wav", 4) == 0) {
         filelen = file::open(filename, file::mode::read).size();
 
         if (filelen == 0) {
@@ -26,7 +25,7 @@ cSoundSource* cSoundSource::create(char const* filename)
             source = (cSoundSource *)new cSoundWaveCache;
         }
     } else {
-        log::message("unknown sound format: %s\n", filename);
+        log::message("unknown sound format: %s\n", filename.c_str());
     }
 
     if (source && succeeded(source->load(filename))) {

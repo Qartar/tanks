@@ -5,7 +5,7 @@
 #include "snd_wav_cache.h"
 
 //------------------------------------------------------------------------------
-result cSoundWaveCache::load(char const* filename)
+result cSoundWaveCache::load(string::view filename)
 {
     chunk_file reader(filename);
 

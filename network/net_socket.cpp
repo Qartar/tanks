@@ -197,7 +197,7 @@ bool socket::write(network::address const& remote, network::message const& messa
 }
 
 //------------------------------------------------------------------------------
-bool socket::printf(network::address const& remote, char const* fmt, ...)
+bool socket::printf(network::address const& remote, string::literal fmt, ...)
 {
     network::message_storage message;
 
@@ -207,7 +207,7 @@ bool socket::printf(network::address const& remote, char const* fmt, ...)
     byte* buf = message.reserve(size);
 
     va_start(va, fmt);
-    int len = vsprintf_s((char*)buf, size, fmt, va);
+    int len = vsprintf_s((char*)buf, size, fmt.c_str(), va);
     va_end(va);
 
     if (len >= 0) {
@@ -219,7 +219,7 @@ bool socket::printf(network::address const& remote, char const* fmt, ...)
 }
 
 //------------------------------------------------------------------------------
-bool socket::resolve(std::string const& address_string, network::address& address) const
+bool socket::resolve(string::view address_string, network::address& address) const
 {
     if (address_string == "localhost") {
         address = {};
@@ -326,7 +326,7 @@ bool socket::address_to_sockaddr(network::address const& address, sockaddr_stora
 }
 
 //------------------------------------------------------------------------------
-bool socket::resolve_sockaddr(std::string const& address_string, sockaddr_storage& sockaddr) const
+bool socket::resolve_sockaddr(string::view address_string, sockaddr_storage& sockaddr) const
 {
     addrinfo* info = nullptr;
 

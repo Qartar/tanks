@@ -8,26 +8,20 @@
 namespace parser {
 
 //------------------------------------------------------------------------------
-text::text(char const* string)
-    : text(string, string + strlen(string))
-{}
-
-//------------------------------------------------------------------------------
 /**
  * Rules for parsing commmand line arguments taken from MSDN:
  *
  * "Parsing C Command-Line Arguments"
  * https://msdn.microsoft.com/en-us/library/a1y7w461.aspx
  */
-text::text(char const* string, char const* end)
+text::text(string::view view)
 {
+    char const* string = view.begin();
+    char const* end = view.end();
+
     // Skip leading whitespace.
     while (isblank((unsigned char)*string)) {
         ++string;
-    }
-
-    if (!end) {
-        end = string + strlen(string);
     }
 
     _buffer.resize(end - string + 1);
@@ -36,13 +30,12 @@ text::text(char const* string, char const* end)
     while (string < end) {
 
         bool inside_quotes = false;
-        _tokens.push_back(ptr);
+        char const* token = ptr;
 
         while (string < end) {
             // "Arguments are delimited by whitespace, which is either a space
             // or a tab."
             if (!inside_quotes && isblank((unsigned char)*string)) {
-                *ptr++ = '\0';
                 break;
             }
             // "A string surrounded by double quotation marks is interpreted as
@@ -104,14 +97,15 @@ text::text(char const* string, char const* end)
             }
         }
 
+        // Append the token.
+        _tokens.push_back({token, ptr});
+        *ptr++ = '\0';
+
         // Skip trailing whitespace.
         while (isblank((unsigned char)*string)) {
             ++string;
         }
     }
-
-    // The original NUL terminator is not copied in the loop above.
-    *ptr++ = '\0';
 }
 
 //------------------------------------------------------------------------------

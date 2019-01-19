@@ -17,7 +17,7 @@ system* system::_singleton = nullptr;
 namespace {
 
 //------------------------------------------------------------------------------
-value_type type_from_string(char const* type_string)
+value_type type_from_string(string_view type_string)
 {
     for (size_t ii = 0; ii < countof(type_strings); ++ii) {
         if (strcmp(type_string, type_strings[ii]) == 0) {
@@ -30,16 +30,16 @@ value_type type_from_string(char const* type_string)
 } // anonymous namespace
 
 //------------------------------------------------------------------------------
-variable_base::variable_base(char const *name, char const* value, char const* type_string, char const* flags_string, char const* description)
+variable_base::variable_base(string_view name, string_view value, string_view type_string, string_view flags_string, string_view description)
     : _name(name)
     , _value(value)
     , _type(type_from_string(type_string))
-    , _flags(atoi(flags_string))
+    , _flags(atoi(flags_string.c_str()))
     , _description(description)
 {}
 
 //------------------------------------------------------------------------------
-void variable_base::set(char const* value)
+void variable_base::set(string_view value)
 {
     char* end = nullptr;
 
@@ -50,32 +50,32 @@ void variable_base::set(char const* value)
         }
 
         case value_type::integer: {
-            long d = strtol(value, &end, 0);
-            if (end != value) {
+            long d = strtol(value.c_str(), &end, 0);
+            if (end != value.end()) {
                 set_integer(d);
             } else {
-                log::message("cannot set variable '^fff%s^xxx' to non-integer value '^fff%s^xxx'\n", name(), value);
+                log::message("cannot set variable '^fff%s^xxx' to non-integer value '^fff%s^xxx'\n", name().c_str(), value.c_str());
             }
             break;
         }
 
         case value_type::boolean: {
-            if (!_stricmp(value, "true") || !strcmp(value, "1")) {
+            if (!stricmp(value, "true") || !strcmp(value, "1")) {
                 set_boolean(true);
-            } else if (!_stricmp(value, "false") || !strcmp(value, "0")) {
+            } else if (!stricmp(value, "false") || !strcmp(value, "0")) {
                 set_boolean(false);
             } else {
-                log::message("cannot set variable '^fff%s^xxx' to non-boolean value '^fff%s^xxx'\n", name(), value);
+                log::message("cannot set variable '^fff%s^xxx' to non-boolean value '^fff%s^xxx'\n", name().c_str(), value.c_str());
             }
             break;
         }
 
         case value_type::scalar: {
-            float f = strtof(value, &end);
-            if (end != value) {
+            float f = strtof(value.c_str(), &end);
+            if (end != value.end()) {
                 set_scalar(f);
             } else {
-                log::message("cannot set variable '^fff%s^xxx' to non-scalar value '^fff%s^xxx'\n", name(), value);
+                log::message("cannot set variable '^fff%s^xxx' to non-scalar value '^fff%s^xxx'\n", name().c_str(), value.c_str());
             }
             break;
         }
@@ -83,9 +83,9 @@ void variable_base::set(char const* value)
 }
 
 //------------------------------------------------------------------------------
-void variable_base::set_string(std::string const& s)
+void variable_base::set_string(string_view s)
 {
-    _value = s;
+    _value = string_buffer(s);
     _flags |= flags::modified;
 }
 
@@ -108,19 +108,19 @@ void variable_base::set_scalar(float f)
 }
 
 //------------------------------------------------------------------------------
-std::string variable_base::to_string(int i) const
+string_buffer variable_base::to_string(int i) const
 {
-    return va("%d", i);
+    return string_buffer(va("%d", i));
 }
 
 //------------------------------------------------------------------------------
-std::string variable_base::to_string(bool b) const
+string_buffer variable_base::to_string(bool b) const
 {
-    return b ? "true" : "false";
+    return string_buffer(b ? "true" : "false");
 }
 
 //------------------------------------------------------------------------------
-std::string variable_base::to_string(float f) const
+string_buffer variable_base::to_string(float f) const
 {
     std::string s = va("%f", f);
     if (s.find('.') != 0) {
@@ -133,11 +133,11 @@ std::string variable_base::to_string(float f) const
             s.pop_back();
         }
     }
-    return s;
+    return string_buffer(s.c_str());
 }
 
 //------------------------------------------------------------------------------
-std::string const& variable_base::get_string() const
+string_view variable_base::get_string() const
 {
     return _value;
 }
@@ -164,7 +164,7 @@ float variable_base::get_scalar() const
 
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-variable::variable(char const* name, char const* value, value_type type, int flags, char const* description)
+variable::variable(string_view name, string_view value, value_type type, int flags, string_view description)
 {
     if (system::_singleton) {
         _base = system::_singleton->create(name, value, type, flags, description);
@@ -178,26 +178,13 @@ variable::variable(char const* name, char const* value, value_type type, int fla
 
 ////////////////////////////////////////////////////////////////////////////////
 //------------------------------------------------------------------------------
-string::operator char const*() const
-{
-    return get_string().c_str();
-}
-
-//------------------------------------------------------------------------------
-string::operator std::string const&() const
+string::operator string_view() const
 {
     return get_string();
 }
 
 //------------------------------------------------------------------------------
-config::string& string::operator=(char const* s)
-{
-    set_string(s);
-    return *this;
-}
-
-//------------------------------------------------------------------------------
-config::string& string::operator=(std::string const& s)
+config::string& string::operator=(string_view s)
 {
     set_string(s);
     return *this;
@@ -281,11 +268,11 @@ char const* system::print(variable_base const* base, int /*tab_size*/) const
     static char buffer[MAX_STRING];
 
     sprintf(buffer, "%-20s %-20s %-8s %3d \"%s\"\n",
-         base->name(),
+         base->name().c_str(),
          va("\"%s\"", base->value().c_str()),
-         config::type_strings[static_cast<int>(base->type())],
+         config::type_strings[static_cast<int>(base->type())].c_str(),
          base->flags(),
-         base->description() );
+         base->description().c_str() );
 
     return buffer;
 }
@@ -348,18 +335,19 @@ void system::init()
                 // update existing variable
                 auto type = type_from_string(text.tokens()[2]);
                 if (type != it->second->_type) {
-                    log::warning("archived variable '^fff%s^xxx' has wrong type, reverting to default\n", text.tokens()[0]);
+                    log::warning("archived variable '^fff%s^xxx' has wrong type, reverting to default\n", text.tokens()[0].c_str());
                 } else {
-                    it->second->_value = text.tokens()[1];
+                    it->second->_value = string_buffer(text.tokens()[1]);
                 }
             } else {
                 // create new variable
-                _variables[text.tokens()[0]] = std::make_shared<variable_base>(
-                    text.tokens()[0],
-                    text.tokens()[1],
-                    text.tokens()[2],
-                    text.tokens()[3],
-                    text.tokens()[4]);
+                _variables[string_buffer(text.tokens()[0])] =
+                    std::make_shared<variable_base>(
+                        text.tokens()[0],
+                        text.tokens()[1],
+                        text.tokens()[2],
+                        text.tokens()[3],
+                        text.tokens()[4]);
             }
         }
     }
@@ -369,7 +357,6 @@ void system::init()
 void system::shutdown()
 {
     char filename[LONG_STRING];
-    char const* line;
 
     get_config_path(filename, countof(filename), true);
 
@@ -378,8 +365,8 @@ void system::shutdown()
 
         for (auto it : _variables) {
             if (it.second->flags() & config::archive) {
-                line = print(it.second.get(), 4);
-                file.write((byte const*)line, strlen(line));
+                string_view line{print(it.second.get(), 4)};
+                file.write((byte const*)line.c_str(), strlen(line));
             }
         }
     }
@@ -394,7 +381,7 @@ void system::command_list(parser::text const& /*args*/)
 }
 
 //------------------------------------------------------------------------------
-variable_base* system::find(char const* name)
+variable_base* system::find(string_view name)
 {
     auto it = _variables.find(name);
     if (it != _variables.end()) {
@@ -405,7 +392,7 @@ variable_base* system::find(char const* name)
 }
 
 //------------------------------------------------------------------------------
-variable_base* system::find(char const* name, value_type type)
+variable_base* system::find(string_view name, value_type type)
 {
     auto it = _variables.find(name);
     if (it != _variables.end() && it->second->type() == type) {
@@ -416,31 +403,31 @@ variable_base* system::find(char const* name, value_type type)
 }
 
 //------------------------------------------------------------------------------
-std::shared_ptr<variable_base> system::create(char const* name, char const* value, value_type type, int flags, char const* description)
+std::shared_ptr<variable_base> system::create(string_view name, string_view value, value_type type, int flags, string_view description)
 {
     auto it = _variables.find(name);
     if (it != _variables.end()) {
         return it->second;
     } else {
         auto base = std::make_shared<variable_base>(name, value, type, flags, description);
-        _variables[name] = base;
+        _variables[string_buffer(name)] = base;
         return base;
     }
 }
 
 //------------------------------------------------------------------------------
-char const* system::get(char const* name)
+string_view system::get(string_view name)
 {
     auto it = _variables.find(name);
     if (it != _variables.end()) {
-        return it->second->value().c_str();
+        return it->second->value();
     } else {
-        return nullptr;
+        return string_view{};
     }
 }
 
 //------------------------------------------------------------------------------
-bool system::set(char const* name, char const* value)
+bool system::set(string_view name, string_view value)
 {
     auto it = _variables.find(name);
     if (it != _variables.end()) {

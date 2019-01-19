@@ -13,7 +13,7 @@ public:
 
     virtual std::size_t get_samples(byte* samples, int num_samples, int sample_offset, bool looping) override;
 
-    virtual result load(char const* filename) override;
+    virtual result load(string::view filename) override;
     virtual void free() override;
 
 protected:

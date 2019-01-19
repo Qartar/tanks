@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "cm_string.h"
+
 struct sockaddr_storage;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,10 +40,10 @@ public:
     //! write data to the remote address
     bool write(network::address const& remote, network::message const& message);
     //! write a formatted string to the remote address
-    bool printf(network::address const& remote, char const* fmt, ...);
+    bool printf(network::address const& remote, string::literal fmt, ...);
 
     //! resolve the string into an address
-    bool resolve(std::string const& address_string, network::address& address) const;
+    bool resolve(string::view address_string, network::address& address) const;
 
 protected:
     socket_type _type;
@@ -54,7 +56,7 @@ protected:
 
     bool sockaddr_to_address(sockaddr_storage const& sockaddr, network::address& address) const;
     bool address_to_sockaddr(network::address const& address, sockaddr_storage& sockaddr) const;
-    bool resolve_sockaddr(std::string const& address_string, sockaddr_storage& sockaddr) const;
+    bool resolve_sockaddr(string::view address_string, sockaddr_storage& sockaddr) const;
 
     std::uintptr_t open_socket(socket_type type, word port = socket_port::any) const;
 };

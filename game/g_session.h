@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_string.h"
 #include "cm_time.h"
 #include "net_channel.h"
 #include "net_socket.h"
@@ -276,7 +277,7 @@ public:
     void stop_client();
 
     void connect_to_server(int index);
-    void connect_to_server(char const* address);
+    void connect_to_server(string::view address);
 
     void info_ask();
 

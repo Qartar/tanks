@@ -215,13 +215,13 @@ void session::client_connect(network::address const& remote, char const* message
     sscanf(message_string, "connect %i %s %i", &version, cl.info.name.data(), &netport);
 
     if (version != PROTOCOL_VERSION) {
-        svs.socket.printf(remote, va("fail \"Bad protocol version: %i\"", version));
+        svs.socket.printf(remote, "fail \"Bad protocol version: %i\"", version);
     } else {
         cl.active = true;
         cl.local = false;
         cl.netchan.setup(&svs.socket, remote, narrow_cast<word>(netport));
 
-        svs.socket.printf(cl.netchan.address(), va("connect %i %lld", client, _worldtime.to_microseconds()));
+        svs.socket.printf(cl.netchan.address(), "connect %i %lld", client, _worldtime.to_microseconds());
 
         // init their tank
 
@@ -286,7 +286,7 @@ void session::info_send(network::address const& remote)
     if ( i == MAX_PLAYERS )
         return;
 
-    svs.socket.printf(remote, va( "info %s", svs.name) );
+    svs.socket.printf(remote, "info %s", svs.name);
 }
 
 char const* sz_upgrades[] = {

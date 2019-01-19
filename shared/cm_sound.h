@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "cm_string.h"
+
 #ifndef _WINDOWS_
 typedef struct HWND__ *HWND;
 #endif // _WINDOWS_
@@ -53,7 +55,7 @@ public:
     virtual sound::channel* allocate_channel() = 0;
     virtual void free_channel(sound::channel* channel) = 0;
 
-    virtual sound::asset load_sound (char const* filename) = 0;
+    virtual sound::asset load_sound (string::view filename) = 0;
 };
 
 } // namespace sound

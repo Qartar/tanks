@@ -4,9 +4,9 @@
 #pragma once
 
 #include "cm_shared.h"
+#include "cm_string.h"
 
 #include <memory>
-#include <string>
 #include <map>
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -20,6 +20,15 @@ namespace config {
 class system;
 class variable;
 
+using string_view = ::string::view;
+using string_literal = ::string::literal;
+using string_buffer = ::string::buffer;
+
+using ::string::strcpy;
+using ::string::sscanf;
+using ::string::strlen;
+using ::string::strncpy;
+
 enum flags
 {
     archive     = 1 << 0,
@@ -29,68 +38,68 @@ enum flags
 };
 
 enum class value_type { string, integer, boolean, scalar };
-static char const* type_strings[] = { "string", "integer", "boolean", "scalar" };
+static constexpr string_literal type_strings[] = { "string", "integer", "boolean", "scalar" };
 
 //------------------------------------------------------------------------------
 class variable_base
 {
 public:
-    variable_base(char const* name, char const* value, value_type type, int flags, char const* description)
+    variable_base(string_view name, string_view value, value_type type, int flags, string_view description)
         : _name(name)
         , _value(value)
         , _type(type)
         , _flags(flags)
         , _description(description)
     {}
-    variable_base(char const* name, char const* value, char const* type_string, char const* flags_string, char const* description);
+    variable_base(string_view name, string_view value, string_view type_string, string_view flags_string, string_view description);
 
-    char const* name() const { return _name.c_str(); }
-    char const* description() const { return _description.c_str(); }
-    std::string const& value() const { return _value; }
+    string_view name() const { return _name; }
+    string_view description() const { return _description; }
+    string_view value() const { return _value; }
     int flags() const { return _flags; }
     value_type type() const { return _type; }
     bool modified() const { return _flags & flags::modified; }
     void reset() { _flags &= ~flags::modified; }
-    void set(char const* value);
+    void set(string_view value);
 
 protected:
     friend system;
     friend variable;
 
-    std::string _name;
-    std::string _description;
-    std::string _value;
+    string_buffer _name;
+    string_buffer _description;
+    string_buffer _value;
     int _flags;
     value_type _type;
 
 protected:
-    std::string const& get_string() const;
+    string_view get_string() const;
     int get_integer() const;
     bool get_boolean() const;
     float get_scalar() const;
 
-    void set_string(std::string const& s);
+    void set_string(string_view s);
     void set_integer(int i);
     void set_boolean(bool b);
     void set_scalar(float f);
 
-    std::string to_string(int i) const;
-    std::string to_string(bool b) const;
-    std::string to_string(float f) const;
+    string_buffer to_string(int i) const;
+    string_buffer to_string(bool b) const;
+    string_buffer to_string(float f) const;
 };
 
 //------------------------------------------------------------------------------
 class variable
 {
 public:
-    char const* name() const { return _base->name(); }
-    char const* description() const { return _base->description(); }
-    std::string const& value() const { _base->value(); }
+    string_view name() const { return _base->name(); }
+    string_view description() const { return _base->description(); }
+    string_view value() const { _base->value(); }
     int flags() const { return _base->flags(); }
     value_type type() const { return _base->type(); }
     bool modified() const { return _base->modified(); }
     void reset() { _base->reset(); }
-    void set(char const* value);
+    void set(string_view value) { _base->set(value); }
 
 protected:
     friend system;
@@ -101,43 +110,41 @@ protected:
     static variable* _head;
 
 protected:
-    variable(char const* name, char const* value, value_type type, int flags, char const* description);
+    variable(string_view name, string_view value, value_type type, int flags, string_view description);
 
-    std::string const& get_string() const { return _base->get_string(); }
+    string_view get_string() const { return _base->get_string(); }
     int get_integer() const { return _base->get_integer(); }
     bool get_boolean() const { return _base->get_boolean(); }
     float get_scalar() const { return _base->get_scalar(); }
 
-    void set_string(std::string const& s) { _base->set_string(s); }
+    void set_string(string_view s) { _base->set_string(s); }
     void set_integer(int i) { _base->set_integer(i); }
     void set_boolean(bool b) { _base->set_boolean(b); }
     void set_scalar(float f) { _base->set_scalar(f); }
 
-    std::string to_string(int i) const { return _base->to_string(i); }
-    std::string to_string(bool b) const { return _base->to_string(b); }
-    std::string to_string(float f) const { return _base->to_string(f); }
+    string_buffer to_string(int i) const { return _base->to_string(i); }
+    string_buffer to_string(bool b) const { return _base->to_string(b); }
+    string_buffer to_string(float f) const { return _base->to_string(f); }
 };
 
 //------------------------------------------------------------------------------
 class string : public variable
 {
 public:
-    string(char const* name, char const* value, int flags, char const* description)
+    string(string_view name, string_view value, int flags, string_view description)
         : variable(name, value, value_type::string, flags, description)
     {}
 
-    operator char const*() const;
-    operator std::string const&() const;
-    config::string& operator=(char const* s);
-    config::string& operator=(std::string const& s);
+    operator string_view() const;
+    config::string& operator=(string_view s);
 };
 
 //------------------------------------------------------------------------------
 class integer : public variable
 {
 public:
-    integer(char const* name, int value, int flags, char const* description)
-        : variable(name, to_string(value).c_str(), value_type::integer, flags, description)
+    integer(string_view name, int value, int flags, string_view description)
+        : variable(name, to_string(value), value_type::integer, flags, description)
     {}
 
     operator int() const;
@@ -148,8 +155,8 @@ public:
 class boolean : public variable
 {
 public:
-    boolean(char const* name, bool value, int flags, char const* description)
-        : variable(name, to_string(value).c_str(), value_type::boolean, flags, description)
+    boolean(string_view name, bool value, int flags, string_view description)
+        : variable(name, to_string(value), value_type::boolean, flags, description)
     {}
 
     operator bool() const;
@@ -160,8 +167,8 @@ public:
 class scalar : public variable
 {
 public:
-    scalar(char const* name, float value, int flags, char const* description)
-        : variable(name, to_string(value).c_str(), value_type::scalar, flags, description)
+    scalar(string_view name, float value, int flags, string_view description)
+        : variable(name, to_string(value), value_type::scalar, flags, description)
     {}
 
     operator float() const;
@@ -178,9 +185,9 @@ public:
     void init();
     void shutdown();
 
-    variable_base* find(char const* name);
-    char const* get(char const* name);
-    bool set(char const* name, char const* value);
+    variable_base* find(string_view name);
+    string_view get(string_view name);
+    bool set(string_view name, string_view value);
 
     static void command_list(parser::text const& args);
 
@@ -190,20 +197,21 @@ protected:
     friend variable;
 
     struct insensitive_compare {
-        bool operator()(std::string const& lhs, std::string const& rhs) const {
-            return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+        using is_transparent = void;
+        bool operator()(string_view lhs, string_view rhs) const {
+            return stricmp(lhs, rhs) < 0;
         }
     };
 
-    std::map<std::string, std::shared_ptr<variable_base>, insensitive_compare> _variables;
+    std::map<string_buffer, std::shared_ptr<variable_base>, insensitive_compare> _variables;
 
     static system* _singleton;
 
 protected:
-    variable_base* find(char const* name, value_type type);
+    variable_base* find(string_view name, value_type type);
     char const* print(variable_base const* base, int tab_size = 4) const;
 
-    std::shared_ptr<variable_base> create(char const* name, char const* value, value_type type, int flags, char const* description);
+    std::shared_ptr<variable_base> create(string_view name, string_view value, value_type type, int flags, string_view description);
 };
 
 } // namespace config

@@ -128,7 +128,7 @@ public:
 
     //  registration
 
-    sound::asset load_sound(char const* filename);
+    sound::asset load_sound(string::view filename);
     cSoundSource* get_sound(sound::asset asset);
 
     //  mixing
@@ -160,7 +160,7 @@ private:
     //
 
     std::vector<std::unique_ptr<cSoundSource>> _sounds;
-    std::map<std::string, sound::asset> _sounds_by_name;
+    std::map<string::buffer, sound::asset> _sounds_by_name;
 
     //
     //  channels

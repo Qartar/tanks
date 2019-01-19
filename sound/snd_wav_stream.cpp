@@ -5,7 +5,7 @@
 #include "snd_wav_stream.h"
 
 //------------------------------------------------------------------------------
-result cSoundWaveStream::load(char const* filename)
+result cSoundWaveStream::load(string::view filename)
 {
     _reader = std::make_unique<chunk_file>(filename);
 
