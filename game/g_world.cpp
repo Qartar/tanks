@@ -113,6 +113,13 @@ void world::run_frame()
 
     ++_framenum;
 
+    for (auto obj : _removed) {
+        _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
+            return it.get() == obj;
+        }));
+    }
+    _removed.clear();
+
     for (auto& obj : _objects) {
         obj->think();
     }
@@ -127,18 +134,6 @@ void world::run_frame()
         _objects.push_back(std::move(obj));
     }
     _pending.clear();
-
-    for (auto obj : _removed) {
-        _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
-            return it.get() == obj;
-        }));
-    }
-    _removed.clear();
-
-    for (auto& obj : _pending) {
-        _objects.push_back(std::move(obj));
-    }
-    _pending.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -148,6 +143,13 @@ void world::read_snapshot(network::message& message)
         _objects.push_back(std::move(obj));
     }
     _pending.clear();
+
+    for (auto obj : _removed) {
+        _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
+            return it.get() == obj;
+        }));
+    }
+    _removed.clear();
 
     while (message.bytes_remaining()) {
         message_type type = static_cast<message_type>(message.read_byte());
@@ -172,13 +174,6 @@ void world::read_snapshot(network::message& message)
                 break;
         }
     }
-
-    for (auto obj : _removed) {
-        _objects.erase(std::find_if(_objects.begin(), _objects.end(), [=](auto& it){
-            return it.get() == obj;
-        }));
-    }
-    _removed.clear();
 
     for (auto& obj : _pending) {
         _objects.push_back(std::move(obj));
@@ -234,12 +229,13 @@ void world::read_sound(network::message const& message)
 //------------------------------------------------------------------------------
 void world::read_effect(network::message const& message)
 {
+    float time = message.read_float();
     int type = message.read_byte();
     vec2 pos = message.read_vector();
     vec2 vel = message.read_vector();
     float strength = message.read_float();
 
-    add_effect(static_cast<game::effect_type>(type), pos, vel, strength);
+    add_effect(time_value::from_seconds(time), static_cast<game::effect_type>(type), pos, vel, strength);
 }
 
 //------------------------------------------------------------------------------
@@ -278,9 +274,10 @@ void world::write_sound(sound::asset sound_asset, vec2 position, float volume)
 }
 
 //------------------------------------------------------------------------------
-void world::write_effect(effect_type type, vec2 position, vec2 direction, float strength)
+void world::write_effect(time_value time, effect_type type, vec2 position, vec2 direction, float strength)
 {
     _message.write_byte(narrow_cast<uint8_t>(message_type::effect));
+    _message.write_float(time.to_seconds());
     _message.write_byte(narrow_cast<uint8_t>(type));
     _message.write_vector(position);
     _message.write_vector(direction);

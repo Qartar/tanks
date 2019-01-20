@@ -40,6 +40,8 @@ protected:
 
     weapon_type _type;
 
+    time_value _impact_time;
+
     sound::channel* _channel;
 
     sound::asset _sound_cannon_impact;

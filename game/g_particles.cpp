@@ -8,10 +8,10 @@
 namespace game {
 
 //------------------------------------------------------------------------------
-render::particle* world::add_particle ()
+render::particle* world::add_particle (time_value time)
 {
     _particles.emplace_back(render::particle{});
-    _particles.back().time = frametime();
+    _particles.back().time = time;
     return &_particles.back();
 }
 
@@ -49,9 +49,9 @@ void world::clear_particles()
 }
 
 //------------------------------------------------------------------------------
-void world::add_effect(effect_type type, vec2 position, vec2 direction, float strength)
+void world::add_effect(time_value time, effect_type type, vec2 position, vec2 direction, float strength)
 {
-    write_effect(type, position, direction, strength);
+    write_effect(time, type, position, direction, strength);
 
     float   r, d;
 
@@ -61,7 +61,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             render::particle* p;
 
             for (int ii = 0; ii < count; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -85,7 +85,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             render::particle* p;
 
             for (int ii = 0; ii < 4; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 p->position = position + vec2(_random.uniform_real(-2.f, 2.f),_random.uniform_real(-2.f, 2.f));
@@ -105,7 +105,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             }
 
             for (int ii = 0; ii < 2; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -138,7 +138,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
             // shock wave
 
-            if ( (p = add_particle()) == NULL )
+            if ( (p = add_particle(time)) == NULL )
                 return;
 
             p->position = position;
@@ -153,7 +153,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             // smoke
 
             for (int ii = 0; ii < 96 * scale; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -179,7 +179,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             // fire
 
             for (int ii = 0; ii < 64 * scale; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -204,7 +204,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             // debris
 
             for (int ii = 0; ii < 32 * scale; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -233,7 +233,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
             // vortex
 
-            if ( (p = add_particle()) == NULL )
+            if ( (p = add_particle(time)) == NULL )
                 return;
 
             p->position = position;
@@ -248,7 +248,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             // fire
 
             for (int ii = 0; ii < 8; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -274,7 +274,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
                 render::particle* p2;
 
-                if ( (p2 = add_particle()) == NULL )
+                if ( (p2 = add_particle(time)) == NULL )
                     return;
 
                 p2->position = p->position;
@@ -291,7 +291,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             // debris
 
             for (int ii = 0; ii < 4; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -326,7 +326,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
             // vortex
 
-            if ( (p = add_particle()) == NULL )
+            if ( (p = add_particle(time)) == NULL )
                 return;
 
             p->position = position;
@@ -340,7 +340,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
 
             // shock wave
 
-            if ( (p = add_particle()) == NULL )
+            if ( (p = add_particle(time)) == NULL )
                 return;
 
             p->position = position;
@@ -355,7 +355,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             // smoke
 
             for (int ii = 0; ii < 64 * scale; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -381,7 +381,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             // fire
 
             for (int ii = 0; ii < 64 * scale; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -406,7 +406,7 @@ void world::add_effect(effect_type type, vec2 position, vec2 direction, float st
             // debris
 
             for (int ii = 0; ii < 32 * scale; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                if ( (p = add_particle(time)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -450,7 +450,8 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
             // smoke
 
             for (int ii = 0; ii < count; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                float t = static_cast<float>(ii) / static_cast<float>(count);
+                if ( (p = add_particle(frametime() + FRAMETIME * t)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
@@ -471,34 +472,35 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
             // fire
 
             for (int ii = 0; ii < count; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                float t = static_cast<float>(ii) / static_cast<float>(count);
+                if ( (p = add_particle(frametime() + FRAMETIME * t)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
                 d = _random.uniform_real();
-                p->position = position + vec2(cos(r)*d,sin(r)*d) + lerp * float(ii) / float(count);
-                p->velocity = direction * (_random.uniform_real(0.25f, 0.75f)) + vec2(_random.uniform_real(-24.f, 24.f), _random.uniform_real(-24.f, 24.f));
+                p->position = position + vec2(std::cos(r)*d,std::sin(r)*d) + lerp * t;
+                p->velocity = direction * _random.uniform_real(.25f, .75f) + vec2(_random.uniform_real(-24.f, 24.f),_random.uniform_real(-24.f, 24.f));
 
-                p->size = _random.uniform_real(4.f, 6.f);
-                p->size_velocity = _random.uniform_real(4.f, 8.f);
+                p->size = _random.uniform_real(1.f, 2.f);
+                p->size_velocity = _random.uniform_real(18.f, 36.f);
 
                 p->color = color4(1.0f,_random.uniform_real(.5f, 1.f),0.0f,0.1f);
                 p->color_velocity = color4(0,0,0,-p->color.a/_random.uniform_real(.15f, .3f));
 
                 p->drag = _random.uniform_real(1.5f, 2.5f);
-                p->time += FRAMETIME * ii / count;
             }
 
             // debris
 
             for (int ii = 0; ii < count; ++ii) {
-                if ( (p = add_particle()) == NULL )
+                float t = static_cast<float>(ii) / static_cast<float>(count);
+                if ( (p = add_particle(frametime() + FRAMETIME * t)) == NULL )
                     return;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
                 d = _random.uniform_real();
 
-                p->position = position + vec2(cos(r),sin(r))*d + lerp * float(ii) / float(count);
+                p->position = position + vec2(std::cos(r),std::sin(r))*d + lerp * t;
 
                 r = _random.uniform_real(2.f * math::pi<float>);
                 d = _random.uniform_real(64.f);
@@ -510,7 +512,6 @@ void world::add_trail_effect(effect_type type, vec2 position, vec2 old_position,
                 p->size = 0.5f;
                 p->size_velocity = 0.0f;
                 p->drag = _random.uniform_real(1.5f, 3.f);
-                p->time += FRAMETIME * ii / count;
                 p->flags = render::particle::tail;
             }
 

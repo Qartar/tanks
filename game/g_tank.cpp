@@ -123,7 +123,7 @@ bool tank::touch(object *other, physics::collision const* collision)
 
     float impulse = collision->impulse.length();
     float strength = clamp((impulse - 5.0f) / 5.0f, 0.0f, 1.0f);
-    _world->add_effect(effect_type::sparks, collision->point, -collision->normal, strength);
+    _world->add_effect(_world->frametime(), effect_type::sparks, collision->point, -collision->normal, strength);
 
     if (other->_type == object_type::projectile) {
         return true;
@@ -224,7 +224,7 @@ void tank::think()
         if (_dead_time != time_value::zero && (time - _dead_time > time_delta::from_seconds(0.65f)) && (time - _dead_time < time_delta::from_seconds(0.65f)+HACK_TIME/2))
         {
             _world->add_sound(_sound_explode, get_position());
-            _world->add_effect(effect_type::explosion, get_position());
+            _world->add_effect(time, effect_type::explosion, get_position());
             _dead_time -= HACK_TIME;    // dont do it again
         }
     }
@@ -274,6 +274,7 @@ void tank::launch_projectile()
 
                 _world->add_sound(_sound_cannon_fire, launch_position);
                 _world->add_effect(
+                    time,
                     effect_type::smoke,
                     launch_position,
                     launch_direction * 21 * 16,
@@ -316,6 +317,7 @@ void tank::launch_projectile()
                 _world->add_sound(_sound_blaster_fire, launch_position);
 
                 _world->add_effect(
+                    time,
                     effect_type::blaster,
                     launch_position,
                     launch_direction * 2);
@@ -343,6 +345,7 @@ void tank::update_effects()
                 power = clamp(power, 0.5f, 1.5f);
 
                 _world->add_effect(
+                    time,
                     effect_type::smoke,
                     get_position() + rotate(effect_origin, _turret_rotation),
                     rotate(effect_origin, _turret_rotation) * power * power * power * 2,
@@ -359,6 +362,7 @@ void tank::update_effects()
                 power = clamp(power, 0.5f, 1.5f);
 
                 _world->add_effect(
+                    time,
                     effect_type::smoke,
                     get_position() + rotate(effect_origin, _turret_rotation),
                     rotate(effect_origin, _turret_rotation) * power * power * power * 2,
