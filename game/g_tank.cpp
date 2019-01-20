@@ -77,9 +77,9 @@ void tank::draw(render::system* renderer, time_value time) const
         lerp = 0.0f;
     }
 
-    vec2    pos = get_position( lerp );
-    float   angle = get_rotation( lerp );
-    float   tangle = get_turret_rotation( lerp );
+    vec2 pos = get_position(time);
+    float angle = get_rotation(time);
+    float tangle = get_turret_rotation(time);
 
     color4 color_health;
     color4 color_reload;
@@ -416,8 +416,9 @@ void tank::write_snapshot(network::message& message) const
 }
 
 //------------------------------------------------------------------------------
-float tank::get_turret_rotation(float lerp) const
+float tank::get_turret_rotation(time_value time) const
 {
+    float lerp = (time - _world->frametime()) / FRAMETIME;
     return _old_turret_rotation + (_turret_rotation - _old_turret_rotation) * lerp;
 }
 

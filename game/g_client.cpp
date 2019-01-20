@@ -329,8 +329,6 @@ void session::write_upgrade(int upgrade)
 //------------------------------------------------------------------------------
 void session::draw_world()
 {
-    float const lerp = (_worldtime - _world.framenum() * FRAMETIME) / FRAMETIME;
-
     //
     // calculate view
     //
@@ -343,7 +341,7 @@ void session::draw_world()
 
     game::tank* player = _world.player(cls.number);
     if (cls.active && player) {
-        vec2 position = player->get_position(lerp);
+        vec2 position = player->get_position(_worldtime);
         vec2 view_mins = _world.mins() + view.size * 0.5f;
         vec2 view_maxs = _world.maxs() - view.size * 0.5f;
 

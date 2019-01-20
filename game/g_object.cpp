@@ -43,8 +43,7 @@ bool object::touch(object* /*other*/, physics::collision const* /*collision*/)
 void object::draw(render::system* renderer, time_value time) const
 {
     if (_model) {
-        float lerp = (time - _world->framenum() * FRAMETIME) / FRAMETIME;
-        renderer->draw_model(_model, get_transform(lerp), _color);
+        renderer->draw_model(_model, get_transform(time), _color);
     }
 }
 
@@ -64,27 +63,29 @@ void object::write_snapshot(network::message& /*message*/) const
 }
 
 //------------------------------------------------------------------------------
-vec2 object::get_position(float lerp) const
+vec2 object::get_position(time_value time) const
 {
+    float lerp = (time - _world->frametime()) / FRAMETIME;
     return _old_position + (get_position() - _old_position) * lerp;
 }
 
 //------------------------------------------------------------------------------
-float object::get_rotation(float lerp) const
+float object::get_rotation(time_value time) const
 {
+    float lerp = (time - _world->frametime()) / FRAMETIME;
     return _old_rotation + (get_rotation() - _old_rotation) * lerp;
 }
 
 //------------------------------------------------------------------------------
-mat3 object::get_transform(float lerp) const
+mat3 object::get_transform(time_value time) const
 {
-    return mat3::transform(get_position(lerp), get_rotation(lerp));
+    return mat3::transform(get_position(time), get_rotation(time));
 }
 
 //------------------------------------------------------------------------------
-mat3 object::get_inverse_transform(float lerp) const
+mat3 object::get_inverse_transform(time_value time) const
 {
-    return mat3::inverse_transform(get_position(lerp), get_rotation(lerp));
+    return mat3::inverse_transform(get_position(time), get_rotation(time));
 }
 
 //------------------------------------------------------------------------------

@@ -219,11 +219,9 @@ bool projectile::touch(object *other, physics::collision const* collision)
 //------------------------------------------------------------------------------
 void projectile::draw(render::system* renderer, time_value time) const
 {
-    float lerp = (time - _world->frametime()) / FRAMETIME;
     float a = min(1.f, (_spawn_time + fuse_time - time) / fade_time);
-
-    vec2 p1 = get_position(lerp);
-    vec2 p2 = get_position(lerp + 0.4f);
+    vec2 p1 = get_position(std::max(_spawn_time, time - time_delta::from_seconds(.02f)));
+    vec2 p2 = get_position(time);
 
     switch (_type) {
         case weapon_type::cannon:
