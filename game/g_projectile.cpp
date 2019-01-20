@@ -19,6 +19,7 @@ projectile::projectile(tank* owner, float damage, weapon_type type)
     : object(object_type::projectile, owner)
     , _damage(damage)
     , _type(type)
+    , _impact_time(time_value::max)
 {
     _rigid_body = physics::rigid_body(&_shape, &_material, 1e-3f);
     _channel = pSound->allocate_channel();
@@ -89,13 +90,22 @@ void projectile::update_homing()
 //------------------------------------------------------------------------------
 void projectile::update_effects()
 {
+    time_value time = _world->frametime();
+
+    if (time > _impact_time) {
+        return;
+    }
+
     float a = min(1.f, (_spawn_time + fuse_time - _world->frametime()) / fade_time);
+    vec2 p1 = get_position() - get_linear_velocity()
+        * (std::min(FRAMETIME, time - _spawn_time) / time_delta::from_seconds(1));
+    vec2 p2 = get_position();
 
     if (_type == weapon_type::missile) {
         _world->add_trail_effect(
             effect_type::missile_trail,
-            get_position(),
-            _old_position,
+            p2,
+            p1,
             get_linear_velocity() * -0.5f,
             4.f * a );
     }
@@ -133,12 +143,23 @@ bool projectile::touch(object *other, physics::collision const* collision)
         return false;
     }
 
+    // calculate impact time
+    {
+        vec2 displacement = (collision->point - get_position());
+        vec2 relative_velocity = get_linear_velocity();
+        if (other) {
+            relative_velocity -= other->get_linear_velocity();
+        }
+        float delta_time = displacement.dot(relative_velocity) / relative_velocity.length_sqr();
+        _impact_time = _world->frametime() + time_delta::from_seconds(1) * delta_time;
+    }
+
     if (collision) {
         _world->add_sound(sound, collision->point);
-        _world->add_effect(effect, collision->point, -collision->normal, 0.5f * _damage);
+        _world->add_effect(_impact_time, effect, collision->point, -collision->normal, 0.5f * _damage);
     } else {
         _world->add_sound(sound, get_position());
-        _world->add_effect(effect, get_position(), vec2_zero, 0.5f * _damage);
+        _world->add_effect(_impact_time, effect, get_position(), vec2_zero, 0.5f * _damage);
     }
 
     _world->remove(this);
@@ -219,6 +240,10 @@ bool projectile::touch(object *other, physics::collision const* collision)
 //------------------------------------------------------------------------------
 void projectile::draw(render::system* renderer, time_value time) const
 {
+    if (time > _impact_time) {
+        return;
+    }
+
     float a = min(1.f, (_spawn_time + fuse_time - time) / fade_time);
     vec2 p1 = get_position(std::max(_spawn_time, time - time_delta::from_seconds(.02f)));
     vec2 p2 = get_position(time);
