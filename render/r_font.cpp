@@ -11,7 +11,7 @@ HFONT font::_system_font = NULL;
 HFONT font::_active_font = NULL;
 
 //------------------------------------------------------------------------------
-render::font const* system::load_font(char const* name, int size)
+render::font const* system::load_font(string::view name, int size)
 {
     for (auto const& f : _fonts) {
         if (f->compare(name, size)) {
@@ -23,7 +23,7 @@ render::font const* system::load_font(char const* name, int size)
 }
 
 //------------------------------------------------------------------------------
-font::font(char const* name, int size)
+font::font(string::view name, int size)
     : _name(name)
     , _size(size)
     , _handle(NULL)
@@ -98,14 +98,14 @@ font::~font()
 }
 
 //------------------------------------------------------------------------------
-bool font::compare(char const* name, int size) const
+bool font::compare(string::view name, int size) const
 {
     return _name == name
         && _size == size;
 }
 
 //------------------------------------------------------------------------------
-void font::draw(char const* string, vec2 position, color4 color, vec2 scale) const
+void font::draw(string::view string, vec2 position, color4 color, vec2 scale) const
 {
     // activate font if it isn't already
     if (_active_font != _handle) {
@@ -127,8 +127,8 @@ void font::draw(char const* string, vec2 position, color4 color, vec2 scale) con
     int b = static_cast<int>(color.b * 255.5f);
     int a = static_cast<int>(color.a * 255.5f);
 
-    char const* cursor = string;
-    char const* end = string + strlen(string);
+    char const* cursor = string.begin();
+    char const* end = string.end();
 
     while (cursor < end) {
         char const* next = find_color(cursor, end);
@@ -159,11 +159,11 @@ void font::draw(char const* string, vec2 position, color4 color, vec2 scale) con
 }
 
 //------------------------------------------------------------------------------
-vec2 font::size(char const* string, vec2 scale) const
+vec2 font::size(string::view string, vec2 scale) const
 {
     vec2i size(0, _size);
-    char const* cursor = string;
-    char const* end = string + strlen(string);
+    char const* cursor = string.begin();
+    char const* end = string.end();
 
     while (cursor < end) {
         char const* next = find_color(cursor, end);

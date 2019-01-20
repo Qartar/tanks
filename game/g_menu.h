@@ -3,12 +3,12 @@
 
 #pragma once
 
+#include "cm_string.h"
+#include "g_projectile.h"
+
 #include <functional>
 #include <memory>
-#include <string>
 #include <vector>
-
-#include "g_projectile.h"
 
 namespace render {
 class system;
@@ -37,7 +37,7 @@ constexpr color4 colors[] =
 class button
 {
 public:
-    button(char const* text, vec2i center, vec2i size)
+    button(string::view text, vec2i center, vec2i size)
         : _text(text)
         , _rectangle(rect::from_center(center, size))
         , _down(false)
@@ -45,7 +45,7 @@ public:
     {}
 
     template<typename Tfunc>
-    button(char const* text, vec2i center, vec2i size, Tfunc&& func)
+    button(string::view text, vec2i center, vec2i size, Tfunc&& func)
         : button(text, center, size)
     {
         _func = std::move(func);
@@ -59,7 +59,7 @@ public:
     virtual void draw(render::system* renderer) const;
 
 protected:
-    std::string _text;
+    string::buffer _text;
     rect _rectangle;
     std::function<void()> _func;
 
@@ -83,7 +83,7 @@ protected:
 
     void draw_rectangle(render::system* renderer, rect const& rect, color4 color) const;
     void draw_rectangle(render::system* renderer, rect const& rect, color4 color, color4 border_color) const;
-    void draw_text(render::system* renderer, rect const& rect, std::string const& text, color4 color, int flags = align_default, float margin = 4.0f) const;
+    void draw_text(render::system* renderer, rect const& rect, string::view text, color4 color, int flags = align_default, float margin = 4.0f) const;
 };
 
 //------------------------------------------------------------------------------
@@ -130,7 +130,7 @@ protected:
 class conditional_button : public button
 {
 public:
-    conditional_button(char const* text, vec2i position, vec2i size, bool *condition_ptr, std::function<void()>&& op_click);
+    conditional_button(string::view text, vec2i position, vec2i size, bool *condition_ptr, std::function<void()>&& op_click);
 
     virtual bool key_event(int key, bool down) override;
 
@@ -151,14 +151,14 @@ public:
 protected:
     game::weapon_type _type;
 
-    static char const* _strings[];
+    static const string::literal _strings[];
 };
 
 //------------------------------------------------------------------------------
 class client_button : public button
 {
 public:
-    client_button(char const* text, vec2i position, vec2i size, color3* color_ptr);
+    client_button(string::view text, vec2i position, vec2i size, color3* color_ptr);
 
     virtual bool key_event(int key, bool down) override;
     virtual bool cursor_event(vec2i position) override;
@@ -181,7 +181,7 @@ protected:
 class submenu_button : public button
 {
 public:
-    submenu_button (char const* text, vec2i position, vec2i size, menu::window *pParent, menu::window *pMenu);
+    submenu_button (string::view text, vec2i position, vec2i size, menu::window *pParent, menu::window *pMenu);
 
     virtual void draw(render::system* renderer) const override;
 

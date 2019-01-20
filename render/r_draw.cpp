@@ -17,7 +17,7 @@ PFNGLBLENDCOLOR glBlendColor = NULL;
 namespace render {
 
 //------------------------------------------------------------------------------
-void system::draw_string(char const* string, vec2 position, color4 color)
+void system::draw_string(string::view string, vec2 position, color4 color)
 {
     vec2 scale(_view.size.x / _framebuffer_size.x,
                _view.size.y / _framebuffer_size.y);
@@ -25,7 +25,7 @@ void system::draw_string(char const* string, vec2 position, color4 color)
 }
 
 //------------------------------------------------------------------------------
-vec2 system::string_size(char const* string) const
+vec2 system::string_size(string::view string) const
 {
     vec2 scale(_view.size.x / _framebuffer_size.x,
                _view.size.y / _framebuffer_size.y);
@@ -33,7 +33,7 @@ vec2 system::string_size(char const* string) const
 }
 
 //------------------------------------------------------------------------------
-void system::draw_monospace(char const* string, vec2 position, color4 color)
+void system::draw_monospace(string::view string, vec2 position, color4 color)
 {
     vec2 scale(_view.size.x / _framebuffer_size.x,
                _view.size.y / _framebuffer_size.y);
@@ -41,7 +41,7 @@ void system::draw_monospace(char const* string, vec2 position, color4 color)
 }
 
 //------------------------------------------------------------------------------
-vec2 system::monospace_size(char const* string) const
+vec2 system::monospace_size(string::view string) const
 {
     vec2 scale(_view.size.x / _framebuffer_size.x,
                _view.size.y / _framebuffer_size.y);

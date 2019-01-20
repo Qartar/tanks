@@ -87,13 +87,13 @@ void session::start_client_local()
 //------------------------------------------------------------------------------
 void session::client_connectionless(network::address const& remote, network::message& message)
 {
-    char const* message_string = message.read_string();
+    string::view message_string(message.read_string());
 
-    if (strstr(message_string, "info")) {
+    if (message_string.starts_with("info")) {
         info_get(remote, message_string);
-    } else if (strstr(message_string, "connect")) {
+    } else if (message_string.starts_with("connect")) {
         connect_ack(message_string);
-    } else if (strstr(message_string, "fail")) {
+    } else if (message_string.starts_with("fail")) {
         read_fail(message_string);
     }
 }
@@ -195,7 +195,7 @@ void session::connect_to_server (string::view address)
 }
 
 //------------------------------------------------------------------------------
-void session::connect_ack(char const* message_string)
+void session::connect_ack(string::view message_string)
 {
     // server has ack'd our connect
 
@@ -290,7 +290,7 @@ void session::info_ask ()
 }
 
 //------------------------------------------------------------------------------
-void session::info_get(network::address const& remote, char const* message_string)
+void session::info_get(network::address const& remote, string::view message_string)
 {
     for (int ii=0; ii < MAX_SERVERS; ++ii) {
         // already exists and active, abort
@@ -304,7 +304,7 @@ void session::info_get(network::address const& remote, char const* message_strin
         cls.servers[ii].address = remote;
         cls.servers[ii].ping = _frametime - cls.ping_time;
 
-        strcpy(cls.servers[ii].name, message_string + 5);
+        strcpy(cls.servers[ii].name, message_string.skip(5));
 
         cls.servers[ii].active = true;
 

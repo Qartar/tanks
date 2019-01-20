@@ -130,8 +130,6 @@ private:
     // particle system
     //
 
-    bool _use_particles;
-
     mutable std::vector<render::particle> _particles;
 
     render::particle* add_particle();

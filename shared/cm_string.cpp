@@ -52,7 +52,7 @@ buffer::buffer(char const* c_str)
     _begin = new char[len + 1];
     _end = _begin + len;
     _capacity = _end + 1;
-    strcpy(_begin, {c_str, c_str + len});
+    strncpy(_begin, {c_str, c_str + len}, _capacity - _begin);
 }
 
 //------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ buffer::buffer(view s)
     , _end(_begin + s.length())
     , _capacity(_end + 1)
 {
-    strcpy(_begin, s);
+    strncpy(_begin, s, _capacity - _begin);
 }
 
 //------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ buffer::buffer(buffer const& s)
     , _end(_begin + s.length())
     , _capacity(_end + 1)
 {
-    strcpy(_begin, s);
+    strncpy(_begin, s, _capacity - _begin);
 }
 
 //------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ buffer& buffer::operator=(buffer const& s)
             _capacity = _begin + s.length() + 1;
         }
         _end = _begin + s.length();
-        strcpy(_begin, s);
+        strncpy(_begin, s, _capacity - _begin);
     }
     return *this;
 }
@@ -129,7 +129,7 @@ buffer& buffer::assign(char const* s, std::size_t len)
         _capacity = _begin + len + 1;
     }
     _end = _begin + len;
-    strcpy(_begin, {s, s + len});
+    strncpy(_begin, {s, s + len}, _capacity - _begin);
     return *this;
 }
 

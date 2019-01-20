@@ -12,7 +12,7 @@
 namespace render {
 
 //------------------------------------------------------------------------------
-render::image const* system::load_image(char const* name)
+render::image const* system::load_image(string::view name)
 {
     _images.push_back(std::make_unique<render::image>(name));
     return _images.back().get();
@@ -48,7 +48,7 @@ void system::draw_image(render::image const* img, vec2 org, vec2 sz, color4 colo
 }
 
 //------------------------------------------------------------------------------
-image::image(char const* name)
+image::image(string::view name)
     : _texnum(0)
     , _width(0)
     , _height(0)
@@ -56,11 +56,11 @@ image::image(char const* name)
     HBITMAP bitmap = NULL;
 
     if ((bitmap = load_resource(name))) {
-        _name = va("<resource#%d>", (ULONG_PTR)name);
+        _name = string::buffer(va("<resource#%d>", (ULONG_PTR)name.begin()));
     } else if ((bitmap = load_file(name))) {
-        _name = name;
+        _name = string::buffer(name);
     } else {
-        _name = "<default>";
+        _name = string::buffer("<default>");
     }
 
     upload(bitmap);
@@ -79,13 +79,13 @@ image::~image()
 }
 
 //------------------------------------------------------------------------------
-HBITMAP image::load_resource(char const* name) const
+HBITMAP image::load_resource(string::view name) const
 {
     UINT flags = LR_CREATEDIBSECTION;
 
     return (HBITMAP )LoadImageA(
         g_Application->hinstance(),     // hinst
-        name,                           // name
+        name.begin(),                   // name
         IMAGE_BITMAP,                   // type
         0,                              // cx
         0,                              // cy
@@ -94,13 +94,13 @@ HBITMAP image::load_resource(char const* name) const
 }
 
 //------------------------------------------------------------------------------
-HBITMAP image::load_file(char const* name) const
+HBITMAP image::load_file(string::view name) const
 {
     UINT flags = LR_CREATEDIBSECTION | LR_DEFAULTSIZE | LR_LOADFROMFILE;
 
     return (HBITMAP )LoadImageA(
         NULL,                           // hinst
-        name,                           // name
+        name.c_str(),                   // name
         IMAGE_BITMAP,                   // type
         0,                              // cx
         0,                              // cy

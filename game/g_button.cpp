@@ -58,10 +58,10 @@ void button::draw_rectangle(render::system* renderer, rect const& rect, color4 c
 }
 
 //------------------------------------------------------------------------------
-void button::draw_text(render::system* renderer, rect const& rect, std::string const& text, color4 color, int flags, float margin) const
+void button::draw_text(render::system* renderer, rect const& rect, string::view text, color4 color, int flags, float margin) const
 {
     vec2i position = rect.center();
-    vec2 size = renderer->string_size(text.c_str());
+    vec2 size = renderer->string_size(text);
 
     if (flags & halign_left) {
         position.x -= static_cast<int>(rect.size().x * 0.5f - margin);
@@ -79,11 +79,11 @@ void button::draw_text(render::system* renderer, rect const& rect, std::string c
         position.y += static_cast<int>(size.y * 0.5f);
     }
 
-    renderer->draw_string(text.c_str(), vec2(position), color);
+    renderer->draw_string(text, vec2(position), color);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-conditional_button::conditional_button(char const* text, vec2i position, vec2i size, bool* condition_ptr, std::function<void()>&& op_click)
+conditional_button::conditional_button(string::view text, vec2i position, vec2i size, bool* condition_ptr, std::function<void()>&& op_click)
     : button(text, position, size, std::move(op_click))
     , _condition_ptr(condition_ptr)
 {}
@@ -118,7 +118,7 @@ void conditional_button::draw(render::system* renderer) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-submenu_button::submenu_button(char const* text, vec2i position, vec2i size, menu::window* parent, menu::window* menu)
+submenu_button::submenu_button(string::view text, vec2i position, vec2i size, menu::window* parent, menu::window* menu)
     : button(text, position, size, [this](){ _active = _parent->activate(this, _menu); })
     , _parent(parent)
     , _menu(menu)
@@ -143,7 +143,7 @@ void submenu_button::draw(render::system* renderer) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-char const* weapon_button::_strings[] = {"Cannon", "Missile", "Blaster"};
+const string::literal weapon_button::_strings[] = {"Cannon", "Missile", "Blaster"};
 
 //------------------------------------------------------------------------------
 weapon_button::weapon_button(game::weapon_type type, vec2i position, vec2i size)
@@ -163,7 +163,7 @@ void weapon_button::draw(render::system* renderer) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-client_button::client_button(char const* text, vec2i position, vec2i size, color3* color_ptr)
+client_button::client_button(string::view text, vec2i position, vec2i size, color3* color_ptr)
     : button(text, position, size)
     , _text_rectangle(rect::from_center(position + vec2i(0, size.y / 2 - 12), vec2i(size.x - 16, 14)))
     , _color_ptr(color_ptr)
@@ -236,7 +236,7 @@ void client_button::draw(render::system* renderer) const
     draw_text(renderer, _rectangle, _text, menu::colors[text_color], valign_top, 8.0f);
 
     draw_rectangle(renderer, _text_rectangle, menu::colors[text_button_color], menu::colors[text_border_color]);
-    draw_text(renderer, _text_rectangle, g_Game->cls.info.name.data(), menu::colors[7], valign_bottom|halign_left);
+    draw_text(renderer, _text_rectangle, string::view(g_Game->cls.info.name.data()), menu::colors[7], valign_bottom|halign_left);
 
     renderer->draw_model(&tank_body_model, mat3::transform(vec2(_rectangle.center()), 0), color4(*_color_ptr));
     renderer->draw_model(&tank_turret_model, mat3::transform(vec2(_rectangle.center()), 0), color4(*_color_ptr));
@@ -287,8 +287,8 @@ void server_button::draw(render::system* renderer) const
     // join button
 
     if (_name_ptr && _name_ptr[0]) {
-        draw_text(renderer, _text_rectangle, _name_ptr, menu::colors[7], halign_left);
-        draw_text(renderer, _text_rectangle, va("%lld", _ping_ptr->to_milliseconds()), menu::colors[7], halign_right);
+        draw_text(renderer, _text_rectangle, string::view(_name_ptr), menu::colors[7], halign_left);
+        draw_text(renderer, _text_rectangle, string::view(va("%lld", _ping_ptr->to_milliseconds())), menu::colors[7], halign_right);
 
         int border_color = _over ? 6 : 4;
         int button_color = _down ? 3 : 5;

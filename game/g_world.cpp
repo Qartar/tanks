@@ -30,18 +30,6 @@ world::world()
 //------------------------------------------------------------------------------
 void world::init()
 {
-    char const* command;
-
-    clear_particles();
-
-    if ( (command = strstr( g_Application->init_string(), "particles=" )) ) {
-        _use_particles = ( atoi(command+10) > 0 );
-    } else {
-        _use_particles = true;
-    }
-
-    _border_material = physics::material(0, 0);
-
     reset();
 }
 
@@ -56,6 +44,8 @@ void world::shutdown()
 //------------------------------------------------------------------------------
 void world::reset()
 {
+    clear_particles();
+
     _mins = vec2(0,0);
     _maxs = vec2(vec2i(_arena_width, _arena_height));
     _framenum = 0;

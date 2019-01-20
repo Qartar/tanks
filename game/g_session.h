@@ -177,7 +177,7 @@ public:
     session();
     ~session() {}
 
-    result init (char const *cmdline);
+    result init (string::view cmdline);
     result shutdown ();
 
     void init_client();
@@ -312,10 +312,10 @@ private:
     void server_packet(network::message& message, std::size_t client);
     void client_packet(network::message& message);
 
-    void connect_ack(char const* message_string);
+    void connect_ack(string::view message_string);
 
-    void client_connect(network::address const& remote, char const* message_string);
-    void client_connect(network::address const& remote, char const* message_string, std::size_t client);
+    void client_connect(network::address const& remote, string::view message_string);
+    void client_connect(network::address const& remote, string::view message_string, std::size_t client);
     void client_disconnect(std::size_t client);
     void client_command(network::message& message, std::size_t client);
 
@@ -325,12 +325,12 @@ private:
     void client_send ();
 
     void info_send(network::address const& remote);
-    void info_get(network::address const& remote, char const* message_string);
+    void info_get(network::address const& remote, string::view message_string);
 
     void read_info(network::message& message);
     void write_info(network::message& message, std::size_t client);
 
-    void read_fail(char const* message_string);
+    void read_fail(string::view message_string);
 
     network::address _netserver;
 

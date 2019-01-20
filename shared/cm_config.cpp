@@ -122,8 +122,8 @@ string_buffer variable_base::to_string(bool b) const
 //------------------------------------------------------------------------------
 string_buffer variable_base::to_string(float f) const
 {
-    std::string s = va("%f", f);
-    if (s.find('.') != 0) {
+    string_buffer s(va("%f", f));
+    if (s[0] != '.') {
         // strip trailing zeroes
         while (s.back() == '0') {
             s.pop_back();

@@ -19,7 +19,7 @@ public:
 
     void quit(int exit_code);
 
-    std::string clipboard() const;
+    string::buffer clipboard() const;
     char const* init_string() { return _init_string; }
 
     time_value time() const;

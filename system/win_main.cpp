@@ -94,7 +94,7 @@ result application::init(HINSTANCE hInstance, LPSTR szCmdLine)
     _window.create();
 
     // init game
-    _game.init( szCmdLine );
+    _game.init(string::view(szCmdLine));
 
     return result::success;
 }
@@ -155,8 +155,6 @@ time_value application::time() const
 //------------------------------------------------------------------------------
 LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
 {
-    char const* command;
-
     switch (nCmd)
     {
     case WM_NCCREATE:
@@ -164,8 +162,7 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
         return DefWindowProc( hWnd, nCmd, wParam, lParam );
 
     case WM_CREATE:
-        if ( !(command = strstr( g_Application->init_string(), "sound=" )) || ( atoi(command+6) > 0 ))
-            pSound->on_create( hWnd );
+        pSound->on_create(hWnd);
         return DefWindowProc( hWnd, nCmd, wParam, lParam );
 
     case WM_CLOSE:
@@ -404,9 +401,9 @@ void application::generate_gamepad_events()
 }
 
 //------------------------------------------------------------------------------
-std::string application::clipboard() const
+string::buffer application::clipboard() const
 {
-    std::string s;
+    string::buffer s;
 
     if (OpenClipboard(NULL) != 0) {
         HANDLE hClipboardData = GetClipboardData(CF_TEXT);
