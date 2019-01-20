@@ -54,16 +54,16 @@ public:
     virtual void write_snapshot(network::message& message) const;
 
     //! Get frame-interpolated position
-    virtual vec2 get_position(float lerp) const;
+    virtual vec2 get_position(time_value time) const;
 
     //! Get frame-interpolated rotation
-    virtual float get_rotation(float lerp) const;
+    virtual float get_rotation(time_value time) const;
 
     //! Get frame-interpolated transform matrix
-    virtual mat3 get_transform(float lerp) const;
+    virtual mat3 get_transform(time_value time) const;
 
     //! Get frame-interpolated inverse transform matrix
-    virtual mat3 get_inverse_transform(float lerp) const;
+    virtual mat3 get_inverse_transform(time_value time) const;
 
     physics::rigid_body const& rigid_body() const { return _rigid_body; }
 

@@ -28,7 +28,7 @@ public:
     virtual void write_snapshot(network::message& message) const override;
 
     //! Get frame-interpolated turret rotation
-    float get_turret_rotation(float lerp) const;
+    float get_turret_rotation(time_value time) const;
 
     void set_turret_rotation(float rotation, bool teleport = false);
     void set_turret_velocity(float velocity) { _turret_velocity = velocity; }
