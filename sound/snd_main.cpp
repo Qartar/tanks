@@ -36,11 +36,9 @@ cSound::cSound()
 //------------------------------------------------------------------------------
 void cSound::on_create(HWND hwnd)
 {
-    if (snd_disable) {
-        return;
+    if (!snd_disable) {
+        _audio_device = cAudioDevice::create(hwnd);
     }
-
-    _audio_device = cAudioDevice::create(hwnd);
 }
 
 //------------------------------------------------------------------------------

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "cm_config.h"
+#include "cm_string.h"
 #include "cm_time.h"
 
 #ifndef _WINDOWS_
@@ -22,17 +23,17 @@ class window;
 class font
 {
 public:
-    font(char const* name, int size);
+    font(string::view name, int size);
     ~font();
 
-    bool compare(char const* name, int size) const;
-    void draw(char const* string, vec2 position, color4 color, vec2 scale) const;
-    vec2 size(char const* string, vec2 scale) const;
+    bool compare(string::view name, int size) const;
+    void draw(string::view string, vec2 position, color4 color, vec2 scale) const;
+    vec2 size(string::view string, vec2 scale) const;
 
 private:
     constexpr static int kNumChars = 256;
 
-    std::string _name;
+    string::buffer _name;
     int _size;
 
     HFONT _handle;
@@ -48,23 +49,23 @@ private:
 class image
 {
 public:
-    image(char const* name);
+    image(string::view name);
     ~image();
 
-    std::string const& name() const { return _name; }
+    string::view name() const { return _name; }
     unsigned int texnum() const { return _texnum; }
     int width() const { return _width; }
     int height() const { return _height; }
 
 protected:
-    std::string _name;
+    string::buffer _name;
     unsigned int _texnum;
     int _width;
     int _height;
 
 protected:
-    HBITMAP load_resource(char const* name) const;
-    HBITMAP load_file(char const* name) const;
+    HBITMAP load_resource(string::view name) const;
+    HBITMAP load_file(string::view name) const;
 
     bool upload(HBITMAP bitmap);
 };
@@ -96,19 +97,19 @@ public:
 
     // Font Interface (r_font.cpp)
 
-    render::font const* load_font(char const* szName, int nSize);
+    render::font const* load_font(string::view name, int nSize);
 
     //  Image Interface (r_image.cpp)
-    render::image const* load_image(char const* name);
+    render::image const* load_image(string::view name);
     void draw_image(render::image const* img, vec2 org, vec2 sz, color4 color = color4(1,1,1,1));
 
     // Drawing Functions (r_draw.cpp)
 
-    void draw_string(char const* string, vec2 position, color4 color);
-    vec2 string_size(char const* string) const;
+    void draw_string(string::view string, vec2 position, color4 color);
+    vec2 string_size(string::view string) const;
 
-    void draw_monospace(char const* string, vec2 position, color4 color);
-    vec2 monospace_size(char const* string) const;
+    void draw_monospace(string::view string, vec2 position, color4 color);
+    vec2 monospace_size(string::view string) const;
 
     void draw_line(vec2 start, vec2 end, color4 start_color, color4 end_color);
     void draw_box(vec2 size, vec2 position, color4 color);

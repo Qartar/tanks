@@ -164,15 +164,19 @@ std::size_t strlen(string::view str);
 //! locations given by the additional arguments.
 int sscanf(string::view s, string::literal fmt, ...);
 
-//! Copies the string pointed by `source` into the array pointed by `destination`,
-//! including the terminating null character (and stopping at that point).
-char* strcpy(char* destination, view source);
-
 //! Copies the first `num` characters of `source` to `destination`. If the end
 //! of the source string is reached before `num` characters have been copied,
 //! `destination` is padded with zeros until a total of `num` characters have
 //! been written to it.
 char* strncpy(char* destination, view source, std::size_t num);
+
+//! Copies the string pointed by `source` into the array pointed by `destination`,
+//! including the terminating null character (and stopping at that point).
+template<std::size_t destination_size>
+char* strcpy(char (&destination)[destination_size], view source)
+{
+    return strncpy(destination, source, destination_size);
+}
 
 //! Compares the string `str1` to the string `str2`.
 int strcmp(view str1, view str2);

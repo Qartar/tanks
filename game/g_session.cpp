@@ -56,7 +56,7 @@ session::session()
 }
 
 //------------------------------------------------------------------------------
-result session::init (char const *cmdline)
+result session::init (string::view cmdline)
 {
     _renderer = g_Application->window()->renderer();
     {
@@ -65,7 +65,9 @@ result session::init (char const *cmdline)
         _console.resize(static_cast<std::size_t>(num / den));
     }
 
-    _menu_image = _renderer->load_image(MAKEINTRESOURCE(IDB_BITMAP1));
+    // Hack for MAKEINTRESOURCE which uses an integer as a pointer value
+    _menu_image = _renderer->load_image(string::view(MAKEINTRESOURCE(IDB_BITMAP1),
+                                                     MAKEINTRESOURCE(IDB_BITMAP1)));
 
     for ( int i=0 ; i<MAX_MESSAGES ; i++ )
         memset( _messages[i].string, 0, MAX_STRING );
@@ -123,8 +125,7 @@ result session::init (char const *cmdline)
     _menu.init( );
     _world.init( );
 
-    if ( strstr( cmdline, "dedicated" ) )
-    {
+    if (cmdline.contains("dedicated")) {
         _dedicated = true;
         start_server( );
     }
@@ -585,7 +586,7 @@ void session::draw_score ()
         int num = _clients[cls.number].upgrades;
 
         if (num > 1) {
-            _renderer->draw_string(va( "you have %i upgrades waiting...", num), vec2(8,12), menu::colors[7]);
+            _renderer->draw_string(string::view(va( "you have %i upgrades waiting...", num)), vec2(8,12), menu::colors[7]);
         } else {
             _renderer->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu::colors[7]);
         }
@@ -600,7 +601,7 @@ void session::draw_score ()
     if (svs.active || cls.active) {
         for (auto const& cl : svs.clients) {
             if (cl.active) {
-                int cl_width = static_cast<int>(_renderer->string_size(cl.info.name.data()).x);
+                int cl_width = static_cast<int>(_renderer->string_size(string::view(cl.info.name.data())).x);
                 panel_width = std::max<int>(panel_width, cl_width + 40);
                 active_count++;
             }
@@ -636,12 +637,12 @@ void session::draw_score ()
             continue;
         }
 
-        std::string score = va("%d", _score[sort[ii]]);
-        int score_width = static_cast<int>(_renderer->string_size(score.c_str()).x);
+        string::buffer score(va("%d", _score[sort[ii]]));
+        int score_width = static_cast<int>(_renderer->string_size(score).x);
 
         _renderer->draw_box(vec2(7,7), vec2(vec2i(width - panel_width - 8, n*12 + 26)), color4(svs.clients[sort[ii]].info.color));
-        _renderer->draw_string(svs.clients[sort[ii]].info.name.data(), vec2(vec2i(width - panel_width - 2, n*12 + 30)), menu::colors[7]);
-        _renderer->draw_string(score.c_str(), vec2(vec2i(width - score_width - 20, n*12 + 30)), menu::colors[7]);
+        _renderer->draw_string(string::view(svs.clients[sort[ii]].info.name.data()), vec2(vec2i(width - panel_width - 2, n*12 + 30)), menu::colors[7]);
+        _renderer->draw_string(score, vec2(vec2i(width - score_width - 20, n*12 + 30)), menu::colors[7]);
 
         n++;
     }
@@ -650,7 +651,7 @@ void session::draw_score ()
 
     if (_restart_time > _frametime) {
         int nTime = static_cast<int>((_restart_time - _frametime).to_microseconds() / 1000);
-        _renderer->draw_string(va("Restart in... %i", nTime), vec2(vec2i(width/2-48,16+13)), menu::colors[7]);
+        _renderer->draw_string(string::view(va("Restart in... %i", nTime)), vec2(vec2i(width/2-48,16+13)), menu::colors[7]);
     }
 }
 
@@ -703,11 +704,11 @@ void session::draw_netgraph()
         _renderer->draw_line(vec2(0, ymax), vec2(width, ymax), color4(1,1,1,1), color4(1,1,1,1));
         _renderer->draw_line(vec2(0, yavg), vec2(width, yavg), color4(0.5f,1,0.75f,alpha_avg), color4(0.5f,1,0.7f,alpha_avg));
 
-        std::string smax = va("%0.1f kbps", CHAR_BIT * max / (FRAMETIME.to_seconds() * 1024.0f));
-        std::string savg = va("%0.1f kbps", CHAR_BIT * avg / (FRAMETIME.to_seconds() * 1024.0f));
+        string::buffer smax(va("%0.1f kbps", CHAR_BIT * max / (FRAMETIME.to_seconds() * 1024.0f)));
+        string::buffer savg(va("%0.1f kbps", CHAR_BIT * avg / (FRAMETIME.to_seconds() * 1024.0f)));
 
-        _renderer->draw_string(smax.c_str(), vec2(638.0f - _renderer->string_size(smax.c_str()).x, ymax), color4(1,1,1,1));
-        _renderer->draw_string(savg.c_str(), vec2(638.0f - _renderer->string_size(savg.c_str()).x, yavg), color4(1,1,1,alpha_avg));
+        _renderer->draw_string(smax, vec2(638.0f - _renderer->string_size(smax).x, ymax), color4(1,1,1,1));
+        _renderer->draw_string(savg, vec2(638.0f - _renderer->string_size(savg).x, yavg), color4(1,1,1,alpha_avg));
     }
 }
 
@@ -941,7 +942,7 @@ void session::draw_console()
         if (y < 0) {
             break;
         }
-        _renderer->draw_monospace(_console.get_row(ii + _console.scroll()),
+        _renderer->draw_monospace(string::view(_console.get_row(ii + _console.scroll())),
                                   vec2(vec2i(4, y)),
                                   menu::colors[6]);
     }

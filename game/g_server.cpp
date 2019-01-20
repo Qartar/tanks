@@ -105,11 +105,11 @@ void session::stop_server ()
 //------------------------------------------------------------------------------
 void session::server_connectionless(network::address const& remote, network::message& message)
 {
-    char const* message_string = message.read_string();
+    string::view message_string(message.read_string());
 
-    if (strstr(message_string, "info")) {
+    if (message_string.starts_with("info")) {
         info_send(remote);
-    } else if (strstr(message_string, "connect")) {
+    } else if (message_string.starts_with("connect")) {
         client_connect(remote, message_string);
     }
 }
@@ -182,7 +182,7 @@ void session::write_frame()
 }
 
 //------------------------------------------------------------------------------
-void session::client_connect(network::address const& remote, char const* message_string)
+void session::client_connect(network::address const& remote, string::view message_string)
 {
     // client has asked for connection
     if (!svs.active) {
@@ -207,7 +207,7 @@ void session::client_connect(network::address const& remote, char const* message
 }
 
 //------------------------------------------------------------------------------
-void session::client_connect(network::address const& remote, char const* message_string, std::size_t client)
+void session::client_connect(network::address const& remote, string::view message_string, std::size_t client)
 {
     auto& cl = svs.clients[client];
     int netport, version;
