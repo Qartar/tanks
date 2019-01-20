@@ -149,6 +149,8 @@ private:
 
     render::view _view;
 
+    config::boolean _draw_tris;
+
     float _costbl[360];
     float _sintbl[360];
 };

@@ -56,6 +56,7 @@ system::system(render::window* window)
     , _view{}
     , _fbo(0)
     , _rbo{0, 0}
+    , _draw_tris("r_tris", 0, 0, "draw triangle edges")
 {}
 
 //------------------------------------------------------------------------------

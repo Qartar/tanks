@@ -189,6 +189,15 @@ void system::draw_model(render::model const* model, mat3 tx, color4 color)
     glColorPointer(3, GL_FLOAT, 0, model->_colors.data());
     glDrawElements(GL_TRIANGLES, (GLsizei)model->_indices.size(), GL_UNSIGNED_SHORT, model->_indices.data());
 
+    if (_draw_tris) {
+        glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        glDrawElements(GL_TRIANGLES, (GLsizei)model->_indices.size(), GL_UNSIGNED_SHORT, model->_indices.data());
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glDisableClientState(GL_VERTEX_ARRAY);
