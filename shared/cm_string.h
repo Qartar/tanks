@@ -184,6 +184,20 @@ int strcmp(view str1, view str2);
 //! Compares the string `str1` to the string `str2` without case-sensitivity.
 int stricmp(view str1, view str2);
 
+//! Returns a pointer to the first occurrence of `str2` in `str1`, or a null
+//! pointer if `str2` is not part of `str1`.
+view strstr(view str1, view str2);
+
+//! Returns a pointer to the first occurrence in `str1` of any of the characters
+//! that are part of `str2`, or a null pointer if there are no matches.
+view strpbrk(view str, view str2);
+
+//! Returns a pointer to the first occurrence of character in the string `str`.
+view strchr(view str, char character);
+
+//! Returns a pointer to the last occurrence of character in the string `str`.
+view strrchr(view str, char character);
+
 } // namespace string
 
 //------------------------------------------------------------------------------
