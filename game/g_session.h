@@ -262,8 +262,8 @@ private:
     std::array<std::size_t, 256> _net_bytes;
 
 public:
-    void write_message (char const* message, bool broadcast=true);
-    void write_message_client(char const* message) { write_message(message, false); }
+    void write_message (string::view message, bool broadcast=true);
+    void write_message_client(string::view message) { write_message(message, false); }
 
     game_client_t _clients[MAX_PLAYERS];
     // NETWORKING
@@ -304,7 +304,7 @@ private:
 
     void broadcast(std::size_t len, byte const* data);
     void broadcast(network::message& message);
-    void broadcast_print (char const* message);
+    void broadcast_print (string::view message);
 
     void server_connectionless(network::address const& remote, network::message& message);
     void client_connectionless(network::address const& remote, network::message& message);

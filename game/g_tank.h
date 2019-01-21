@@ -41,7 +41,7 @@ public:
 
     void update_sound();
 
-    char const* player_name() const;
+    string::view player_name() const;
 
     render::model const* _turret_model;
     float _turret_rotation;

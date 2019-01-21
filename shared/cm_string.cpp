@@ -22,7 +22,7 @@ char const* view::c_str() const
         return _begin;
     } else {
         // view is not null-terminated so return a null-terminated copy
-        return va("%.*s", narrow_cast<int>(length()), _begin);
+        return va("%.*s", narrow_cast<int>(length()), _begin).begin();
     }
 }
 
@@ -210,3 +210,35 @@ int stricmp(view str1, view str2)
 }
 
 } // namespace string
+
+//------------------------------------------------------------------------------
+string::view va (string::literal fmt, ...)
+{
+    constexpr int buffer_size = 16384;
+    static thread_local int  index = 0;
+    static thread_local char string[buffer_size];
+
+    va_list     ap;
+    char        *buf;
+
+    int offset = index & (buffer_size-1);
+    buf = string + offset;
+
+    va_start(ap, fmt);
+    int len = vsnprintf(buf, buffer_size - offset, fmt.c_str(), ap);
+    va_end(ap);
+
+    // check if a wrap is necessary
+    if (len >= buffer_size - offset && len < buffer_size) {
+        buf = string;
+        index = 0;
+
+        va_start(ap, fmt);
+        len = vsnprintf(buf, buffer_size, fmt.c_str(), ap);
+        va_end(ap);
+    }
+
+    // vsnprintf returns a negative value if an error occurs
+    index += max(0, len + 1);
+    return {buf, buf + len};
+}
