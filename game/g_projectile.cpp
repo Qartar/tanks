@@ -183,7 +183,7 @@ bool projectile::touch(object *other, physics::collision const* collision)
             g_Game->add_score( owner_tank->_player_index, 1 );
             other_tank->_dead_time = _world->frametime();
 
-            char const* fmt = "";
+            string::literal fmt = "";
 
             switch (_type) {
                 case weapon_type::cannon:
@@ -209,7 +209,7 @@ bool projectile::touch(object *other, physics::collision const* collision)
                     break;
             }
 
-            g_Game->write_message(va(fmt, other_tank->player_name(), owner_tank->player_name()));
+            g_Game->write_message(va(fmt, other_tank->player_name().c_str(), owner_tank->player_name().c_str()));
         }
     }
 

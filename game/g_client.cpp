@@ -56,7 +56,7 @@ void session::init_client()
 void session::shutdown_client()
 {
     _cl_name = string::view(cls.info.name.data());
-    _cl_color = string::view(va("%i %i %i", (int )(cls.info.color.r*255), (int )(cls.info.color.g*255), (int )(cls.info.color.b*255) ));
+    _cl_color = va("%i %i %i", (int )(cls.info.color.r*255), (int )(cls.info.color.g*255), (int )(cls.info.color.b*255) );
     _cl_weapon = static_cast<int>(cls.info.weapon);
 }
 
@@ -109,7 +109,7 @@ void session::client_packet(network::message& message)
                 break;
 
             case svc_message:
-                write_message(message.read_string());
+                write_message(string::view(message.read_string()));
                 break;
 
             case svc_score: {

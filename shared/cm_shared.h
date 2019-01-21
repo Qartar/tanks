@@ -71,9 +71,6 @@ template<typename T, typename Y> constexpr T narrow_cast(Y value)
 }
 
 //------------------------------------------------------------------------------
-char const* va (char const *fmt, ...);
-
-//------------------------------------------------------------------------------
 namespace detail {
 
 class log

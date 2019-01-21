@@ -586,7 +586,7 @@ void session::draw_score ()
         int num = _clients[cls.number].upgrades;
 
         if (num > 1) {
-            _renderer->draw_string(string::view(va( "you have %i upgrades waiting...", num)), vec2(8,12), menu::colors[7]);
+            _renderer->draw_string(va( "you have %i upgrades waiting...", num), vec2(8,12), menu::colors[7]);
         } else {
             _renderer->draw_string("you have 1 upgrade waiting...", vec2(8,12), menu::colors[7]);
         }
@@ -651,7 +651,7 @@ void session::draw_score ()
 
     if (_restart_time > _frametime) {
         int nTime = static_cast<int>((_restart_time - _frametime).to_microseconds() / 1000);
-        _renderer->draw_string(string::view(va("Restart in... %i", nTime)), vec2(vec2i(width/2-48,16+13)), menu::colors[7]);
+        _renderer->draw_string(va("Restart in... %i", nTime), vec2(vec2i(width/2-48,16+13)), menu::colors[7]);
     }
 }
 
@@ -863,7 +863,7 @@ result session::message(char const* format, ...)
 }
 
 //------------------------------------------------------------------------------
-void session::write_message (char const* message, bool broadcast)
+void session::write_message (string::view message, bool broadcast)
 {
     if (svs.active && broadcast) {
         broadcast_print( message );

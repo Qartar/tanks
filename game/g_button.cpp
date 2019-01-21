@@ -288,7 +288,7 @@ void server_button::draw(render::system* renderer) const
 
     if (_name_ptr && _name_ptr[0]) {
         draw_text(renderer, _text_rectangle, string::view(_name_ptr), menu::colors[7], halign_left);
-        draw_text(renderer, _text_rectangle, string::view(va("%lld", _ping_ptr->to_milliseconds())), menu::colors[7], halign_right);
+        draw_text(renderer, _text_rectangle, va("%lld", _ping_ptr->to_milliseconds()), menu::colors[7], halign_right);
 
         int border_color = _over ? 6 : 4;
         int button_color = _down ? 3 : 5;

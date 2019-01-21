@@ -166,7 +166,7 @@ void tank::collide(tank* other, physics::collision const* collision)
         g_Game->add_score(_player_index, 1);
         other->_dead_time = _world->frametime();
 
-        g_Game->write_message( va("%s got a little too cozy with %s.", other->player_name(), player_name() ) );
+        g_Game->write_message( va("%s got a little too cozy with %s.", other->player_name().c_str(), player_name().c_str() ) );
     }
 }
 
@@ -487,7 +487,7 @@ void tank::update_sound()
 }
 
 //------------------------------------------------------------------------------
-char const* tank::player_name() const
+string::view tank::player_name() const
 {
     return va("^%x%x%x%s^xxx",
               int(_color.r * 15.5f),

@@ -112,12 +112,12 @@ void session::broadcast(network::message& message)
 }
 
 //------------------------------------------------------------------------------
-void session::broadcast_print (char const* message)
+void session::broadcast_print (string::view message)
 {
     network::message_storage netmsg;
         
     netmsg.write_byte( svc_message );
-    netmsg.write_string( message );
+    netmsg.write_string( message.c_str() );
 
     broadcast(netmsg);
 }
