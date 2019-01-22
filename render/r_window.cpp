@@ -129,6 +129,8 @@ result window::create(int xpos, int ypos, int width, int height, bool fullscreen
             rect.right - rect.left,
             rect.bottom - rect.top,
             SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+        _current_dpi = dpi;
     }
 
     _logical_size.x = width;
