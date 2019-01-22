@@ -66,7 +66,7 @@ result window::create(int xpos, int ypos, int width, int height, bool fullscreen
     SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
 
     // Setup struct for RegisterClass
-    WNDCLASSA   wc;
+    WNDCLASSW   wc;
 
     wc.style            = 0;
     wc.lpfnWndProc      = _wndproc;
@@ -79,7 +79,7 @@ result window::create(int xpos, int ypos, int width, int height, bool fullscreen
     wc.lpszMenuName     = 0;
     wc.lpszClassName    = APP_CLASSNAME;
 
-    if (!RegisterClassA(&wc)) {
+    if (!RegisterClassW(&wc)) {
         g_Application->error( "Tanks! Error", "window::m_CreateWindow | RegisterClass failed\n" );
         return result::failure;
     }
@@ -91,10 +91,10 @@ result window::create(int xpos, int ypos, int width, int height, bool fullscreen
     RECT rect = { 0, 0, width, height };
     AdjustWindowRect(&rect, style, FALSE);
 
-    _hwnd = CreateWindowExA(
+    _hwnd = CreateWindowExW(
         0,
         APP_CLASSNAME,
-        "Tanks!",
+        L"Tanks!",
         style,
         xpos,
         ypos,
@@ -291,7 +291,7 @@ LRESULT window::message (UINT nCmd, WPARAM wParam, LPARAM lParam)
             break;
     }
 
-    return DefWindowProcA( _hwnd, nCmd, wParam, lParam );
+    return DefWindowProcW( _hwnd, nCmd, wParam, lParam );
 }
 
 //------------------------------------------------------------------------------

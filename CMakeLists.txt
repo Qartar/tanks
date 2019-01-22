@@ -16,6 +16,7 @@ add_compile_options(
     /WX             # Enable warnings as errors
     /wd4706         # Disable C4706: assignment within conditional expression
     /permissive-    # Enable language conformance mode
+    /std:c++17      # Enable C++17 language features
 )
 
 add_subdirectory(shared)

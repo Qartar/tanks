@@ -45,13 +45,13 @@ int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
         }
 
         // message loop (pump)
-        while (PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
-            if (!GetMessageA(&msg, NULL, 0, 0 )) {
+        while (PeekMessageW(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+            if (!GetMessageW(&msg, NULL, 0, 0 )) {
                 return shutdown();
             }
 
             TranslateMessage(&msg);
-            DispatchMessageA(&msg);
+            DispatchMessageW(&msg);
         }
 
         // gamepad events are polled from the device
@@ -159,11 +159,11 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     {
     case WM_NCCREATE:
         EnableNonClientDpiScaling(hWnd);
-        return DefWindowProc( hWnd, nCmd, wParam, lParam );
+        return DefWindowProcW( hWnd, nCmd, wParam, lParam );
 
     case WM_CREATE:
         pSound->on_create(hWnd);
-        return DefWindowProc( hWnd, nCmd, wParam, lParam );
+        return DefWindowProcW( hWnd, nCmd, wParam, lParam );
 
     case WM_CLOSE:
         g_Application->quit( 0 );
@@ -225,7 +225,7 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
         break;
     }
 
-    return DefWindowProcA(hWnd, nCmd, wParam, lParam);
+    return DefWindowProcW(hWnd, nCmd, wParam, lParam);
 }
 
 //------------------------------------------------------------------------------
@@ -406,13 +406,35 @@ string::buffer application::clipboard() const
     string::buffer s;
 
     if (OpenClipboard(NULL) != 0) {
-        HANDLE hClipboardData = GetClipboardData(CF_TEXT);
+        HANDLE hClipboardData = GetClipboardData(CF_UNICODETEXT);
 
         if (hClipboardData != NULL) {
-            char* cliptext = (char *)GlobalLock(hClipboardData);
+            wchar_t* cliptext = (wchar_t *)GlobalLock(hClipboardData);
 
-            if (cliptext != nullptr) {
-                s.assign(cliptext, GlobalSize(hClipboardData));
+            if (cliptext) {
+                // Calculate the destination size in bytes
+                int len = WideCharToMultiByte(
+                    CP_UTF8,
+                    0,
+                    cliptext,
+                    -1,
+                    nullptr,
+                    0,
+                    NULL,
+                    NULL);
+
+                // Convert directly into std::string's data
+                s.resize(len - 1);
+                WideCharToMultiByte(
+                    CP_UTF8,
+                    0,
+                    cliptext,
+                    -1,
+                    s.data(),
+                    narrow_cast<int>(s.length()),
+                    NULL,
+                    NULL);
+
                 GlobalUnlock(hClipboardData);
             }
         }

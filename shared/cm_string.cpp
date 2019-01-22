@@ -47,20 +47,21 @@ bool view::starts_with(string::view prefix) const
 
 //------------------------------------------------------------------------------
 buffer::buffer(char const* c_str)
+    : _begin(nullptr)
+    , _end(nullptr)
+    , _capacity(nullptr)
 {
-    std::size_t len = ::strlen(c_str);
-    _begin = new char[len + 1];
-    _end = _begin + len;
-    _capacity = _end + 1;
-    strncpy(_begin, {c_str, c_str + len}, _capacity - _begin);
+    resize(::strlen(c_str));
+    strncpy(_begin, {c_str, c_str + length()}, _capacity - _begin);
 }
 
 //------------------------------------------------------------------------------
 buffer::buffer(view s)
-    : _begin(new char[s.length() + 1])
-    , _end(_begin + s.length())
-    , _capacity(_end + 1)
+    : _begin(nullptr)
+    , _end(nullptr)
+    , _capacity(nullptr)
 {
+    resize(s.length());
     strncpy(_begin, s, _capacity - _begin);
 }
 
@@ -77,10 +78,11 @@ buffer::buffer(buffer&& s)
 
 //------------------------------------------------------------------------------
 buffer::buffer(buffer const& s)
-    : _begin(new char[s.length() + 1])
-    , _end(_begin + s.length())
-    , _capacity(_end + 1)
+    : _begin(nullptr)
+    , _end(nullptr)
+    , _capacity(nullptr)
 {
+    resize(s.length());
     strncpy(_begin, s, _capacity - _begin);
 }
 
@@ -103,12 +105,7 @@ buffer& buffer::operator=(buffer&& s)
 buffer& buffer::operator=(buffer const& s)
 {
     if (this != &s) {
-        if (_capacity - _begin <= s.end() - s.begin()) {
-            delete [] _begin;
-            _begin = new char[s.length() + 1];
-            _capacity = _begin + s.length() + 1;
-        }
-        _end = _begin + s.length();
+        resize(s.length());
         strncpy(_begin, s, _capacity - _begin);
     }
     return *this;
@@ -121,14 +118,26 @@ buffer::~buffer()
 }
 
 //------------------------------------------------------------------------------
+void buffer::resize(std::size_t length)
+{
+    reserve(length + 1);
+    _end = _begin + length;
+}
+
+//------------------------------------------------------------------------------
+void buffer::reserve(std::size_t size)
+{
+    if (_capacity < _begin + size) {
+        delete [] _begin;
+        _begin = new char[size];
+        _capacity = _begin + size;
+    }
+}
+
+//------------------------------------------------------------------------------
 buffer& buffer::assign(char const* s, std::size_t len)
 {
-    if (_capacity <= _begin + len) {
-        delete [] _begin;
-        _begin = new char[len + 1];
-        _capacity = _begin + len + 1;
-    }
-    _end = _begin + len;
+    resize(len);
     strncpy(_begin, {s, s + len}, _capacity - _begin);
     return *this;
 }

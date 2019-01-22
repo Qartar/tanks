@@ -121,6 +121,9 @@ public:
     //! Returns a pointer a C-style string representation
     char const* c_str() const { return _begin; }
 
+    //! Returns a mutable pointer to the internal string data
+    char* data() { return _begin; }
+
     //! Returns an iterator to the beginning of the string
     char const* begin() const { return _begin; }
 
@@ -142,10 +145,19 @@ public:
     //! Sets the contents of the string to the given string
     buffer& assign(char const* s, std::size_t len);
 
+    //! Resize the internal string data for the given number of bytes, not
+    //! including null terminator.
+    void resize(std::size_t size);
+
 protected:
     char* _begin;
     char* _end;
     char* _capacity;
+
+protected:
+    //! Resize the internal string data for the given number of bytes, including
+    //! null terminator.
+    void reserve(std::size_t size);
 };
 
 //! Returns true if the strings `lhs` and `rhs` represent the same string.
