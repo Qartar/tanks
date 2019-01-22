@@ -39,10 +39,13 @@ window::window(HINSTANCE hInstance, WNDPROC WndProc)
 {}
 
 //------------------------------------------------------------------------------
-void window::create()
+result window::create()
 {
-    create(CW_USEDEFAULT, 0, _vid_width, _vid_height, _vid_fullscreen);
-    _renderer.init();
+    if (failed(create(CW_USEDEFAULT, 0, _vid_width, _vid_height, _vid_fullscreen))) {
+        return result::failure;
+    }
+
+    return _renderer.init();
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +83,7 @@ result window::create(int xpos, int ypos, int width, int height, bool fullscreen
     wc.lpszClassName    = APP_CLASSNAME;
 
     if (!RegisterClassW(&wc)) {
-        g_Application->error( "Tanks! Error", "window::m_CreateWindow | RegisterClass failed\n" );
+        log::error("window::m_CreateWindow | RegisterClass failed\n");
         return result::failure;
     }
 
@@ -142,8 +145,7 @@ result window::create(int xpos, int ypos, int width, int height, bool fullscreen
     }
 
     if (_hwnd == NULL) {
-        g_Application->error( "Tanks! Error", "window::m_CreateWindow | CreateWindow failed\n" );
-
+        log::error("window::m_CreateWindow | CreateWindow failed\n");
         return result::failure;
     }
 
@@ -195,28 +197,28 @@ result window::init_opengl()
 
     // get DC
     if ((_hdc = GetDC(_hwnd)) == NULL) {
-        g_Application->error( "Tanks! Error", "window::m_InitGL | GetDC failed");
+        log::error("window::m_InitGL | GetDC failed");
         return result::failure;
     }
 
     // select pixel format
     if ((pixelformat = ChoosePixelFormat(_hdc, &pfd)) == 0) {
-        g_Application->error( "Tanks! Error", "window::m_InitGL | ChoosePixelFormat failed");
+        log::error("window::m_InitGL | ChoosePixelFormat failed");
         return result::failure;
     }
     if ((SetPixelFormat(_hdc, pixelformat, &pfd)) == FALSE) {
-        g_Application->error( "Tanks! Error", "window::m_InitGL | SetPixelFormat failed");
+        log::error("window::m_InitGL | SetPixelFormat failed");
         return result::failure;
     }
 
     // set up context
     if ((_hrc = wglCreateContext(_hdc)) == 0) {
-        g_Application->error ( "Tanks! Error", "window::m_InitGL: wglCreateContext failed" );
+        log::error("window::m_InitGL: wglCreateContext failed");
         shutdown_opengl();
         return result::failure;
     }
     if (!wglMakeCurrent(_hdc, _hrc)) {
-        g_Application->error ( "Tanks! Error", "window::m_InitGL: wglMakeCurrent failed" );
+        log::error("window::m_InitGL: wglMakeCurrent failed");
         shutdown_opengl();
         return result::failure;
     }

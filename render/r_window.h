@@ -18,7 +18,7 @@ public:
     window(HINSTANCE hInstance, WNDPROC WndProc);
     ~window();
 
-    void create();
+    result create();
     void destroy();
     void end_frame();
 

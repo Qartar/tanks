@@ -67,7 +67,8 @@ void session::get_packets ()
     // check for timeouts
     //
 
-    time_value time = g_Application->time();
+    // network uses application time directly so do the same here
+    time_value time = application::singleton()->time();
     constexpr time_delta timeout = time_delta::from_seconds(10);
 
     if (svs.active) {

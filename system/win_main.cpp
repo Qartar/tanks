@@ -9,7 +9,8 @@
 #include <WS2tcpip.h>
 #include <XInput.h>
 
-application *g_Application; // global instance, extern declaration in "win_main.h"
+////////////////////////////////////////////////////////////////////////////////
+application* application::_singleton = nullptr;
 
 //------------------------------------------------------------------------------
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR szCmdLine, int nCmdShow)
@@ -24,7 +25,7 @@ application::application(HINSTANCE hInstance)
     , _exit_code(0)
     , _mouse_state(0)
 {
-    g_Application = this;
+    _singleton = this;
 }
 
 //------------------------------------------------------------------------------
@@ -70,7 +71,7 @@ result application::init(HINSTANCE hInstance, LPSTR szCmdLine)
     _hinstance = hInstance;
 
     // set init string
-    _init_string = szCmdLine;
+    _init_string = string::view(szCmdLine);
 
     // init timer
     QueryPerformanceFrequency(&_timer_frequency);
@@ -91,10 +92,14 @@ result application::init(HINSTANCE hInstance, LPSTR szCmdLine)
     sound::system::create();
 
     // init opengl
-    _window.create();
+    if (failed(_window.create())) {
+        return result::failure;
+    }
 
     // init game
-    _game.init(string::view(szCmdLine));
+    if (failed(_game.init(_init_string))) {
+        return result::failure;
+    }
 
     return result::success;
 }
@@ -121,14 +126,6 @@ int application::shutdown()
 #endif // DEBUG_MEM
 
     return _exit_code;
-}
-
-//------------------------------------------------------------------------------
-void application::error(char const *title, char const *message)
-{
-    MessageBoxA(NULL, message, title, MB_OK);
-
-    quit(-1);
 }
 
 //------------------------------------------------------------------------------
@@ -166,7 +163,7 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
         return DefWindowProcW( hWnd, nCmd, wParam, lParam );
 
     case WM_CLOSE:
-        g_Application->quit( 0 );
+        _singleton->quit(0);
         return 0;
 
     // Game Messages
@@ -179,14 +176,14 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     case WM_MBUTTONUP:
     case WM_MOUSEMOVE: {
         POINT P{(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
-        g_Application->mouse_event(wParam, vec2i(P.x, P.y));
+        _singleton->mouse_event(wParam, vec2i(P.x, P.y));
         break;
     }
 
     case WM_MOUSEWHEEL: {
         POINT P{(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
         ScreenToClient(hWnd, &P);
-        g_Application->mouse_event(wParam, vec2i(P.x, P.y));
+        _singleton->mouse_event(wParam, vec2i(P.x, P.y));
         break;
     }
 
@@ -195,21 +192,21 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
         if (wParam == VK_RETURN && (HIWORD(lParam) & KF_ALTDOWN)) {
             return 0;
         }
-        g_Application->key_event( lParam, true );
+        _singleton->key_event( lParam, true );
         break;
 
     case WM_SYSKEYUP:
     case WM_KEYUP:
-        g_Application->key_event( lParam, false );
+        _singleton->key_event( lParam, false );
         break;
 
     case WM_SYSCHAR:
     case WM_CHAR:
         if (wParam == VK_RETURN && (HIWORD(lParam) & KF_ALTDOWN)) {
-            g_Application->_window.toggle_fullscreen();
+            _singleton->_window.toggle_fullscreen();
             return 0;
         }
-        g_Application->char_event(wParam, lParam);
+        _singleton->char_event(wParam, lParam);
         break;
 
     // glWnd Messages
@@ -219,7 +216,7 @@ LRESULT application::wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam)
     case WM_MOVE:
     case WM_DESTROY:
     case WM_DPICHANGED:
-        return g_Application->_window.message( nCmd, wParam, lParam );
+        return _singleton->_window.message( nCmd, wParam, lParam );
 
     default:
         break;

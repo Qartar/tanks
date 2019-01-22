@@ -37,8 +37,8 @@ void channel::setup(network::socket* socket, network::address remote, word netpo
     _socket = socket;
     _address = remote;
 
-    _last_sent = g_Application->time();
-    _last_received = g_Application->time();
+    _last_sent = application::singleton()->time();
+    _last_received = application::singleton()->time();
 }
 
 //------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ bool channel::transmit(std::size_t length, byte const* data)
 
     // send it off
 
-    _last_sent = g_Application->time();
+    _last_sent = application::singleton()->time();
 
     if (_socket && _socket->write(_address, netmsg)) {
         reset();
@@ -77,7 +77,7 @@ bool channel::transmit()
 //------------------------------------------------------------------------------
 bool channel::process(network::message&)
 {
-    _last_received = g_Application->time();
+    _last_received = application::singleton()->time();
     return true;
 }
 

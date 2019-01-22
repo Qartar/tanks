@@ -15,12 +15,10 @@ public:
 
     int main(LPSTR szCmdLine, int nCmdShow);
 
-    void error(char const *title, char const *message);
-
     void quit(int exit_code);
 
     string::buffer clipboard() const;
-    char const* init_string() { return _init_string; }
+    string::view init_string() { return _init_string; }
 
     time_value time() const;
 
@@ -28,13 +26,15 @@ public:
     config::system* config() { return &_config; }
     render::window* window() { return &_window; }
 
+    static application* singleton() { return _singleton; }
+
 protected:
     HINSTANCE _hinstance;
     int _exit_code;
 
     WPARAM _mouse_state;
 
-    char const* _init_string;
+    string::view _init_string;
 
     LARGE_INTEGER _timer_frequency;
     LARGE_INTEGER _timer_base;
@@ -42,6 +42,8 @@ protected:
     render::window _window;
     game::session _game;
     config::system _config;
+
+    static application* _singleton;
 
 protected:
     result init(HINSTANCE hInstance, LPSTR szCmdLine);
@@ -55,5 +57,3 @@ protected:
 
     static LRESULT WINAPI wndproc(HWND hWnd, UINT nCmd, WPARAM wParam, LPARAM lParam);
 };
-
-extern application *g_Application;
