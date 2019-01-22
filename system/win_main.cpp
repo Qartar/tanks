@@ -34,7 +34,9 @@ int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
     time_value previous_time, current_time;
     MSG msg;
 
-    init(_hinstance, szCmdLine);
+    if (failed(init(_hinstance, szCmdLine))) {
+        return shutdown();
+    }
 
     previous_time = time();
 
@@ -89,7 +91,9 @@ result application::init(HINSTANCE hInstance, LPSTR szCmdLine)
     }
 
     // create sound class
-    sound::system::create();
+    if (failed(sound::system::create())) {
+        // non-fatal, continue initialization
+    }
 
     // init opengl
     if (failed(_window.create())) {

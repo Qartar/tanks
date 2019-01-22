@@ -85,7 +85,7 @@ public:
     system(render::window* window);
 
     result init();
-    result shutdown();
+    void shutdown();
 
     void begin_frame();
     void end_frame();

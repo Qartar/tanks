@@ -38,19 +38,19 @@ public:
 class system
 {
 public:
-    static void create ();
+    static result create ();
     static void destroy ();
 
     virtual ~system() {}
 
-    virtual void on_create(HWND hwnd) = 0;
+    virtual result on_create(HWND hwnd) = 0;
     virtual void on_destroy() = 0;
 
     virtual void update() = 0;
 
     virtual void set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up) = 0;
 
-    virtual void play(sound::asset asset, vec3 origin, float volume, float attenuation) = 0;
+    virtual result play(sound::asset asset, vec3 origin, float volume, float attenuation) = 0;
 
     virtual sound::channel* allocate_channel() = 0;
     virtual void free_channel(sound::channel* channel) = 0;

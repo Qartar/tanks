@@ -88,11 +88,10 @@ result system::init()
 }
 
 //------------------------------------------------------------------------------
-result system::shutdown()
+void system::shutdown()
 {
     destroy_framebuffer();
     _fonts.clear();
-    return result::success;
 }
 
 //------------------------------------------------------------------------------

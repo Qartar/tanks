@@ -148,15 +148,13 @@ result session::init (string::view cmdline)
 }
 
 //------------------------------------------------------------------------------
-result session::shutdown()
+void session::shutdown()
 {
     stop_client( );
     shutdown_client();
 
     _world.shutdown( );
     _menu.shutdown( );
-
-    return result::success;
 }
 
 //------------------------------------------------------------------------------

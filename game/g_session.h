@@ -178,7 +178,7 @@ public:
     ~session() {}
 
     result init (string::view cmdline);
-    result shutdown ();
+    void shutdown ();
 
     void init_client();
     void shutdown_client();

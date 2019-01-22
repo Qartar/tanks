@@ -114,14 +114,14 @@ public:
     cSound();
     ~cSound() {}
 
-    virtual void on_create(HWND hWnd) override;
+    virtual result on_create(HWND hWnd) override;
     virtual void on_destroy() override;
 
     virtual void update() override;
 
     virtual void set_listener(vec3 origin, vec3 forward, vec3 right, vec3 up) override;
 
-    virtual void play(sound::asset asset, vec3 origin, float volume, float attenuation) override;
+    virtual result play(sound::asset asset, vec3 origin, float volume, float attenuation) override;
 
     virtual sound::channel* allocate_channel() override;
     virtual void free_channel(sound::channel* channel) override;

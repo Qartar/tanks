@@ -7,9 +7,10 @@
 sound::system* pSound = nullptr;
 
 //------------------------------------------------------------------------------
-void sound::system::create()
+result sound::system::create()
 {
     pSound = new cSound;
+    return result::success;
 }
 
 //------------------------------------------------------------------------------
@@ -34,10 +35,17 @@ cSound::cSound()
 }
 
 //------------------------------------------------------------------------------
-void cSound::on_create(HWND hwnd)
+result cSound::on_create(HWND hwnd)
 {
-    if (!snd_disable) {
-        _audio_device = cAudioDevice::create(hwnd);
+    if (snd_disable) {
+        return result::success;
+    }
+
+    _audio_device = cAudioDevice::create(hwnd);
+    if (!_audio_device || _audio_device->get_state() != device_ready) {
+        return result::failure;
+    } else {
+        return result::success;
     }
 }
 
@@ -167,7 +175,7 @@ cSoundSource* cSound::get_sound(sound::asset asset)
 }
 
 //------------------------------------------------------------------------------
-void cSound::play(sound::asset asset, vec3 origin, float volume, float attenuation)
+result cSound::play(sound::asset asset, vec3 origin, float volume, float attenuation)
 {
     sound::channel* ch = alloc_channel(false);
 
@@ -177,7 +185,9 @@ void cSound::play(sound::asset asset, vec3 origin, float volume, float attenuati
         ch->set_frequency(1.0f);
         ch->set_attenuation(attenuation);
 
-        ch->play(asset);
+        return ch->play(asset);
+    } else {
+        return result::failure;
     }
 }
 
