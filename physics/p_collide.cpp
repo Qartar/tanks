@@ -6,6 +6,8 @@
 #include "p_rigidbody.h"
 #include "p_shape.h"
 
+#include "cm_filesystem.h"
+
 #include <algorithm>
 #include <array>
 
@@ -44,6 +46,9 @@ collide::collide(motion const& motion_a, motion const& motion_b)
     _contact.normal = direction.to_vec2();
 }
 
+static bool write_steps = false;
+static int write_iteration = 0;
+
 //------------------------------------------------------------------------------
 float collide::minimum_distance(vec3& point, vec3& direction) const
 {
@@ -54,8 +59,43 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
     direction = -nearest_difference(simplex[0], simplex[1]);
     float distance = direction.length_sqr();
 
+    struct writer {
+        ~writer() {
+            if (write_steps) {
+                file::write(va("step%d.obj", write_iteration++), (byte*)buf.data(), buf.length());
+            }
+        }
+        void append(support_vertex a, support_vertex b, support_vertex c, vec3 d) {
+            if (write_steps) {
+                buf.append(va("v %f %f %f\n", a.d.x, n * -.1f, a.d.y).c_str());
+                buf.append(va("v %f %f %f\n", b.d.x, n * -.1f, b.d.y).c_str());
+                buf.append(va("v %f %f %f\n", c.d.x, (n + 1) * -.1f, c.d.y).c_str());
+                buf.append(va("v %f %f %f\n", d.x, (n - 1) * -.1f, d.y).c_str());
+                buf.append(va("f %d %d %d\n", n + 1, n + 3, n + 4).c_str());
+                buf.append(va("f %d %d %d\n", n + 2, n + 4, n + 3).c_str());
+                n += 4;
+
+                buf.append(va("v %f %f %f\n", a.a.x, n * -.1f, a.a.y).c_str());
+                buf.append(va("v %f %f %f\n", b.a.x, n * -.1f, b.a.y).c_str());
+                buf.append(va("v %f %f %f\n", c.a.x, n * -.1f, c.a.y).c_str());
+                buf.append(va("f %d %d %d\n", n + 1, n + 2, n + 3).c_str());
+                n += 3;
+
+                buf.append(va("v %f %f %f\n", a.b.x, n * -.1f, a.b.y).c_str());
+                buf.append(va("v %f %f %f\n", b.b.x, n * -.1f, b.b.y).c_str());
+                buf.append(va("v %f %f %f\n", c.b.x, n * -.1f, c.b.y).c_str());
+                buf.append(va("f %d %d %d\n", n + 1, n + 2, n + 3).c_str());
+                n += 3;
+            }
+        }
+        int n = 0;
+        std::string buf;
+    } w;
+
     for (int num_iterations = 0; ; ++num_iterations) {
         candidate = supporting_vertex(direction);
+
+        w.append(simplex[0], simplex[1], candidate, -direction);
 
         // Check if simplex formed with candidate contains origin
         if (triangle_contains_origin(simplex[0].d, simplex[1].d, candidate.d)) {

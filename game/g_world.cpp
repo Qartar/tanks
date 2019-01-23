@@ -88,6 +88,28 @@ void world::reset()
             spawn<obstacle>(std::move(body));
         }
     }
+
+
+    {
+        physics::box_shape box(vec2(2, 2));
+        physics::circle_shape dot(1.f);
+
+        physics::rigid_body box_body(&box, &_border_material, 0.f);
+        physics::rigid_body dot_body(&dot, &_border_material, 0.f);
+
+        box_body.set_position(vec2(0, 0));
+
+        for (int ii = -512; ii < 512; ++ii) {
+            dot_body.set_position(vec2(128.f, float(ii)));
+            dot_body.set_linear_velocity(vec2(-256.f, -float(ii * 2)));
+
+            physics::trace tr(&box_body, &dot_body, 1.f);
+            if (tr.get_fraction() == 1.f || square(tr.get_contact().point.x) > 1e-6f) {
+                physics::trace tr2(&box_body, &dot_body, 1.f);
+                tr2;
+            }
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
