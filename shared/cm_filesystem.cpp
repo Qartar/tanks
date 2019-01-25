@@ -105,7 +105,7 @@ void stream::close()
 //------------------------------------------------------------------------------
 bool stream::seek(std::intptr_t offset, file::seek origin)
 {
-#if defined(_WINDOWS)
+#if defined(_WIN32)
     return _fseeki64(_handle, offset, seek_to_native(origin)) == 0;
 #else
     return fseek(_handle, offset, seek_to_native(origin)) == 0;
@@ -121,7 +121,7 @@ std::size_t stream::size() const
 
     fpos_t pos;
     fgetpos(_handle, &pos);
-#if defined(_WINDOWS)
+#if defined(_WIN32)
     _fseeki64(_handle, 0, SEEK_SET);
     long long start = _ftelli64(_handle);
     _fseeki64(_handle, 0, SEEK_END);

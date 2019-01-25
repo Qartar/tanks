@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 2.8.11)
 
 project(tanks)
 
+# Remove bad default compiler flags for Visual Studio
+if(MSVC)
+    string(REPLACE "/DWIN32 /D_WINDOWS /W3 /GR /EHsc" "/EHsc" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
+
 add_definitions(
     -D_CRT_SECURE_NO_WARNINGS
 )
@@ -92,8 +97,8 @@ target_include_directories(tanks
 )
 
 # Set up precompiled header
-set_source_files_properties(precompiled.cpp PROPERTIES COMPILE_FLAGS /Ycprecompiled.h)
-set_source_files_properties(${TANKS_SOURCES} PROPERTIES COMPILE_FLAGS /Yuprecompiled.h)
+set_source_files_properties(precompiled.cpp PROPERTIES COMPILE_FLAGS /Ycprecompiled.h OBJECT_OUTPUTS precompiled.pch)
+set_source_files_properties(${TANKS_SOURCES} PROPERTIES COMPILE_FLAGS /Yuprecompiled.h OBJECT_DEPENDS precompiled.pch)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${TANKS_SOURCES} precompiled.cpp precompiled.h)
 source_group("\\" FILES precompiled.cpp precompiled.h)
