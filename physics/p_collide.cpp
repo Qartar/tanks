@@ -11,6 +11,25 @@
 #include <algorithm>
 #include <array>
 
+#include <vector>
+
+struct debug {
+    struct line {
+        vec3 l1, l2;
+        color4 c;
+    };
+    struct point {
+        vec3 p;
+        color4 c;
+    };
+    struct step {
+        std::vector<line> lines;
+        std::vector<line> arrows;
+        std::vector<point> points;
+    };
+    std::vector<step> steps;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 namespace physics {
 
@@ -61,41 +80,41 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
 
     struct writer {
         ~writer() {
+        }
+        void append(support_vertex a, support_vertex b, support_vertex c, vec3 d, vec3 p_a) {
             if (write_steps) {
-                file::write(va("step%d.obj", write_iteration++), (byte*)buf.data(), buf.length());
+                debug::step step;
+
+                // feature on a
+                if (a.a == b.a) {
+                    step.points.push_back({a.a, color4(0,0,1,1)});
+                } else {
+                    step.lines.push_back({a.a, b.a, color4(0,0,1,1)});
+                }
+                step.arrows.push_back({p_a, p_a + d * .5f, color4(0,0,1,1)});
+
+                // feature on b
+                if (a.b == b.b) {
+                    step.points.push_back({a.b, color4(1,0,0,1)});
+                } else {
+                    step.lines.push_back({a.b, b.b, color4(1,0,0,1)});
+                }
+                step.arrows.push_back({p_a + d, p_a + d * .5f, color4(1,0,0,1)});
+
+                // feature on minkowski difference
+                step.lines.push_back({a.d, b.d, color4(1,1,1,1)});
+                step.arrows.push_back({d, vec3_zero, color4(1,1,1,1)});
+
+                _debug.steps.push_back(step);
             }
         }
-        void append(support_vertex a, support_vertex b, support_vertex c, vec3 d) {
-            if (write_steps) {
-                buf.append(va("v %f %f %f\n", a.d.x, n * -.1f, a.d.y).c_str());
-                buf.append(va("v %f %f %f\n", b.d.x, n * -.1f, b.d.y).c_str());
-                buf.append(va("v %f %f %f\n", c.d.x, (n + 1) * -.1f, c.d.y).c_str());
-                buf.append(va("v %f %f %f\n", d.x, (n - 1) * -.1f, d.y).c_str());
-                buf.append(va("f %d %d %d\n", n + 1, n + 3, n + 4).c_str());
-                buf.append(va("f %d %d %d\n", n + 2, n + 4, n + 3).c_str());
-                n += 4;
-
-                buf.append(va("v %f %f %f\n", a.a.x, n * -.1f, a.a.y).c_str());
-                buf.append(va("v %f %f %f\n", b.a.x, n * -.1f, b.a.y).c_str());
-                buf.append(va("v %f %f %f\n", c.a.x, n * -.1f, c.a.y).c_str());
-                buf.append(va("f %d %d %d\n", n + 1, n + 2, n + 3).c_str());
-                n += 3;
-
-                buf.append(va("v %f %f %f\n", a.b.x, n * -.1f, a.b.y).c_str());
-                buf.append(va("v %f %f %f\n", b.b.x, n * -.1f, b.b.y).c_str());
-                buf.append(va("v %f %f %f\n", c.b.x, n * -.1f, c.b.y).c_str());
-                buf.append(va("f %d %d %d\n", n + 1, n + 2, n + 3).c_str());
-                n += 3;
-            }
-        }
-        int n = 0;
-        std::string buf;
+        debug _debug;
     } w;
 
     for (int num_iterations = 0; ; ++num_iterations) {
         candidate = supporting_vertex(direction);
 
-        w.append(simplex[0], simplex[1], candidate, -direction);
+        w.append(simplex[0], simplex[1], candidate, -direction, nearest_point(simplex[0], simplex[1]));
 
         // Check if simplex formed with candidate contains origin
         if (triangle_contains_origin(simplex[0].d, simplex[1].d, candidate.d)) {
