@@ -238,13 +238,10 @@ void message::write_vector(vec2 v)
 }
 
 //------------------------------------------------------------------------------
-void message::write_string(char const* sz)
+void message::write_string(string::view s)
 {
-    if (sz) {
-        write((byte const*)sz, strlen(sz) + 1);
-    } else {
-        write((byte const*)"", 1);
-    }
+    write((byte const*)s.begin(), s.length());
+    write_byte(0);
 }
 
 //------------------------------------------------------------------------------
@@ -318,14 +315,14 @@ vec2 message::read_vector() const
 }
 
 //------------------------------------------------------------------------------
-char const* message::read_string() const
+string::view message::read_string() const
 {
     std::size_t remaining = bytes_remaining();
     char const* str = (char const* )read(remaining);
     std::size_t len = strnlen(str, remaining);
 
     rewind(remaining - len - 1);
-    return (char const*)str;
+    return {str, str + len};
 }
 
 } // namespace network

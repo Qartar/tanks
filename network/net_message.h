@@ -79,8 +79,8 @@ public:
     void write_float(float f);
     //! write a two-dimensional vector
     void write_vector(vec2 v);
-    //! write a null-terminated string
-    void write_string(char const* sz);
+    //! write a string
+    void write_string(string::view s);
 
     //! read an arbitrary number of bits
     int read_bits(int bits) const;
@@ -98,8 +98,8 @@ public:
     float read_float() const;
     //! read a two-dimensional vector
     vec2 read_vector() const;
-    //! read a null-terminated string
-    char const* read_string() const;
+    //! read a string
+    string::view read_string() const;
 
 protected:
     byte* _data;

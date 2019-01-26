@@ -117,7 +117,7 @@ void session::broadcast_print (string::view message)
     network::message_storage netmsg;
         
     netmsg.write_byte( svc_message );
-    netmsg.write_string( message.c_str() );
+    netmsg.write_string( message );
 
     broadcast(netmsg);
 }
@@ -161,7 +161,7 @@ void session::write_info(network::message& message, std::size_t client)
     message.write_byte( svc_info );
     message.write_byte( narrow_cast<uint8_t>(client) );
     message.write_byte( svs.clients[client].active );
-    message.write_string( svs.clients[client].info.name.data() );
+    message.write_string( svs.clients[client].info.name );
 
     message.write_float( svs.clients[client].info.color.r );
     message.write_float( svs.clients[client].info.color.g );
@@ -189,14 +189,13 @@ void session::read_info(network::message& message)
 {
     int client;
     int active;
-    char const* string;
 
     client = message.read_byte();
     active = message.read_byte();
 
     svs.clients[client].active = (active == 1);
 
-    string = message.read_string();
+    string::view string = message.read_string();
     strncpy(svs.clients[client].info.name.data(), string, SHORT_STRING);
 
     svs.clients[client].info.color.r = message.read_float();

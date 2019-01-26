@@ -87,7 +87,7 @@ void session::start_client_local()
 //------------------------------------------------------------------------------
 void session::client_connectionless(network::address const& remote, network::message& message)
 {
-    string::view message_string(message.read_string());
+    string::view message_string = message.read_string();
 
     if (message_string.starts_with("info")) {
         info_get(remote, message_string);
@@ -109,7 +109,7 @@ void session::client_packet(network::message& message)
                 break;
 
             case svc_message:
-                write_message(string::view(message.read_string()));
+                write_message(message.read_string());
                 break;
 
             case svc_score: {

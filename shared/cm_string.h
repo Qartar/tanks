@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <array>
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace string {
@@ -16,6 +17,10 @@ public:
     view() = default;
     //! Explicit conversion from null-terminated string
     explicit view(char const* c_str);
+    //! Implicit conversion from std::array<char>
+    template<std::size_t size> view(std::array<char, size> const& s)
+        : view((char const*)s.data())
+    {}
     //! Implicit conversion from char array
     template<std::size_t size> view(char (&s)[size])
         : view((char const*)s)

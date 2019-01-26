@@ -105,7 +105,7 @@ void session::stop_server ()
 //------------------------------------------------------------------------------
 void session::server_connectionless(network::address const& remote, network::message& message)
 {
-    string::view message_string(message.read_string());
+    string::view message_string = message.read_string();
 
     if (message_string.starts_with("info")) {
         info_send(remote);
@@ -133,7 +133,7 @@ void session::server_packet(network::message& message, std::size_t client)
                     (int )(svs.clients[client].info.color.r * 15.5f),
                     (int )(svs.clients[client].info.color.g * 15.5f),
                     (int )(svs.clients[client].info.color.b * 15.5f),
-                    svs.clients[client].info.name.data(), message.read_string()));
+                    svs.clients[client].info.name.data(), message.read_string().c_str()));
                 break;
 
             case clc_upgrade:
