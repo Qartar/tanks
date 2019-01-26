@@ -183,7 +183,9 @@ void system::draw_model(render::model const* model, mat3 tx, color4 color)
     glEnableClientState(GL_COLOR_ARRAY);
 
     glBlendFunc(GL_CONSTANT_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-    glBlendColor(color.r, color.g, color.b, color.a);
+    if (glBlendColor) {
+        glBlendColor(color.r, color.g, color.b, color.a);
+    }
 
     glVertexPointer(2, GL_FLOAT, 0, model->_vertices.data());
     glColorPointer(3, GL_FLOAT, 0, model->_colors.data());

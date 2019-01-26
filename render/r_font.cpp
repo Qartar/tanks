@@ -64,10 +64,13 @@ font::font(string::view name, int size)
     m.eM21.value = 0;
     m.eM22.value = 1;
 
-    wglUseFontBitmapsA(g_Application->window()->hdc(), 0, kNumChars-1, _list_base);
-    for (int ii = 0; ii < kNumChars; ++ii) {
-        GetGlyphOutlineA(g_Application->window()->hdc(), ii, GGO_METRICS, &gm, 0, NULL, &m);
-        _char_width[ii] = gm.gmCellIncX;
+    if (wglUseFontBitmapsA(g_Application->window()->hdc(), 0, kNumChars-1, _list_base)) {
+        for (int ii = 0; ii < kNumChars; ++ii) {
+            GetGlyphOutlineA(g_Application->window()->hdc(), ii, GGO_METRICS, &gm, 0, NULL, &m);
+            _char_width[ii] = gm.gmCellIncX;
+        }
+    } else {
+        memset(_char_width, 0, sizeof(_char_width));
     }
 
     // restore previous font

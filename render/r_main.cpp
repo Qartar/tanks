@@ -48,7 +48,8 @@ namespace render {
 
 //------------------------------------------------------------------------------
 system::system(render::window* window)
-    : _framebuffer_width("r_width", 0, config::archive, "framebuffer width, or 0 to use window width")
+    : _initialized(false)
+    , _framebuffer_width("r_width", 0, config::archive, "framebuffer width, or 0 to use window width")
     , _framebuffer_height("r_height", 0, config::archive, "framebuffer height, or 0 to use window height")
     , _framebuffer_scale("r_scale", 1, config::archive, "framebuffer scale if using window dimensions")
     , _framebuffer_samples("r_samples", -1, config::archive, "framebuffer samples, or -1 to use maximum supported")
@@ -77,6 +78,8 @@ result system::init()
     _view.origin = _view.size * 0.5f;
     _view.viewport = {};
 
+    _initialized = true;
+
     resize(_window->size());
 
     for (int ii = 0; ii < 360 ; ++ii) {
@@ -104,29 +107,35 @@ void system::begin_frame()
 //------------------------------------------------------------------------------
 void system::end_frame()
 {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    if (_fbo) {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-    glDrawBuffer(GL_BACK);
+        glDrawBuffer(GL_BACK);
 
-    glBlitFramebuffer(
-        0, 0, _framebuffer_size.x, _framebuffer_size.y,
-        0, 0, _window->size().x, _window->size().y,
-        GL_COLOR_BUFFER_BIT, GL_LINEAR
-    );
+        glBlitFramebuffer(
+            0, 0, _framebuffer_size.x, _framebuffer_size.y,
+            0, 0, _window->size().x, _window->size().y,
+            GL_COLOR_BUFFER_BIT, GL_LINEAR
+        );
+    }
 
     _window->end_frame();
 
-    if (_framebuffer_width.modified()
-            || _framebuffer_height.modified()
-            || _framebuffer_samples.modified()
-            || _framebuffer_scale.modified()) {
-        resize(_window->size());
+    if (_fbo) {
+        if (_framebuffer_width.modified()
+                || _framebuffer_height.modified()
+                || _framebuffer_samples.modified()
+                || _framebuffer_scale.modified()) {
+            resize(_window->size());
+        }
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo);
+
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    } else {
+        glDrawBuffer(GL_BACK);
     }
-
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo);
-
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
 }
 
 //------------------------------------------------------------------------------
@@ -139,26 +148,30 @@ void system::set_view(render::view const& view)
 //------------------------------------------------------------------------------
 void system::resize(vec2i size)
 {
-    if (!glGenFramebuffers) {
+    if (!_initialized) {
         return;
     }
 
-    vec2i actual_size;
-    actual_size.x = _framebuffer_width ? _framebuffer_width : static_cast<int>(size.x * _framebuffer_scale);
-    actual_size.y = _framebuffer_height ? _framebuffer_height : static_cast<int>(size.y * _framebuffer_scale);
+    if (glGenFramebuffers) {
+        vec2i actual_size;
+        actual_size.x = _framebuffer_width ? _framebuffer_width : static_cast<int>(size.x * _framebuffer_scale);
+        actual_size.y = _framebuffer_height ? _framebuffer_height : static_cast<int>(size.y * _framebuffer_scale);
 
-    GLint max_samples = 0;
-    glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
-    GLint num_samples = actual_size != size ? 0
-        : _framebuffer_samples == -1 ? max_samples
-        : std::min<int>(max_samples, _framebuffer_samples);
+        GLint max_samples = 0;
+        glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
+        GLint num_samples = actual_size != size ? 0
+            : _framebuffer_samples == -1 ? max_samples
+            : std::min<int>(max_samples, _framebuffer_samples);
 
-    create_framebuffer(actual_size, num_samples);
+        create_framebuffer(actual_size, num_samples);
 
-    _framebuffer_width.reset();
-    _framebuffer_height.reset();
-    _framebuffer_samples.reset();
-    _framebuffer_scale.reset();
+        _framebuffer_width.reset();
+        _framebuffer_height.reset();
+        _framebuffer_samples.reset();
+        _framebuffer_scale.reset();
+    } else {
+        _framebuffer_size = _window->size();
+    }
 
     create_default_font();
     set_default_state();

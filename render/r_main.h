@@ -120,6 +120,8 @@ public:
 
 private:
 
+    bool _initialized;
+
     // More font stuff (r_font.cpp)
 
     std::unique_ptr<render::font> _default_font;
