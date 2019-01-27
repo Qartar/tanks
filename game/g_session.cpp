@@ -8,6 +8,10 @@
 #include "cm_parser.h"
 #include "g_tank.h"
 
+#include "cm_visualize.h"
+extern visualize::debug g_debug;
+visualize::state g_state{0, vec2_zero, 1.f};
+
 #include "resource.h"
 
 #include <numeric>
@@ -207,6 +211,81 @@ void session::update_screen()
 {
     _renderer->begin_frame();
 
+    if (g_debug.steps.size()) {
+        render::view view = {};
+        view.size = vec2(_renderer->window()->size()) / (float(_renderer->window()->size().y) * g_state.zoom);
+        view.origin = g_state.origin;
+        view.size.y *= -1.f;
+        _renderer->set_view(view);
+        view.size.y *= -1.f;
+
+        bounds b(view.origin - view.size * .5f, view.origin + view.size * .5f);
+        {
+            float logz = std::log10f(.1f / g_state.zoom);
+            float alpha = 1.f - (logz - std::floor(logz));
+            float grid = std::pow(10.f, std::floor(logz));
+
+            color4 c0(1, 1, 1, .5f);
+            color4 c1(1, 1, 1, .3f);
+            color4 c2(1, 1, 1, .3f * alpha);
+
+            _renderer->draw_line(vec2(0.f, b[0][1]), vec2(0.f, b[1][1]), c0, c0);
+            _renderer->draw_line(vec2(b[0][0], 0.f), vec2(b[1][0], 0.f), c0, c0);
+
+            for (float x = view.origin.x + grid * 10.f; x < b[1][0]; x += grid * 10.f) {
+                _renderer->draw_line(vec2(-x, b[0][1]), vec2(-x, b[1][1]), c1, c1);
+                _renderer->draw_line(vec2(+x, b[0][1]), vec2(+x, b[1][1]), c1, c1);
+            }
+            _renderer->draw_string(va("%g", view.origin.x + grid * 10.f),
+                                   vec2(view.origin.x + grid * 10.f, b[0][1]), c1);
+
+            for (float y = view.origin.y + grid * 10.f; y < b[1][1]; y += grid * 10.f) {
+                _renderer->draw_line(vec2(b[0][0], -y), vec2(b[1][0], -y), c1, c1);
+                _renderer->draw_line(vec2(b[0][0], +y), vec2(b[1][0], +y), c1, c1);
+            }
+            _renderer->draw_string(va("%g", view.origin.y + grid * 10.f),
+                                   vec2(b[0][0], view.origin.y + grid * 10.f), c1);
+
+            for (float x = view.origin.x + grid; x < b[1][0]; x += grid) {
+                _renderer->draw_line(vec2(-x, b[0][1]), vec2(-x, b[1][1]), c2, c2);
+                _renderer->draw_line(vec2(+x, b[0][1]), vec2(+x, b[1][1]), c2, c2);
+            }
+
+            for (float y = view.origin.y + grid; y < b[1][1]; y += grid) {
+                _renderer->draw_line(vec2(b[0][0], -y), vec2(b[1][0], -y), c2, c2);
+                _renderer->draw_line(vec2(b[0][0], +y), vec2(b[1][0], +y), c2, c2);
+            }
+        }
+
+        auto const& step = g_debug.steps[g_state.step];
+        for (auto const& line : step.lines) {
+            _renderer->draw_line(line.l1.to_vec2(), line.l2.to_vec2(), line.c, line.c);
+        }
+        for (auto const& arrow : step.arrows) {
+            vec3 n = (arrow.l2 - arrow.l1).normalize() * .01f / g_state.zoom;
+            vec3 t = n.cross(vec3(0,0,1));
+            _renderer->draw_line(arrow.l1.to_vec2(), arrow.l2.to_vec2(), arrow.c, arrow.c);
+            _renderer->draw_line(arrow.l2.to_vec2(), (arrow.l2 - n + t).to_vec2(), arrow.c, arrow.c);
+            _renderer->draw_line(arrow.l2.to_vec2(), (arrow.l2 - n - t).to_vec2(), arrow.c, arrow.c);
+        }
+        for (auto const& point : step.points) {
+            _renderer->draw_box(vec2(.01f, .01f) / g_state.zoom, point.p.to_vec2(), point.c);
+        }
+
+        //
+        // calculate view for ui
+        //
+
+        view.size = vec2(640, 480);
+        view.origin = view.size * 0.5f;
+        _renderer->set_view(view);
+
+        draw_console();
+
+        _renderer->end_frame();
+        return;
+    }
+
     draw_world();
 
     //
@@ -386,6 +465,18 @@ void session::key_event(int key, bool down)
     if (key == K_PGDN && down) {
         for (int i = 0; i < MAX_MESSAGES; i++) {
             _messages[i].time = _frametime;
+        }
+    } else if ((key == K_MWHEELUP || key == '+' || key =='=') && down) {
+        g_state.zoom = g_state.zoom * 1.1f;
+    } else if ((key == K_MWHEELDOWN || key == '-') && down) {
+        g_state.zoom = g_state.zoom / 1.1f;
+    } else if (key == K_LEFTARROW && down) {
+        if (g_state.step) {
+            --g_state.step;
+        }
+    } else if (key == K_RIGHTARROW && down) {
+        if (g_state.step + 1 < g_debug.steps.size()) {
+            ++g_state.step;
         }
     }
 

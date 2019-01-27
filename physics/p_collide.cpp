@@ -7,28 +7,13 @@
 #include "p_shape.h"
 
 #include "cm_filesystem.h"
+#include "cm_visualize.h"
 
 #include <algorithm>
 #include <array>
 
-#include <vector>
-
-struct debug {
-    struct line {
-        vec3 l1, l2;
-        color4 c;
-    };
-    struct point {
-        vec3 p;
-        color4 c;
-    };
-    struct step {
-        std::vector<line> lines;
-        std::vector<line> arrows;
-        std::vector<point> points;
-    };
-    std::vector<step> steps;
-};
+visualize::debug g_debug;
+bool debug_collide = false;
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace physics {
@@ -65,8 +50,35 @@ collide::collide(motion const& motion_a, motion const& motion_b)
     _contact.normal = direction.to_vec2();
 }
 
-static bool write_steps = false;
-static int write_iteration = 0;
+void extract_convex_hull(std::vector<vec3>& vertices)
+{
+    if (!vertices.size()) {
+        return;
+    }
+
+    // find a point that is guaranteed to be on the convex hull
+    vec3 pivot = vertices[0];
+    for (std::size_t ii = 1; ii < vertices.size(); ++ii) {
+        if (vertices[ii].x > pivot.x || (vertices[ii].x == pivot.x && vertices[ii].y > pivot.y)) {
+            pivot = vertices[ii];
+        }
+    }
+
+    // radial sort about an arbitrary point on the convex hull
+    std::sort(vertices.begin(), vertices.end(), [pivot](vec3 a, vec3 b) {
+        vec3 c = a - pivot;
+        vec3 d = b - pivot;
+        float s = c.y * d.x - d.y * c.x;
+
+        if (c.y * d.y < 0.f) {
+            return d.y < 0.f;
+        } else if (s != 0.f) {
+            return s < 0.f;
+        } else {
+            return c.length_sqr() < d.length_sqr();
+        }
+    });
+}
 
 //------------------------------------------------------------------------------
 float collide::minimum_distance(vec3& point, vec3& direction) const
@@ -80,35 +92,81 @@ float collide::minimum_distance(vec3& point, vec3& direction) const
 
     struct writer {
         ~writer() {
+            if (debug_collide) {
+                g_debug.steps.insert(g_debug.steps.end(), _debug.steps.begin(), _debug.steps.end());
+            }
         }
         void append(support_vertex a, support_vertex b, support_vertex c, vec3 d, vec3 p_a) {
-            if (write_steps) {
-                debug::step step;
+            if (debug_collide) {
+                visualize::debug::step step;
 
                 // feature on a
                 if (a.a == b.a) {
                     step.points.push_back({a.a, color4(0,0,1,1)});
+                    _shape_a.push_back(a.a);
                 } else {
                     step.lines.push_back({a.a, b.a, color4(0,0,1,1)});
+                    _shape_a.push_back(a.a);
+                    _shape_a.push_back(b.a);
                 }
-                step.arrows.push_back({p_a, p_a + d * .5f, color4(0,0,1,1)});
+                // candidate on a
+                if (c.a != a.a && c.a != b.a) {
+                    step.lines.push_back({a.a, c.a, color4(0,0,1,.5f)});
+                    step.lines.push_back({b.a, c.a, color4(0,0,1,.5f)});
+                }
+                // direction from a
+                step.arrows.push_back({p_a, p_a - d * .5f, color4(0,0,1,1)});
 
                 // feature on b
                 if (a.b == b.b) {
                     step.points.push_back({a.b, color4(1,0,0,1)});
+                    _shape_b.push_back(a.b);
                 } else {
                     step.lines.push_back({a.b, b.b, color4(1,0,0,1)});
+                    _shape_b.push_back(a.b);
+                    _shape_b.push_back(b.b);
                 }
-                step.arrows.push_back({p_a + d, p_a + d * .5f, color4(1,0,0,1)});
+                // candidate on b
+                if (c.b != a.b && c.b != b.b) {
+                    step.lines.push_back({a.b, c.b, color4(1,0,0,.5f)});
+                    step.lines.push_back({b.b, c.b, color4(1,0,0,.5f)});
+                }
+                // direction from b
+                step.arrows.push_back({p_a - d, p_a - d * .5f, color4(1,0,0,1)});
 
                 // feature on minkowski difference
                 step.lines.push_back({a.d, b.d, color4(1,1,1,1)});
+                // candidate on minkowski difference
+                step.lines.push_back({a.d, c.d, color4(1,1,1,.5f)});
+                step.lines.push_back({b.d, c.d, color4(1,1,1,.5f)});
+                _shape_d.push_back(a.d);
+                _shape_d.push_back(b.d);
+                // nearest difference on minkowski difference
                 step.arrows.push_back({d, vec3_zero, color4(1,1,1,1)});
+
+                // convex hull of a
+                extract_convex_hull(_shape_a);
+                for (std::size_t ii = 0; ii < _shape_a.size(); ++ii) {
+                    step.lines.push_back({_shape_a[ii], _shape_a[(ii + 1) % _shape_a.size()], color4(0,0,1,.3f)});
+                }
+                // convex hull of b
+                extract_convex_hull(_shape_b);
+                for (std::size_t ii = 0; ii < _shape_b.size(); ++ii) {
+                    step.lines.push_back({_shape_b[ii], _shape_b[(ii + 1) % _shape_b.size()], color4(1,0,0,.3f)});
+                }
+                // convex hull of d
+                extract_convex_hull(_shape_d);
+                for (std::size_t ii = 0; ii < _shape_d.size(); ++ii) {
+                    step.lines.push_back({_shape_d[ii], _shape_d[(ii + 1) % _shape_d.size()], color4(1,1,1,.3f)});
+                }
 
                 _debug.steps.push_back(step);
             }
         }
-        debug _debug;
+        visualize::debug _debug;
+        std::vector<vec3> _shape_a;
+        std::vector<vec3> _shape_b;
+        std::vector<vec3> _shape_d;
     } w;
 
     for (int num_iterations = 0; ; ++num_iterations) {

@@ -20,6 +20,7 @@ set(SHARED_SOURCES
     cm_string.h
     cm_time.h
     cm_vector.h
+    cm_visualize.h
 
     shared.natvis
 )

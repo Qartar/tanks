@@ -11,6 +11,8 @@
 
 #include <algorithm>
 
+extern bool debug_collide;
+
 ////////////////////////////////////////////////////////////////////////////////
 namespace game {
 
@@ -105,8 +107,11 @@ void world::reset()
 
             physics::trace tr(&box_body, &dot_body, 1.f);
             if (tr.get_fraction() == 1.f || square(tr.get_contact().point.x) > 1e-6f) {
+                debug_collide = true;
                 physics::trace tr2(&box_body, &dot_body, 1.f);
+                debug_collide = false;
                 tr2;
+                break;
             }
         }
     }
