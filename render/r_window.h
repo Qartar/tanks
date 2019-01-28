@@ -58,6 +58,7 @@ private:
     config::integer _vid_width;
     config::integer _vid_height;
     config::boolean _vid_fullscreen;
+    config::boolean _vid_vsync;
 
     render::system _renderer;
 

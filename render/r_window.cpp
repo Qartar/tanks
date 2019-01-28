@@ -36,6 +36,7 @@ window::window(HINSTANCE hInstance, WNDPROC WndProc)
     , _vid_width("vid_width", 1280, config::archive | config::reset, "window width in logical pixels (dpi scaled)")
     , _vid_height("vid_height", 760, config::archive | config::reset, "window height in logical pixels (dpi scaled)")
     , _vid_fullscreen("vid_fullscreen", 0, config::archive | config::reset, "fullscreen window (uses desktop dimensions)")
+    , _vid_vsync("vid_vsync", true, config::archive, "synchronize buffer swap to vertical blank (vsync)")
 {}
 
 //------------------------------------------------------------------------------
@@ -51,6 +52,11 @@ result window::create()
 //------------------------------------------------------------------------------
 void window::end_frame ()
 {
+    if (wglSwapIntervalEXT && _vid_vsync.modified()) {
+        wglSwapIntervalEXT(_vid_vsync ? 1 : 0);
+        _vid_vsync.reset();
+    }
+
     SwapBuffers(_hdc);
 }
 
@@ -229,7 +235,8 @@ result window::init_opengl()
     wglGetSwapIntervalEXT = (PFNWGLGETSWAPINTERVALEXT )wglGetProcAddress("wglGetSwapIntervalEXT");
 
     if (wglSwapIntervalEXT) {
-        wglSwapIntervalEXT(0);
+        wglSwapIntervalEXT(_vid_vsync ? 1 : 0);
+        _vid_vsync.reset();
     }
 
     return result::success;
