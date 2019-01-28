@@ -188,7 +188,7 @@ float collide::penetration_distance(support_vertex a, support_vertex b, support_
         float edge_distance = vertices[edge_index].d.dot(direction);
         float point_distance = candidate.d.dot(direction);
         float delta_sqr = (point_distance - edge_distance) * (point_distance - edge_distance) / direction.length_sqr();
-        if (delta_sqr < epsilon || vertices.size() == max_vertices) {
+        if (delta_sqr < epsilon || num_vertices == max_vertices) {
             point = nearest_point(vertices[edge_index], vertices[edge_index-1]);
             return edge_distance / direction.normalize_length();
         }
