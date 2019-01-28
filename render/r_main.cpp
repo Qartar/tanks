@@ -4,45 +4,6 @@
 #include "precompiled.h"
 #pragma hdrstop
 
-namespace {
-
-// additional opengl bindings
-typedef void (APIENTRY* PFNGLBINDRENDERBUFFER)(GLenum target, GLuint renderbuffer);
-typedef void (APIENTRY* PFNGLDELETERENDERBUFFERS)(GLsizei n, GLuint const* renderbuffers);
-typedef void (APIENTRY* PFNGLGENRENDERBUFFERS)(GLsizei n, GLuint* renderbuffers);
-typedef void (APIENTRY* PFNGLRENDERBUFFERSTORAGE)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY* PFNGLRENDERBUFFERSTORAGEMULTISAMPLE)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY* PFNGLBINDFRAMEBUFFER)(GLenum target, GLuint framebuffer);
-typedef void (APIENTRY* PFNGLDELETEFRAMEBUFFERS)(GLsizei n, GLuint const* framebuffers);
-typedef void (APIENTRY* PFNGLGENFRAMEBUFFERS)(GLsizei n, GLuint* framebuffers);
-typedef void (APIENTRY* PFNGLFRAMEBUFFERRENDERBUFFER)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-typedef void (APIENTRY* PFNGLBLITFRAMEBUFFER)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-typedef void (APIENTRY* PFNGLBLENDCOLOR)(GLfloat red, GLfloat greed, GLfloat blue, GLfloat alpha);
-
-static PFNGLBINDRENDERBUFFER glBindRenderbuffer = NULL;
-static PFNGLDELETERENDERBUFFERS glDeleteRenderbuffers = NULL;
-static PFNGLGENRENDERBUFFERS glGenRenderbuffers = NULL;
-static PFNGLRENDERBUFFERSTORAGE glRenderbufferStorage = NULL;
-static PFNGLRENDERBUFFERSTORAGEMULTISAMPLE glRenderbufferStorageMultisample = NULL;
-static PFNGLBINDFRAMEBUFFER glBindFramebuffer = NULL;
-static PFNGLDELETEFRAMEBUFFERS glDeleteFramebuffers = NULL;
-static PFNGLGENFRAMEBUFFERS glGenFramebuffers = NULL;
-static PFNGLFRAMEBUFFERRENDERBUFFER glFramebufferRenderbuffer = NULL;
-static PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
-
-#define GL_FRAMEBUFFER                  0x8D40
-#define GL_READ_FRAMEBUFFER             0x8CA8
-#define GL_DRAW_FRAMEBUFFER             0x8CA9
-#define GL_RENDERBUFFER                 0x8D41
-#define GL_MAX_SAMPLES                  0x8D57
-#define GL_COLOR_ATTACHMENT0            0x8CE0
-#define GL_DEPTH_STENCIL_ATTACHMENT     0x821A
-#define GL_DEPTH24_STENCIL8             0x88F0
-
-} // anonymous namespace
-
-extern PFNGLBLENDCOLOR glBlendColor; // r_draw.cpp
-
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
 

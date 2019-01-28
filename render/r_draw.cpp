@@ -4,15 +4,6 @@
 #include "precompiled.h"
 #pragma hdrstop
 
-typedef void (APIENTRY* PFNGLBLENDCOLOR)(GLfloat red, GLfloat greed, GLfloat blue, GLfloat alpha);
-
-PFNGLBLENDCOLOR glBlendColor = NULL;
-
-#define GL_CONSTANT_COLOR               0x8001
-#define GL_ONE_MINUS_CONSTANT_COLOR     0x8002
-#define GL_CONSTANT_ALPHA               0x8003
-#define GL_ONE_MINUS_CONSTANT_ALPHA     0x8004
-
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
 

@@ -12,7 +12,26 @@ typedef struct HFONT__* HFONT;
 typedef struct HBITMAP__* HBITMAP;
 #endif // _WINDOWS_
 
+typedef unsigned int GLenum;
+typedef unsigned int GLbitfield;
+typedef int GLint;
+typedef int GLsizei;
 typedef unsigned int GLuint;
+typedef float GLfloat;
+
+#define GL_FRAMEBUFFER                  0x8D40
+#define GL_READ_FRAMEBUFFER             0x8CA8
+#define GL_DRAW_FRAMEBUFFER             0x8CA9
+#define GL_RENDERBUFFER                 0x8D41
+#define GL_MAX_SAMPLES                  0x8D57
+#define GL_COLOR_ATTACHMENT0            0x8CE0
+#define GL_DEPTH_STENCIL_ATTACHMENT     0x821A
+#define GL_DEPTH24_STENCIL8             0x88F0
+
+#define GL_CONSTANT_COLOR               0x8001
+#define GL_ONE_MINUS_CONSTANT_COLOR     0x8002
+#define GL_CONSTANT_ALPHA               0x8003
+#define GL_ONE_MINUS_CONSTANT_ALPHA     0x8004
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace render {
@@ -153,6 +172,33 @@ private:
 
     float _costbl[360];
     float _sintbl[360];
+
+private:
+
+    // additional opengl bindings
+    typedef void (APIENTRY* PFNGLBINDRENDERBUFFER)(GLenum target, GLuint renderbuffer);
+    typedef void (APIENTRY* PFNGLDELETERENDERBUFFERS)(GLsizei n, GLuint const* renderbuffers);
+    typedef void (APIENTRY* PFNGLGENRENDERBUFFERS)(GLsizei n, GLuint* renderbuffers);
+    typedef void (APIENTRY* PFNGLRENDERBUFFERSTORAGE)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+    typedef void (APIENTRY* PFNGLRENDERBUFFERSTORAGEMULTISAMPLE)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
+    typedef void (APIENTRY* PFNGLBINDFRAMEBUFFER)(GLenum target, GLuint framebuffer);
+    typedef void (APIENTRY* PFNGLDELETEFRAMEBUFFERS)(GLsizei n, GLuint const* framebuffers);
+    typedef void (APIENTRY* PFNGLGENFRAMEBUFFERS)(GLsizei n, GLuint* framebuffers);
+    typedef void (APIENTRY* PFNGLFRAMEBUFFERRENDERBUFFER)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+    typedef void (APIENTRY* PFNGLBLITFRAMEBUFFER)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+    typedef void (APIENTRY* PFNGLBLENDCOLOR)(GLfloat red, GLfloat greed, GLfloat blue, GLfloat alpha);
+
+    PFNGLBINDRENDERBUFFER glBindRenderbuffer = NULL;
+    PFNGLDELETERENDERBUFFERS glDeleteRenderbuffers = NULL;
+    PFNGLGENRENDERBUFFERS glGenRenderbuffers = NULL;
+    PFNGLRENDERBUFFERSTORAGE glRenderbufferStorage = NULL;
+    PFNGLRENDERBUFFERSTORAGEMULTISAMPLE glRenderbufferStorageMultisample = NULL;
+    PFNGLBINDFRAMEBUFFER glBindFramebuffer = NULL;
+    PFNGLDELETEFRAMEBUFFERS glDeleteFramebuffers = NULL;
+    PFNGLGENFRAMEBUFFERS glGenFramebuffers = NULL;
+    PFNGLFRAMEBUFFERRENDERBUFFER glFramebufferRenderbuffer = NULL;
+    PFNGLBLITFRAMEBUFFER glBlitFramebuffer = NULL;
+    PFNGLBLENDCOLOR glBlendColor = NULL;
 };
 
 } // namespace render
