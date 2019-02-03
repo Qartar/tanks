@@ -218,7 +218,7 @@ buffer read(string::view filename)
         byte* data = new byte[size];
         std::size_t bytes_read = f.read(data, size);
         assert(bytes_read == size);
-        /*unreferenced variable*/bytes_read;
+        /*unreferenced variable*/(void)bytes_read;
         return buffer_internal(data, size);
     } else {
         return buffer();

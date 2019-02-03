@@ -27,16 +27,17 @@ constexpr int fullscreen_style = WS_OVERLAPPED;
 
 //------------------------------------------------------------------------------
 window::window(HINSTANCE hInstance, WNDPROC WndProc)
-    : _hinst(hInstance)
-    , _wndproc(WndProc)
-    , _hdc(nullptr)
-    , _hrc(nullptr)
-    , _renderer(this)
-    , _current_dpi(USER_DEFAULT_SCREEN_DPI)
+    : _current_dpi(USER_DEFAULT_SCREEN_DPI)
     , _vid_width("vid_width", 1280, config::archive | config::reset, "window width in logical pixels (dpi scaled)")
     , _vid_height("vid_height", 760, config::archive | config::reset, "window height in logical pixels (dpi scaled)")
     , _vid_fullscreen("vid_fullscreen", 0, config::archive | config::reset, "fullscreen window (uses desktop dimensions)")
     , _vid_vsync("vid_vsync", true, config::archive, "synchronize buffer swap to vertical blank (vsync)")
+    , _renderer(this)
+    , _hinst(hInstance)
+    , _wndproc(WndProc)
+    , _hwnd(nullptr)
+    , _hdc(nullptr)
+    , _hrc(nullptr)
 {}
 
 //------------------------------------------------------------------------------

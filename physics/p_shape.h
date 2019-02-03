@@ -54,7 +54,7 @@ public:
         }
     }
 
-    virtual bounds calculate_bounds(vec2 position, float /*rotation*/) const {
+    virtual bounds calculate_bounds(vec2 position, float /*rotation*/) const override {
         return bounds(position - _half_size * math::sqrt2<float>, position + _half_size * math::sqrt2<float>);
     }
 
@@ -88,7 +88,7 @@ public:
         }
     }
 
-    virtual bounds calculate_bounds(vec2 position, float /*rotation*/) const {
+    virtual bounds calculate_bounds(vec2 position, float /*rotation*/) const override {
         return bounds(position - vec2(_radius), position + vec2(_radius));
     }
 

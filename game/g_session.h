@@ -234,7 +234,7 @@ private:
 
     time_value _worldtime;
     time_value _frametime;
-    int _framenum;
+    std::size_t _framenum;
 
     vec2i _cursor;
     bool _show_cursor;

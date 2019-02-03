@@ -13,10 +13,10 @@ system::system(render::window* window)
     , _framebuffer_height("r_height", 0, config::archive, "framebuffer height, or 0 to use window height")
     , _framebuffer_scale("r_scale", 1, config::archive, "framebuffer scale if using window dimensions")
     , _framebuffer_samples("r_samples", -1, config::archive, "framebuffer samples, or -1 to use maximum supported")
-    , _window(window)
-    , _view{}
     , _fbo(0)
     , _rbo{0, 0}
+    , _window(window)
+    , _view{}
     , _draw_tris("r_tris", 0, 0, "draw triangle edges")
 {}
 

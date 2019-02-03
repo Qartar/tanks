@@ -12,10 +12,12 @@ physics::circle_shape object::_default_shape(0.5f);
 
 //------------------------------------------------------------------------------
 object::object(object_type type, object* owner)
-    : _world(nullptr)
-    , _model(nullptr)
+    : _model(nullptr)
     , _color(1,1,1,1)
+    , _old_position(vec2_zero)
+    , _old_rotation(0)
     , _type(type)
+    , _world(nullptr)
     , _owner(owner)
     , _rigid_body(&_default_shape, &_default_material, _default_mass)
 {}

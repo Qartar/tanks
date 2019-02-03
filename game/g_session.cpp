@@ -946,7 +946,7 @@ void session::draw_console()
 //------------------------------------------------------------------------------
 void session::command_quit(parser::text const&)
 {
-    PostQuitMessage(0);
+    application::singleton()->quit(0);
 }
 
 //------------------------------------------------------------------------------

@@ -94,8 +94,7 @@ std::uintptr_t socket::open_socket(socket_type type, word port) const
     } else if (type == socket_type::ipv6) {
         ipv6_mreq mreq = {};
 
-        mreq.ipv6mr_multiaddr.u.Word[ 0 ] = htons( 0xff02 );
-        mreq.ipv6mr_multiaddr.u.Word[ 7 ] = htons( 0x0001 );
+        mreq.ipv6mr_multiaddr = in6addr_allnodesonlink;
         mreq.ipv6mr_interface = 0;
 
         //  add membership to link-local multicast group
@@ -146,7 +145,7 @@ void socket::close()
 bool socket::read(network::address& remote, network::message& message)
 {
     sockaddr_storage from = {};
-    int fromlen = sizeof(from);
+    socklen_t fromlen = sizeof(from);
 
     if (!_socket) {
         return false;
@@ -244,7 +243,7 @@ bool socket::sockaddr_to_address(sockaddr_storage const& sockaddr, network::addr
         if (_type == socket_type::ipv4 || _type == socket_type::unspecified) {
             address.type = network::address_type::ipv4;
             address.port = ntohs(sockaddr_ipv4.sin_port);
-            *(ULONG*)address.ip4.data() = sockaddr_ipv4.sin_addr.s_addr;
+            *(uint32_t*)address.ip4.data() = sockaddr_ipv4.sin_addr.s_addr;
         } else if (_type == socket_type::ipv6) {
             // IPv4-mapped IPv6 address
             address.type = network::address_type::ipv6;
@@ -289,7 +288,7 @@ bool socket::address_to_sockaddr(network::address const& address, sockaddr_stora
         } else if (address.type == network::address_type::broadcast) {
             sockaddr_ipv4.sin_addr = in4addr_broadcast;
         } else if (address.type == network::address_type::ipv4) {
-            sockaddr_ipv4.sin_addr.s_addr = *(ULONG*)address.ip4.data();
+            sockaddr_ipv4.sin_addr.s_addr = *(uint32_t*)address.ip4.data();
         } else {
             return false;
         }

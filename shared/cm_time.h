@@ -91,15 +91,15 @@ protected:
 };
 
 //------------------------------------------------------------------------------
-template<typename T> constexpr T operator*(time_base<T> lhs, double rhs)
+template<typename Tx, typename Ty> constexpr Tx operator*(time_base<Tx> lhs, Ty rhs)
 {
-    return T::from_microseconds(static_cast<int64_t>(lhs.to_microseconds() * rhs));
+    return Tx::from_microseconds(static_cast<int64_t>(lhs.to_microseconds() * rhs));
 }
 
 //------------------------------------------------------------------------------
-template<typename T> constexpr T operator*(double lhs, time_base<T> rhs)
+template<typename Tx, typename Ty> constexpr Ty operator*(Tx lhs, time_base<Ty> rhs)
 {
-    return T::from_microseconds(static_cast<int64_t>(lhs * rhs.to_microseconds()));
+    return Ty::from_microseconds(static_cast<int64_t>(lhs * rhs.to_microseconds()));
 }
 
 //------------------------------------------------------------------------------

@@ -358,9 +358,7 @@ void system::shutdown()
 {
     char filename[LONG_STRING];
 
-    get_config_path(filename, countof(filename), true);
-
-    if (filename) {
+    if (get_config_path(filename, countof(filename), true)) {
         file::stream file = file::open(filename, file::mode::write);
 
         for (auto it : _variables) {
