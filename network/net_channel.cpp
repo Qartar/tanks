@@ -1,10 +1,8 @@
 // net_chan.cpp
 //
 
-#include "precompiled.h"
-#pragma hdrstop
-
 #include "net_channel.h"
+#include "net_socket.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace network {
@@ -16,12 +14,8 @@ channel::channel(word netport)
     , _last_received{}
     , _socket{}
 {
-    LARGE_INTEGER counter;
-
-    QueryPerformanceCounter(&counter);
-
     if (!netport) {
-        _netport = counter.QuadPart & 0xffff;
+        _netport = time_value::current().to_microseconds() & 0xffff;
     } else {
         _netport = netport;
     }
@@ -37,8 +31,8 @@ void channel::setup(network::socket* socket, network::address remote, word netpo
     _socket = socket;
     _address = remote;
 
-    _last_sent = application::singleton()->time();
-    _last_received = application::singleton()->time();
+    _last_sent = time_value::current();
+    _last_received = time_value::current();
 }
 
 //------------------------------------------------------------------------------
@@ -55,7 +49,7 @@ bool channel::transmit(std::size_t length, byte const* data)
 
     // send it off
 
-    _last_sent = application::singleton()->time();
+    _last_sent = time_value::current();
 
     if (_socket && _socket->write(_address, netmsg)) {
         reset();
@@ -77,7 +71,7 @@ bool channel::transmit()
 //------------------------------------------------------------------------------
 bool channel::process(network::message&)
 {
-    _last_received = application::singleton()->time();
+    _last_received = time_value::current();
     return true;
 }
 

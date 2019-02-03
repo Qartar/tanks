@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_shared.h"
 #include "cm_string.h"
 
 struct sockaddr_storage;

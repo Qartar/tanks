@@ -68,7 +68,7 @@ void session::get_packets ()
     //
 
     // network uses application time directly so do the same here
-    time_value time = application::singleton()->time();
+    time_value time = time_value::current();
     constexpr time_delta timeout = time_delta::from_seconds(10);
 
     if (svs.active) {

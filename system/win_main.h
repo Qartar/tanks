@@ -20,8 +20,6 @@ public:
     string::buffer clipboard() const;
     string::view init_string() { return _init_string; }
 
-    time_value time() const;
-
     HINSTANCE hinstance() { return _hinstance; }
     config::system* config() { return &_config; }
     render::window* window() { return &_window; }
@@ -35,9 +33,6 @@ protected:
     WPARAM _mouse_state;
 
     string::view _init_string;
-
-    LARGE_INTEGER _timer_frequency;
-    LARGE_INTEGER _timer_base;
 
     render::window _window;
     game::session _game;

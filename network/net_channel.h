@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "cm_time.h"
 #include "net_address.h"
 #include "net_message.h"
 

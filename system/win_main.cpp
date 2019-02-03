@@ -10,6 +10,34 @@
 #include <XInput.h>
 
 ////////////////////////////////////////////////////////////////////////////////
+namespace {
+
+int64_t get_ticks()
+{
+    LARGE_INTEGER counter;
+    QueryPerformanceCounter(&counter);
+    return counter.QuadPart;
+}
+
+int64_t get_ticks_per_second()
+{
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);
+    return frequency.QuadPart;
+}
+
+} // anonymous namespace
+
+//------------------------------------------------------------------------------
+time_value time_value::current()
+{
+    static int64_t offset = get_ticks();
+    static double denominator = 1e-6 * static_cast<double>(get_ticks_per_second());
+    double numerator = static_cast<double>(get_ticks() - offset);
+    return time_value::from_microseconds(static_cast<int64_t>(numerator / denominator));
+}
+
+////////////////////////////////////////////////////////////////////////////////
 application* application::_singleton = nullptr;
 
 //------------------------------------------------------------------------------
@@ -38,7 +66,7 @@ int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
         return shutdown();
     }
 
-    previous_time = time();
+    previous_time = time_value::current();
 
     while (true) {
 
@@ -60,7 +88,7 @@ int application::main(LPSTR szCmdLine, int /*nCmdShow*/)
         // gamepad events are polled from the device
         generate_gamepad_events();
 
-        current_time = time();
+        current_time = time_value::current();
         _game.run_frame(current_time - previous_time);
         previous_time = current_time;
     }
@@ -75,11 +103,7 @@ result application::init(HINSTANCE hInstance, LPSTR szCmdLine)
     // set init string
     _init_string = string::view(szCmdLine);
 
-    // init timer
-    QueryPerformanceFrequency(&_timer_frequency);
-    QueryPerformanceCounter(&_timer_base);
-
-    srand(static_cast<unsigned int>(_timer_base.QuadPart));
+    srand(static_cast<unsigned int>(get_ticks()));
 
     _config.init();
 
@@ -140,17 +164,6 @@ void application::quit(int exit_code)
 
     // tell windows we dont want to play anymore
     PostQuitMessage(exit_code);
-}
-
-//------------------------------------------------------------------------------
-time_value application::time() const
-{
-    LARGE_INTEGER counter;
-    QueryPerformanceCounter(&counter);
-
-    double num = static_cast<double>(counter.QuadPart - _timer_base.QuadPart);
-    double den = 1e-6 * static_cast<double>(_timer_frequency.QuadPart); 
-    return time_value::from_microseconds(static_cast<uint64_t>(num / den));
 }
 
 //------------------------------------------------------------------------------

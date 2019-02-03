@@ -1,10 +1,9 @@
 // net_sock.cpp
 //
 
-#include "precompiled.h"
-#pragma hdrstop
-
 #include "net_socket.h"
+#include "net_address.h"
+#include "net_message.h"
 
 #include <WS2tcpip.h>
 

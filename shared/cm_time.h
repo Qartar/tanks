@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 ////////////////////////////////////////////////////////////////////////////////
 
 //------------------------------------------------------------------------------
@@ -172,6 +174,9 @@ public:
         _value -= delta.to_microseconds();
         return *this;
     }
+
+    //! Returns the current time. This must be implemented by the application.
+    static time_value current();
 
 protected:
     friend time_base<time_value>;
