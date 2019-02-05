@@ -10,6 +10,8 @@
 
 #include "resource.h"
 
+#include "version.h"
+
 #include <numeric>
 // #todo: abstract XInput virtual keycodes
 #include <XInput.h>
@@ -915,6 +917,13 @@ void session::draw_console()
         color4(.1f,.1f,.1f,.8f));
 
     int ystep = int(_renderer->monospace_size(" ").y);
+
+    // draw build string
+    {
+        string::literal build(BUILD_STRING);
+        vec2 size = _renderer->monospace_size(build);
+        _renderer->draw_monospace(build, vec2(vec2i(width - int(size.x) - 4, yoffset - 8)), menu::colors[1]);
+    }
 
     // draw input text
     {

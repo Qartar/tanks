@@ -1,0 +1,17 @@
+// version.h
+//
+
+#pragma once
+
+#cmakedefine PROJECT_NAME "${PROJECT_NAME}"
+#cmakedefine BUILD_RELEASE "${BUILD_RELEASE}"
+#cmakedefine BUILD_BRANCH "${BUILD_BRANCH}"
+#cmakedefine BUILD_COMMIT "${BUILD_COMMIT}"
+
+#if defined(BUILD_RELEASE)
+#   define BUILD_STRING PROJECT_NAME "|" BUILD_RELEASE
+#elif defined(BUILD_BRANCH) && defined(BUILD_COMMIT)
+#   define BUILD_STRING PROJECT_NAME "|" BUILD_BRANCH "(" BUILD_COMMIT ")"
+#else
+#   define BUILD_STRING PROJECT_NAME
+#endif

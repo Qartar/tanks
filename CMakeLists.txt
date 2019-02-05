@@ -2,6 +2,29 @@ cmake_minimum_required(VERSION 2.8.11)
 
 project(tanks)
 
+# Configure version file
+find_package(git)
+
+set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
+set(VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/version.h")
+
+if(GIT_FOUND)
+    add_custom_command(OUTPUT ${VERSION_FILE}
+        COMMAND ${CMAKE_COMMAND}
+            -DPROJECT_NAME=${PROJECT_NAME}
+            -DGIT_EXECUTABLE="${GIT_EXECUTABLE}"
+            -DCONFIG_FILE="${SCRIPTS_DIR}/version.h.in"
+            -DOUTPUT_FILE="${VERSION_FILE}"
+            -P "${SCRIPTS_DIR}/version.cmake"
+        DEPENDS
+            ${SCRIPTS_DIR}/version.cmake
+            ${SCRIPTS_DIR}/version.h.in
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+else()
+    configure_file(${SCRIPTS_DIR}/version.h.in ${VERSION_FILE})
+endif()
+
 # Remove bad default compiler flags for Visual Studio
 if(MSVC)
     string(REPLACE "/DWIN32 /D_WINDOWS /W3 /GR /EHsc" "/EHsc" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -63,6 +86,7 @@ set(TANKS_SOURCES
 
 add_executable(tanks WIN32
     ${TANKS_SOURCES}
+    ${VERSION_FILE}
 
     precompiled.cpp
     precompiled.h
@@ -84,7 +108,8 @@ target_link_libraries(tanks
 
 target_include_directories(tanks
     PRIVATE
-        .
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
         game
         render
         system
