@@ -725,6 +725,7 @@ void session::reset()
     }
 
     _world.reset( );
+    _worldtime = time_value::zero;
 }
 
 //------------------------------------------------------------------------------
@@ -748,6 +749,7 @@ void session::new_game()
     //
 
     _world.reset( );
+    _worldtime = time_value::zero;
 
     //
     //  reset scores
